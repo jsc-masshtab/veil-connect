@@ -6,7 +6,7 @@
 #define MyAppPublisher "АО «НИИ «Масштаб»"
 #define MyAppURL "http://mashtab.org/"
 #define MyAppExeName "thin_client_veil.exe"
-#define MyAppIcoName "veil_connect.ico"
+#define MyAppIco "C:\Jenkins\workspace\vdi-connect\doc\veil_connect.ico"
 
 [Setup]
 ; NOTE: The value of AppId uniquely identifies this application. Do not use the same AppId value in installers for other applications.
@@ -29,7 +29,7 @@ UsedUserAreasWarning=no
 PrivilegesRequiredOverridesAllowed=dialog
 OutputDir=C:\Jenkins\workspace\vdi-connect
 OutputBaseFilename=veil_connect_installer
-SetupIconFile=C:\Jenkins\workspace\vdi-connect\doc\veil_connect.ico
+SetupIconFile={#MyAppIco}
 Compression=lzma
 SolidCompression=yes
 WizardStyle=modern
@@ -50,7 +50,7 @@ Source: "C:\Jenkins\workspace\vdi-connect\build\*"; DestDir: "{app}"; Flags: ign
 [Icons]
 Name: "{group}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"
 Name: "{group}\{cm:UninstallProgram,{#MyAppName}}"; Filename: "{uninstallexe}"
-Name: "{autodesktop}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; IconFilename: "{app}\{#MyAppIcoName}"; Tasks: desktopicon
+Name: "{autodesktop}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; IconFilename: "{#MyAppIco}"; Tasks: desktopicon
 Name: "{userappdata}\Microsoft\Internet Explorer\Quick Launch\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; Tasks: quicklaunchicon
 
 [Run]
