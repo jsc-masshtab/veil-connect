@@ -11,13 +11,13 @@ pipeline {
     post {
         failure {
             println "Something goes wrong"
-            println "Current build marked as ${currentBuild.result}: ${err}"
+            println "Current build marked as ${currentBuild.result}"
             notifyBuild(slackNotify,"FAILED", "Something goes wrong. Version: ${currentDate}")
         }
 
         aborted {
             println "Build was interrupted manually"
-            println "Current build marked as ${currentBuild.result}: ${err}"
+            println "Current build marked as ${currentBuild.result}"
             notifyBuild(slackNotify,"FAILED", "Build was interrupted manually. Version: ${currentDate}")
         }
 
