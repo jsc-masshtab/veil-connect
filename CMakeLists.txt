@@ -139,8 +139,8 @@ if (UNIX)
 endif (UNIX)
 
 if (WIN32)
-    SET(LIBS_INCLUDE_PATH C:/msys64/mingw64/include/)
-    SET(FREERDP_PATH C:/job/FreeRDP-2.0.0-rc4/FreeRDP-2.0.0-rc4/)
+    SET(LIBS_INCLUDE_PATH C:/msys32/mingw64/include/)
+    SET(FREERDP_PATH C:/job/FreeRDP-2.0.0-rc4/)
     SET(HIREDIS_PATH C:/job/hiredis-mingw/)
 
     # hiredis port to Windows
