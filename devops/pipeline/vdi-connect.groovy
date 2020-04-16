@@ -54,6 +54,7 @@ node("win10_x64_veil_guest_agent") {
 
                 stage ('copy dependencies') {
                     bat script: '''
+                        copy doc\\veil_connect.ico build
                         cd build
                         rmdir /S /Q CMakeFiles
                         del CMakeCache.txt cmake_install.cmake Makefile libthin_client_veil.dll.a start_vdi_client.sh
