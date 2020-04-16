@@ -37,20 +37,22 @@ pipeline {
         string(      name: 'BRANCH',               defaultValue: 'feature_tg_7975',             description: 'branch')
         string(      name: 'VERSION',              defaultValue: '1.2.5',           description: 'version')
     }
-    
+
     stages {
         stage ('create environment') {
             steps {
                 cleanWs()
-                def scmVars = checkout([ $class: 'GitSCM',
-                    branches: [[name: '$BRANCH']],
-                    doGenerateSubmoduleConfigurations: false,
-                    extensions: [], submoduleCfg: [],
-                    userRemoteConfigs: [[credentialsId: '',
-                    url: 'http://gitlab+deploy-token-3:LD2jHQCWDYSEt-8AJQzs@gitlab.bazalt.team/vdi/veil_connect.git']]
-                ])
-                env.GIT_COMMIT = scmVars.GIT_COMMIT
-                env.GIT_BRANCH = scmVars.GIT_BRANCH
+                script {
+                    def scmVars = checkout([ $class: 'GitSCM',
+                        branches: [[name: '$BRANCH']],
+                        doGenerateSubmoduleConfigurations: false,
+                        extensions: [], submoduleCfg: [],
+                        userRemoteConfigs: [[credentialsId: '',
+                        url: 'http://gitlab+deploy-token-3:LD2jHQCWDYSEt-8AJQzs@gitlab.bazalt.team/vdi/veil_connect.git']]
+                    ])
+                    env.GIT_COMMIT = scmVars.GIT_COMMIT
+                    env.GIT_BRANCH = scmVars.GIT_BRANCH
+                }
                         
                 println "scmVars - $scmVars"
                 println "GIT_COMMIT - $env.GIT_COMMIT"
