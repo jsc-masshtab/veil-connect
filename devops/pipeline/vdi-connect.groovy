@@ -11,7 +11,7 @@ properties([
     ),
     gitLabConnection('gitlab'),
     parameters([
-        string(      name: 'BRANCH',               defaultValue: 'feature_tg_7975',             description: 'branch', trim: false),
+        string(      name: 'BRANCH',               defaultValue: 'master',          description: 'branch', trim: false),
         string(      name: 'VERSION',              defaultValue: '1.2.5',           description: 'version', trim: false)
     ])
 ])
@@ -32,7 +32,7 @@ node("win10_x64_veil_guest_agent") {
                         doGenerateSubmoduleConfigurations: false,
                         extensions: [], submoduleCfg: [],
                         userRemoteConfigs: [[credentialsId: '',
-                        url: 'http://gitlab+deploy-token-3:LD2jHQCWDYSEt-8AJQzs@gitlab.bazalt.team/vdi/veil_connect.git']]
+                        url: 'http://gitlab+deploy-token-3:LD2jHQCWDYSEt-8AJQzs@gitlab.bazalt.team/vdi/veil-connect.git']]
                     ])
                     env.GIT_COMMIT = scmVars.GIT_COMMIT
                     env.GIT_BRANCH = scmVars.GIT_BRANCH

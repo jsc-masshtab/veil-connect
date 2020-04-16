@@ -35,7 +35,7 @@ pipeline {
     }
 
     parameters {
-        string(      name: 'BRANCH',               defaultValue: 'master',             description: 'branch')
+        string(      name: 'BRANCH',               defaultValue: 'master',          description: 'branch')
         string(      name: 'VERSION',              defaultValue: '1.2.5',           description: 'version')
     }
 
@@ -48,7 +48,7 @@ pipeline {
                     doGenerateSubmoduleConfigurations: false,
                     extensions: [], submoduleCfg: [],
                     userRemoteConfigs: [[credentialsId: '',
-                    url: 'http://gitlab+deploy-token-3:LD2jHQCWDYSEt-8AJQzs@gitlab.bazalt.team/vdi/veil_connect.git']]
+                    url: 'http://gitlab+deploy-token-3:LD2jHQCWDYSEt-8AJQzs@gitlab.bazalt.team/vdi/veil-connect.git']]
                 ])
             }
         }
