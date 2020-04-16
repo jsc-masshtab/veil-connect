@@ -29,9 +29,7 @@ pipeline {
     }
 
     options {
-        buildDiscarder(
-            logRotator(daysToKeepStr: '60', numToKeepStr: '30')
-        ),
+        buildDiscarder(logRotator(daysToKeepStr: '60', numToKeepStr: '30')),
         gitLabConnection('gitlab'),
         timestamps(),
         ansiColor('xterm')
