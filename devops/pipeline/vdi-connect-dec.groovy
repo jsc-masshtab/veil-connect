@@ -35,7 +35,7 @@ pipeline {
     }
 
     parameters {
-        string(      name: 'BRANCH',               defaultValue: 'feature_tg_7975',             description: 'branch')
+        string(      name: 'BRANCH',               defaultValue: 'master',             description: 'branch')
         string(      name: 'VERSION',              defaultValue: '1.2.5',           description: 'version')
     }
 
