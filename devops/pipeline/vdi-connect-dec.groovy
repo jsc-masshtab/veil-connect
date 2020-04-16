@@ -43,22 +43,13 @@ pipeline {
         stage ('create environment') {
             steps {
                 cleanWs()
-                script {
-                    def scmVars = checkout([ $class: 'GitSCM',
-                        branches: [[name: '$BRANCH']],
-                        doGenerateSubmoduleConfigurations: false,
-                        extensions: [], submoduleCfg: [],
-                        userRemoteConfigs: [[credentialsId: '',
-                        url: 'http://gitlab+deploy-token-3:LD2jHQCWDYSEt-8AJQzs@gitlab.bazalt.team/vdi/veil_connect.git']]
-                    ])
-                    env.GIT_COMMIT = scmVars.GIT_COMMIT
-                    env.GIT_BRANCH = scmVars.GIT_BRANCH
-                }
-                        
-                println "scmVars - $scmVars"
-                println "GIT_COMMIT - $env.GIT_COMMIT"
-                println "GIT_BRANCH - $env.GIT_BRANCH"
-                println "env.DATE - ${currentDate}"
+                checkout([ $class: 'GitSCM',
+                    branches: [[name: '$BRANCH']],
+                    doGenerateSubmoduleConfigurations: false,
+                    extensions: [], submoduleCfg: [],
+                    userRemoteConfigs: [[credentialsId: '',
+                    url: 'http://gitlab+deploy-token-3:LD2jHQCWDYSEt-8AJQzs@gitlab.bazalt.team/vdi/veil_connect.git']]
+                ])
             }
         }
         
