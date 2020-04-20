@@ -132,6 +132,7 @@ pipeline {
         stage ('deploy to repo') {
             steps {
                 bat script: '''
+                    ssh uploader@mothership.bazalt.team mkdir -p /local_storage/vdi_releases/%VERSION%
                     ssh uploader@mothership.bazalt.team rm -f /local_storage/vdi_releases/%VERSION%/veil_connect_installer_%VERSION%.exe
                     scp veil_connect_installer.exe uploader@mothership.bazalt.team:/local_storage/vdi_releases/%VERSION%/veil_connect_installer_%VERSION%.exe
                 '''
