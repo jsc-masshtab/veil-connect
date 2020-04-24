@@ -9,6 +9,7 @@
 #include <gdk/gdkkeysyms.h>
 #include <gtk/gtk.h>
 #include <gtk/gtktypes.h>
+#include <json-glib/json-glib.h>
 
 #include "remote-viewer-util.h"
 
@@ -24,6 +25,7 @@ typedef struct{
     GtkWidget *vm_name_label;
     GtkWidget *image_widget;
     GtkWidget *vm_start_button;
+    GtkWidget *combobox_remote_protocol;
 
     gchar *pool_id;
 
@@ -31,7 +33,7 @@ typedef struct{
 
 // build vm widget and insert it in gtk_flow_box
 VdiPoolWidget build_pool_widget(const gchar *pool_id, const gchar *pool_name,
-                                const gchar *os_type, const gchar *status, GtkWidget *gtk_flow_box);
+        const gchar *os_type, const gchar *status, JsonArray *conn_types_json_array, GtkWidget *gtk_flow_box);
 
 // start / stop spinner
 void enable_spinner_visible(VdiPoolWidget *vdi_pool_widget, gboolean enable);

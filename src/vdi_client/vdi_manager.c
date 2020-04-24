@@ -59,7 +59,8 @@ static void set_init_values(void);
 static void set_vdi_client_state(VdiClientState vdi_client_state, const gchar *message, gboolean error_message);
 static void refresh_vdi_pool_data_async(void);
 static void unregister_all_pools(void);
-static void register_pool(const gchar *pool_id, const gchar *pool_name, const gchar *os_type, const gchar *status);
+static void register_pool(const gchar *pool_id, const gchar *pool_name, const gchar *os_type,
+        const gchar *status, JsonArray *conn_types_json_array);
 static VdiPoolWidget get_vdi_pool_widget_by_id(const gchar *searched_id);
 
 static void on_get_vdi_pool_data_finished(GObject *source_object, GAsyncResult *res, gpointer user_data);
@@ -165,14 +166,18 @@ static void unregister_all_pools()
     }
 }
 // create virtual machine widget and add to GUI
-static void register_pool(const gchar *pool_id, const gchar *pool_name, const gchar *os_type, const gchar *status)
+static void register_pool(const gchar *pool_id, const gchar *pool_name, const gchar *os_type, const gchar *status,
+                          JsonArray *conn_types_json_array)
 {
     // create array if required
     if (vdi_manager.pool_widgets_array == NULL)
         vdi_manager.pool_widgets_array = g_array_new (FALSE, FALSE, sizeof (VdiPoolWidget));
 
+    GArray *connection_types_array = NULL;
+
     // add element
-    VdiPoolWidget vdi_pool_widget = build_pool_widget(pool_id, pool_name, os_type, status, vdi_manager.gtk_flow_box);
+    VdiPoolWidget vdi_pool_widget = build_pool_widget(pool_id, pool_name, os_type, status,
+                                                      conn_types_json_array, vdi_manager.gtk_flow_box);
     g_array_append_val (vdi_manager.pool_widgets_array, vdi_pool_widget);
     // connect start button to callback
     g_signal_connect(vdi_pool_widget.vm_start_button, "clicked", G_CALLBACK(on_vm_start_button_clicked), NULL);
@@ -226,11 +231,11 @@ static void on_get_vdi_pool_data_finished(GObject *source_object G_GNUC_UNUSED,
     if (root_object)
         data_member = json_object_get_member(root_object, "data");
 
-    JsonArray *jsonArray = NULL;
+    JsonArray *json_array = NULL;
     if (data_member)
-        jsonArray = json_node_get_array(data_member);
+        json_array = json_node_get_array(data_member);
 
-    if (!jsonArray) {
+    if (!json_array) {
         g_object_unref(parser);
         g_free(ptr_res);
         set_vdi_client_state(VDI_RECEIVED_RESPONSE, "Не удалось получить список пулов", TRUE);
@@ -241,13 +246,13 @@ static void on_get_vdi_pool_data_finished(GObject *source_object G_GNUC_UNUSED,
     unregister_all_pools();
 
     // fill pool_widgets_array
-    guint jsonArrayLength = MIN(json_array_get_length(jsonArray), MAX_POOL_NUMBER);
-    printf("Number of vm pools: %i\n", jsonArrayLength);
+    guint json_arrayLength = MIN(json_array_get_length(json_array), MAX_POOL_NUMBER);
+    printf("Number of vm pools: %i\n", json_arrayLength);
 
     int i;
-    for(i = (int)jsonArrayLength - 1; i >= 0; --i){
+    for(i = (int)json_arrayLength - 1; i >= 0; --i){
 
-        JsonNode *jsonNode = json_array_get_element (jsonArray, (guint)i);
+        JsonNode *jsonNode = json_array_get_element (json_array, (guint)i);
         JsonObject *object = json_node_get_object (jsonNode);
 
         const gchar *pool_id = json_object_get_string_member_safely(object, "id");
@@ -256,7 +261,8 @@ static void on_get_vdi_pool_data_finished(GObject *source_object G_GNUC_UNUSED,
         const gchar *status = json_object_get_string_member_safely(object, "status");
         //printf("os_type %s\n", os_type);
         //printf("pool_name %s\n", pool_name);
-        register_pool(pool_id, pool_name, os_type, status);
+        JsonArray *conn_types_json_array = NULL; // todo: get
+        register_pool(pool_id, pool_name, os_type, status, conn_types_json_array);
     }
 
     //

@@ -5,7 +5,8 @@
 #include "vdi_pool_widget.h"
 
 VdiPoolWidget build_pool_widget(const gchar *pool_id, const gchar *pool_name,
-                                const gchar *os_type, const gchar *status, GtkWidget *gtk_flow_box)
+                                const gchar *os_type, const gchar *status, JsonArray *conn_types_json_array,
+                                GtkWidget *gtk_flow_box)
 {
     VdiPoolWidget vdi_pool_widget  = {};
 
@@ -46,6 +47,11 @@ VdiPoolWidget build_pool_widget(const gchar *pool_id, const gchar *pool_name,
     vdi_pool_widget.image_widget = gtk_image_new_from_resource(os_icon_path);
     gtk_widget_set_name(vdi_pool_widget.image_widget, "vdi_pool_widget_image");
     free_memory_safely(&os_icon_path);
+
+    // combobox_remote_protocol
+    vdi_pool_widget.combobox_remote_protocol = gtk_combo_box_text_new();
+    gtk_box_pack_start((GtkBox *)vdi_pool_widget.gtk_box, vdi_pool_widget.combobox_remote_protocol,
+                       TRUE, TRUE, 0);
 
     // vm start button
     vdi_pool_widget.vm_start_button = gtk_button_new_with_label(pool_name);
@@ -91,6 +97,7 @@ void destroy_vdi_pool_widget(VdiPoolWidget *vdi_pool_widget)
     gtk_widget_destroy(vdi_pool_widget->vm_spinner);
     gtk_widget_destroy(vdi_pool_widget->image_widget);
     gtk_widget_destroy(vdi_pool_widget->vm_start_button);
+    gtk_widget_destroy(vdi_pool_widget->combobox_remote_protocol);
     gtk_widget_destroy(vdi_pool_widget->gtk_box);
     gtk_widget_destroy(vdi_pool_widget->gtk_overlay);
     gtk_widget_destroy(vdi_pool_widget->main_widget);
