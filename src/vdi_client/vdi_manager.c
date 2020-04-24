@@ -35,7 +35,7 @@ typedef struct{
     GtkWidget *gtk_flow_box;
     GtkWidget *status_label;
     GtkWidget *main_vm_spinner;
-    GtkWidget *image_label_vdi_online;
+    GtkWidget *label_is_vdi_online;
     GtkWidget *combobox_remote_protocol;
 
     GArray *pool_widgets_array;
@@ -85,7 +85,7 @@ static void set_init_values()
     vdi_manager.gtk_flow_box = NULL;
     vdi_manager.status_label = NULL;
     vdi_manager.main_vm_spinner = NULL;
-    vdi_manager.image_label_vdi_online = NULL;
+    vdi_manager.label_is_vdi_online = NULL;
     vdi_manager.combobox_remote_protocol = NULL;
 
     vdi_manager.pool_widgets_array = NULL;
@@ -324,21 +324,20 @@ static void on_get_vm_from_pool_finished(GObject *source_object G_GNUC_UNUSED,
 // ws data callback    "<span color=\"red\">%s</span>"
 static gboolean on_ws_data_from_vdi_received(gboolean is_vdi_online)
 {
-    //printf("In %s :thread id = %lu\n", (const char *)__func__, pthread_self());
 //    gchar *message;
-//    if (vdi_manager.label_vdi_online){
+//    if (vdi_manager.label_is_vdi_online){
 //        if (is_vdi_online){
-//            message = g_strdup("<span background=\"green\" color=\"white\">  Сервер доступен  </span>");
+//            message = g_strdup("<span background=\"green\" color=\"white\">      </span>");
 //        }
 //        else{
-//            message = g_strdup("<span background=\"red\" color=\"white\">  Сервер недоступен  </span>");
+//            message = g_strdup("<span background=\"red\" color=\"white\">      </span>");
 //        }
-
-//        gtk_label_set_markup(GTK_LABEL (vdi_manager.label_vdi_online), message);
+//
+//        gtk_label_set_markup(GTK_LABEL (vdi_manager.label_is_vdi_online), message);
 //        g_free(message);
 //    }
 
-    if (vdi_manager.image_label_vdi_online) {
+    if (vdi_manager.label_is_vdi_online) {
 
         gchar *resource_path;
         if (is_vdi_online)
@@ -346,7 +345,7 @@ static gboolean on_ws_data_from_vdi_received(gboolean is_vdi_online)
         else
             resource_path = g_strdup(VIRT_VIEWER_RESOURCE_PREFIX"/icons/content/img/red_circle.png");
 
-        gtk_image_set_from_resource((GtkImage *)vdi_manager.image_label_vdi_online, resource_path);
+        gtk_image_set_from_resource((GtkImage *)vdi_manager.label_is_vdi_online, resource_path);
         g_free(resource_path);
     }
 
@@ -462,7 +461,7 @@ GtkResponseType vdi_manager_dialog(GtkWindow *main_window G_GNUC_UNUSED, gchar *
 #ifdef __linux__
     gtk_combo_box_text_remove((GtkComboBoxText *)vdi_manager.combobox_remote_protocol, 2);
 #endif
-    vdi_manager.image_label_vdi_online = GTK_WIDGET(gtk_builder_get_object(vdi_manager.builder, "image_label_vdi_online"));
+    vdi_manager.label_is_vdi_online = GTK_WIDGET(gtk_builder_get_object(vdi_manager.builder, "label-is-vdi-online"));
 
     // connects
     //g_signal_connect_swapped(vdi_manager.window, "map-event", G_CALLBACK(mapped_user_function), &vdi_manager.ci);

@@ -14,7 +14,7 @@
     <child>
       <placeholder/>
     </child>
-    <child>F
+    <child>
       <object class="GtkVBox" id="main-box">
         <property name="name">main-window-box</property>
         <property name="visible">True</property>
@@ -60,7 +60,7 @@
               </packing>
             </child>
             <child>
-              <object class="GtkLabel" id="label_vdi_online">
+              <object class="GtkLabel" id="label-spacer-2">
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
               </object>
@@ -168,7 +168,19 @@
               </packing>
             </child>
             <child>
-              <placeholder/>
+              <object class="GtkImage" id="label-is-vdi-online">
+                <property name="name">label-is-vdi-online</property>
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="halign">end</property>
+                <property name="hexpand">True</property>
+                <property name="stock">gtk-missing-image</property>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="fill">True</property>
+                <property name="position">1</property>
+              </packing>
             </child>
           </object>
           <packing>
