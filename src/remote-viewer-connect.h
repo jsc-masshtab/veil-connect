@@ -13,7 +13,7 @@
 
 GtkResponseType remote_viewer_connect_dialog(gchar **user, gchar **password, gchar **domain,
                                       gchar **ip, gchar **port, gboolean *is_connect_to_prev_pool,
-                                      gchar **vm_verbose_name, VdiVmRemoteProtocol *remote_protocol_type);
+                                      gchar **vm_verbose_name);
 
 #endif /* REMOTE_VIEWER_CONNECT_H */
 

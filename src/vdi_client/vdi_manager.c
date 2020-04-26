@@ -43,7 +43,6 @@ typedef struct{
     gchar **port_ptr;
     gchar **password_ptr;
     gchar **vm_verbose_name_ptr;
-    VdiVmRemoteProtocol *remote_protocol_type_ptr;
 
     ConnectionInfo ci;
 } VdiManager;
@@ -93,7 +92,6 @@ static void set_init_values()
     vdi_manager.port_ptr = NULL;
     vdi_manager.password_ptr = NULL;
     vdi_manager.vm_verbose_name_ptr = NULL;
-    vdi_manager.remote_protocol_type_ptr = NULL;
 }
 
 // Set GUI state
@@ -308,10 +306,6 @@ static void on_get_vm_from_pool_finished(GObject *source_object G_GNUC_UNUSED,
 
         free_memory_safely(vdi_manager.vm_verbose_name_ptr);
         *vdi_manager.vm_verbose_name_ptr = g_strdup(vdi_vm_data->vm_verbose_name);
-
-        // get current remote protocol from gui
-        *vdi_manager.remote_protocol_type_ptr =
-            gtk_combo_box_get_active((GtkComboBox*)vdi_manager.combobox_remote_protocol);
         //
         set_vdi_client_state(VDI_RECEIVED_RESPONSE, "Получена вм из пула", FALSE);
 
@@ -416,21 +410,18 @@ static void
 read_data_from_ini_file()
 {
     gint cur_remote_protocol_index = read_int_from_ini_file("General", "cur_remote_protocol_index");
-    gtk_combo_box_set_active((GtkComboBox*)vdi_manager.combobox_remote_protocol, cur_remote_protocol_index);
+    set_current_remote_protocol((VdiVmRemoteProtocol)cur_remote_protocol_index);
 }
 
 static void
 save_data_to_ini_file()
 {
-    gint cur_remote_protocol_index =
-            gtk_combo_box_get_active((GtkComboBox*)vdi_manager.combobox_remote_protocol);
-    write_int_to_ini_file("General", "cur_remote_protocol_index", cur_remote_protocol_index);
+    write_int_to_ini_file("General", "cur_remote_protocol_index", (gint)get_current_remote_protocol());
 }
 
 /////////////////////////////////// main function
 GtkResponseType vdi_manager_dialog(GtkWindow *main_window G_GNUC_UNUSED, gchar **ip, gchar **port,
-                                   gchar **password, gchar **vm_verbose_name,
-                                   VdiVmRemoteProtocol *remote_protocol_type)
+                                   gchar **password, gchar **vm_verbose_name)
 {
     set_init_values();
     vdi_manager.ci.response = FALSE;
@@ -440,7 +431,6 @@ GtkResponseType vdi_manager_dialog(GtkWindow *main_window G_GNUC_UNUSED, gchar *
     vdi_manager.port_ptr = port;
     vdi_manager.password_ptr = password;
     vdi_manager.vm_verbose_name_ptr = vm_verbose_name;
-    vdi_manager.remote_protocol_type_ptr = remote_protocol_type;
 
     /* Create the widgets */
     vdi_manager.builder = remote_viewer_util_load_ui("vdi_manager_form.ui");
@@ -460,12 +450,6 @@ GtkResponseType vdi_manager_dialog(GtkWindow *main_window G_GNUC_UNUSED, gchar *
     gtk_box_pack_start(GTK_BOX(vdi_manager.vm_main_box), vdi_manager.gtk_flow_box, FALSE, TRUE, 0);
 
     vdi_manager.main_vm_spinner = GTK_WIDGET(gtk_builder_get_object(vdi_manager.builder, "main_vm_spinner"));
-    vdi_manager.combobox_remote_protocol =
-            GTK_WIDGET(gtk_builder_get_object(vdi_manager.builder, "combobox-remote-protocol"));
-    // remove tdp native optin if we are on linux
-#ifdef __linux__
-    gtk_combo_box_text_remove((GtkComboBoxText *)vdi_manager.combobox_remote_protocol, 2);
-#endif
     vdi_manager.label_is_vdi_online = GTK_WIDGET(gtk_builder_get_object(vdi_manager.builder, "label-is-vdi-online"));
 
     // connects

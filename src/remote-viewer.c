@@ -315,7 +315,6 @@ remote_viewer_start(VirtViewerApp *app, GError **err G_GNUC_UNUSED, RemoteViewer
     gchar *port = NULL;
     gboolean is_connect_to_prev_pool = FALSE;
     gchar *vm_verbose_name = NULL;
-    VdiVmRemoteProtocol remote_protocol_type = VDI_SPICE_PROTOCOL;
     GError *error = NULL;
 
     setup_css(); // CSS setup
@@ -331,7 +330,7 @@ retry_auth:
     {
         // Забираем из ui адрес и порт
         GtkResponseType dialog_window_response = remote_viewer_connect_dialog(&user, &password, &domain, &ip, &port,
-                                         &is_connect_to_prev_pool, &vm_verbose_name, &remote_protocol_type);
+                                         &is_connect_to_prev_pool, &vm_verbose_name);
 
         if (dialog_window_response == GTK_RESPONSE_CLOSE) {
             remote_viewer_free_auth_data(&user, &password, &domain, &ip, &port, &vm_verbose_name);
@@ -345,7 +344,7 @@ retry_auth:
 retry_connnect_to_vm:
     /// instant connect attempt
     if (opt_manual_mode) {
-        if (remote_protocol_type == VDI_RDP_PROTOCOL) {
+        if (get_current_remote_protocol() == VDI_RDP_PROTOCOL) {
 //            printf("%s TEST user %s\n", (const char *)__func__, user);
 //            printf("%s TEST password %s\n", (const char *)__func__, password);
 //            printf("%s TEST ip %s\n", (const char *)__func__, ip);
@@ -407,7 +406,7 @@ retry_connnect_to_vm:
             // show VDI manager window
             GtkResponseType vdi_dialog_window_response =
                     vdi_manager_dialog(virt_viewer_window_get_window(main_window), &ip, &port,
-                                       &password, &vm_verbose_name, &remote_protocol_type);
+                                       &password, &vm_verbose_name);
             if (vdi_dialog_window_response == GTK_RESPONSE_CANCEL) {
                 remote_viewer_free_auth_data(&user, &password, &domain, &ip, &port, &vm_verbose_name);
                 goto retry_auth;
@@ -421,7 +420,7 @@ retry_connnect_to_vm:
         virt_viewer_app_set_window_name(app, vm_verbose_name);
 
         // connect to vm depending on remote protocol
-        if (remote_protocol_type == VDI_RDP_PROTOCOL) {
+        if (get_current_remote_protocol() == VDI_RDP_PROTOCOL) {
             GtkResponseType rdp_viewer_res = rdp_viewer_start(get_vdi_username(), get_vdi_password(), domain, ip, 0);
             //printf("user: %s   pass: %s", get_vdi_username(), get_vdi_password());
             // quit if required
@@ -430,7 +429,7 @@ retry_connnect_to_vm:
                 return FALSE;
             }
 #ifdef _WIN32
-        }else if (remote_protocol_type == VDI_RDP_WINDOWS_NATIVE_PROTOCOL) {
+        }else if (get_current_remote_protocol() == VDI_RDP_WINDOWS_NATIVE_PROTOCOL) {
                 launch_windows_rdp_client(get_vdi_username(), get_vdi_password(), ip, 0);
 #endif
         } else { // spice by default

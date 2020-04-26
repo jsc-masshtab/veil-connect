@@ -61,7 +61,6 @@ typedef struct
     gboolean *is_connect_to_prev_pool_ptr;
 
     gchar **vm_verbose_name;
-    VdiVmRemoteProtocol *remote_protocol_type;
 
 } RemoteViewerData;
 
@@ -105,7 +104,6 @@ set_data_from_gui_in_outer_pointers(RemoteViewerData *ci)
     *ci->password = g_strdup(gtk_entry_get_text(GTK_ENTRY(ci->password_entry)));
 
     set_current_remote_protocol(ci->connect_settings_data.remote_protocol_type);
-    *ci->remote_protocol_type = get_current_remote_protocol();
 }
 
 // save data to ini file
@@ -338,7 +336,7 @@ static void fast_forward_connect_to_prev_pool_if_enabled(RemoteViewerData *ci)
 GtkResponseType
 remote_viewer_connect_dialog(gchar **user, gchar **password, gchar **domain,
                              gchar **ip, gchar **port, gboolean *is_connect_to_prev_pool,
-                             gchar **vm_verbose_name, VdiVmRemoteProtocol *remote_protocol_type)
+                             gchar **vm_verbose_name)
 {
     GtkBuilder *builder;
 
@@ -354,7 +352,6 @@ remote_viewer_connect_dialog(gchar **user, gchar **password, gchar **domain,
     ci.port = port;
     ci.is_connect_to_prev_pool_ptr = is_connect_to_prev_pool;
     ci.vm_verbose_name = vm_verbose_name;
-    ci.remote_protocol_type = remote_protocol_type;
 
     /* Create the widgets */
     builder = remote_viewer_util_load_ui("remote-viewer-connect_veil.ui");

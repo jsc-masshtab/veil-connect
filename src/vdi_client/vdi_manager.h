@@ -10,6 +10,6 @@
 #include "vdi_api_session.h"
 
 GtkResponseType vdi_manager_dialog(GtkWindow *main_window, gchar **ip, gchar **port,
-                                   gchar **password, gchar **vm_verbose_name, VdiVmRemoteProtocol *remote_protocol_type);
+                                   gchar **password, gchar **vm_verbose_name);
 
 #endif //VIRT_VIEWER_VEIL_VDI_MANAGER_H
