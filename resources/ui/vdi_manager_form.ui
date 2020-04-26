@@ -29,18 +29,9 @@
             <property name="spacing">2</property>
             <property name="homogeneous">True</property>
             <child>
-              <object class="GtkComboBoxText" id="combobox-remote-protocol">
-                <property name="name">combobox-remote-protocol</property>
+              <object class="GtkLabel">
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
-                <property name="halign">start</property>
-                <property name="hexpand">False</property>
-                <property name="active">0</property>
-                <items>
-                  <item translatable="yes">spice</item>
-                  <item translatable="yes">rdp</item>
-                  <item translatable="yes">rdp native</item>
-                </items>
               </object>
               <packing>
                 <property name="expand">False</property>
@@ -49,7 +40,7 @@
               </packing>
             </child>
             <child>
-              <object class="GtkLabel" id="label-spacer">
+              <object class="GtkLabel">
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
               </object>
@@ -60,7 +51,7 @@
               </packing>
             </child>
             <child>
-              <object class="GtkLabel" id="label-spacer-2">
+              <object class="GtkLabel">
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
               </object>
@@ -77,6 +68,8 @@
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
                 <property name="receives_default">True</property>
+                <property name="halign">baseline</property>
+                <property name="valign">baseline</property>
                 <property name="image">image1</property>
                 <property name="always_show_image">True</property>
               </object>

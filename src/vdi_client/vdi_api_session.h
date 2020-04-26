@@ -79,6 +79,7 @@ typedef struct{
 } ActionOnVmData;
 
 // Functions
+const gchar *vdi_session_remote_protocol_to_str(VdiVmRemoteProtocol vm_remote_protocol);
 // init session
 void start_vdi_session(void);
 // deinit session

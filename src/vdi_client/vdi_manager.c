@@ -36,7 +36,6 @@ typedef struct{
     GtkWidget *status_label;
     GtkWidget *main_vm_spinner;
     GtkWidget *label_is_vdi_online;
-    GtkWidget *combobox_remote_protocol;
 
     GArray *pool_widgets_array;
 
@@ -87,7 +86,6 @@ static void set_init_values()
     vdi_manager.status_label = NULL;
     vdi_manager.main_vm_spinner = NULL;
     vdi_manager.label_is_vdi_online = NULL;
-    vdi_manager.combobox_remote_protocol = NULL;
 
     vdi_manager.pool_widgets_array = NULL;
 
@@ -249,11 +247,9 @@ static void on_get_vdi_pool_data_finished(GObject *source_object G_GNUC_UNUSED,
     guint json_arrayLength = MIN(json_array_get_length(json_array), MAX_POOL_NUMBER);
     printf("Number of vm pools: %i\n", json_arrayLength);
 
-    int i;
-    for(i = (int)json_arrayLength - 1; i >= 0; --i){
+    for(int i = (int)json_arrayLength - 1; i >= 0; --i){
 
-        JsonNode *jsonNode = json_array_get_element (json_array, (guint)i);
-        JsonObject *object = json_node_get_object (jsonNode);
+        JsonObject *object = json_array_get_object_element(json_array, (guint)i);
 
         const gchar *pool_id = json_object_get_string_member_safely(object, "id");
         const gchar *pool_name = json_object_get_string_member_safely(object, "name");
@@ -261,7 +257,8 @@ static void on_get_vdi_pool_data_finished(GObject *source_object G_GNUC_UNUSED,
         const gchar *status = json_object_get_string_member_safely(object, "status");
         //printf("os_type %s\n", os_type);
         //printf("pool_name %s\n", pool_name);
-        JsonArray *conn_types_json_array = NULL; // todo: get
+        JsonArray *conn_types_json_array =
+                json_object_get_array_member_safely(object, "connection_types");
         register_pool(pool_id, pool_name, os_type, status, conn_types_json_array);
     }
 
@@ -408,8 +405,9 @@ static void on_vm_start_button_clicked(GtkButton *button, gpointer data G_GNUC_U
     enable_spinner_visible(&vdi_pool_widget, TRUE);
 
     // take from gui currect remote protocol
-    gint remote_protocol_index = gtk_combo_box_get_active((GtkComboBox*)vdi_manager.combobox_remote_protocol);
-    set_current_remote_protocol((VdiVmRemoteProtocol)remote_protocol_index);
+    //gint remote_protocol_index = gtk_combo_box_get_active((GtkComboBox*)vdi_manager.combobox_remote_protocol);
+    VdiVmRemoteProtocol remote_protocol =  vdi_pool_widget_get_current_protocol(&vdi_pool_widget);
+    set_current_remote_protocol(remote_protocol);
     // execute task
     execute_async_task(get_vm_from_pool, on_get_vm_from_pool_finished, NULL, NULL);
 }
@@ -431,7 +429,8 @@ save_data_to_ini_file()
 
 /////////////////////////////////// main function
 GtkResponseType vdi_manager_dialog(GtkWindow *main_window G_GNUC_UNUSED, gchar **ip, gchar **port,
-                                   gchar **password, gchar **vm_verbose_name, VdiVmRemoteProtocol *remote_protocol_type)
+                                   gchar **password, gchar **vm_verbose_name,
+                                   VdiVmRemoteProtocol *remote_protocol_type)
 {
     set_init_values();
     vdi_manager.ci.response = FALSE;

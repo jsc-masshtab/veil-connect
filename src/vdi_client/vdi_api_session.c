@@ -16,19 +16,6 @@
 
 static VdiSession vdiSession;
 
-static const gchar *remote_protocol_to_str(VdiVmRemoteProtocol vm_remote_protocol)
-{
-    switch (vm_remote_protocol) {
-    case VDI_SPICE_PROTOCOL:
-        return "spice";
-    case VDI_RDP_PROTOCOL:
-        return "rdp";
-     case VDI_RDP_WINDOWS_NATIVE_PROTOCOL:
-         return "rdp";
-    case VDI_ANOTHER_REMOTE_PROTOCOL:
-        return "unknown_protocol";
-    }
-}
 
 static void free_session_memory(){
 
@@ -152,6 +139,20 @@ static void vdi_api_session_register_for_license()
 
     // connect to Redis and subscribe to channel
     vdi_redis_client_init(&vdiSession.redis_client);
+}
+
+const gchar *vdi_session_remote_protocol_to_str(VdiVmRemoteProtocol vm_remote_protocol)
+{
+    switch (vm_remote_protocol) {
+        case VDI_SPICE_PROTOCOL:
+            return "spice";
+        case VDI_RDP_PROTOCOL:
+            return "rdp";
+        case VDI_RDP_WINDOWS_NATIVE_PROTOCOL:
+            return "rdp";
+        case VDI_ANOTHER_REMOTE_PROTOCOL:
+            return "unknown_protocol";
+    }
 }
 
 void start_vdi_session()
@@ -342,7 +343,7 @@ void get_vm_from_pool(GTask       *task,
     // get vm from pool
     gchar *url_str = g_strdup_printf("%s/client/pools/%s", vdiSession.api_url, vdiSession.current_pool_id);
     gchar *bodyStr = g_strdup_printf("{\"remote_protocol\":\"%s\"}",
-                                     remote_protocol_to_str(vdiSession.current_remote_protocol));
+                                     vdi_session_remote_protocol_to_str(vdiSession.current_remote_protocol));
 
     gchar *response_body_str = api_call("POST", url_str, bodyStr);
     g_free(url_str);

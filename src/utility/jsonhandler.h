@@ -12,6 +12,7 @@ JsonObject *get_root_json_object(JsonParser *parser, const gchar *data);
 
 gint64 json_object_get_int_member_safely(JsonObject  *object, const gchar *member_name);
 const gchar *json_object_get_string_member_safely(JsonObject  *object,const gchar *member_name);
+JsonArray *json_object_get_array_member_safely(JsonObject *object, const gchar *member_name);
 JsonObject *json_object_get_object_member_safely(JsonObject  *object, const gchar *member_name);
 
 // Return data_object pointer or NULL if an error occured
