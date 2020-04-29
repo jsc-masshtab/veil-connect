@@ -4,9 +4,7 @@ def slackNotify = true
 notifyBuild(slackNotify, "STARTED", "Start new build. Version: ${currentDate}")
 
 pipeline {
-    agent {
-        label 'win10_x64_veil_guest_agent'
-    }
+    agent none
 
     post {
         failure {
@@ -36,11 +34,20 @@ pipeline {
 
     parameters {
         string(      name: 'BRANCH',               defaultValue: 'master',          description: 'branch')
-        string(      name: 'VERSION',              defaultValue: '1.2.5',           description: 'version')
+        string(      name: 'VERSION',              defaultValue: '1.2.6',           description: 'version')
+        booleanParam(name: 'DEBIAN',               defaultValue: true,              description: 'create DEB?')
+        booleanParam(name: 'WINDOWS',              defaultValue: true,              description: 'create EXE?')
     }
 
     stages {
-        stage ('create environment') {
+        stage ('debian. create environment') {
+            when {
+                beforeAgent true
+                expression { params.DEBIAN == true }
+            }
+            agent {
+                label 'bld-agent-01'
+            }
             steps {
                 cleanWs()
                 checkout([ $class: 'GitSCM',
@@ -52,8 +59,54 @@ pipeline {
                 ])
             }
         }
-        
-        stage ('build') {
+
+        stage ('windows. create environment') {
+            when {
+                beforeAgent true
+                expression { params.WINDOWS == true }
+            }
+            agent {
+                label 'win10_x64_veil_guest_agent'
+            }
+            steps {
+                cleanWs()
+                checkout([ $class: 'GitSCM',
+                    branches: [[name: '$BRANCH']],
+                    doGenerateSubmoduleConfigurations: false,
+                    extensions: [], submoduleCfg: [],
+                    userRemoteConfigs: [[credentialsId: '',
+                    url: 'http://gitlab+deploy-token-3:LD2jHQCWDYSEt-8AJQzs@gitlab.bazalt.team/vdi/veil-connect.git']]
+                ])
+            }
+        }
+
+        stage ('debian. build') {
+            when {
+                beforeAgent true
+                expression { params.DEBIAN == true }
+            }
+            agent {
+                label 'bld-agent-01'
+            }
+            steps {
+                sh script: '''
+                    mkdir build
+                    cd build
+                    cmake -DCMAKE_BUILD_TYPE=Release ../
+                    make
+                    rm -rf CMakeCache.txt  CMakeFiles  Makefile  cmake_install.cmake
+                '''
+            }
+        }
+
+        stage ('windows. build') {
+            when {
+                beforeAgent true
+                expression { params.WINDOWS == true }
+            }
+            agent {
+                label 'win10_x64_veil_guest_agent'
+            }
             steps {
                 bat script: '''
                     mkdir build
@@ -64,7 +117,14 @@ pipeline {
             }
         }
         
-        stage ('copy dependencies') {
+        stage ('windows. copy dependencies') {
+            when {
+                beforeAgent true
+                expression { params.WINDOWS == true }
+            }
+            agent {
+                label 'win10_x64_veil_guest_agent'
+            }
             steps {
                 bat script: '''
                     copy doc\\veil_connect.ico build
@@ -120,7 +180,35 @@ pipeline {
             }
         }
         
-        stage ('make installer') {
+        stage ('debian. make installer') {
+            when {
+                beforeAgent true
+                expression { params.DEBIAN == true }
+            }
+            agent {
+                label 'bld-agent-01'
+            }
+            steps {
+                sh script: '''
+                    cp -r ${WORKSPACE}/build/* ${WORKSPACE}/devops/deb_config/root/etc/veil-connect
+                    sed -i -e "s:%%VER%%:${VERSION}:g" ${WORKSPACE}/devops/deb_config/root/DEBIAN/control
+                    chmod -R 777 ${WORKSPACE}/devops/deb_config/root
+                    chmod -R 755 ${WORKSPACE}/devops/deb_config/root/DEBIAN
+                    sudo chown -R root:root ${WORKSPACE}/devops/deb_config/root
+                    cd ${WORKSPACE}/devops/deb_config
+                    dpkg-deb -b root .
+                '''
+            }
+        }
+        
+        stage ('windows. make installer') {
+            when {
+                beforeAgent true
+                expression { params.WINDOWS == true }
+            }
+            agent {
+                label 'win10_x64_veil_guest_agent'
+            }
             steps {
                 bat script: '''
                     sed -i -e "s:&&VER&&:%VERSION%:g" %WORKSPACE%/devops\\inno_setup_script\\veil_connect_installer.iss
@@ -128,13 +216,37 @@ pipeline {
                 '''
             }
         }
+
+        stage ('debian. deploy to repo') {
+            when {
+                beforeAgent true
+                expression { params.DEBIAN == true }
+            }
+            agent {
+                label 'bld-agent-01'
+            }
+            steps {
+                sh script: '''
+                    ssh uploader@192.168.10.144 mkdir -p /local_storage/vdi_releases/${VERSION}
+                    ssh uploader@192.168.10.144 rm -f /local_storage/vdi_releases/${VERSION}/veil-connect_${VERSION}_amd64.deb
+                    scp ${WORKSPACE}/devops/deb_config/*.deb uploader@192.168.10.144:/local_storage/vdi_releases/${VERSION}
+                '''
+            }
+        }
         
-        stage ('deploy to repo') {
+        stage ('windows. deploy to repo') {
+            when {
+                beforeAgent true
+                expression { params.WINDOWS == true }
+            }
+            agent {
+                label 'win10_x64_veil_guest_agent'
+            }
             steps {
                 bat script: '''
                     ssh uploader@mothership.bazalt.team mkdir -p /local_storage/vdi_releases/%VERSION%
-                    ssh uploader@mothership.bazalt.team rm -f /local_storage/vdi_releases/%VERSION%/veil_connect_installer_%VERSION%.exe
-                    scp veil_connect_installer.exe uploader@mothership.bazalt.team:/local_storage/vdi_releases/%VERSION%/veil_connect_installer_%VERSION%.exe
+                    ssh uploader@mothership.bazalt.team rm -f /local_storage/vdi_releases/%VERSION%/veil-connect_%VERSION%_installer.exe
+                    scp veil-connect_installer.exe uploader@mothership.bazalt.team:/local_storage/vdi_releases/%VERSION%/veil-connect_%VERSION%_installer.exe
                 '''
             }
         }
