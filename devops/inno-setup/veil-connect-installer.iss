@@ -6,7 +6,7 @@
 #define MyAppPublisher "АО «НИИ «Масштаб»"
 #define MyAppURL "http://mashtab.org/"
 #define MyAppExeName "thin_client_veil.exe"
-#define MyAppIcoName "veil_connect.ico"
+#define MyAppIcoName "veil-connect.ico"
 
 [Setup]
 ; NOTE: The value of AppId uniquely identifies this application. Do not use the same AppId value in installers for other applications.
@@ -28,8 +28,8 @@ UsedUserAreasWarning=no
 ;PrivilegesRequired=lowest
 PrivilegesRequiredOverridesAllowed=dialog
 OutputDir=C:\Jenkins\workspace\vdi-connect
-OutputBaseFilename=veil-connect_installer
-SetupIconFile=C:\Jenkins\workspace\vdi-connect\doc\veil_connect.ico
+OutputBaseFilename=veil-connect-installer
+SetupIconFile=C:\Jenkins\workspace\vdi-connect\doc\veil-connect.ico
 Compression=lzma
 SolidCompression=yes
 WizardStyle=modern

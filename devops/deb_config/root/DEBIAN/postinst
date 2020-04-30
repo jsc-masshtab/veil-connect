@@ -1,6 +1,0 @@
-#!/bin/sh
-
-ln -s /etc/veil-connect/start_vdi_client.sh /usr/bin/
-if [ ! -f /usr/lib/x86_64-linux-gnu/libhiredis.so.0.14 ]; then
-    mv /etc/veil-connect/libhiredis.so.0.14 /usr/lib/x86_64-linux-gnu
-fi

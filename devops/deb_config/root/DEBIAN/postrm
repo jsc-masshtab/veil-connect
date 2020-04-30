@@ -1,7 +1,0 @@
-#!/bin/sh
-
-rm -f /usr/bin/start_vdi_client.sh
-rm -rf /etc/veil-connect
-if [ -f /usr/lib/x86_64-linux-gnu/libhiredis.so.0.13 ]; then
-    rm -f /usr/lib/x86_64-linux-gnu/libhiredis.so.0.14
-fi
