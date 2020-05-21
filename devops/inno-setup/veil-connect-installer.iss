@@ -3,8 +3,8 @@
 
 #define MyAppName "Veil Connect"
 #define MyAppVersion "&&VER&&"
-#define MyAppPublisher "АО «НИИ «Масштаб»"
-#define MyAppURL "http://mashtab.org/"
+#define MyAppPublisher "JSC “Research institute “Masshtab”"
+#define MyAppURL "https://mashtab.org/"
 #define MyAppExeName "thin_client_veil.exe"
 #define MyAppIcoName "veil-connect.ico"
 
