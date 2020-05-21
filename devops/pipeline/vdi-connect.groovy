@@ -181,7 +181,7 @@ pipeline {
                     rmdir /S /Q CMakeFiles
                     del CMakeCache.txt cmake_install.cmake Makefile libthin_client_veil.dll.a start_vdi_client.sh
         
-                    mkdir lib\\gdk-pixbuf-2.0\\2.10.0\\loaders log share
+                    mkdir lib\\gdk-pixbuf-2.0\\2.10.0\\loaders log
                     copy C:\\msys32\\mingw64\\lib\\gdk-pixbuf-2.0\\2.10.0\\loaders\\*.dll lib\\gdk-pixbuf-2.0\\2.10.0\\loaders
                     copy C:\\msys32\\mingw64\\lib\\gdk-pixbuf-2.0\\2.10.0\\loaders.cache lib\\gdk-pixbuf-2.0\\2.10.0
                     xcopy C:\\msys32\\mingw64\\lib\\gio lib\\gio /E /H /I

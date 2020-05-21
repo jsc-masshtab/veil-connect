@@ -200,6 +200,8 @@ target_link_libraries(
 if (WIN32)
     file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/doc/rdp_data
             DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
+    file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/doc/usb.ids
+            DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/share/hwdata)
 endif (WIN32)
 
 # translations
