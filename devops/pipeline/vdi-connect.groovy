@@ -285,7 +285,7 @@ pipeline {
                     }
                     steps {
                         bat script: '''
-                            sed -i -e "s:&&VER&&:%VERSION%:g" %WORKSPACE%/devops\\inno-setup\\veil-connect-installer.iss
+                            sed -i -e "s:&&VER&&:%VERSION%:g" -e "s:&&BUILD_VER&&:%BUILD_NUMBER%:g" %WORKSPACE%/devops\\inno-setup\\veil-connect-installer.iss
                             iscc "%WORKSPACE%/devops\\inno-setup\\veil-connect-installer.iss"
                         '''
                     }

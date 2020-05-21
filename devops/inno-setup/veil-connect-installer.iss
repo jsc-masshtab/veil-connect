@@ -7,6 +7,7 @@
 #define MyAppURL "https://mashtab.org/"
 #define MyAppExeName "thin_client_veil.exe"
 #define MyAppIcoName "veil-connect.ico"
+#define MyBuildVersion "&&BUILD_VER&&"
 
 [Setup]
 ; NOTE: The value of AppId uniquely identifies this application. Do not use the same AppId value in installers for other applications.
@@ -19,6 +20,7 @@ AppPublisher={#MyAppPublisher}
 AppPublisherURL={#MyAppURL}
 AppSupportURL={#MyAppURL}
 AppUpdatesURL={#MyAppURL}
+VersionInfoVersion={#MyBuildVersion}
 DefaultDirName={autopf}\{#MyAppName}
 DefaultGroupName={#MyAppName}
 AllowNoIcons=yes
