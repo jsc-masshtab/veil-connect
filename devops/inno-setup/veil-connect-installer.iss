@@ -64,12 +64,22 @@ begin
   Result := RegKeyExists(HKEY_LOCAL_MACHINE, 'SOFTWARE\Microsoft\VisualStudio\14.0\VC');
 end;
 
+function isUsbDkInstalled: Boolean;
+begin
+  Result := FileExists('C:\Program Files\UsbDk Runtime Library\UsbDkController.exe');
+end;
+
 function InitializeSetup(): Boolean;
 begin
   Result := isMvcInstalled();
   if Not Result then
   begin
     MsgBox('Для корректной работы программы требуется Распространяемый компонент Microsoft Visual C++ 2015. Убедитесь, что он установлен.', mbInformation, MB_OK);
+  end;
+  Result := isUsbDkInstalled();
+  if Not Result then
+  begin
+    MsgBox('Для корректной работы проброса USB-устройств требуется Spice USB Development Kit (UsbDK). Убедитесь, что он установлен.', mbInformation, MB_OK);
   end;
   Result := True;
 end;
