@@ -83,6 +83,7 @@
                 <property name="name">connection-port-entry</property>
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
+                <property name="text" translatable="yes">443</property>
                 <property name="input_purpose">digits</property>
               </object>
               <packing>

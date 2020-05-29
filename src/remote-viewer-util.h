@@ -89,6 +89,8 @@ void free_memory_safely(gchar **string_ptr);
 
 size_t strlen_safely(const gchar * str);
 
+const gchar* determine_http_protocol_by_port(const gchar *port);
+
 #endif
 
 /*

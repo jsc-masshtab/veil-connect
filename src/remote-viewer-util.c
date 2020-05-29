@@ -752,6 +752,12 @@ size_t strlen_safely(const gchar * str)
         return 0;
 }
 
+const gchar* determine_http_protocol_by_port(const gchar *port)
+{
+    const int https_port = 443;
+    return ((atoi(port) == https_port) ? "https" : "http");
+}
+
 /*
  * Local variables:
  *  c-indent-level: 4

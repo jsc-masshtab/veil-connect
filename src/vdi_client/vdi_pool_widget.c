@@ -17,7 +17,7 @@ static void vdi_pool_widget_check_protocol_available_and_add(
         const gchar *protocol_name = json_array_get_string_element(conn_types_json_array, (guint)i);
         // We expect from server "SPICE", "RDP", "NATIVE_RDP" (26.04.2020)
         if (g_strcmp0(protocol_name, protocol) == 0) {
-            gtk_combo_box_text_append_text(combobox_remote_protocol, protocol_name);
+            gtk_combo_box_text_append_text((GtkComboBoxText*)combobox_remote_protocol, protocol_name);
             return; // in case if the server sent duplicates
         }
     }
@@ -111,7 +111,8 @@ VdiPoolWidget build_pool_widget(const gchar *pool_id, const gchar *pool_name,
 VdiVmRemoteProtocol vdi_pool_widget_get_current_protocol(VdiPoolWidget *vdi_pool_widget)
 {
     //vdi_pool_widget->combobox_remote_protocol
-    gchar *current_protocol_str = gtk_combo_box_text_get_active_text(vdi_pool_widget->combobox_remote_protocol);
+    gchar *current_protocol_str = gtk_combo_box_text_get_active_text(
+            (GtkComboBoxText*)vdi_pool_widget->combobox_remote_protocol);
 
     VdiVmRemoteProtocol protocol = VDI_ANOTHER_REMOTE_PROTOCOL;
     if (g_strcmp0("SPICE", current_protocol_str) == 0)

@@ -160,7 +160,9 @@ void start_vdi_session()
     memset(&vdiSession, 0, sizeof(VdiSession));
 
     // creae session
-    vdiSession.soup_session = soup_session_new_with_options("timeout", HTTP_RESPONSE_TIOMEOUT, NULL);
+    gboolean ssl_strict = FALSE; // todo: maybe read from ini file
+    vdiSession.soup_session = soup_session_new_with_options("timeout", HTTP_RESPONSE_TIOMEOUT,
+    "ssl-strict", ssl_strict, NULL);
     vdiSession.current_remote_protocol = VDI_SPICE_PROTOCOL; // by default
 }
 
@@ -220,7 +222,8 @@ void set_vdi_credentials(const gchar *username, const gchar *password, const gch
     vdiSession.vdi_ip = g_strdup(ip);
     vdiSession.vdi_port = g_strdup(port);
 
-    vdiSession.api_url = g_strdup_printf("http://%s:%s", vdiSession.vdi_ip, vdiSession.vdi_port);
+    const gchar *http_protocol = determine_http_protocol_by_port(port);
+    vdiSession.api_url = g_strdup_printf("%s://%s:%s", http_protocol, vdiSession.vdi_ip, vdiSession.vdi_port);
     vdiSession.auth_url = g_strdup_printf("%s/auth/", vdiSession.api_url);
 
     vdiSession.is_ldap = is_ldap;
