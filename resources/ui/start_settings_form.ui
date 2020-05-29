@@ -43,7 +43,6 @@
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
                 <property name="hexpand">True</property>
-                <property name="text" translatable="yes">192.168.11.110</property>
                 <property name="input_purpose">alpha</property>
               </object>
               <packing>
@@ -84,7 +83,6 @@
                 <property name="name">connection-port-entry</property>
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
-                <property name="text" translatable="yes">5908</property>
                 <property name="input_purpose">digits</property>
               </object>
               <packing>
