@@ -41,18 +41,19 @@ setup_logging()
 
     //error output
     gchar *stderr_file_name = g_strconcat(log_dir, ts_string, "_stderr.txt", NULL);
-    FILE *file_desc = freopen(stderr_file_name, "w", stderr);
-    (void)file_desc;
+    FILE *err_file_desc = freopen(stderr_file_name, "w", stderr);
+    (void)err_file_desc;
 
-//    //stdout output
-//    gchar *stdout_file_name = g_strconcat(log_dir, ts_string, "_stdout.txt", NULL);
-//    freopen(stdout_file_name, "w", stdout);
+    //stdout output
+    gchar *stdout_file_name = g_strconcat(log_dir, ts_string, "_stdout.txt", NULL);
+    FILE *out_file_desc = freopen(stdout_file_name, "w", stdout);
+    (void)out_file_desc; // it would be polite to close file descriptors
 
     // free memory
     g_free(ts_string);
     g_free(bt_file_name);
     g_free(stderr_file_name);
-    //g_free(stdout_file_name);
+    g_free(stdout_file_name);
 }
 
 void
