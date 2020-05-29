@@ -165,6 +165,7 @@
                 <property name="name">label-is-vdi-online</property>
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
+                <property name="tooltip_text" translatable="yes">Индикатор доступности VDI сервера</property>
                 <property name="halign">end</property>
                 <property name="hexpand">True</property>
                 <property name="stock">gtk-missing-image</property>
