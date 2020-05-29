@@ -76,13 +76,13 @@ static GArray * rdp_client_create_params_array(ExtendedRdpContext* tf)
     add_rdp_param(rdp_params_dyn_array, g_strdup("/smartcard"));
     add_rdp_param(rdp_params_dyn_array, g_strdup("+fonts"));
 
-    gboolean is_drives_redirected =  read_int_from_ini_file("General", "is_drives_redirected");
+    gboolean is_drives_redirected =  read_int_from_ini_file("General", "is_drives_redirected", 0);
     if (is_drives_redirected) {
         add_rdp_param(rdp_params_dyn_array, g_strdup("+drives"));
         add_rdp_param(rdp_params_dyn_array, g_strdup("+home-drive"));
     }
     write_int_to_ini_file("General", "is_drives_redirected", is_drives_redirected);
-    gboolean is_gfx_h264_AVC444_used =  read_int_from_ini_file("General", "is_gfx_h264_AVC444_used");
+    gboolean is_gfx_h264_AVC444_used =  read_int_from_ini_file("General", "is_gfx_h264_AVC444_used", 0);
     if (is_gfx_h264_AVC444_used)
         add_rdp_param(rdp_params_dyn_array, g_strdup("/gfx-h264:AVC444"));
     write_int_to_ini_file("General", "is_gfx_h264_AVC444_used", is_gfx_h264_AVC444_used);

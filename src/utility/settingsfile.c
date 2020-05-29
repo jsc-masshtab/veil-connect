@@ -71,7 +71,7 @@ write_str_to_ini_file(const gchar *group_name,  const gchar *key, const gchar *s
 
 ///integer
 gint
-read_int_from_ini_file(const gchar *group_name,  const gchar *key)
+read_int_from_ini_file(const gchar *group_name,  const gchar *key, gint def_value)
 {
     GError *error = NULL;
     gint value = 0;
@@ -86,7 +86,11 @@ read_int_from_ini_file(const gchar *group_name,  const gchar *key)
     }
     else
     {
-        value = g_key_file_get_integer(keyfile, group_name, key, NULL);
+        g_clear_error(&error);
+        value = g_key_file_get_integer(keyfile, group_name, key, &error);
+
+        if (error)
+            value = def_value;
     }
 
     g_clear_error(&error);

@@ -409,7 +409,8 @@ static void on_vm_start_button_clicked(GtkButton *button, gpointer data G_GNUC_U
 static void
 read_data_from_ini_file()
 {
-    gint cur_remote_protocol_index = read_int_from_ini_file("General", "cur_remote_protocol_index");
+    gint cur_remote_protocol_index = read_int_from_ini_file("General",
+            "cur_remote_protocol_index", VDI_SPICE_PROTOCOL);
     set_current_remote_protocol((VdiVmRemoteProtocol)cur_remote_protocol_index);
 }
 

@@ -222,14 +222,15 @@ fill_connect_settings_data_from_ini_file(ConnectSettingsData *connect_settings_d
     free_memory_safely(&connect_settings_data->ip);
     connect_settings_data->ip = read_str_from_ini_file(paramToFileGrpoup, "ip");
     // port
-    connect_settings_data->port = read_int_from_ini_file(paramToFileGrpoup, "port");
+    connect_settings_data->port = read_int_from_ini_file(paramToFileGrpoup, "port", 443);
     // ldap
-    connect_settings_data->is_ldap = read_int_from_ini_file("RemoteViewerConnect", "is_ldap_btn_checked");
+    connect_settings_data->is_ldap = read_int_from_ini_file("RemoteViewerConnect", "is_ldap_btn_checked", 0);
     // Connect to prev pool
     connect_settings_data->is_connect_to_prev_pool =
-            read_int_from_ini_file("RemoteViewerConnect", "is_conn_to_prev_pool_btn_checked");
+            read_int_from_ini_file("RemoteViewerConnect", "is_conn_to_prev_pool_btn_checked", 0);
     // remote protocol
-    gint remote_protocol_type = read_int_from_ini_file("General", "cur_remote_protocol_index");
+    gint remote_protocol_type = read_int_from_ini_file("General",
+            "cur_remote_protocol_index", VDI_SPICE_PROTOCOL);
     connect_settings_data->remote_protocol_type = (VdiVmRemoteProtocol)remote_protocol_type;
 }
 

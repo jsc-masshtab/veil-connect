@@ -15,7 +15,7 @@ const gchar *get_ini_file_name(void);
 gchar *read_str_from_ini_file(const gchar *group_name,  const gchar *key);
 void write_str_to_ini_file(const gchar *group_name,  const gchar *key, const gchar *str_value);
 
-gint read_int_from_ini_file(const gchar *group_name,  const gchar *key);
+gint read_int_from_ini_file(const gchar *group_name,  const gchar *key, gint def_value);
 void write_int_to_ini_file(const gchar *group_name,  const gchar *key, gint value);
 
 #endif //THIN_CLIENT_VEIL_SETTINGSFILE_H

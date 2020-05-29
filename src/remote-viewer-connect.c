@@ -209,7 +209,8 @@ void connect_to_vdi_server(RemoteViewerData *ci)
         set_current_pool_id(last_pool_id);
         free_memory_safely(&last_pool_id);
 
-        VdiVmRemoteProtocol remote_protocol = read_int_from_ini_file("General", "cur_remote_protocol_index");
+        VdiVmRemoteProtocol remote_protocol = read_int_from_ini_file("General",
+                "cur_remote_protocol_index", VDI_SPICE_PROTOCOL);
         set_current_remote_protocol(remote_protocol);
 
         // start async task  get_vm_from_pool
@@ -318,7 +319,7 @@ read_data_from_ini_file(RemoteViewerData *ci)
 static void fast_forward_connect_to_prev_pool_if_enabled(RemoteViewerData *ci)
 {
     gboolean is_fastforward_conn_to_prev_pool =
-            read_int_from_ini_file("RemoteViewerConnect", "is_conn_to_prev_pool_btn_checked");
+            read_int_from_ini_file("RemoteViewerConnect", "is_conn_to_prev_pool_btn_checked", 0);
 
     static gboolean is_first_time = TRUE;
     if (is_fastforward_conn_to_prev_pool && is_first_time && !opt_manual_mode) {
