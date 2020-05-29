@@ -35,7 +35,7 @@ pipeline {
 
     parameters {
         string(      name: 'BRANCH',               defaultValue: 'master',          description: 'branch')
-        string(      name: 'VERSION',              defaultValue: '1.2.6',           description: 'version')
+        string(      name: 'VERSION',              defaultValue: '1.2.7',           description: 'version')
         booleanParam(name: 'DEBIAN',               defaultValue: true,              description: 'create DEB?')
         booleanParam(name: 'UBUNTU',               defaultValue: true,              description: 'create DEB?')
         booleanParam(name: 'WINDOWS',              defaultValue: true,              description: 'create EXE?')
@@ -285,7 +285,7 @@ pipeline {
                     }
                     steps {
                         bat script: '''
-                            sed -i -e "s:&&VER&&:%VERSION%:g" %WORKSPACE%/devops\\inno-setup\\veil-connect-installer.iss
+                            sed -i -e "s:&&VER&&:%VERSION%:g" -e "s:&&BUILD_VER&&:%BUILD_NUMBER%:g" %WORKSPACE%/devops\\inno-setup\\veil-connect-installer.iss
                             iscc "%WORKSPACE%/devops\\inno-setup\\veil-connect-installer.iss"
                         '''
                     }

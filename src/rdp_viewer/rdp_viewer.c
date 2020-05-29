@@ -22,7 +22,7 @@
 
 #include "async.h"
 
-#define MAX_MONITOR_AMOUNT 2
+#define MAX_MONITOR_AMOUNT 3
 
 static gboolean is_rdp_context_created = FALSE;
 
