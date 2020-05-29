@@ -109,6 +109,26 @@
      transition: all 500ms;
 }
 
+#network_entry_with_errors {
+     min-height: 25px;
+     min-width: 200px;
+     border: 0;
+     border-radius: 3px;
+     background: white;
+     padding-left: 12px;
+     border: 1px solid #c1bfbf;
+     border-radius: 2px;
+     color: rgba(0, 0, 0, 0.7);
+     text-decoration: none;
+     -webkit-appearance: none;
+     margin: 3px;
+     margin-bottom: 6px;
+     transition: all 500ms;
+
+   background-image: none;
+   background-color: #ffcccc;
+}
+
 #start-setting-domain {
      border-bottom: 1px solid #c1bfbf;
      padding-bottom: 12px;

@@ -59,6 +59,7 @@ fill_connect_settings_data_from_gui(ConnectSettingsData *connect_settings_data, 
         free_memory_safely(&connect_settings_data->domain);
         connect_settings_data->domain = g_strdup(domain_gui_str);
     } else {
+        gtk_widget_set_name(dialog_data->domain_entry, "network_entry_with_errors");
         return FALSE;
     }
 
@@ -72,16 +73,19 @@ fill_connect_settings_data_from_gui(ConnectSettingsData *connect_settings_data, 
         free_memory_safely(&connect_settings_data->ip);
         connect_settings_data->ip = g_strdup(address_gui_str);
     } else {
+        gtk_widget_set_name(dialog_data->address_entry, "network_entry_with_errors");
         return FALSE;
     }
 
     // check if the port is within the correct range and set
     const gchar *port_str = gtk_entry_get_text(GTK_ENTRY(dialog_data->port_entry));
     int port_int = atoi(port_str);
-    if (port_int >= 0 && port_int <= 65535)
+    if (port_int >= 0 && port_int <= 65535) {
         connect_settings_data->port = port_int;
-    else
+    } else {
+        gtk_widget_set_name(dialog_data->port_entry, "network_entry_with_errors");
         return FALSE;
+    }
 
     connect_settings_data->is_ldap = gtk_toggle_button_get_active((GtkToggleButton *)dialog_data->ldap_checkbutton);
     connect_settings_data->is_connect_to_prev_pool =
