@@ -26,6 +26,8 @@ typedef struct{
     GtkWidget *bt_cancel;
     GtkWidget *bt_ok;
 
+    ConnectSettingsData *p_connect_settings_data;
+
 } ConnectSettingsDialogData;
 
 static gboolean
@@ -43,20 +45,43 @@ cancel_button_clicked_cb(GtkButton *button G_GNUC_UNUSED, ConnectSettingsDialogD
     shutdown_loop(dialog_data->loop);
 }
 
-static void
+/*Take data from GUI. Return true if there were no errors otherwise - false  */
+static gboolean
 fill_connect_settings_data_from_gui(ConnectSettingsData *connect_settings_data, ConnectSettingsDialogData *dialog_data)
 {
-    if (dialog_data->dialog_window_response != GTK_RESPONSE_OK)
-        return;
+    const gchar *pattern = "^$|[а-яА-ЯёЁa-zA-Z0-9]+[а-яА-ЯёЁa-zA-Z0-9.\\-_+ ]*$";
 
-    free_memory_safely(&connect_settings_data->domain);
-     connect_settings_data->domain = g_strdup(gtk_entry_get_text(GTK_ENTRY(dialog_data->domain_entry)));
+    // check domain name and set
+    const gchar *domain_gui_str = gtk_entry_get_text(GTK_ENTRY(dialog_data->domain_entry));
+    gboolean is_matched = g_regex_match_simple(pattern, domain_gui_str,G_REGEX_CASELESS,G_REGEX_MATCH_ANCHORED);
 
-   free_memory_safely(&connect_settings_data->ip);
-    connect_settings_data->ip = g_strdup(gtk_entry_get_text(GTK_ENTRY(dialog_data->address_entry)));
+    if (is_matched) {
+        free_memory_safely(&connect_settings_data->domain);
+        connect_settings_data->domain = g_strdup(domain_gui_str);
+    } else {
+        return FALSE;
+    }
 
+    // check ip and set
+    const gchar *address_gui_str = gtk_entry_get_text(GTK_ENTRY(dialog_data->address_entry));
+
+    is_matched = g_regex_match_simple(pattern, address_gui_str,G_REGEX_CASELESS,G_REGEX_MATCH_ANCHORED);
+    //printf("%s is_matched %i\n", (const char *)__func__, is_matched);
+
+    if (is_matched) {
+        free_memory_safely(&connect_settings_data->ip);
+        connect_settings_data->ip = g_strdup(address_gui_str);
+    } else {
+        return FALSE;
+    }
+
+    // check if the port is within the correct range and set
     const gchar *port_str = gtk_entry_get_text(GTK_ENTRY(dialog_data->port_entry));
-    connect_settings_data->port = atoi(port_str);
+    int port_int = atoi(port_str);
+    if (port_int >= 0 && port_int <= 65535)
+        connect_settings_data->port = port_int;
+    else
+        return FALSE;
 
     connect_settings_data->is_ldap = gtk_toggle_button_get_active((GtkToggleButton *)dialog_data->ldap_checkbutton);
     connect_settings_data->is_connect_to_prev_pool =
@@ -66,6 +91,7 @@ fill_connect_settings_data_from_gui(ConnectSettingsData *connect_settings_data, 
         connect_settings_data->remote_protocol_type = (VdiVmRemoteProtocol)(
                 gtk_combo_box_get_active((GtkComboBox*)dialog_data->remote_protocol_combobox));
 
+    return TRUE;
 }
 
 // Перехватывается событие ввода текста. Игнорируется, если есть нецифры
@@ -87,8 +113,13 @@ on_insert_text_event(GtkEditable *editable, const gchar *text, gint length,
 static void
 ok_button_clicked_cb(GtkButton *button G_GNUC_UNUSED, ConnectSettingsDialogData *dialog_data)
 {
-    dialog_data->dialog_window_response = GTK_RESPONSE_OK;
-    shutdown_loop(dialog_data->loop);
+    // fill connect_settings_data from gui
+    gboolean is_success = fill_connect_settings_data_from_gui(dialog_data->p_connect_settings_data, dialog_data);
+
+    if (is_success) {
+        dialog_data->dialog_window_response = GTK_RESPONSE_OK;
+        shutdown_loop(dialog_data->loop);
+    }
 }
 
 static void
@@ -157,6 +188,7 @@ GtkResponseType remote_viewer_start_settings_dialog(ConnectSettingsData *connect
     ConnectSettingsDialogData dialog_data;
     memset(&dialog_data, 0, sizeof(ConnectSettingsDialogData));
 
+    dialog_data.p_connect_settings_data = connect_settings_data;
     dialog_data.dialog_window_response = GTK_RESPONSE_OK;
 
     // gui widgets
@@ -198,8 +230,6 @@ GtkResponseType remote_viewer_start_settings_dialog(ConnectSettingsData *connect
 
     create_loop_and_launch(&dialog_data.loop);
 
-    // fill connect_settings_data from gui if response is GTK_RESPONSE_OK
-    fill_connect_settings_data_from_gui(connect_settings_data, &dialog_data);
     // write to file if response is GTK_RESPONSE_OK
     save_data_to_ini_file(&dialog_data);
 
