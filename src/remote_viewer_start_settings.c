@@ -46,9 +46,11 @@ cancel_button_clicked_cb(GtkButton *button G_GNUC_UNUSED, ConnectSettingsDialogD
 }
 
 /*Take data from GUI. Return true if there were no errors otherwise - false  */
+// У виджета есть понятие id имя, котоое уникально и есть понятие имя виджета, которое используется для css.
 static gboolean
 fill_connect_settings_data_from_gui(ConnectSettingsData *connect_settings_data, ConnectSettingsDialogData *dialog_data)
 {
+    gboolean is_ok = TRUE;
     const gchar *pattern = "^$|[а-яА-ЯёЁa-zA-Z0-9]+[а-яА-ЯёЁa-zA-Z0-9.\\-_+ ]*$";
 
     // check domain name and set
@@ -56,11 +58,12 @@ fill_connect_settings_data_from_gui(ConnectSettingsData *connect_settings_data, 
     gboolean is_matched = g_regex_match_simple(pattern, domain_gui_str,G_REGEX_CASELESS,G_REGEX_MATCH_ANCHORED);
 
     if (is_matched) {
+        gtk_widget_set_name(dialog_data->domain_entry, "domain-entry");
         free_memory_safely(&connect_settings_data->domain);
         connect_settings_data->domain = g_strdup(domain_gui_str);
     } else {
         gtk_widget_set_name(dialog_data->domain_entry, "network_entry_with_errors");
-        return FALSE;
+        is_ok = FALSE;
     }
 
     // check ip and set
@@ -70,21 +73,23 @@ fill_connect_settings_data_from_gui(ConnectSettingsData *connect_settings_data, 
     //printf("%s is_matched %i\n", (const char *)__func__, is_matched);
 
     if (is_matched) {
+        gtk_widget_set_name(dialog_data->address_entry, "connection-address-entry");
         free_memory_safely(&connect_settings_data->ip);
         connect_settings_data->ip = g_strdup(address_gui_str);
     } else {
         gtk_widget_set_name(dialog_data->address_entry, "network_entry_with_errors");
-        return FALSE;
+        is_ok = FALSE;
     }
 
     // check if the port is within the correct range and set
     const gchar *port_str = gtk_entry_get_text(GTK_ENTRY(dialog_data->port_entry));
     int port_int = atoi(port_str);
     if (port_int >= 0 && port_int <= 65535) {
+        gtk_widget_set_name(dialog_data->port_entry, "connection-port-entry");
         connect_settings_data->port = port_int;
     } else {
         gtk_widget_set_name(dialog_data->port_entry, "network_entry_with_errors");
-        return FALSE;
+        is_ok = FALSE;
     }
 
     connect_settings_data->is_ldap = gtk_toggle_button_get_active((GtkToggleButton *)dialog_data->ldap_checkbutton);
@@ -95,7 +100,7 @@ fill_connect_settings_data_from_gui(ConnectSettingsData *connect_settings_data, 
         connect_settings_data->remote_protocol_type = (VdiVmRemoteProtocol)(
                 gtk_combo_box_get_active((GtkComboBox*)dialog_data->remote_protocol_combobox));
 
-    return TRUE;
+    return is_ok;
 }
 
 // Перехватывается событие ввода текста. Игнорируется, если есть нецифры
