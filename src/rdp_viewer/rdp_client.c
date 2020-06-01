@@ -82,10 +82,16 @@ static GArray * rdp_client_create_params_array(ExtendedRdpContext* tf)
         add_rdp_param(rdp_params_dyn_array, g_strdup("+home-drive"));
     }
     write_int_to_ini_file("General", "is_drives_redirected", is_drives_redirected);
-    gboolean is_gfx_h264_AVC444_used =  read_int_from_ini_file("General", "is_gfx_h264_AVC444_used", 0);
-    if (is_gfx_h264_AVC444_used)
-        add_rdp_param(rdp_params_dyn_array, g_strdup("/gfx-h264:AVC444"));
-    write_int_to_ini_file("General", "is_gfx_h264_AVC444_used", is_gfx_h264_AVC444_used);
+    // gfx_h264
+    gchar *gfx_h264_str = read_str_from_ini_file("General", "gfx-h264");
+    if (gfx_h264_str && gfx_h264_str[0] != '\0') {
+        gchar *gfx_h264_arg_str = g_strconcat("/gfx-h264:", gfx_h264_str, NULL);
+        add_rdp_param(rdp_params_dyn_array, gfx_h264_arg_str);
+    }
+    free_memory_safely(&gfx_h264_str);
+
+    //write_str_to_ini_file("General", "gfx-h264", gfx_h264_str);
+
 #ifdef __linux__
     add_rdp_param(rdp_params_dyn_array,g_strdup("/usb:auto"));
 #elif _WIN32
