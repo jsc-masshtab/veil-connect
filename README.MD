@@ -1,4 +1,4 @@
-# Veil VDI Thin Cleint
+# Veil VDI Thin Client
 ## Таблица соответствия сборок с ОС
 
 | ОС                 | Пакет  |
