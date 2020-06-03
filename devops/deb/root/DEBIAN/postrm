@@ -1,4 +1,4 @@
 #!/bin/sh
 
 rm -f /usr/bin/start_vdi_client.sh
-rm -rf /etc/veil-connect
+rm -rf /opt/veil-connect
