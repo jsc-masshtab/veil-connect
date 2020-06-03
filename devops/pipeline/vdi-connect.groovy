@@ -242,7 +242,7 @@ pipeline {
                     steps {
                         sh script: '''
                             mkdir -p ${WORKSPACE}/devops/deb/root/opt/veil-connect
-                            cp -r ${WORKSPACE}/build/* ${WORKSPACE}/devops/deb/root/opt/veil-connect
+                            cp -r ${WORKSPACE}/build/* ${WORKSPACE}/doc/veil-connect.ico ${WORKSPACE}/devops/deb/root/opt/veil-connect
                             sed -i -e "s:%%VER%%:${VERSION}-buster:g" ${WORKSPACE}/devops/deb/root/DEBIAN/control
                             chmod -R 777 ${WORKSPACE}/devops/deb/root
                             chmod -R 755 ${WORKSPACE}/devops/deb/root/DEBIAN
