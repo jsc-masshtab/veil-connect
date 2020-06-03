@@ -84,7 +84,7 @@ fill_connect_settings_data_from_gui(ConnectSettingsData *connect_settings_data, 
     // check if the port is within the correct range and set
     const gchar *port_str = gtk_entry_get_text(GTK_ENTRY(dialog_data->port_entry));
     int port_int = atoi(port_str);
-    if (port_int >= 0 && port_int <= 65535) {
+    if ( (g_strcmp0(port_str, "") == 0) || (port_int >= 0 && port_int <= 65535) ) {
         gtk_widget_set_name(dialog_data->port_entry, "connection-port-entry");
         connect_settings_data->port = port_int;
     } else {
@@ -144,7 +144,7 @@ fill_connect_settings_dialog_data(ConnectSettingsDialogData *dialog_data, Connec
     if (connect_settings_data->ip) {
         gtk_entry_set_text(GTK_ENTRY(dialog_data->address_entry), connect_settings_data->ip);
     }
-    // port. TODO: why gtk entry for port?
+    // port.
     int port_from_config_file = connect_settings_data->port;
     if (port_from_config_file != 0) {
         gchar *port_str = g_strdup_printf("%i", port_from_config_file);

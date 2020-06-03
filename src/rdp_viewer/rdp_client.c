@@ -76,28 +76,26 @@ static GArray * rdp_client_create_params_array(ExtendedRdpContext* tf)
     add_rdp_param(rdp_params_dyn_array, g_strdup("/smartcard"));
     add_rdp_param(rdp_params_dyn_array, g_strdup("+fonts"));
 
-    gboolean is_drives_redirected =  read_int_from_ini_file("General", "is_drives_redirected", 0);
-    if (is_drives_redirected) {
-        add_rdp_param(rdp_params_dyn_array, g_strdup("+drives"));
-        add_rdp_param(rdp_params_dyn_array, g_strdup("+home-drive"));
-    }
-    write_int_to_ini_file("General", "is_drives_redirected", is_drives_redirected);
-    // gfx_h264
-    gchar *gfx_h264_str = read_str_from_ini_file("General", "gfx-h264");
-    if (gfx_h264_str && gfx_h264_str[0] != '\0') {
-        gchar *gfx_h264_arg_str = g_strconcat("/gfx-h264:", gfx_h264_str, NULL);
-        add_rdp_param(rdp_params_dyn_array, gfx_h264_arg_str);
-    }
-    free_memory_safely(&gfx_h264_str);
-
-    //write_str_to_ini_file("General", "gfx-h264", gfx_h264_str);
-
 #ifdef __linux__
     add_rdp_param(rdp_params_dyn_array,g_strdup("/usb:auto"));
 #elif _WIN32
     add_rdp_param(rdp_params_dyn_array, g_strdup("/relax-order-checks"));
     add_rdp_param(rdp_params_dyn_array, g_strdup("+glyph-cache"));
 #endif
+    // custom from ini file
+    gchar *rdp_args_str = read_str_from_ini_file("General", "rdp_args");
+
+    if (rdp_args_str) {
+        gchar **rdp_args_array = g_strsplit(rdp_args_str, ",", 100);
+
+        gchar **rdp_arg;
+        for (rdp_arg = rdp_args_array; *rdp_arg; rdp_arg++)
+            add_rdp_param(rdp_params_dyn_array, g_strdup(*rdp_arg));
+
+        g_strfreev(rdp_args_array);
+    }
+
+    // null terminating arg
     add_rdp_param(rdp_params_dyn_array, NULL);
 
     return rdp_params_dyn_array;
