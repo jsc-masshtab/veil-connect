@@ -1,10 +1,18 @@
-Veil VDI Thin Cleint
+# Veil VDI Thin Cleint
+## Таблица соответствия сборок с ОС
 
+| ОС                 | Пакет  |
+|--------------------|--------|
+| Astra 1.6 Smolensk | bionic |
+| Astra 2.12 Orel    | bionic |
+| Debian 9           | bionic |
+| Debian 10          | buster |
+| Ubuntu 18.04       | bionic |
+| Ubuntu 20.04       | buster |
+| Centos 7           |    ?   |
+| Centos 8           |    ?   |
 
-Build checked on Ubuntu 18.04, CentOS 7, Windows 7.
-
-
-======================================================Building on Linux===================================================
+## Building on Linux
 1)Install followwing packages:
 
 spice-client-gtk
@@ -34,9 +42,7 @@ cmake -DCMAKE_BUILD_TYPE=Release ../
 
 make
 
-
-
-======================================================Building on Windows 7==================================================
+## Building on Windows
 
 
 MSYS2 installation
@@ -95,7 +101,7 @@ In Clion open CmakeListx.txt and build the project
 
 
 
-======================================================INSTALL AND LAUNCH==========================================
+## INSTALL AND LAUNCH
 
 On Windows unpack archive vdi_client_release_win7.zip and just launch executable file
 
