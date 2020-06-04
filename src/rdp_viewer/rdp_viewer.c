@@ -147,7 +147,7 @@ GtkResponseType rdp_viewer_start(const gchar *usename, const gchar *password, gc
     ex_rdp_context->rdp_viewer_data_array = rdp_viewer_data_array;
 
     const int max_image_width = 5120;//2560; 5120
-    const int max_image_height = 1440;
+    const int max_image_height = 2500; // 1440
     int image_width = MIN(max_image_width, total_monitor_width);
     int image_height = MIN(max_image_height, total_monitor_height);
     rdp_client_set_rdp_image_size(ex_rdp_context, image_width, image_height);
