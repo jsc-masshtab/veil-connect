@@ -367,8 +367,25 @@ static BOOL rdp_pre_connect(freerdp* instance)
  */
 static BOOL rdp_post_connect(freerdp* instance)
 {
+    // only 2 working pairs found
+    // PIXEL_FORMAT_RGB16       CAIRO_FORMAT_RGB16_565
+    // PIXEL_FORMAT_BGRA32      CAIRO_FORMAT_ARGB32
     printf("%s\n", (const char *)__func__);
-    if (!gdi_init(instance, PIXEL_FORMAT_RGB16)) // PIXEL_FORMAT_RGBA32
+
+    // get image pixel format from ini file
+    gchar *rdp_pixel_format_str = read_str_from_ini_file("General", "rdp_pixel_format");
+    UINT32 freerdp_pix_format = PIXEL_FORMAT_RGB16; // default
+    cairo_format_t cairo_format = CAIRO_FORMAT_RGB16_565; // default
+
+    if (g_strcmp0(rdp_pixel_format_str, "BGRA32") == 0) {
+        freerdp_pix_format = PIXEL_FORMAT_BGRA32;
+        cairo_format = CAIRO_FORMAT_ARGB32;
+    }
+
+    free_memory_safely(&rdp_pixel_format_str);
+
+    // init
+    if (!gdi_init(instance, freerdp_pix_format))
         return FALSE;
 
     if (!rdp_register_pointer(instance->context->graphics))
@@ -387,7 +404,6 @@ static BOOL rdp_post_connect(freerdp* instance)
 
     g_mutex_lock(&tf->primary_buffer_mutex);
 
-    cairo_format_t cairo_format = CAIRO_FORMAT_RGB16_565;
     printf("%s W: %i H: %i\n", (const char *)__func__, gdi->width, gdi->height);
     int stride = cairo_format_stride_for_width(cairo_format, gdi->width);
     tf->surface = cairo_image_surface_create_for_data((unsigned char*)gdi->primary_buffer,
