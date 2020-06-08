@@ -12,38 +12,27 @@
 | Centos 7           |    ?   |
 | Centos 8           |    ?   |
 
-## Building on Linux
-1)Install followwing packages:
-
-spice-client-gtk
-
-libspice-client-gtk-3.0-dev
-
-libjson-glib-dev
-
-libxml2-dev
-
-libsoup2.4-dev
-freerdp2-dev (Разработка велась под версию 2.0.0~git202002281153-0)
-
-libfreerdp-client2-2
-
-libwinpr2-2
-
-libwinpr2-dev
-2)Install gcc, cmake, pkg-config
-3)Open terminal in desktop-client-c directory and execute commands:
-
+## Building on Debian / Ubuntu
+```
+sudo apt install spice-client-gtk libspice-client-gtk-3.0-dev libjson-glib-dev libxml2-dev libsoup2.4-dev freerdp2-dev libfreerdp-client2-2 libwinpr2-2 libwinpr2-dev gcc cmake pkg-config
 mkdir build
-
 cd build
-
 cmake -DCMAKE_BUILD_TYPE=Release ../
-
 make
+```
+
+## Building on Centos
+```
+yum install curl
+yum install epel-release
+yum install spice-gtk3-devel freerdp-libs freerdp-devel json-glib-devel libsoup-devel libwinpr libxml2-devel gcc cmake3 gtk3-devel hiredis-devel
+mkdir build
+cd build
+cmake3 -DCMAKE_BUILD_TYPE=Release ../
+make
+```
 
 ## Building on Windows
-
 
 MSYS2 installation
 
