@@ -16,6 +16,8 @@ typedef struct{
 
    VdiVmRemoteProtocol remote_protocol_type;
 
+   gboolean is_client_cursor_visible;
+
 } ConnectSettingsData;
 
 

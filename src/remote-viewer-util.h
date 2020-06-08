@@ -91,6 +91,10 @@ size_t strlen_safely(const gchar * str);
 
 const gchar* determine_http_protocol_by_port(const gchar *port);
 
+// enable spice debug cursor
+// use env variable to activate spice debug cursor
+void set_client_spice_cursor_visible(gboolean is_visible);
+
 #endif
 
 /*

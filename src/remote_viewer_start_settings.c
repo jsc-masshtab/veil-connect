@@ -23,6 +23,8 @@ typedef struct{
     GtkWidget *conn_to_prev_pool_checkbutton;
     GtkWidget *remote_protocol_combobox;
 
+    GtkWidget *client_cursor_visible_checkbutton;
+
     GtkWidget *bt_cancel;
     GtkWidget *bt_ok;
 
@@ -100,6 +102,10 @@ fill_connect_settings_data_from_gui(ConnectSettingsData *connect_settings_data, 
         connect_settings_data->remote_protocol_type = (VdiVmRemoteProtocol)(
                 gtk_combo_box_get_active((GtkComboBox*)dialog_data->remote_protocol_combobox));
 
+    // Spice settings
+    connect_settings_data->is_client_cursor_visible =
+            gtk_toggle_button_get_active((GtkToggleButton *)dialog_data->client_cursor_visible_checkbutton);
+
     return is_ok;
 }
 
@@ -118,13 +124,16 @@ on_insert_text_event(GtkEditable *editable, const gchar *text, gint length,
     }
 }
 
-
 static void
 ok_button_clicked_cb(GtkButton *button G_GNUC_UNUSED, ConnectSettingsDialogData *dialog_data)
 {
     // fill connect_settings_data from gui
     gboolean is_success = fill_connect_settings_data_from_gui(dialog_data->p_connect_settings_data, dialog_data);
 
+    // Spice debug cursor enabling
+    set_client_spice_cursor_visible(dialog_data->p_connect_settings_data->is_client_cursor_visible);
+
+    // Close the window if settings are ok
     if (is_success) {
         dialog_data->dialog_window_response = GTK_RESPONSE_OK;
         shutdown_loop(dialog_data->loop);
@@ -134,7 +143,7 @@ ok_button_clicked_cb(GtkButton *button G_GNUC_UNUSED, ConnectSettingsDialogData 
 static void
 fill_connect_settings_dialog_data(ConnectSettingsDialogData *dialog_data, ConnectSettingsData *connect_settings_data)
 {
-    const gchar *paramToFileGrpoup = opt_manual_mode ? "RemoteViewerConnectManual" : "RemoteViewerConnect";
+    //const gchar *paramToFileGrpoup = opt_manual_mode ? "RemoteViewerConnectManual" : "RemoteViewerConnect";
 
     // domain
     if (connect_settings_data->domain) {
@@ -164,6 +173,11 @@ fill_connect_settings_dialog_data(ConnectSettingsDialogData *dialog_data, Connec
     gint remote_protocol_type = (gint)connect_settings_data->remote_protocol_type;
     if (dialog_data->remote_protocol_combobox)
         gtk_combo_box_set_active((GtkComboBox*)dialog_data->remote_protocol_combobox, remote_protocol_type);
+
+    // spice settings
+    if (dialog_data->client_cursor_visible_checkbutton)
+        gtk_toggle_button_set_active((GtkComboBox*)dialog_data->client_cursor_visible_checkbutton,
+                                 connect_settings_data->is_client_cursor_visible);
 }
 
 static void
@@ -204,8 +218,10 @@ GtkResponseType remote_viewer_start_settings_dialog(ConnectSettingsData *connect
     dialog_data.builder = remote_viewer_util_load_ui("start_settings_form.ui");
 
     dialog_data.window = GTK_WIDGET(gtk_builder_get_object(dialog_data.builder, "start-settings-window"));
+    // main buttons
     dialog_data.bt_cancel = GTK_WIDGET(gtk_builder_get_object(dialog_data.builder, "btn_cancel"));
     dialog_data.bt_ok = GTK_WIDGET(gtk_builder_get_object(dialog_data.builder, "btn_ok"));
+    // main settinfs
     dialog_data.domain_entry = GTK_WIDGET(gtk_builder_get_object(dialog_data.builder, "domain-entry"));
     dialog_data.address_entry = GTK_WIDGET(gtk_builder_get_object(dialog_data.builder, "connection-address-entry"));
     dialog_data.port_entry = GTK_WIDGET(gtk_builder_get_object(dialog_data.builder, "connection-port-entry"));
@@ -220,6 +236,9 @@ GtkResponseType remote_viewer_start_settings_dialog(ConnectSettingsData *connect
         gtk_widget_destroy(dialog_data.remote_protocol_combobox);
         dialog_data.remote_protocol_combobox = NULL;
     }
+    // spice settings
+    dialog_data.client_cursor_visible_checkbutton =
+            GTK_WIDGET(gtk_builder_get_object(dialog_data.builder, "menu-show-client-cursor"));
 
     // Signals
     g_signal_connect_swapped(dialog_data.window, "delete-event", G_CALLBACK(window_deleted_cb), &dialog_data);
@@ -252,6 +271,7 @@ GtkResponseType remote_viewer_start_settings_dialog(ConnectSettingsData *connect
 void
 fill_connect_settings_data_from_ini_file(ConnectSettingsData *connect_settings_data)
 {
+    // Main settings
     const gchar *paramToFileGrpoup = opt_manual_mode ? "RemoteViewerConnectManual" : "RemoteViewerConnect";
     // domain
     free_memory_safely(&connect_settings_data->domain);
@@ -271,6 +291,10 @@ fill_connect_settings_data_from_ini_file(ConnectSettingsData *connect_settings_d
     gint remote_protocol_type = read_int_from_ini_file("General",
             "cur_remote_protocol_index", VDI_SPICE_PROTOCOL);
     connect_settings_data->remote_protocol_type = (VdiVmRemoteProtocol)remote_protocol_type;
+
+    // Spice settings
+    connect_settings_data->is_client_cursor_visible =
+            read_int_from_ini_file("General", "is_client_cursor_visible", FALSE);
 }
 
 //void free_connect_settings_data(ConnectSettingsData *connect_settings_data)

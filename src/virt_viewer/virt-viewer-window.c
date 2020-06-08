@@ -89,7 +89,6 @@ static void virt_viewer_window_toolbar_setup(VirtViewerWindow *self);
 static GtkMenu* virt_viewer_window_get_keycombo_menu(VirtViewerWindow *self);
 static void virt_viewer_window_get_minimal_dimensions(VirtViewerWindow *self, guint *width, guint *height);
 static gint virt_viewer_window_get_minimal_zoom_level(VirtViewerWindow *self);
-static void virt_viewer_window_set_client_cursor_visible(gboolean is_visible);
 
 G_DEFINE_TYPE (VirtViewerWindow, virt_viewer_window, G_TYPE_OBJECT)
 
@@ -336,8 +335,7 @@ virt_viewer_window_init (VirtViewerWindow *self)
             GTK_WIDGET(gtk_builder_get_object(self->priv->builder, "menu-show-client-cursor"));
     gboolean is_client_cursor_visible = read_int_from_ini_file("General", "is_client_cursor_visible", FALSE);
     if (is_client_cursor_visible) {
-        gtk_check_menu_item_set_active((GtkCheckMenuItem *)menu_show_client_cursor, is_client_cursor_visible);
-        virt_viewer_window_set_client_cursor_visible(is_client_cursor_visible);
+        set_client_spice_cursor_visible(is_client_cursor_visible);
     }
 
     gtk_builder_connect_signals(priv->builder, self);
@@ -983,26 +981,6 @@ virt_viewer_window_save_screenshot(VirtViewerWindow *self,
 
     g_object_unref(pix);
     return result;
-}
-
-static void virt_viewer_window_set_client_cursor_visible(gboolean is_visible)
-{
-    const gchar *spice_cursor_env_var = "SPICE_DEBUG_CURSOR";
-    if (is_visible) {
-        gboolean is_var_set = g_setenv(spice_cursor_env_var, "1", TRUE);
-        printf("%s is_var_set: %i\n", (const char *)__func__, is_var_set);
-    } else {
-        g_unsetenv(spice_cursor_env_var);
-    }
-}
-
-G_MODULE_EXPORT void
-virt_viewer_window_menu_show_client_cursor(GtkWidget *menu,
-                                        VirtViewerWindow *self G_GNUC_UNUSED)
-{
-    gboolean is_menu_item_active = gtk_check_menu_item_get_active((GtkCheckMenuItem *)menu);
-    virt_viewer_window_set_client_cursor_visible(is_menu_item_active);
-    write_int_to_ini_file("General", "is_client_cursor_visible", is_menu_item_active);
 }
 
 G_MODULE_EXPORT void

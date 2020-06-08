@@ -40,6 +40,7 @@
 #include <libxml/uri.h>
 
 #include "remote-viewer-util.h"
+#include "settingsfile.h"
 
 void
 create_loop_and_launch(GMainLoop **loop)
@@ -756,6 +757,19 @@ const gchar* determine_http_protocol_by_port(const gchar *port)
 {
     const int https_port = 443;
     return ((atoi(port) == https_port) ? "https" : "http");
+}
+
+void set_client_spice_cursor_visible(gboolean is_visible)
+{
+    const gchar *spice_cursor_env_var = "SPICE_DEBUG_CURSOR";
+    if (is_visible) {
+        gboolean is_var_set = g_setenv(spice_cursor_env_var, "1", TRUE);
+        printf("%s is_var_set: %i\n", (const char *)__func__, is_var_set);
+    } else {
+        g_unsetenv(spice_cursor_env_var);
+    }
+
+    write_int_to_ini_file("General", "is_client_cursor_visible", is_visible);
 }
 
 /*
