@@ -397,7 +397,7 @@ RdpViewerData *rdp_viewer_window_create(ExtendedRdpContext *ex_rdp_context, UINT
 
     rdp_viewer_data->ex_rdp_context = ex_rdp_context;
 
-    // gui
+    // gui  TODO: make a separate .ui form. Dont use virt-viewer_veil.ui
     GtkBuilder *builder = rdp_viewer_data->builder = remote_viewer_util_load_ui("virt-viewer_veil.ui");
 
     GtkWidget *rdp_viewer_window = rdp_viewer_data->rdp_viewer_window =
@@ -415,6 +415,7 @@ RdpViewerData *rdp_viewer_window_create(ExtendedRdpContext *ex_rdp_context, UINT
     gtk_widget_destroy(menu_usb); // rdp automaticly redirects usb if app is launched with corresponding flag
 
     // remove inapropriate items from settings menu
+    gtk_widget_destroy(GTK_WIDGET(gtk_builder_get_object(builder, "menu-show-client-cursor")));
     gtk_widget_destroy(GTK_WIDGET(gtk_builder_get_object(builder, "menu-file-smartcard-insert")));
     gtk_widget_destroy(GTK_WIDGET(gtk_builder_get_object(builder, "menu-file-smartcard-remove")));
     gtk_widget_destroy(GTK_WIDGET(gtk_builder_get_object(builder, "menu-change-cd")));

@@ -3,7 +3,6 @@
   <gresource prefix="/org/virt-manager/virt-viewer">
     <file>ui/remote-viewer-connect_veil.ui</file>
     <file>ui/remote-viewer-iso-list.ui</file>
-    <file>ui/virt-viewer.ui</file>
     <file>ui/virt-viewer_veil.ui</file>
     <file>ui/virt-viewer-about.ui</file>
     <file>ui/virt-viewer-auth.ui</file>
