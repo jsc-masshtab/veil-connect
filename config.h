@@ -14,7 +14,7 @@
                 
 
 /* GETTEXT package name */
-#define GETTEXT_PACKAGE "thin_client_veil"
+#define GETTEXT_PACKAGE "veil_connect"
 #define  LOCALE_DIR "locale" // folder that placed next to the binary
 
 /* Define to 1 if you have the `bind_textdomain_codeset' function. */
@@ -113,7 +113,7 @@
 #define LT_OBJDIR ".libs/"
 
 /* Name of package */
-#define PACKAGE "thin_client_veil"
+#define PACKAGE "veil_connect"
 
 /* Define to the address where bug reports for this package should be sent. */
 #define PACKAGE_BUGREPORT ""

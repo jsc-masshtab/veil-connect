@@ -5,7 +5,7 @@
 #define MyAppVersion "&&VER&&"
 #define MyAppPublisher "JSC Research institute Masshtab"
 #define MyAppURL "https://mashtab.org/"
-#define MyAppExeName "thin_client_veil.exe"
+#define MyAppExeName "veil_connect.exe"
 #define MyAppIcoName "veil-connect.ico"
 #define MyBuildVersion "&&BUILD_VER&&"
 
@@ -45,7 +45,7 @@ Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{
 Name: "quicklaunchicon"; Description: "{cm:CreateQuickLaunchIcon}"; GroupDescription: "{cm:AdditionalIcons}"; OnlyBelowVersion: 6.1; Check: not IsAdminInstallMode
 
 [Files]
-Source: "C:\Jenkins\workspace\vdi-connect\build\thin_client_veil.exe"; DestDir: "{app}"; Flags: ignoreversion
+Source: "C:\Jenkins\workspace\vdi-connect\build\veil_connect.exe"; DestDir: "{app}"; Flags: ignoreversion
 Source: "C:\Jenkins\workspace\vdi-connect\build\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
 ; NOTE: Don't use "Flags: ignoreversion" on any shared system files
 

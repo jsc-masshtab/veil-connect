@@ -5,7 +5,7 @@ ABSOLUTE_FILENAME=`readlink -e "$0"`
 
 DIRECTORY=`dirname "$ABSOLUTE_FILENAME"`
 
-#killall thin_client_veil
+#killall veil_connect
 
 
 #CURDATE=`date +%Y.%m.%d`
@@ -20,4 +20,4 @@ export LD_LIBRARY_PATH=$DIRECTORY/libs
 export GDK_PIXBUF_MODULEDIR=$DIRECTORY/pixbuf_loaders
 
 cd $DIRECTORY
-./thin_client_veil $1
+./veil_connect $1

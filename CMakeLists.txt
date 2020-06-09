@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.7)
-project(thin_client_veil C)
+project(veil_connect C)
 
 set(CMAKE_C_STANDARD 99)
 
@@ -189,9 +189,9 @@ endif (WIN32)
     SET(LIBS ${LIBS} json-glib-1.0)
 
 #############################LINKING###################################
-ADD_EXECUTABLE(thin_client_veil ${GUI_TYPE} ${SRC_CODE})
+ADD_EXECUTABLE(veil_connect ${GUI_TYPE} ${SRC_CODE})
 target_link_libraries(
-    thin_client_veil # exec
+    veil_connect # exec
     ${LIBS} # libs
 )
 

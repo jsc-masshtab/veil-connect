@@ -179,7 +179,7 @@ pipeline {
                     copy doc\\veil-connect.ico build
                     cd build
                     rmdir /S /Q CMakeFiles
-                    del CMakeCache.txt cmake_install.cmake Makefile libthin_client_veil.dll.a start_vdi_client.sh
+                    del CMakeCache.txt cmake_install.cmake Makefile libveil_connect.dll.a start_vdi_client.sh
         
                     mkdir lib\\gdk-pixbuf-2.0\\2.10.0\\loaders log
                     copy C:\\msys32\\mingw64\\lib\\gdk-pixbuf-2.0\\2.10.0\\loaders\\*.dll lib\\gdk-pixbuf-2.0\\2.10.0\\loaders
