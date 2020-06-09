@@ -40,7 +40,7 @@ rm -rf /opt/veil-connect
 %attr (777,root,root) /opt/veil-connect/locale/ru/LC_MESSAGES/thin_client_veil.gmo
 %attr (777,root,root) /opt/veil-connect/locale/ru/LC_MESSAGES/thin_client_veil.mo
 %attr (777,root,root) /opt/veil-connect/start_vdi_client.sh
-%attr (777,root,root) /opt/veil-connect/thin_client_veil
+%attr (777,root,root) /opt/veil-connect/veil_connect
 %attr (777,root,root) /opt/veil-connect/veil-connect.ico
 %attr (644,root,root) /usr/share/applications/veil-connect.desktop
 
