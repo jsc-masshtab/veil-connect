@@ -35,12 +35,13 @@ pipeline {
 
     parameters {
         string(      name: 'BRANCH',               defaultValue: 'master',          description: 'branch')
-        string(      name: 'VERSION',              defaultValue: '1.2.10',           description: 'version')
+        string(      name: 'VERSION',              defaultValue: '1.2.10',          description: 'version')
         booleanParam(name: 'DEBIAN',               defaultValue: true,              description: 'create DEB?')
         booleanParam(name: 'UBUNTU',               defaultValue: true,              description: 'create DEB?')
         booleanParam(name: 'CENTOS7',              defaultValue: true,              description: 'create RPM?')
         booleanParam(name: 'CENTOS8',              defaultValue: true,              description: 'create RPM?')
         booleanParam(name: 'WINDOWS',              defaultValue: true,              description: 'create EXE?')
+        booleanParam(name: 'UNIVERSAL',            defaultValue: true,              description: 'create TAR?')
     }
 
     stages {
@@ -69,7 +70,7 @@ pipeline {
                 stage ('ubuntu. create environment') {
                     when {
                         beforeAgent true
-                        expression { params.UBUNTU == true }
+                        expression { params.UBUNTU == true || params.UNIVERSAL == true }
                     }
                     agent {
                         label 'ubuntu18'
@@ -510,6 +511,24 @@ pipeline {
                         '''
                     }
                 }
+            }
+        }
+
+        stage ('make universal linux installer') {
+            when {
+                beforeAgent true
+                expression { params.UNIVERSAL == true }
+            }
+            agent {
+                label 'ubuntu18'
+            }
+            steps {
+                sh script: '''
+                    ssh uploader@192.168.10.144 rm -f /local_storage/vdi_releases/${VERSION}/veil-connect-${VERSION}-linux.tar
+                    scp ${WORKSPACE}/devops/veil-connect-linux-installer.sh uploader@192.168.10.144:/local_storage/vdi_releases/${VERSION}
+                    ssh uploader@192.168.10.144 chmod +x /local_storage/vdi_releases/${VERSION}/veil-connect-linux-installer.sh
+                    ssh uploader@192.168.10.144 "cd /local_storage/vdi_releases/${VERSION}/ && tar cvf veil-connect-${VERSION}-linux.tar --exclude=*.exe ./*"
+                '''
             }
         }
     }
