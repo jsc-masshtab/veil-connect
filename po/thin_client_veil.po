@@ -98,7 +98,7 @@ msgid "Open connection using Spice controller communication"
 msgstr "Открыть соединение с помощью контроллера Spice"
 
 #: ../src/remote-viewer.c:153
-msgid "Remote viewer client"
+msgid "Thin client. Based on virt-viewer and freerdp"
 msgstr "Клиент удаленного просмотра рабочего стола"
 
 #: ../src/remote-viewer.c:178
