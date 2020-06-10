@@ -305,6 +305,8 @@ pipeline {
                     libvorbis-0 libvorbisenc-2 libvorbisfile-3 libvorbisidec-1 libwebp-7 libwebpdecoder-3 libwebpdemux-2 libwebpmux-3 ^
                     libwinpthread-1 libxdot-4 libxml2-2 libXpm-noX4 libzstd nss3 nssckbi nssutil3 smime3 softokn3 ssl3 ^
                     tcl86 zlib1) do (copy C:\\msys32\\mingw64\\bin\\%%I.dll)
+
+                    perl -pi -e "s/crosshair/default\0\0/g" libspice-client-gtk-3.0-5.dll
                 '''
             }
         }
