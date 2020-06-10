@@ -38,6 +38,8 @@ pipeline {
         string(      name: 'VERSION',              defaultValue: '1.2.10',           description: 'version')
         booleanParam(name: 'DEBIAN',               defaultValue: true,              description: 'create DEB?')
         booleanParam(name: 'UBUNTU',               defaultValue: true,              description: 'create DEB?')
+        booleanParam(name: 'CENTOS7',              defaultValue: true,              description: 'create RPM?')
+        booleanParam(name: 'CENTOS8',              defaultValue: true,              description: 'create RPM?')
         booleanParam(name: 'WINDOWS',              defaultValue: true,              description: 'create EXE?')
     }
 
@@ -71,6 +73,46 @@ pipeline {
                     }
                     agent {
                         label 'ubuntu18'
+                    }
+                    steps {
+                        cleanWs()
+                        checkout([ $class: 'GitSCM',
+                            branches: [[name: '$BRANCH']],
+                            doGenerateSubmoduleConfigurations: false,
+                            extensions: [], submoduleCfg: [],
+                            userRemoteConfigs: [[credentialsId: '',
+                            url: 'http://gitlab+deploy-token-3:LD2jHQCWDYSEt-8AJQzs@gitlab.bazalt.team/vdi/veil-connect.git']]
+                        ])
+                    }
+                }
+
+                stage ('centos 7. create environment') {
+                    when {
+                        beforeAgent true
+                        expression { params.CENTOS7 == true }
+                    }
+                    agent {
+                        label 'centos7-2'
+                    }
+                    steps {
+                        cleanWs()
+                        checkout([ $class: 'GitSCM',
+                            branches: [[name: '$BRANCH']],
+                            doGenerateSubmoduleConfigurations: false,
+                            extensions: [], submoduleCfg: [],
+                            userRemoteConfigs: [[credentialsId: '',
+                            url: 'http://gitlab+deploy-token-3:LD2jHQCWDYSEt-8AJQzs@gitlab.bazalt.team/vdi/veil-connect.git']]
+                        ])
+                    }
+                }
+
+                stage ('centos 8. create environment') {
+                    when {
+                        beforeAgent true
+                        expression { params.CENTOS8 == true }
+                    }
+                    agent {
+                        label 'centos8'
                     }
                     steps {
                         cleanWs()
@@ -140,6 +182,44 @@ pipeline {
                             mkdir build
                             cd build
                             cmake -DCMAKE_BUILD_TYPE=Release ../
+                            make
+                            rm -rf CMakeCache.txt  CMakeFiles  Makefile  cmake_install.cmake
+                        '''
+                    }
+                }
+
+                stage ('centos 7. build') {
+                    when {
+                        beforeAgent true
+                        expression { params.CENTOS7 == true }
+                    }
+                    agent {
+                        label 'centos7-2'
+                    }
+                    steps {
+                        sh script: '''
+                            mkdir build
+                            cd build
+                            cmake3 -DCMAKE_BUILD_TYPE=Release ../
+                            make
+                            rm -rf CMakeCache.txt  CMakeFiles  Makefile  cmake_install.cmake
+                        '''
+                    }
+                }
+
+                stage ('centos 8. build') {
+                    when {
+                        beforeAgent true
+                        expression { params.CENTOS8 == true }
+                    }
+                    agent {
+                        label 'centos8'
+                    }
+                    steps {
+                        sh script: '''
+                            mkdir build
+                            cd build
+                            cmake3 -DCMAKE_BUILD_TYPE=Release ../
                             make
                             rm -rf CMakeCache.txt  CMakeFiles  Makefile  cmake_install.cmake
                         '''
@@ -242,7 +322,9 @@ pipeline {
                     steps {
                         sh script: '''
                             mkdir -p ${WORKSPACE}/devops/deb/root/opt/veil-connect
+                            mkdir -p ${WORKSPACE}/devops/deb/root/usr/share/applications
                             cp -r ${WORKSPACE}/build/* ${WORKSPACE}/doc/veil-connect.ico ${WORKSPACE}/devops/deb/root/opt/veil-connect
+                            cp ${WORKSPACE}/doc/veil-connect.desktop ${WORKSPACE}/devops/deb/root/usr/share/applications
                             sed -i -e "s:%%VER%%:${VERSION}-buster:g" ${WORKSPACE}/devops/deb/root/DEBIAN/control
                             chmod -R 777 ${WORKSPACE}/devops/deb/root
                             chmod -R 755 ${WORKSPACE}/devops/deb/root/DEBIAN
@@ -264,13 +346,61 @@ pipeline {
                     steps {
                         sh script: '''
                             mkdir -p ${WORKSPACE}/devops/deb/root/opt/veil-connect
+                            mkdir -p ${WORKSPACE}/devops/deb/root/usr/share/applications
                             cp -r ${WORKSPACE}/build/* ${WORKSPACE}/doc/veil-connect.ico ${WORKSPACE}/devops/deb/root/opt/veil-connect
+                            cp ${WORKSPACE}/doc/veil-connect.desktop ${WORKSPACE}/devops/deb/root/usr/share/applications
                             sed -i -e "s:%%VER%%:${VERSION}-bionic:g" ${WORKSPACE}/devops/deb/root/DEBIAN/control
                             chmod -R 777 ${WORKSPACE}/devops/deb/root
                             chmod -R 755 ${WORKSPACE}/devops/deb/root/DEBIAN
                             sudo chown -R root:root ${WORKSPACE}/devops/deb/root
                             cd ${WORKSPACE}/devops/deb
                             dpkg-deb -b root .
+                        '''
+                    }
+                }
+
+                stage ('centos 7. make installer') {
+                    when {
+                        beforeAgent true
+                        expression { params.CENTOS7 == true }
+                    }
+                    agent {
+                        label 'centos7-2'
+                    }
+                    steps {
+                        sh script: '''
+                            rm -rf ~/rpmbuild/
+                            rpmdev-setuptree
+                            sed -i -e "s:%%VER%%:${VERSION}:g" ${WORKSPACE}/devops/rpm/veil-connect.spec
+                            cp ${WORKSPACE}/devops/rpm/veil-connect.spec ~/rpmbuild/SPECS/
+                            mkdir -p ~/rpmbuild/BUILD/opt/veil-connect
+                            mkdir -p ~/rpmbuild/BUILD/usr/share/applications
+                            cp -r ${WORKSPACE}/build/* ${WORKSPACE}/doc/veil-connect.ico ~/rpmbuild/BUILD/opt/veil-connect
+                            cp ${WORKSPACE}/doc/veil-connect.desktop ~/rpmbuild/BUILD/usr/share/applications
+                            rpmbuild -bb ~/rpmbuild/SPECS/veil-connect.spec
+                        '''
+                    }
+                }
+
+                stage ('centos 8. make installer') {
+                    when {
+                        beforeAgent true
+                        expression { params.CENTOS8 == true }
+                    }
+                    agent {
+                        label 'centos8'
+                    }
+                    steps {
+                        sh script: '''
+                            rm -rf ~/rpmbuild/
+                            rpmdev-setuptree
+                            sed -i -e "s:%%VER%%:${VERSION}:g" ${WORKSPACE}/devops/rpm/veil-connect.spec
+                            cp ${WORKSPACE}/devops/rpm/veil-connect.spec ~/rpmbuild/SPECS/
+                            mkdir -p ~/rpmbuild/BUILD/opt/veil-connect
+                            mkdir -p ~/rpmbuild/BUILD/usr/share/applications
+                            cp -r ${WORKSPACE}/build/* ${WORKSPACE}/doc/veil-connect.ico ~/rpmbuild/BUILD/opt/veil-connect
+                            cp ${WORKSPACE}/doc/veil-connect.desktop ~/rpmbuild/BUILD/usr/share/applications
+                            rpmbuild -bb ~/rpmbuild/SPECS/veil-connect.spec
                         '''
                     }
                 }
@@ -325,6 +455,39 @@ pipeline {
                             ssh uploader@192.168.10.144 mkdir -p /local_storage/vdi_releases/${VERSION}
                             ssh uploader@192.168.10.144 rm -f /local_storage/vdi_releases/${VERSION}/veil-connect_${VERSION}-bionic_amd64.deb
                             scp ${WORKSPACE}/devops/deb/*.deb uploader@192.168.10.144:/local_storage/vdi_releases/${VERSION}
+                        '''
+                    }
+                }
+
+                stage ('centos 7. deploy to repo') {
+                    when {
+                        beforeAgent true
+                        expression { params.CENTOS7 == true }
+                    }
+                    agent {
+                        label 'centos7-2'
+                    }
+                    steps {
+                        sh script: '''
+                            ssh uploader@192.168.10.144 mkdir -p /local_storage/vdi_releases/${VERSION}
+                            scp ~/rpmbuild/RPMS/x86_64/*.rpm uploader@192.168.10.144:/local_storage/vdi_releases/${VERSION}
+                        '''
+                    }
+                }
+
+                stage ('centos 8. deploy to repo') {
+                    when {
+                        beforeAgent true
+                        expression { params.CENTOS8 == true }
+                    }
+                    agent {
+                        label 'centos8'
+                    }
+                    steps {
+                        sh script: '''
+                            ssh uploader@192.168.10.144 mkdir -p /local_storage/vdi_releases/${VERSION}
+                            chmod 644 ~/rpmbuild/RPMS/x86_64/*.rpm
+                            scp ~/rpmbuild/RPMS/x86_64/*.rpm uploader@192.168.10.144:/local_storage/vdi_releases/${VERSION}
                         '''
                     }
                 }

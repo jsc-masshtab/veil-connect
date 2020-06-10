@@ -9,8 +9,8 @@
 | Debian 10          | buster |
 | Ubuntu 18.04       | bionic |
 | Ubuntu 20.04       | buster |
-| Centos 7           |    ?   |
-| Centos 8           |    ?   |
+| Centos 7           |  el7   |
+| Centos 8           |  el8   |
 
 ## Building on Debian / Ubuntu
 ```
