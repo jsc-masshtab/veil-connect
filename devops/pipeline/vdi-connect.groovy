@@ -438,9 +438,9 @@ pipeline {
                     }
                     steps {
                         sh script: '''
-                            ssh uploader@192.168.10.144 mkdir -p /local_storage/vdi_releases/${VERSION}
-                            ssh uploader@192.168.10.144 rm -f /local_storage/vdi_releases/${VERSION}/veil-connect_${VERSION}-buster_amd64.deb
-                            scp ${WORKSPACE}/devops/deb/*.deb uploader@192.168.10.144:/local_storage/vdi_releases/${VERSION}
+                            ssh uploader@192.168.10.144 mkdir -p /local_storage/veil-connect/${VERSION}
+                            ssh uploader@192.168.10.144 rm -f /local_storage/veil-connect/${VERSION}/veil-connect_${VERSION}-buster_amd64.deb
+                            scp ${WORKSPACE}/devops/deb/*.deb uploader@192.168.10.144:/local_storage/veil-connect/${VERSION}
                         '''
                     }
                 }
@@ -455,9 +455,9 @@ pipeline {
                     }
                     steps {
                         sh script: '''
-                            ssh uploader@192.168.10.144 mkdir -p /local_storage/vdi_releases/${VERSION}
-                            ssh uploader@192.168.10.144 rm -f /local_storage/vdi_releases/${VERSION}/veil-connect_${VERSION}-bionic_amd64.deb
-                            scp ${WORKSPACE}/devops/deb/*.deb uploader@192.168.10.144:/local_storage/vdi_releases/${VERSION}
+                            ssh uploader@192.168.10.144 mkdir -p /local_storage/veil-connect/${VERSION}
+                            ssh uploader@192.168.10.144 rm -f /local_storage/veil-connect/${VERSION}/veil-connect_${VERSION}-bionic_amd64.deb
+                            scp ${WORKSPACE}/devops/deb/*.deb uploader@192.168.10.144:/local_storage/veil-connect/${VERSION}
                         '''
                     }
                 }
@@ -472,8 +472,8 @@ pipeline {
                     }
                     steps {
                         sh script: '''
-                            ssh uploader@192.168.10.144 mkdir -p /local_storage/vdi_releases/${VERSION}
-                            scp ~/rpmbuild/RPMS/x86_64/*.rpm uploader@192.168.10.144:/local_storage/vdi_releases/${VERSION}
+                            ssh uploader@192.168.10.144 mkdir -p /local_storage/veil-connect/${VERSION}
+                            scp ~/rpmbuild/RPMS/x86_64/*.rpm uploader@192.168.10.144:/local_storage/veil-connect/${VERSION}
                         '''
                     }
                 }
@@ -488,9 +488,9 @@ pipeline {
                     }
                     steps {
                         sh script: '''
-                            ssh uploader@192.168.10.144 mkdir -p /local_storage/vdi_releases/${VERSION}
+                            ssh uploader@192.168.10.144 mkdir -p /local_storage/veil-connect/${VERSION}
                             chmod 644 ~/rpmbuild/RPMS/x86_64/*.rpm
-                            scp ~/rpmbuild/RPMS/x86_64/*.rpm uploader@192.168.10.144:/local_storage/vdi_releases/${VERSION}
+                            scp ~/rpmbuild/RPMS/x86_64/*.rpm uploader@192.168.10.144:/local_storage/veil-connect/${VERSION}
                         '''
                     }
                 }
@@ -505,9 +505,9 @@ pipeline {
                     }
                     steps {
                         bat script: '''
-                            ssh uploader@mothership.bazalt.team mkdir -p /local_storage/vdi_releases/%VERSION%
-                            ssh uploader@mothership.bazalt.team rm -f /local_storage/vdi_releases/%VERSION%/veil-connect_%VERSION%-installer.exe
-                            scp veil-connect-installer.exe uploader@mothership.bazalt.team:/local_storage/vdi_releases/%VERSION%/veil-connect_%VERSION%-installer.exe
+                            ssh uploader@mothership.bazalt.team mkdir -p /local_storage/veil-connect/%VERSION%
+                            ssh uploader@mothership.bazalt.team rm -f /local_storage/veil-connect/%VERSION%/veil-connect_%VERSION%-installer.exe
+                            scp veil-connect-installer.exe uploader@mothership.bazalt.team:/local_storage/veil-connect/%VERSION%/veil-connect_%VERSION%-installer.exe
                         '''
                     }
                 }
@@ -524,10 +524,11 @@ pipeline {
             }
             steps {
                 sh script: '''
-                    ssh uploader@192.168.10.144 rm -f /local_storage/vdi_releases/${VERSION}/veil-connect-${VERSION}-linux.tar
-                    scp ${WORKSPACE}/devops/veil-connect-linux-installer.sh uploader@192.168.10.144:/local_storage/vdi_releases/${VERSION}
-                    ssh uploader@192.168.10.144 chmod +x /local_storage/vdi_releases/${VERSION}/veil-connect-linux-installer.sh
-                    ssh uploader@192.168.10.144 "cd /local_storage/vdi_releases/${VERSION}/ && tar cvf veil-connect-${VERSION}-linux.tar --exclude=*.exe ./*"
+                    ssh uploader@192.168.10.144 rm -f /local_storage/veil-connect/${VERSION}/veil-connect-${VERSION}-linux.tar
+                    scp ${WORKSPACE}/devops/veil-connect-linux-installer.sh uploader@192.168.10.144:/local_storage/veil-connect/${VERSION}
+                    ssh uploader@192.168.10.144 chmod +x /local_storage/veil-connect/${VERSION}/veil-connect-linux-installer.sh
+                    ssh uploader@192.168.10.144 "cd /local_storage/veil-connect/${VERSION}/ && tar cvf veil-connect-${VERSION}-linux.tar --exclude=*.exe ./*"
+                    ssh uploader@192.168.10.144 ln -s /local_storage/veil-connect/${VERSION} /local_storage/veil-connect/latest
                 '''
             }
         }
