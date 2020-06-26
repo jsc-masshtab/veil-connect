@@ -37,7 +37,7 @@ typedef struct{
     VdiVmOs os_type;
 
     gchar *vm_host;
-    gint64 vm_port;
+    int vm_port;
     gchar *vm_password;
     gchar *vm_verbose_name;
 

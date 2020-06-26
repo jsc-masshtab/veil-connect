@@ -299,7 +299,7 @@ static void on_get_vm_from_pool_finished(GObject *source_object G_GNUC_UNUSED,
         free_memory_safely(vdi_manager.ip_ptr);
         *vdi_manager.ip_ptr = g_strdup(vdi_vm_data->vm_host);
         free_memory_safely(vdi_manager.port_ptr);
-        *vdi_manager.port_ptr = g_strdup_printf("%ld", vdi_vm_data->vm_port);
+        *vdi_manager.port_ptr = g_strdup_printf("%i", vdi_vm_data->vm_port);
 
         free_memory_safely(vdi_manager.password_ptr);
         *vdi_manager.password_ptr = g_strdup(vdi_vm_data->vm_password);

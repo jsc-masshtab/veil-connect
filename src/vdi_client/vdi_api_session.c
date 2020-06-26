@@ -48,7 +48,8 @@ static guint send_message(SoupMessage *msg)
     printf("Send_count: %i\n", ++count);
 
     guint status = soup_session_send_message(vdiSession.soup_session, msg);
-    printf("%s: Successfully sent. Response code: %i\n", (const char *)__func__, status);
+    printf("%s: Successfully sent. Response code: %i reason_phrase: %s\n",
+            (const char *)__func__, status, msg->reason_phrase);
     return status;
 }
 
@@ -378,7 +379,7 @@ void get_vm_from_pool(GTask       *task,
     vdi_vm_data->vm_verbose_name = g_strdup(json_object_get_string_member_safely(data_member_object, "vm_verbose_name"));
 
     printf("vm_host %s \n", vdi_vm_data->vm_host);
-    printf("vm_port %ld \n", vdi_vm_data->vm_port);
+    printf("vm_port %i \n", vdi_vm_data->vm_port);
     printf("vm_password %s \n", vdi_vm_data->vm_password);
     printf("vm_verbose_name %s \n", vdi_vm_data->vm_verbose_name);
 

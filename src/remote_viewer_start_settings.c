@@ -176,7 +176,7 @@ fill_connect_settings_dialog_data(ConnectSettingsDialogData *dialog_data, Connec
 
     // spice settings
     if (dialog_data->client_cursor_visible_checkbutton)
-        gtk_toggle_button_set_active((GtkComboBox*)dialog_data->client_cursor_visible_checkbutton,
+        gtk_toggle_button_set_active((GtkToggleButton*)dialog_data->client_cursor_visible_checkbutton,
                                  connect_settings_data->is_client_cursor_visible);
 }
 
