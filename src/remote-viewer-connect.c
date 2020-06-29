@@ -119,7 +119,23 @@ save_data_to_ini_file(RemoteViewerData *ci)
 static void
 set_error_message_to_label(GtkLabel *label, const gchar *message)
 {
-    gchar *message_str = g_strdup_printf("<span color=\"red\">%s</span>", message);
+    if (!message)
+        return;
+
+    const guint max_str_width = 120;
+
+    gchar *message_str;
+
+    const gchar *mask_string = "<span color=\"red\">%s</span>";
+    // trim message
+    if ( strlen(message) > max_str_width ) {
+        gchar *trimmed_message = g_strndup(message, max_str_width);
+        message_str = g_strdup_printf(mask_string, trimmed_message);
+        g_free(trimmed_message);
+    } else {
+        message_str = g_strdup_printf(mask_string, message);
+    }
+
     gtk_label_set_markup(label, message_str);
     g_free(message_str);
 }
