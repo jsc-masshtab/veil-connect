@@ -220,23 +220,6 @@ msgstr ""
 msgid "C_onnect"
 msgstr ""
 
-#: ../src/resources/ui/remote-viewer-iso-list.ui.h:1
-msgid "Loading..."
-msgstr ""
-
-#: ../src/resources/ui/remote-viewer-iso-list.ui.h:2
-msgid "Select ISO"
-msgstr ""
-
-#: ../src/resources/ui/remote-viewer-iso-list.ui.h:3
-msgid "Selected"
-msgstr ""
-
-#: ../src/resources/ui/remote-viewer-iso-list.ui.h:4
-#: ../src/resources/ui/virt-viewer-vm-connection.ui.h:4
-msgid "Name"
-msgstr "Имя"
-
 #: ../src/resources/ui/virt-viewer-about.ui.h:1
 msgid "About Virt-Viewer"
 msgstr ""
@@ -477,7 +460,6 @@ msgid "_OK"
 msgstr ""
 
 #: ../src/resources/ui/virt-viewer-auth.ui.h:4
-#: ../src/resources/ui/virt-viewer-guest-details.ui.h:5
 #: ../src/resources/ui/virt-viewer-file-transfer-dialog.ui.h:2
 msgid "label"
 msgstr "метка"
@@ -533,7 +515,6 @@ msgid "Select USB devices for redirection"
 msgstr "Выбрать устройства USB для перенаправления"
 
 #: ../src/virt-viewer-session-spice.c:824
-#: ../src/resources/ui/virt-viewer-guest-details.ui.h:2
 msgid "_Close"
 msgstr ""
 
@@ -889,18 +870,6 @@ msgstr "Параметры  _гостевой системы"
 #: ../src/resources/ui/virt-viewer.ui.h:20
 msgid "_About"
 msgstr ""
-
-#: ../src/resources/ui/virt-viewer-guest-details.ui.h:1
-msgid "Guest Details"
-msgstr "Параметры гостевой системы"
-
-#: ../src/resources/ui/virt-viewer-guest-details.ui.h:3
-msgid "Name:"
-msgstr "Имя:"
-
-#: ../src/resources/ui/virt-viewer-guest-details.ui.h:4
-msgid "GUID:"
-msgstr "GUID:"
 
 #: ../src/resources/ui/virt-viewer-vm-connection.ui.h:1
 msgid "Choose a virtual machine"
