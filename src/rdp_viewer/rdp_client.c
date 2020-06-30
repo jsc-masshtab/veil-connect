@@ -8,10 +8,8 @@
 #include "config.h"
 #endif
 
-#include <errno.h>
 #include <stdio.h>
 #include <string.h>
-#include <math.h>
 
 #include <glib.h>
 
@@ -20,15 +18,10 @@
 #include <freerdp/gdi/gdi.h>
 #include <freerdp/utils/signal.h>
 
-#include <freerdp/client/file.h>
 #include <freerdp/client/cmdline.h>
-#include <freerdp/client/cliprdr.h>
-#include <freerdp/client/channels.h>
-#include <freerdp/channels/channels.h>
 
 #include <freerdp/locale/keyboard.h>
 #include <freerdp/error.h>
-#include <freerdp/version.h>
 
 #include <winpr/crt.h>
 #include <winpr/synch.h>
@@ -40,6 +33,7 @@
 #include "rdp_channels.h"
 #include "rdp_client.h"
 #include "rdp_cursor.h"
+#include "rdp_data.h"
 
 #include "remote-viewer-util.h"
 #include "settingsfile.h"
@@ -63,7 +57,8 @@ static GArray * rdp_client_create_params_array(ExtendedRdpContext* tf)
     GArray *rdp_params_dyn_array = g_array_new(FALSE, FALSE, sizeof(gchar *));
 
     add_rdp_param(rdp_params_dyn_array, g_strdup(PROGRAMM_NAME));
-    gchar *full_adress = tf->port != 0 ? g_strdup_printf("/v:%s:%i", tf->ip, tf->port) : g_strdup_printf("/v:%s", tf->ip);
+    gchar *full_adress = tf->port != 0 ? g_strdup_printf("/v:%s:%i", tf->ip, tf->port) :
+            g_strdup_printf("/v:%s", tf->ip);
     add_rdp_param(rdp_params_dyn_array, full_adress);
     add_rdp_param(rdp_params_dyn_array, g_strdup_printf("/d:%s", tf->domain));
     add_rdp_param(rdp_params_dyn_array, g_strdup_printf("/u:%s", tf->usename));
@@ -83,14 +78,33 @@ static GArray * rdp_client_create_params_array(ExtendedRdpContext* tf)
     add_rdp_param(rdp_params_dyn_array, g_strdup("+glyph-cache"));
 #endif
     // custom from ini file
-    gchar *rdp_args_str = read_str_from_ini_file("General", "rdp_args");
+    // GUI RDP params
+    // /gfx-h264:AVC444
+    gboolean is_rdp_h264_used = read_int_from_ini_file("RDPSettings", "is_rdp_h264_used", FALSE);
+    if (is_rdp_h264_used) {
+        gchar *rdp_h264_codec = read_str_from_ini_file("RDPSettings", "rdp_h264_codec");
+        gchar *gfx_h264_param_str = g_strdup_printf("/gfx-h264:%s", rdp_h264_codec);
+        //printf("gfx_h264_param_str:  %s\n", gfx_h264_param_str);
+        add_rdp_param(rdp_params_dyn_array, gfx_h264_param_str);
+        free_memory_safely(&rdp_h264_codec);
+    }
+    // +drives,+home-drive
+    gboolean rdp_redirect_disks = read_int_from_ini_file("RDPSettings", "rdp_redirect_disks", FALSE);
+    if (rdp_redirect_disks) {
+        add_rdp_param(rdp_params_dyn_array, g_strdup("+drives"));
+        add_rdp_param(rdp_params_dyn_array, g_strdup("+home-drive"));
+    }
+
+    // rdp_args
+    gchar *rdp_args_str = read_str_from_ini_file("RDPSettings", "rdp_args");
 
     if (rdp_args_str) {
         gchar **rdp_args_array = g_strsplit(rdp_args_str, ",", 100);
 
         gchar **rdp_arg;
-        for (rdp_arg = rdp_args_array; *rdp_arg; rdp_arg++)
+        for (rdp_arg = rdp_args_array; *rdp_arg; rdp_arg++) {
             add_rdp_param(rdp_params_dyn_array, g_strdup(*rdp_arg));
+        }
 
         g_strfreev(rdp_args_array);
     }
@@ -143,21 +157,20 @@ void rdp_client_routine(GTask   *task,
                  gpointer       task_data G_GNUC_UNUSED,
                  GCancellable  *cancellable G_GNUC_UNUSED)
 {
-    int rc = -1;
     int status;
     rdpContext *context = g_task_get_task_data(task);
 
-    ExtendedRdpContext* tf = (ExtendedRdpContext*)context;
-    g_mutex_lock(&tf->rdp_routine_mutex);
+    ExtendedRdpContext* ex_contect = (ExtendedRdpContext*)context;
+    g_mutex_lock(&ex_contect->rdp_routine_mutex);
 
     if (!context)
         goto fail;
 
     // rdp params
-    GArray *rdp_params_dyn_array = rdp_client_create_params_array(tf);
+    GArray *rdp_params_dyn_array = rdp_client_create_params_array(ex_contect);
 
-    printf("%s tf->usename %s\n", (const char *)__func__, tf->usename);
-    printf("%s tf->domain %s\n", (const char *)__func__, tf->domain);
+    printf("%s ex_contect->usename %s\n", (const char *)__func__, ex_contect->usename);
+    printf("%s ex_contect->domain %s\n", (const char *)__func__, ex_contect->domain);
     // /v:192.168.20.104 /u:solomin /p:5555 -clipboard /sound:rate:44100,channel:2 /cert-ignore
 
     gchar** argv = malloc(rdp_params_dyn_array->len * sizeof(gchar*));
@@ -165,36 +178,37 @@ void rdp_client_routine(GTask   *task,
         argv[i] = g_array_index(rdp_params_dyn_array, gchar*, i);
 
     int argc = rdp_params_dyn_array->len - 1;
-    printf("sizeof(argv): %lu, argc: %i\n", sizeof(argv), argc);
+    //printf("sizeof(argv): %lu, argc: %i\n", sizeof(argv), argc);
 
     // set rdp params
     status = freerdp_client_settings_parse_command_line(context->settings, argc, argv, FALSE);
+    if (status)
+        *ex_contect->last_rdp_error_p = WRONG_FREERDP_ARGUMENTS;
+
     status = freerdp_client_settings_command_line_status_print(context->settings, status, argc, argv);
 
     // clear memory
     free(argv);
     rdp_client_destroy_params_array(rdp_params_dyn_array);
 
-    if (status) {
-        g_mutex_unlock(&tf->rdp_routine_mutex);
-        return;
-    }
+    if (status)
+        goto fail;
 
     if (freerdp_client_start(context) != 0)
         goto fail;
 
-    tf->is_running = TRUE;
+    ex_contect->is_running = TRUE;
 
-    rc = (int)rdp_client_thread_proc(tf);
+    // main loop
+    rdp_client_thread_proc(ex_contect);
 
     // stopping
-    if (freerdp_client_stop(context) != 0)
-        rc = -1;
+    freerdp_client_stop(context);
 
 fail:
     printf("%s: g_mutex_unlock\n", (const char *)__func__);
-    g_mutex_unlock(&tf->rdp_routine_mutex);
-    tf->is_running = FALSE;
+    g_mutex_unlock(&ex_contect->rdp_routine_mutex);
+    ex_contect->is_running = FALSE;
 }
 
 //void rdp_client_adjust_im_origin_point(ExtendedRdpContext* ex_rdp_context)
@@ -373,7 +387,7 @@ static BOOL rdp_post_connect(freerdp* instance)
     printf("%s\n", (const char *)__func__);
 
     // get image pixel format from ini file
-    gchar *rdp_pixel_format_str = read_str_from_ini_file("General", "rdp_pixel_format");
+    gchar *rdp_pixel_format_str = read_str_from_ini_file("RDPSettings", "rdp_pixel_format");
     UINT32 freerdp_pix_format = PIXEL_FORMAT_RGB16; // default
     cairo_format_t cairo_format = CAIRO_FORMAT_RGB16_565; // default
 

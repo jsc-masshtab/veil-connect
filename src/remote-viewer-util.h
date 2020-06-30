@@ -95,6 +95,9 @@ const gchar* determine_http_protocol_by_port(const gchar *port);
 // use env variable to activate spice debug cursor
 void set_client_spice_cursor_visible(gboolean is_visible);
 
+// Get widget from widget builder
+GtkWidget *get_widget_from_builder(GtkBuilder *builder, const gchar *name);
+
 #endif
 
 /*

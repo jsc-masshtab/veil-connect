@@ -11,6 +11,7 @@
 #include <freerdp/scancode.h>
 
 #include "rdp_display.h"
+#include "rdp_data.h"
 
 static double scale_f = 1; // todo: make local
 
@@ -22,8 +23,10 @@ static gboolean fuzzy_compare(double number_1, double number_2)
 
 static const gchar *error_to_str(UINT32 rdp_error)
 {
-    //rdp_error = (rdp_error >= 0x10000 && rdp_error < 0x00020000) ? (rdp_error & 0xFFFF) : rdp_error;
+    if (rdp_error == WRONG_FREERDP_ARGUMENTS)
+        return "Невалидные агрументы Freerdp";
 
+    //rdp_error = (rdp_error >= 0x10000 && rdp_error < 0x00020000) ? (rdp_error & 0xFFFF) : rdp_error;
     if (rdp_error >= 0x10000 && rdp_error < 0x00020000) {
         rdp_error = (rdp_error & 0xFFFF);
 
@@ -201,8 +204,8 @@ static gboolean rdp_display_mouse_moved(GtkWidget *widget G_GNUC_UNUSED, GdkEven
     return TRUE;
 }
 
-static void rdp_viewer_handle_mouse_btn_event(GtkWidget *widget G_GNUC_UNUSED, GdkEventButton *event, gpointer user_data,
-                                                  UINT16 additional_flags)
+static void rdp_viewer_handle_mouse_btn_event(GtkWidget *widget G_GNUC_UNUSED, GdkEventButton *event,
+        gpointer user_data, UINT16 additional_flags)
 {
     RdpViewerData *rdp_viewer_data = (RdpViewerData *)user_data;
     ExtendedRdpContext* ex_rdp_contect = rdp_viewer_data->ex_rdp_context;
@@ -275,6 +278,16 @@ static gboolean rdp_display_wheel_scrolled(GtkWidget *widget G_GNUC_UNUSED, GdkE
     return TRUE;
 }
 
+static void rdp_display_draw_text_message(cairo_t* context, const gchar *msg)
+{
+    cairo_select_font_face(context, "Sans", CAIRO_FONT_SLANT_NORMAL, CAIRO_FONT_WEIGHT_NORMAL);
+    cairo_set_font_size(context, 15);
+    cairo_set_source_rgb(context, 0.1, 0.2, 0.9);
+
+    cairo_move_to(context, 50, 50);
+    cairo_show_text(context, msg);
+}
+
 static gboolean rdp_display_event_on_draw(GtkWidget* widget, cairo_t* context, gpointer user_data)
 {
     //printf("%s START\n", (const char *)__func__);
@@ -311,6 +324,8 @@ static gboolean rdp_display_event_on_draw(GtkWidget* widget, cairo_t* context, g
                 cairo_clip(context);
                 cairo_paint(context);
             }
+        } else { // Поверхность создается сразу после подключения. Если ее нет, значит мы ожидаем подключение
+            rdp_display_draw_text_message(context, "Ожидаем подключение");
         }
 
         g_mutex_unlock(&ex_rdp_contect->primary_buffer_mutex);
@@ -319,15 +334,9 @@ static gboolean rdp_display_event_on_draw(GtkWidget* widget, cairo_t* context, g
         /* Draw text */
         UINT32 *last_rdp_error_p = (g_object_get_data(G_OBJECT(widget), "last_rdp_error"));
         UINT32 last_rdp_error = *last_rdp_error_p;
-        gchar *msg = g_strdup_printf(("Нет соединения. Код: %i %s"), last_rdp_error,
-                                     error_to_str(last_rdp_error));
+        gchar *msg = g_strdup_printf(("Нет соединения. Код: %i %s"), last_rdp_error, error_to_str(last_rdp_error));
 
-        cairo_select_font_face(context, "Sans", CAIRO_FONT_SLANT_NORMAL, CAIRO_FONT_WEIGHT_NORMAL);
-        cairo_set_font_size(context, 15);
-        cairo_set_source_rgb(context, 0.1, 0.2, 0.9);
-
-        cairo_move_to(context, 50, 50);
-        cairo_show_text(context, msg);
+        rdp_display_draw_text_message(context, msg);
 
         g_free(msg);
     }

@@ -3,10 +3,13 @@
 
 #include <gtk/gtk.h>
 
+#include <winpr/wtypes.h>
+
 #include "vdi_api_session.h"
 
 typedef struct{
 
+   // General
    gchar *domain;
    gchar *ip;
    int port;
@@ -16,8 +19,6 @@ typedef struct{
 
    VdiVmRemoteProtocol remote_protocol_type;
 
-   gboolean is_client_cursor_visible;
-
 } ConnectSettingsData;
 
 
@@ -26,3 +27,6 @@ void fill_connect_settings_data_from_ini_file(ConnectSettingsData *connect_setti
 
 
 #endif // REMOTE_VIEWER_START_SETTINGS_H
+
+
+
