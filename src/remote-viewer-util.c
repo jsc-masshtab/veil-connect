@@ -738,7 +738,6 @@ configerror:
 // todo: rename to free_string_safely
 void free_memory_safely(gchar **string_ptr)
 {
-
     if(string_ptr && *string_ptr) {
         g_free(*string_ptr);
         *string_ptr = NULL;
@@ -769,7 +768,12 @@ void set_client_spice_cursor_visible(gboolean is_visible)
         g_unsetenv(spice_cursor_env_var);
     }
 
-    write_int_to_ini_file("General", "is_client_cursor_visible", is_visible);
+    write_int_to_ini_file("SpiceSettings", "is_spice_client_cursor_visible", is_visible);
+}
+
+GtkWidget *get_widget_from_builder(GtkBuilder *builder, const gchar *name)
+{
+    return GTK_WIDGET(gtk_builder_get_object(builder, name));
 }
 
 /*

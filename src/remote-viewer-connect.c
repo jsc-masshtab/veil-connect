@@ -97,7 +97,7 @@ static void
 set_data_from_gui_in_outer_pointers(RemoteViewerData *ci)
 {
     *ci->domain = g_strdup(ci->connect_settings_data.domain);
-    printf("%s *ci->domain %s\n", (const char *)__func__, *ci->domain);
+    //printf("%s *ci->domain %s\n", (const char *)__func__, *ci->domain);
     *ci->ip = g_strdup(ci->connect_settings_data.ip);
     *ci->port = g_strdup_printf("%i", ci->connect_settings_data.port);
     *ci->user = g_strdup(gtk_entry_get_text(GTK_ENTRY(ci->login_entry)));

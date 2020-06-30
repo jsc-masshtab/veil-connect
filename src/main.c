@@ -61,10 +61,11 @@ setup_ini_file()
 {
     if (!g_file_test(get_ini_file_name(), G_FILE_TEST_EXISTS))
     {
-        //g_creat(get_ini_file_name(), O_WRONLY | O_CREAT | O_TRUNC); // dont work somehow
-        FILE *fp;
-        fp = fopen (get_ini_file_name(), "ab");
+        FILE *fp = fopen (get_ini_file_name(), "ab");
         fclose(fp);
+        // prefill (maybe temp)
+        write_str_to_ini_file("RDPSettings", "rdp_pixel_format", "BGRA16");
+        write_str_to_ini_file("RDPSettings", "rdp_args", "");
     }
 }
 

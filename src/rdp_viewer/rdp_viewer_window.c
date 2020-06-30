@@ -12,6 +12,8 @@
 
 #include "vdi_api_session.h"
 
+#include "settingsfile.h"
+
 #define MAX_KEY_COMBO 4
 struct keyComboDef {
     guint keys[MAX_KEY_COMBO];
@@ -415,7 +417,6 @@ RdpViewerData *rdp_viewer_window_create(ExtendedRdpContext *ex_rdp_context, UINT
     gtk_widget_destroy(menu_usb); // rdp automaticly redirects usb if app is launched with corresponding flag
 
     // remove inapropriate items from settings menu
-    gtk_widget_destroy(GTK_WIDGET(gtk_builder_get_object(builder, "menu-show-client-cursor")));
     gtk_widget_destroy(GTK_WIDGET(gtk_builder_get_object(builder, "menu-file-smartcard-insert")));
     gtk_widget_destroy(GTK_WIDGET(gtk_builder_get_object(builder, "menu-file-smartcard-remove")));
     gtk_widget_destroy(GTK_WIDGET(gtk_builder_get_object(builder, "menu-change-cd")));
@@ -456,7 +457,10 @@ RdpViewerData *rdp_viewer_window_create(ExtendedRdpContext *ex_rdp_context, UINT
     //gtk_window_resize(GTK_WINDOW(rdp_viewer_window), optimal_image_width, optimal_image_height);
     gtk_widget_show_all(rdp_viewer_window);
 
-    rdp_viewer_data->g_timeout_id = g_timeout_add(35, (GSourceFunc)gtk_update, rdp_viewer_data);
+    // get desired fps from ini file
+    UINT32 rdp_fps = CLAMP(read_int_from_ini_file("RDPSettings", "rdp_fps", 30), 1, 60);
+    guint redraw_timeout = 1000 / rdp_fps;
+    rdp_viewer_data->g_timeout_id = g_timeout_add(redraw_timeout, (GSourceFunc)gtk_update, rdp_viewer_data);
     //gtk_widget_add_tick_callback(rdp_display, gtk_update, context, NULL);
 
     return rdp_viewer_data;

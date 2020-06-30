@@ -1,6 +1,8 @@
 #include <stdio.h>
 #include <ctype.h>
 
+#include <freerdp/codec/color.h>
+
 #include "remote-viewer-util.h"
 #include "settingsfile.h"
 
@@ -23,8 +25,19 @@ typedef struct{
     GtkWidget *conn_to_prev_pool_checkbutton;
     GtkWidget *remote_protocol_combobox;
 
+    // spice settings
     GtkWidget *client_cursor_visible_checkbutton;
 
+    // RDP settings
+    GtkWidget *rdp_image_pixel_format_combobox;
+    GtkWidget *rdp_fps_spin_btn;
+
+    GtkWidget *is_h264_used_check_btn;
+    GtkWidget *rdp_h264_codec_entry;
+
+    GtkWidget *rdp_redirect_disks_check_btn;
+
+    // control buttons
     GtkWidget *bt_cancel;
     GtkWidget *bt_ok;
 
@@ -102,10 +115,6 @@ fill_connect_settings_data_from_gui(ConnectSettingsData *connect_settings_data, 
         connect_settings_data->remote_protocol_type = (VdiVmRemoteProtocol)(
                 gtk_combo_box_get_active((GtkComboBox*)dialog_data->remote_protocol_combobox));
 
-    // Spice settings
-    connect_settings_data->is_client_cursor_visible =
-            gtk_toggle_button_get_active((GtkToggleButton *)dialog_data->client_cursor_visible_checkbutton);
-
     return is_ok;
 }
 
@@ -125,13 +134,18 @@ on_insert_text_event(GtkEditable *editable, const gchar *text, gint length,
 }
 
 static void
+on_h264_used_check_btn_toggled(GtkToggleButton *h264_used_check_btn, gpointer user_data)
+{
+    ConnectSettingsDialogData *dialog_data = (ConnectSettingsDialogData *)user_data;
+    gboolean is_h264_used_check_btn_toggled = gtk_toggle_button_get_active(h264_used_check_btn);
+    gtk_widget_set_sensitive(dialog_data->rdp_h264_codec_entry, is_h264_used_check_btn_toggled);
+}
+
+static void
 ok_button_clicked_cb(GtkButton *button G_GNUC_UNUSED, ConnectSettingsDialogData *dialog_data)
 {
     // fill connect_settings_data from gui
     gboolean is_success = fill_connect_settings_data_from_gui(dialog_data->p_connect_settings_data, dialog_data);
-
-    // Spice debug cursor enabling
-    set_client_spice_cursor_visible(dialog_data->p_connect_settings_data->is_client_cursor_visible);
 
     // Close the window if settings are ok
     if (is_success) {
@@ -141,10 +155,9 @@ ok_button_clicked_cb(GtkButton *button G_GNUC_UNUSED, ConnectSettingsDialogData 
 }
 
 static void
-fill_connect_settings_dialog_data(ConnectSettingsDialogData *dialog_data, ConnectSettingsData *connect_settings_data)
+fill_connect_settings_gui(ConnectSettingsDialogData *dialog_data, ConnectSettingsData *connect_settings_data)
 {
-    //const gchar *paramToFileGrpoup = opt_manual_mode ? "RemoteViewerConnectManual" : "RemoteViewerConnect";
-
+    /// General settings
     // domain
     if (connect_settings_data->domain) {
         gtk_entry_set_text(GTK_ENTRY(dialog_data->domain_entry), connect_settings_data->domain);
@@ -174,10 +187,32 @@ fill_connect_settings_dialog_data(ConnectSettingsDialogData *dialog_data, Connec
     if (dialog_data->remote_protocol_combobox)
         gtk_combo_box_set_active((GtkComboBox*)dialog_data->remote_protocol_combobox, remote_protocol_type);
 
-    // spice settings
-    if (dialog_data->client_cursor_visible_checkbutton)
-        gtk_toggle_button_set_active((GtkToggleButton*)dialog_data->client_cursor_visible_checkbutton,
-                                 connect_settings_data->is_client_cursor_visible);
+    /// Spice settings
+    gboolean is_spice_client_cursor_visible =
+            read_int_from_ini_file("SpiceSettings", "is_spice_client_cursor_visible", FALSE);
+    gtk_toggle_button_set_active((GtkToggleButton*)dialog_data->client_cursor_visible_checkbutton,
+                                     is_spice_client_cursor_visible);
+
+    /// RDP settings
+    gchar *rdp_pixel_format_str = read_str_from_ini_file("RDPSettings", "rdp_pixel_format");
+    UINT32 freerdp_pix_index = (g_strcmp0(rdp_pixel_format_str, "BGRA32") == 0) ? 1 : 0;
+    free_memory_safely(&rdp_pixel_format_str);
+    gtk_combo_box_set_active((GtkComboBox*)dialog_data->rdp_image_pixel_format_combobox, freerdp_pix_index);
+
+    UINT32 rdp_fps = CLAMP(read_int_from_ini_file("RDPSettings", "rdp_fps", 30), 1, 60);
+    gtk_spin_button_set_value((GtkSpinButton*) dialog_data->rdp_fps_spin_btn, (gdouble)rdp_fps);
+
+    gboolean is_rdp_h264_used = read_int_from_ini_file("RDPSettings", "is_rdp_h264_used", FALSE);
+    gtk_toggle_button_set_active((GtkToggleButton *)dialog_data->is_h264_used_check_btn, is_rdp_h264_used);
+    gtk_widget_set_sensitive(dialog_data->rdp_h264_codec_entry, is_rdp_h264_used);
+
+    gchar *rdp_h264_codec = read_str_from_ini_file("RDPSettings", "rdp_h264_codec");
+    if (rdp_h264_codec)
+        gtk_entry_set_text(GTK_ENTRY(dialog_data->rdp_h264_codec_entry), rdp_h264_codec);
+    free_memory_safely(&rdp_h264_codec);
+
+    gboolean rdp_redirect_disks = read_int_from_ini_file("RDPSettings", "rdp_redirect_disks", FALSE);
+    gtk_toggle_button_set_active((GtkToggleButton *)dialog_data->rdp_redirect_disks_check_btn, rdp_redirect_disks);
 }
 
 static void
@@ -204,6 +239,30 @@ save_data_to_ini_file(ConnectSettingsDialogData *dialog_data)
         gint cur_remote_protocol_index = gtk_combo_box_get_active((GtkComboBox*)dialog_data->remote_protocol_combobox);
         write_int_to_ini_file("General", "cur_remote_protocol_index", cur_remote_protocol_index);
     }
+
+    /// Spice debug cursor enabling
+    gboolean is_spice_client_cursor_visible =
+            gtk_toggle_button_get_active((GtkToggleButton *)dialog_data->client_cursor_visible_checkbutton);
+    set_client_spice_cursor_visible(is_spice_client_cursor_visible);
+
+    /// RDP settings
+    gchar *rdp_pixel_format_str = gtk_combo_box_text_get_active_text(
+            (GtkComboBoxText *)dialog_data->rdp_image_pixel_format_combobox);
+    write_str_to_ini_file("RDPSettings", "rdp_pixel_format", rdp_pixel_format_str);
+    free_memory_safely(&rdp_pixel_format_str);
+
+    gint fps = (gint)gtk_spin_button_get_value((GtkSpinButton *)dialog_data->rdp_fps_spin_btn);
+    write_int_to_ini_file("RDPSettings", "rdp_fps", fps);
+
+    gboolean is_rdp_h264_used = gtk_toggle_button_get_active((GtkToggleButton *)dialog_data->is_h264_used_check_btn);
+    write_int_to_ini_file("RDPSettings", "is_rdp_h264_used", is_rdp_h264_used);
+
+    const gchar *rdp_h264_codec_str = gtk_entry_get_text(GTK_ENTRY(dialog_data->rdp_h264_codec_entry));
+    write_str_to_ini_file("RDPSettings", "rdp_h264_codec", rdp_h264_codec_str);
+
+    gboolean rdp_redirect_disks = gtk_toggle_button_get_active(
+            (GtkToggleButton *)dialog_data->rdp_redirect_disks_check_btn);
+    write_int_to_ini_file("RDPSettings", "rdp_redirect_disks", rdp_redirect_disks);
 }
 
 GtkResponseType remote_viewer_start_settings_dialog(ConnectSettingsData *connect_settings_data, GtkWindow *parent)
@@ -217,38 +276,48 @@ GtkResponseType remote_viewer_start_settings_dialog(ConnectSettingsData *connect
     // gui widgets
     dialog_data.builder = remote_viewer_util_load_ui("start_settings_form.ui");
 
-    dialog_data.window = GTK_WIDGET(gtk_builder_get_object(dialog_data.builder, "start-settings-window"));
+    dialog_data.window = get_widget_from_builder(dialog_data.builder, "start-settings-window");
     // main buttons
-    dialog_data.bt_cancel = GTK_WIDGET(gtk_builder_get_object(dialog_data.builder, "btn_cancel"));
-    dialog_data.bt_ok = GTK_WIDGET(gtk_builder_get_object(dialog_data.builder, "btn_ok"));
+    dialog_data.bt_cancel = get_widget_from_builder(dialog_data.builder, "btn_cancel");
+    dialog_data.bt_ok = get_widget_from_builder(dialog_data.builder, "btn_ok");
     // main settinfs
-    dialog_data.domain_entry = GTK_WIDGET(gtk_builder_get_object(dialog_data.builder, "domain-entry"));
-    dialog_data.address_entry = GTK_WIDGET(gtk_builder_get_object(dialog_data.builder, "connection-address-entry"));
-    dialog_data.port_entry = GTK_WIDGET(gtk_builder_get_object(dialog_data.builder, "connection-port-entry"));
-    dialog_data.ldap_checkbutton = GTK_WIDGET(gtk_builder_get_object(dialog_data.builder, "ldap-button"));
+    dialog_data.domain_entry = get_widget_from_builder(dialog_data.builder, "domain-entry");
+    dialog_data.address_entry = get_widget_from_builder(dialog_data.builder, "connection-address-entry");
+    dialog_data.port_entry = get_widget_from_builder(dialog_data.builder, "connection-port-entry");
+    dialog_data.ldap_checkbutton = get_widget_from_builder(dialog_data.builder, "ldap-button");
     gtk_widget_set_sensitive(dialog_data.ldap_checkbutton, !opt_manual_mode);
-    dialog_data.conn_to_prev_pool_checkbutton =
-            GTK_WIDGET(gtk_builder_get_object(dialog_data.builder, "connect-to-prev-button"));
+    dialog_data.conn_to_prev_pool_checkbutton = get_widget_from_builder(dialog_data.builder, "connect-to-prev-button");
     gtk_widget_set_sensitive(dialog_data.conn_to_prev_pool_checkbutton, !opt_manual_mode);
-    dialog_data.remote_protocol_combobox =
-            GTK_WIDGET(gtk_builder_get_object(dialog_data.builder, "combobox-remote-protocol"));
+    dialog_data.remote_protocol_combobox =get_widget_from_builder(dialog_data.builder, "combobox_remote_protocol");
     if (!opt_manual_mode) {
         gtk_widget_destroy(dialog_data.remote_protocol_combobox);
         dialog_data.remote_protocol_combobox = NULL;
     }
     // spice settings
     dialog_data.client_cursor_visible_checkbutton =
-            GTK_WIDGET(gtk_builder_get_object(dialog_data.builder, "menu-show-client-cursor"));
+            get_widget_from_builder(dialog_data.builder, "menu-show-client-cursor");
+
+    // rdp settings
+    dialog_data.rdp_image_pixel_format_combobox =
+            get_widget_from_builder(dialog_data.builder, "rdp_image_pixel_format_combobox");
+    dialog_data.rdp_fps_spin_btn = get_widget_from_builder(dialog_data.builder, "rdp_fps_spin_btn");
+
+    dialog_data.is_h264_used_check_btn = get_widget_from_builder(dialog_data.builder, "is_h264_used_check_btn");
+    dialog_data.rdp_h264_codec_entry = get_widget_from_builder(dialog_data.builder, "rdp_h264_codec_entry");
+
+    dialog_data.rdp_redirect_disks_check_btn = get_widget_from_builder(dialog_data.builder, "redirect_disks_check_btn");
 
     // Signals
     g_signal_connect_swapped(dialog_data.window, "delete-event", G_CALLBACK(window_deleted_cb), &dialog_data);
     g_signal_connect(dialog_data.bt_cancel, "clicked", G_CALLBACK(cancel_button_clicked_cb), &dialog_data);
     g_signal_connect(dialog_data.bt_ok, "clicked", G_CALLBACK(ok_button_clicked_cb), &dialog_data);
     g_signal_connect(dialog_data.port_entry, "insert-text", G_CALLBACK(on_insert_text_event), NULL);
+    g_signal_connect(dialog_data.is_h264_used_check_btn, "toggled", G_CALLBACK(on_h264_used_check_btn_toggled),
+            &dialog_data);
 
     // read from file
     fill_connect_settings_data_from_ini_file(connect_settings_data);
-    fill_connect_settings_dialog_data(&dialog_data, connect_settings_data);
+    fill_connect_settings_gui(&dialog_data, connect_settings_data);
 
     // show window
     gtk_window_set_transient_for(GTK_WINDOW(dialog_data.window), parent);
@@ -276,7 +345,7 @@ fill_connect_settings_data_from_ini_file(ConnectSettingsData *connect_settings_d
     // domain
     free_memory_safely(&connect_settings_data->domain);
     connect_settings_data->domain = read_str_from_ini_file(paramToFileGrpoup, "domain");
-    printf("%s connect_settings_data->domain %s\n", (const char *)__func__, connect_settings_data->domain);
+    //printf("%s connect_settings_data->domain %s\n", (const char *)__func__, connect_settings_data->domain);
     // ip
     free_memory_safely(&connect_settings_data->ip);
     connect_settings_data->ip = read_str_from_ini_file(paramToFileGrpoup, "ip");
@@ -291,10 +360,6 @@ fill_connect_settings_data_from_ini_file(ConnectSettingsData *connect_settings_d
     gint remote_protocol_type = read_int_from_ini_file("General",
             "cur_remote_protocol_index", VDI_SPICE_PROTOCOL);
     connect_settings_data->remote_protocol_type = (VdiVmRemoteProtocol)remote_protocol_type;
-
-    // Spice settings
-    connect_settings_data->is_client_cursor_visible =
-            read_int_from_ini_file("General", "is_client_cursor_visible", FALSE);
 }
 
 //void free_connect_settings_data(ConnectSettingsData *connect_settings_data)
