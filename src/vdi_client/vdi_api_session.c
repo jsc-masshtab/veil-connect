@@ -169,11 +169,6 @@ void start_vdi_session()
 
 void stop_vdi_session()
 {
-//    if (!vdiSession.is_active){
-//        printf("%s: Session is not active\n", (const char *)__func__);
-//        return;
-//    }
-
     // logout
     vdi_api_session_logout();
 
