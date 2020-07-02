@@ -58,7 +58,7 @@ typedef struct {
 
 GType virt_viewer_app_get_type (void);
 
-void virt_viewer_app_set_debug(gboolean debug);
+//void virt_viewer_app_set_debug(gboolean debug);
 gboolean virt_viewer_app_start(VirtViewerApp *app, GError **error, RemoteViewerState remoteViewerState);
 void virt_viewer_app_maybe_quit(VirtViewerApp *self, VirtViewerWindow *window);
 VirtViewerWindow* virt_viewer_app_get_main_window(VirtViewerApp *self);

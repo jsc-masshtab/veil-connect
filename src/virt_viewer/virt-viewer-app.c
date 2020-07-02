@@ -184,22 +184,22 @@ enum {
     PROP_USERNAME
 };
 
-void
-virt_viewer_app_set_debug(gboolean debug)
-{
-    if (debug) {
-        const gchar *doms = g_getenv("G_MESSAGES_DEBUG");
-        if (!doms) {
-            g_setenv("G_MESSAGES_DEBUG", G_LOG_DOMAIN, 1);
-        } else if (!g_str_equal(doms, "all") &&
-                   !strstr(doms, G_LOG_DOMAIN)) {
-            gchar *newdoms = g_strdup_printf("%s %s", doms, G_LOG_DOMAIN);
-            g_setenv("G_MESSAGES_DEBUG", newdoms, 1);
-            g_free(newdoms);
-        }
-    }
-    doDebug = debug;
-}
+//void
+//virt_viewer_app_set_debug(gboolean debug)
+//{
+//    if (debug) {
+//        const gchar *doms = g_getenv("G_MESSAGES_DEBUG");
+//        if (!doms) {
+//            g_setenv("G_MESSAGES_DEBUG", G_LOG_DOMAIN, 1);
+//        } else if (!g_str_equal(doms, "all") &&
+//                   !strstr(doms, G_LOG_DOMAIN)) {
+//            gchar *newdoms = g_strdup_printf("%s %s", doms, G_LOG_DOMAIN);
+//            g_setenv("G_MESSAGES_DEBUG", newdoms, 1);
+//            g_free(newdoms);
+//        }
+//    }
+//    doDebug = debug;
+//}
 
 static GtkWidget*
 virt_viewer_app_make_message_dialog(VirtViewerApp *self,
@@ -1875,7 +1875,7 @@ virt_viewer_app_on_application_startup(GApplication *app)
 
     self->priv->resource = virt_viewer_get_resource();
 
-    virt_viewer_app_set_debug(opt_debug);
+    //virt_viewer_app_set_debug(opt_debug);virt_viewer_app_set_debug
     virt_viewer_app_set_fullscreen(self, opt_fullscreen);
 
     self->priv->verbose = opt_verbose;
@@ -2657,20 +2657,20 @@ virt_viewer_app_add_option_entries(G_GNUC_UNUSED VirtViewerApp *self,
           N_("Display version information"), NULL },*/
         { "manual mode", 'm', 0, G_OPTION_ARG_NONE, &opt_manual_mode,
           N_("Manual mode. Direct connection to VM"), NULL },
-        { "zoom", 'z', 0, G_OPTION_ARG_INT, &opt_zoom,
-          N_("Zoom level of window, in percentage"), "ZOOM" },
-        { "full-screen", 'f', 0, G_OPTION_ARG_NONE, &opt_fullscreen,
-          N_("Open in full screen mode (adjusts guest resolution to fit the client)"), NULL },
-        { "hotkeys", 'H', 0, G_OPTION_ARG_STRING, &opt_hotkeys,
-          N_("Customise hotkeys"), NULL },
-        { "kiosk", 'k', 0, G_OPTION_ARG_NONE, &opt_kiosk,
-          N_("Enable kiosk mode"), NULL },
-        { "kiosk-quit", '\0', 0, G_OPTION_ARG_CALLBACK, option_kiosk_quit,
-          N_("Quit on given condition in kiosk mode"), N_("<never|on-disconnect>") },
+//        { "zoom", 'z', 0, G_OPTION_ARG_INT, &opt_zoom,
+//          N_("Zoom level of window, in percentage"), "ZOOM" },
+//        { "full-screen", 'f', 0, G_OPTION_ARG_NONE, &opt_fullscreen,
+//          N_("Open in full screen mode (adjusts guest resolution to fit the client)"), NULL },
+//        { "hotkeys", 'H', 0, G_OPTION_ARG_STRING, &opt_hotkeys,
+//          N_("Customise hotkeys"), NULL },
+//        { "kiosk", 'k', 0, G_OPTION_ARG_NONE, &opt_kiosk,
+//          N_("Enable kiosk mode"), NULL },
+//        { "kiosk-quit", '\0', 0, G_OPTION_ARG_CALLBACK, option_kiosk_quit,
+//          N_("Quit on given condition in kiosk mode"), N_("<never|on-disconnect>") },
         { "verbose", 'v', 0, G_OPTION_ARG_NONE, &opt_verbose,
           N_("Display verbose information"), NULL },
-        { "debug", '\0', 0, G_OPTION_ARG_NONE, &opt_debug,
-          N_("Display debugging information"), NULL },
+//        { "debug", '\0', 0, G_OPTION_ARG_NONE, &opt_debug,
+//          N_("Display debugging information"), NULL },
         { NULL, 0, 0, G_OPTION_ARG_NONE, NULL, NULL, NULL }
     };
 

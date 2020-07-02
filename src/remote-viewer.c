@@ -94,12 +94,12 @@ static void
 remote_viewer_add_option_entries(VirtViewerApp *self, GOptionContext *context, GOptionGroup *group)
 {
     static const GOptionEntry options[] = {
-        { "title", 't', 0, G_OPTION_ARG_STRING, &opt_title,
-          N_("Set window title"), NULL },
-#ifdef HAVE_SPICE_GTK
-        { "spice-controller", '\0', 0, G_OPTION_ARG_NONE, &opt_controller,
-          N_("Open connection using Spice controller communication"), NULL },
-#endif
+//        { "title", 't', 0, G_OPTION_ARG_STRING, &opt_title,
+//          N_("Set window title"), NULL },
+//#ifdef HAVE_SPICE_GTK
+//        { "spice-controller", '\0', 0, G_OPTION_ARG_NONE, &opt_controller,
+//          N_("Open connection using Spice controller communication"), NULL },
+//#endif
         { G_OPTION_REMAINING, '\0', 0, G_OPTION_ARG_STRING_ARRAY, &opt_args,
           NULL, "URI|VV-FILE" },
         { NULL, 0, 0, G_OPTION_ARG_NONE, NULL, NULL, NULL }
