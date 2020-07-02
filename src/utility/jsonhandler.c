@@ -57,19 +57,37 @@ JsonObject *json_object_get_object_member_safely(JsonObject *object, const gchar
     return NULL;
 }
 
-JsonObject *jsonhandler_get_data_object(JsonParser *parser, const gchar *json_str)
+JsonObject *jsonhandler_get_data_or_errors_object(JsonParser *parser, const gchar *json_str,
+        ServerReplyType *server_reply_type)
 {
     if (!json_str)
-        return NULL;
+        goto total_fail;
 
     JsonObject *root_object = get_root_json_object(parser, json_str);
     if (!root_object)
-        return NULL;
+        goto total_fail;
 
-    // if response contains errors feild we consider request as a failure and dont parse the data
-    if (json_object_has_member(root_object, "errors"))
-        return NULL;
+    // errors
+    if (json_object_has_member(root_object, "errors")) {
 
-    JsonObject *data_member_object = json_object_get_object_member_safely(root_object, "data");
-    return data_member_object;
+        JsonObject *errors_member_object = json_object_get_object_member_safely(root_object, "errors");
+        if (errors_member_object) {
+            *server_reply_type = SERVER_REPLY_TYPE_ERROR;
+            return errors_member_object;
+        }
+    }
+
+    // data
+    if (json_object_has_member(root_object, "data")) {
+
+        JsonObject *data_member_object = json_object_get_object_member_safely(root_object, "data");
+        if (data_member_object) {
+            *server_reply_type = SERVER_REPLY_TYPE_DATA;
+            return data_member_object;
+        }
+    }
+
+total_fail:
+    *server_reply_type = SERVER_REPLY_TYPE_UNKNOWN;
+    return NULL;
 }

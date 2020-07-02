@@ -11,7 +11,7 @@
 #include "async.h"
 #include "vdi_ws_client.h"
 
-#define TIMEOUT 500000 // 1 sec
+#define TIMEOUT 1000000 // 1 sec
 #define WS_READ_TIMEOUT 200000
 
 // static functions declarations
