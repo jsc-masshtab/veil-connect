@@ -86,12 +86,14 @@ freerdp на винде возможно собрать только с помо
  Install Clion
 
 
-In Clion open CmakeListx.txt and build the project  
+In Clion open CmakeListx.txt and build the project
 
 
 
 ## INSTALL AND LAUNCH
 
-On Windows unpack archive vdi_client_release_win7.zip and just launch executable file
+Windows
+Запустить инсталятор, следовать инструкциям. 
 
-On Linux unpack archive vdi_client_release_Ubuntu_18_04_2_LTS.tar.xz and execute script start_vdi_client.sh
+Linux
+Установить deb пакет.

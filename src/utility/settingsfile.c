@@ -14,26 +14,29 @@ get_ini_file_name()
         ini_file_path = g_strdup("veil_client_settings.ini");
 #elif _WIN32
         const gchar *locap_app_data_path = g_getenv("LOCALAPPDATA");
-        // create log dir in local
+        // create app dir in local
         gchar *app_data_dir = g_strdup_printf("%s/%s/", locap_app_data_path, PACKAGE);
         g_mkdir_with_parents(app_data_dir, 0755);
         // ini file full path
         ini_file_path = g_strdup_printf("%s/veil_client_settings.ini", app_data_dir);
         g_free(app_data_dir);
+#endif
 
-        // prefill (maybe temp) if file didnt exist
         if (!g_file_test(ini_file_path, G_FILE_TEST_EXISTS)) {
+            // create file
+            FILE *fp = fopen (get_ini_file_name(), "ab"); fclose(fp);
+            // prefill file (maybe temp)
             write_str_to_ini_file("RDPSettings", "rdp_pixel_format", "BGRA16");
             write_str_to_ini_file("RDPSettings", "rdp_args", "");
         }
-#endif
     }
     return ini_file_path;
 }
 
 void free_ini_file_name()
 {
-    g_free(ini_file_path);
+    if (ini_file_path)
+        g_free(ini_file_path);
 }
 
 // Это конечно не оптимально открывать файл каждый раз чтоб записать или получить одно значение.
