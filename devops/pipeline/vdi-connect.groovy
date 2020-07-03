@@ -1,7 +1,7 @@
 def currentDate = new Date().format('yyyyMMddHHmmss')
-def slackNotify = true
+def rocketNotify = true
 
-notifyBuild(slackNotify, "STARTED", "Start new build. Version: ${currentDate}")
+notifyBuild(rocketNotify, ":bell: STARTED", "Start new build. Version: ${currentDate}")
 
 pipeline {
     agent none
@@ -10,17 +10,17 @@ pipeline {
         failure {
             println "Something goes wrong"
             println "Current build marked as ${currentBuild.result}"
-            notifyBuild(slackNotify,"FAILED", "Something goes wrong. Version: ${currentDate}")
+            notifyBuild(rocketNotify,":x: FAILED", "Something goes wrong. Version: ${currentDate}")
         }
 
         aborted {
             println "Build was interrupted manually"
             println "Current build marked as ${currentBuild.result}"
-            notifyBuild(slackNotify,"FAILED", "Build was interrupted manually. Version: ${currentDate}")
+            notifyBuild(rocketNotify,":x: FAILED", "Build was interrupted manually. Version: ${currentDate}")
         }
 
         success {
-            notifyBuild(slackNotify, "SUCCESSFUL","Build SUCCESSFUL. Version: ${currentDate}")
+            notifyBuild(rocketNotify, ":white_check_mark: SUCCESSFUL","Build SUCCESSFUL. Version: ${currentDate}")
         }
     }
 
@@ -535,29 +535,14 @@ pipeline {
     }
 }
 
-def notifyBuild(slackNotify, buildStatus, msg) {
+def notifyBuild(rocketNotify, buildStatus, msg) {
     buildStatus =  buildStatus ?: 'SUCCESSFUL'
 
-    def colorName = 'RED'
-    def colorCode = '#FF0000'
-    def subject = "${buildStatus}: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]'"
-    def summary = "${subject} (${env.BUILD_URL})" + "\n"
+    def summary = "${buildStatus}: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]' (${env.BUILD_URL})" + "\n"
 
-    if (buildStatus == 'STARTED') {
-        color = 'YELLOW'
-        colorCode = '#FFFF00'
-        summary += "${msg}"
-    } else if (buildStatus == 'SUCCESSFUL') {
-        color = 'GREEN'
-        colorCode = '#00FF00'
-        summary += "${msg}"
-    } else {
-        color = 'RED'
-        colorCode = '#FF0000'
-        summary += "${msg}"
-    }
+    summary += "${msg}"
 
-    if (slackNotify){
-        slackSend (color: colorCode, message: summary)
+    if (rocketNotify){
+        rocketSend (channel: 'jenkins-notify', message: summary, serverUrl: '192.168.14.210', trustSSL: true, rawMessage: true)
     }
 }
