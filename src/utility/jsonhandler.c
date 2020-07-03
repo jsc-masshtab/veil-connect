@@ -50,26 +50,61 @@ JsonArray *json_object_get_array_member_safely(JsonObject *object, const gchar *
 
 JsonObject *json_object_get_object_member_safely(JsonObject *object, const gchar *member_name)
 {
-    if (json_object_has_member(object, member_name))
-        return json_object_get_object_member(object, member_name);
+    if (json_object_has_member(object, member_name)) {
 
-    printf("json member '%s' does not exist \n", member_name);
+        JsonNode *json_node = json_object_get_member(object, member_name);
+        if (JSON_NODE_HOLDS_OBJECT(json_node))
+            return json_object_get_object_member(object, member_name);
+    }
+
+    printf("json object member '%s' does not exist \n", member_name);
     return NULL;
 }
 
-JsonObject *jsonhandler_get_data_object(JsonParser *parser, const gchar *json_str)
+JsonObject *jsonhandler_get_data_or_errors_object(JsonParser *parser, const gchar *json_str,
+        ServerReplyType *server_reply_type)
 {
     if (!json_str)
-        return NULL;
+        goto total_fail;
 
     JsonObject *root_object = get_root_json_object(parser, json_str);
     if (!root_object)
-        return NULL;
+        goto total_fail;
 
-    // if response contains errors feild we consider request as a failure and dont parse the data
-    if (json_object_has_member(root_object, "errors"))
-        return NULL;
+    // errors
+    if (json_object_has_member(root_object, "errors")) {
 
-    JsonObject *data_member_object = json_object_get_object_member_safely(root_object, "data");
-    return data_member_object;
+        JsonArray *errors_json_array =  json_object_get_array_member_safely(root_object, "errors");
+
+        if (errors_json_array && json_array_get_length(errors_json_array) == 1) {
+            JsonObject *error_json_object_0 = json_array_get_object_element(errors_json_array, (guint) 0);
+
+            if (error_json_object_0) {
+                *server_reply_type = SERVER_REPLY_TYPE_ERROR;
+                return error_json_object_0;
+            }
+            else {
+                printf("Errors json first element in is NOT json object!\n");
+                goto total_fail;
+            }
+        }
+        else {
+            printf("Errors json array is empty!\n");
+            goto total_fail;
+        }
+    }
+
+    // data
+    if (json_object_has_member(root_object, "data")) {
+
+        JsonObject *data_member_object = json_object_get_object_member_safely(root_object, "data");
+        if (data_member_object) {
+            *server_reply_type = SERVER_REPLY_TYPE_DATA;
+            return data_member_object;
+        }
+    }
+
+total_fail:
+    *server_reply_type = SERVER_REPLY_TYPE_UNKNOWN;
+    return NULL;
 }

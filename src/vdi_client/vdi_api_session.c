@@ -88,58 +88,72 @@ static gboolean vdi_api_session_get_token()
     printf("msg->response_body->data %s\n", msg->response_body->data);
 
     if(msg->status_code != OK_RESPONSE) {
+        g_object_unref(msg);
         printf("%s : Unable to get token\n", (const char *)__func__);
         return FALSE;
     }
 
+    // extract reply
     JsonParser *parser = json_parser_new();
-    JsonObject *data_member_object = jsonhandler_get_data_object(parser, msg->response_body->data);
 
-    if (!data_member_object) {
-        g_object_unref(msg);
-        g_object_unref (parser);
-        return FALSE;
+    ServerReplyType server_reply_type;
+    JsonObject *reply_json_object = jsonhandler_get_data_or_errors_object(parser, msg->response_body->data,
+            &server_reply_type);
+
+    switch (server_reply_type) {
+        case SERVER_REPLY_TYPE_DATA: {
+            free_memory_safely(&vdiSession.jwt);
+            vdiSession.jwt = g_strdup(json_object_get_string_member_safely(reply_json_object, "access_token"));
+            printf("new token: %s\n", vdiSession.jwt);
+
+            g_object_unref(msg);
+            g_object_unref(parser);
+            return TRUE;
+        }
+        case SERVER_REPLY_TYPE_ERROR:
+        case SERVER_REPLY_TYPE_UNKNOWN:
+        default: {
+            g_object_unref(msg);
+            g_object_unref(parser);
+            return FALSE;
+        }
     }
-
-    free_memory_safely(&vdiSession.jwt);
-    vdiSession.jwt = g_strdup(json_object_get_string_member_safely (data_member_object, "access_token"));
-    printf("new token: %s\n", vdiSession.jwt);
-
-    g_object_unref(msg);
-    g_object_unref (parser);
-    return TRUE;
 }
 
 // connect to reddis and subscribe for licence handling
-static void vdi_api_session_register_for_license()
-{
+static void vdi_api_session_register_for_license() {
     if (vdiSession.redis_client.is_subscribed)
         return;
 
     // do request to vdi server in order to get data fot Redis connection
     gchar *url_str = g_strdup_printf("%s/client/message_broker/", vdiSession.api_url);
     gchar *response_body_str = api_call("GET", url_str, NULL);
-    printf("%s: response_body_str %s\n", (const char *)__func__, response_body_str);
+    printf("%s: response_body_str %s\n", (const char *) __func__, response_body_str);
     g_free(url_str);
 
     // parse the response
     JsonParser *parser = json_parser_new();
-    JsonObject *data_member_object = jsonhandler_get_data_object(parser, response_body_str);
 
-    if (!data_member_object)
-        return;
+    ServerReplyType server_reply_type;
+    JsonObject *data_member_object = jsonhandler_get_data_or_errors_object(parser, response_body_str,
+                                                                           &server_reply_type);
 
-    vdi_redis_client_clear_connection_data(&vdiSession.redis_client);
-    vdiSession.redis_client.adress = g_strdup(vdiSession.vdi_ip);
-    vdiSession.redis_client.port = json_object_get_int_member_safely(data_member_object, "port");
-    vdiSession.redis_client.password = g_strdup(
+    if (server_reply_type == SERVER_REPLY_TYPE_DATA) {
+
+        vdi_redis_client_clear_connection_data(&vdiSession.redis_client);
+        vdiSession.redis_client.adress = g_strdup(vdiSession.vdi_ip);
+        vdiSession.redis_client.port = json_object_get_int_member_safely(data_member_object, "port");
+        vdiSession.redis_client.password = g_strdup(
             g_strdup(json_object_get_string_member_safely(data_member_object, "password")));
-    vdiSession.redis_client.channel = g_strdup(
+        vdiSession.redis_client.channel = g_strdup(
             g_strdup(json_object_get_string_member_safely(data_member_object, "channel")));
-    vdiSession.redis_client.db = json_object_get_int_member_safely(data_member_object, "db");
+        vdiSession.redis_client.db = json_object_get_int_member_safely(data_member_object, "db");
 
-    // connect to Redis and subscribe to channel
-    vdi_redis_client_init(&vdiSession.redis_client);
+        // connect to Redis and subscribe to channel
+        vdi_redis_client_init(&vdiSession.redis_client);
+    }
+
+    g_object_unref(parser);
 }
 
 const gchar *vdi_session_remote_protocol_to_str(VdiVmRemoteProtocol vm_remote_protocol)
@@ -148,11 +162,12 @@ const gchar *vdi_session_remote_protocol_to_str(VdiVmRemoteProtocol vm_remote_pr
         case VDI_SPICE_PROTOCOL:
             return "spice";
         case VDI_RDP_PROTOCOL:
-            return "rdp";
         case VDI_RDP_WINDOWS_NATIVE_PROTOCOL:
             return "rdp";
         case VDI_ANOTHER_REMOTE_PROTOCOL:
             return "unknown_protocol";
+        default:
+            return "";
     }
 }
 
@@ -219,7 +234,7 @@ void set_vdi_credentials(const gchar *username, const gchar *password, const gch
     vdiSession.vdi_port = g_strdup(port);
 
     const gchar *http_protocol = determine_http_protocol_by_port(port);
-    vdiSession.api_url = g_strdup_printf("%s://%s:%s/api", http_protocol, vdiSession.vdi_ip, vdiSession.vdi_port);
+    vdiSession.api_url = g_strdup_printf("%s://%s:%s", http_protocol, vdiSession.vdi_ip, vdiSession.vdi_port); // api
     vdiSession.auth_url = g_strdup_printf("%s/auth/", vdiSession.api_url);
 
     vdiSession.is_ldap = is_ldap;
@@ -356,10 +371,13 @@ void get_vm_from_pool(GTask       *task,
 
     // parse response
     JsonParser *parser = json_parser_new();
-    JsonObject *data_member_object = jsonhandler_get_data_object(parser, response_body_str);
+
+    ServerReplyType server_reply_type;
+    JsonObject *data_member_object = jsonhandler_get_data_or_errors_object(parser, response_body_str,
+            &server_reply_type);
 
     // no point to parse if data is invalid
-    if (!data_member_object) {
+    if (server_reply_type != SERVER_REPLY_TYPE_DATA) {
         g_object_unref(parser);
         free_memory_safely(&response_body_str);
         g_task_return_pointer(task, NULL, NULL);
@@ -371,7 +389,8 @@ void get_vm_from_pool(GTask       *task,
     vdi_vm_data->vm_port = json_object_get_int_member_safely(data_member_object, "port");
     vdi_vm_data->vm_password = g_strdup(json_object_get_string_member_safely(data_member_object, "password"));
     vdi_vm_data->message = g_strdup(json_object_get_string_member_safely(data_member_object, "message"));
-    vdi_vm_data->vm_verbose_name = g_strdup(json_object_get_string_member_safely(data_member_object, "vm_verbose_name"));
+    vdi_vm_data->vm_verbose_name = g_strdup(json_object_get_string_member_safely(
+            data_member_object, "vm_verbose_name"));
 
     printf("vm_host %s \n", vdi_vm_data->vm_host);
     printf("vm_port %i \n", vdi_vm_data->vm_port);
@@ -379,6 +398,7 @@ void get_vm_from_pool(GTask       *task,
     printf("vm_verbose_name %s \n", vdi_vm_data->vm_verbose_name);
 
     g_object_unref(parser);
+    free_memory_safely(&response_body_str);
     g_task_return_pointer(task, vdi_vm_data, NULL); // return pointer must be freed
 }
 

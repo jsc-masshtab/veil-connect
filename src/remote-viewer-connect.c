@@ -117,7 +117,7 @@ save_data_to_ini_file(RemoteViewerData *ci)
 
 // set error message
 static void
-set_error_message_to_label(GtkLabel *label, const gchar *message)
+set_message_to_info_label(GtkLabel *label, const gchar *message)
 {
     if (!message)
         return;
@@ -153,7 +153,7 @@ on_get_vm_from_pool_finished(GObject *source_object G_GNUC_UNUSED,
     GError *error = NULL;
     gpointer  ptr_res =  g_task_propagate_pointer (G_TASK (res), &error); // take ownership
     if (ptr_res == NULL) {
-        set_error_message_to_label(GTK_LABEL(ci->message_display_label), "Не удалось получить вм из пула");
+        set_message_to_info_label(GTK_LABEL(ci->message_display_label), "Не удалось получить вм из пула");
         return;
     }
 
@@ -161,7 +161,7 @@ on_get_vm_from_pool_finished(GObject *source_object G_GNUC_UNUSED,
     // if port == 0 it means VDI server can not provide a vm
     if (vdi_vm_data->vm_port == 0) {
         const gchar *user_message = vdi_vm_data->message ? vdi_vm_data->message : "Не удалось получить вм из пула";
-        set_error_message_to_label(GTK_LABEL(ci->message_display_label), user_message);
+        set_message_to_info_label(GTK_LABEL(ci->message_display_label), user_message);
 
     } else {
         ci->dialog_window_response = GTK_RESPONSE_OK;
@@ -198,7 +198,7 @@ on_vdi_api_session_log_in_finished(GObject *source_object G_GNUC_UNUSED,
 
         shutdown_loop(ci->loop);
     } else {
-        set_error_message_to_label(GTK_LABEL(ci->message_display_label), "Не удалось авторизоваться");
+        set_message_to_info_label(GTK_LABEL(ci->message_display_label), "Не удалось авторизоваться");
     }
 }
 
@@ -218,7 +218,7 @@ void connect_to_vdi_server(RemoteViewerData *ci)
         // get pool id from settings file
         gchar *last_pool_id = read_str_from_ini_file("RemoteViewerConnect", "last_pool_id");
         if (!last_pool_id) {
-            set_error_message_to_label(GTK_LABEL(ci->message_display_label), "Нет информации о предыдущем пуле");
+            set_message_to_info_label(GTK_LABEL(ci->message_display_label), "Нет информации о предыдущем пуле");
             set_auth_dialog_state(AUTH_GUI_DEFAULT_STATE, ci);
             return;
         }
@@ -250,6 +250,8 @@ handle_connect_event(RemoteViewerData *ci)
         } else {
             connect_to_vdi_server(ci);
         }
+    } else {
+        set_message_to_info_label(GTK_LABEL(ci->message_display_label), "Не указан адрес (Настройки->Основные)");
     }
 }
 
