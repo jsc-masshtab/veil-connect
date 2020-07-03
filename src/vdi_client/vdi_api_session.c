@@ -234,7 +234,7 @@ void set_vdi_credentials(const gchar *username, const gchar *password, const gch
     vdiSession.vdi_port = g_strdup(port);
 
     const gchar *http_protocol = determine_http_protocol_by_port(port);
-    vdiSession.api_url = g_strdup_printf("%s://%s:%s", http_protocol, vdiSession.vdi_ip, vdiSession.vdi_port); // api
+    vdiSession.api_url = g_strdup_printf("%s://%s:%s/api", http_protocol, vdiSession.vdi_ip, vdiSession.vdi_port);
     vdiSession.auth_url = g_strdup_printf("%s/auth/", vdiSession.api_url);
 
     vdiSession.is_ldap = is_ldap;
