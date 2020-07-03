@@ -376,30 +376,32 @@ void get_vm_from_pool(GTask       *task,
     JsonObject *data_member_object = jsonhandler_get_data_or_errors_object(parser, response_body_str,
             &server_reply_type);
 
-    // no point to parse if data is invalid
-    if (server_reply_type != SERVER_REPLY_TYPE_DATA) {
+
+    if (server_reply_type == SERVER_REPLY_TYPE_DATA) {
+
+        VdiVmData *vdi_vm_data = calloc(1, sizeof(VdiVmData));
+        vdi_vm_data->vm_host = g_strdup(json_object_get_string_member_safely(data_member_object, "host"));
+        vdi_vm_data->vm_port = json_object_get_int_member_safely(data_member_object, "port");
+        vdi_vm_data->vm_password = g_strdup(json_object_get_string_member_safely(data_member_object, "password"));
+        vdi_vm_data->message = g_strdup(json_object_get_string_member_safely(data_member_object, "message"));
+        vdi_vm_data->vm_verbose_name = g_strdup(json_object_get_string_member_safely(
+                data_member_object, "vm_verbose_name"));
+
+        printf("vm_host %s \n", vdi_vm_data->vm_host);
+        printf("vm_port %i \n", vdi_vm_data->vm_port);
+        printf("vm_password %s \n", vdi_vm_data->vm_password);
+        printf("vm_verbose_name %s \n", vdi_vm_data->vm_verbose_name);
+
         g_object_unref(parser);
         free_memory_safely(&response_body_str);
-        g_task_return_pointer(task, NULL, NULL);
+        g_task_return_pointer(task, vdi_vm_data, NULL); // return pointer must be freed
         return;
     }
 
-    VdiVmData *vdi_vm_data = calloc(1, sizeof(VdiVmData));
-    vdi_vm_data->vm_host = g_strdup(json_object_get_string_member_safely(data_member_object, "host"));
-    vdi_vm_data->vm_port = json_object_get_int_member_safely(data_member_object, "port");
-    vdi_vm_data->vm_password = g_strdup(json_object_get_string_member_safely(data_member_object, "password"));
-    vdi_vm_data->message = g_strdup(json_object_get_string_member_safely(data_member_object, "message"));
-    vdi_vm_data->vm_verbose_name = g_strdup(json_object_get_string_member_safely(
-            data_member_object, "vm_verbose_name"));
-
-    printf("vm_host %s \n", vdi_vm_data->vm_host);
-    printf("vm_port %i \n", vdi_vm_data->vm_port);
-    printf("vm_password %s \n", vdi_vm_data->vm_password);
-    printf("vm_verbose_name %s \n", vdi_vm_data->vm_verbose_name);
-
+    // no point to parse if data is invalid
     g_object_unref(parser);
     free_memory_safely(&response_body_str);
-    g_task_return_pointer(task, vdi_vm_data, NULL); // return pointer must be freed
+    g_task_return_pointer(task, NULL, NULL);
 }
 
 void do_action_on_vm(GTask      *task,
