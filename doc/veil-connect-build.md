@@ -200,3 +200,23 @@ tcl86 zlib1) do (copy C:\msys32\mingw64\bin\%%I.dll)
 ```
 iscc "C:\veil-connect\devops\inno-setup\veil-connect-installer.iss"
 ```
+
+## Универсальный установщик Linux
+### Подготовка
+0. Сборка выполняется в любой из трех ОС: Debian, Ubuntu или Centos
+1. Скопировать все собарнные linux-пакеты в отдельный каталог (например /tmp/veil-connect):
+```
+mkdir -p /tmp/veil-connect
+cp veil-connect*.deb veil-connect*.rpm /tmp/veil-connect
+```
+### Сборка
+2. Скопировать установочный скрипт в каталог `/tmp/veil-connect` и назначить ему права на запуск:
+```
+cp veil-connect-linux-installer.sh /tmp/veil-connect
+chmod +x /tmp/veil-connect/veil-connect-linux-installer.sh
+```
+3. Выполнить команду для сборки tar-архива:
+```
+cd /tmp/veil-connect && tar cvf veil-connect-1.2.10-linux.tar --exclude=*.exe ./*
+```
+4. Универсальный установщик Linux будет создан в каталоге `/tmp/veil-connect`
