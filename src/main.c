@@ -32,7 +32,10 @@ setup_logging()
 {
     // get ts
     gint64 cur_ts = g_get_real_time();
-    gchar *ts_string = g_strdup_printf("%lld", (long long int)cur_ts);
+
+    GDateTime *datetime = g_date_time_new_now_local();
+    gchar *data_time_string = g_date_time_format(datetime, "%c");
+    g_date_time_unref(datetime);
 
     // log dir dipends on OS
 #ifdef __linux__
@@ -46,21 +49,21 @@ setup_logging()
 #endif
 
     // crash handler
-    gchar *bt_file_name = g_strconcat(log_dir, "/", ts_string, "_backtrace.txt", NULL);
+    gchar *bt_file_name = g_strconcat(log_dir, "/", data_time_string, "_backtrace.txt", NULL);
     install_crash_handler(bt_file_name);
 
     //error output
-    gchar *stderr_file_name = g_strconcat(log_dir, "/", ts_string, "_stderr.txt", NULL);
+    gchar *stderr_file_name = g_strconcat(log_dir, "/", data_time_string, "_stderr.txt", NULL);
     FILE *err_file_desc = freopen(stderr_file_name, "w", stderr);
     (void)err_file_desc;
 
     //stdout output
-    gchar *stdout_file_name = g_strconcat(log_dir, "/", ts_string, "_stdout.txt", NULL);
+    gchar *stdout_file_name = g_strconcat(log_dir, "/", data_time_string, "_stdout.txt", NULL);
     FILE *out_file_desc = freopen(stdout_file_name, "w", stdout);
     (void)out_file_desc; // it would be polite to close file descriptors
 
     // free memory
-    g_free(ts_string);
+    g_free(data_time_string);
     g_free(bt_file_name);
     g_free(stderr_file_name);
     g_free(stdout_file_name);
