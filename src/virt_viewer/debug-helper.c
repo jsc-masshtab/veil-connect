@@ -51,7 +51,7 @@ main(int argc, char *argv[])
                        program_path,
                        &si,
                        &pi)) {
-        printf("CreateProcess failed (%ld).\n", GetLastError());
+        g_info("CreateProcess failed (%ld).\n", GetLastError());
         rv = 1;
         goto end;
     }

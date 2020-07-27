@@ -105,7 +105,7 @@ static void rdp_viewer_window_toggle_fullscreen(RdpViewerData *rdp_viewer_data, 
                                           gtk_widget_get_window(rdp_viewer_data->rdp_viewer_window),
                                           GDK_SEAT_CAPABILITY_KEYBOARD, TRUE, NULL, NULL, NULL, NULL);
 
-        printf("%s ggs: %i\n", (const char *)__func__, ggs);
+        g_info("%s ggs: %i", (const char *)__func__, ggs);
 
         // fullscreen
         gtk_window_set_resizable(GTK_WINDOW(rdp_viewer_data->rdp_viewer_window), TRUE);
@@ -148,7 +148,7 @@ static guint get_nkeys(const guint *keys)
 // if rdp session closed the context contains trash
 static gboolean rdp_viewer_window_deleted_cb(gpointer userdata)
 {
-    printf("%s\n", (const char *)__func__);
+    g_info("%s", (const char *)__func__);
     RdpViewerData *rdp_viewer_data = (RdpViewerData *)userdata;
     shutdown_loop(*rdp_viewer_data->loop_p);
 
@@ -174,13 +174,13 @@ static void rdp_viewer_event_on_mapped(GtkWidget *widget G_GNUC_UNUSED, GdkEvent
 ////    }
 
 ////    gdouble time_elapsed = g_timer_elapsed(timer, NULL);
-////    printf("%s time_elapsed: %f \n", (const char *)__func__, time_elapsed);
+////    g_info("%s time_elapsed: %f \n", (const char *)__func__, time_elapsed);
 
 
 ////    if (!is_running)
 ////        return TRUE;
 
-//    //printf("%s BEG \n", (const char *)__func__);
+//    //g_info("%s BEG \n", (const char *)__func__);
 
 //    //rdpContext* context = user_data;
 //    //ExtendedRdpContext* tf = (ExtendedRdpContext*)context;
@@ -203,14 +203,14 @@ static gboolean gtk_update(gpointer user_data)
 
 static void rdp_viewer_item_details_activated(GtkWidget *menu G_GNUC_UNUSED, gpointer userdata G_GNUC_UNUSED)
 {
-    printf("%s\n", (const char *)__func__);
+    g_info("%s", (const char *)__func__);
     GError *error = NULL;
     gtk_show_uri_on_window(NULL, "http://mashtab.org/files/veil/index.html", GDK_CURRENT_TIME, &error);
 }
 
 static void rdp_viewer_item_about_activated(GtkWidget *menu G_GNUC_UNUSED, gpointer userdata)
 {
-    printf("%s\n", (const char *)__func__);
+    g_info("%s", (const char *)__func__);
     // todo: code repeat with virt viewer
     GtkBuilder *about;
     GtkWidget *dialog;
@@ -263,7 +263,7 @@ static void rdp_viewer_window_menu_send(GtkWidget *menu, gpointer userdata)
     rdpContext context = ex_rdp_context->context;
 
     int *key_shortcut_index = (g_object_get_data(G_OBJECT(menu), "key_shortcut_index"));
-    printf("%s %i %i %i\n", (const char *)__func__,
+    g_info("%s %i %i %i", (const char *)__func__,
            keyCombos[*key_shortcut_index].keys[0], keyCombos[*key_shortcut_index].keys[1],
             keyCombos[*key_shortcut_index].keys[2]);
     rdp_viewer_window_send_key_shortcut(&context, *key_shortcut_index);
@@ -272,7 +272,7 @@ static void rdp_viewer_window_menu_send(GtkWidget *menu, gpointer userdata)
 static void
 rdp_viewer_window_menu_switch_off(GtkWidget *menu G_GNUC_UNUSED, gpointer userdata)
 {
-    printf("%s\n", (const char *)__func__);
+    g_info("%s", (const char *)__func__);
     RdpViewerData *rdp_viewer_data = (RdpViewerData *)userdata;
     *rdp_viewer_data->dialog_window_response_p = GTK_RESPONSE_CANCEL;
     shutdown_loop(*rdp_viewer_data->loop_p);
@@ -281,42 +281,42 @@ rdp_viewer_window_menu_switch_off(GtkWidget *menu G_GNUC_UNUSED, gpointer userda
 static void
 rdp_viewer_window_menu_start_vm(GtkWidget *menu G_GNUC_UNUSED, gpointer userdata G_GNUC_UNUSED)
 {
-    printf("%s\n", (const char *)__func__);
+    g_info("%s", (const char *)__func__);
     vdi_api_session_do_action_on_vm("start", FALSE);
 }
 
 static void
 rdp_viewer_window_menu_suspend_vm(GtkWidget *menu G_GNUC_UNUSED, gpointer userdata G_GNUC_UNUSED)
 {
-    printf("%s\n", (const char *)__func__);
+    g_info("%s", (const char *)__func__);
     vdi_api_session_do_action_on_vm("suspend", FALSE);
 }
 
 static void
 rdp_viewer_window_menu_shutdown_vm(GtkWidget *menu G_GNUC_UNUSED, gpointer userdata G_GNUC_UNUSED)
 {
-    printf("%s\n", (const char *)__func__);
+    g_info("%s", (const char *)__func__);
     vdi_api_session_do_action_on_vm("shutdown", FALSE);
 }
 
 static void
 rdp_viewer_window_menu_shutdown_vm_force(GtkWidget *menu G_GNUC_UNUSED, gpointer userdata G_GNUC_UNUSED)
 {
-    printf("%s\n", (const char *)__func__);
+    g_info("%s", (const char *)__func__);
     vdi_api_session_do_action_on_vm("shutdown", TRUE);
 }
 
 static void
 rdp_viewer_window_menu_reboot_vm(GtkWidget *menu G_GNUC_UNUSED, gpointer userdata G_GNUC_UNUSED)
 {
-    printf("%s\n", (const char *)__func__);
+    g_info("%s", (const char *)__func__);
     vdi_api_session_do_action_on_vm("reboot", FALSE);
 }
 
 static void
 rdp_viewer_window_menu_reboot_vm_force(GtkWidget *menu G_GNUC_UNUSED, gpointer userdata G_GNUC_UNUSED)
 {
-    printf("%s\n", (const char *)__func__);
+    g_info("%s", (const char *)__func__);
     vdi_api_session_do_action_on_vm("reboot", TRUE);
 }
 
@@ -341,7 +341,7 @@ static void rdp_viewer_control_menu_setup(GtkBuilder *builder, RdpViewerData *rd
 
 static void rdp_viewer_item_fullscreen_activated(GtkWidget *menu G_GNUC_UNUSED, gpointer userdata)
 {
-    printf("%s\n", (const char *)__func__);
+    g_info("%s", (const char *)__func__);
     RdpViewerData *rdp_viewer_data = (RdpViewerData *)userdata;
     rdp_viewer_window_toggle_fullscreen(rdp_viewer_data, TRUE);
 }
@@ -478,7 +478,7 @@ void rdp_viewer_window_destroy(RdpViewerData *rdp_viewer_data)
 void rdp_viewer_window_set_monitor_data(RdpViewerData *rdp_viewer_data, GdkRectangle geometry, int monitor_index)
 {
     rdp_viewer_data->monitor_index = monitor_index;
-    printf ("TESTT W: %u x H:%u\n", geometry.width, geometry.height);
+    g_info("TESTT W: %u x H:%u", geometry.width, geometry.height);
     rdp_viewer_data->monitor_geometry = geometry;
 
     gtk_window_resize(GTK_WINDOW(rdp_viewer_data->rdp_viewer_window),

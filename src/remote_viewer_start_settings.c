@@ -85,7 +85,7 @@ fill_connect_settings_data_from_gui(ConnectSettingsData *connect_settings_data, 
     const gchar *address_gui_str = gtk_entry_get_text(GTK_ENTRY(dialog_data->address_entry));
 
     is_matched = g_regex_match_simple(pattern, address_gui_str,G_REGEX_CASELESS,G_REGEX_MATCH_ANCHORED);
-    //printf("%s is_matched %i\n", (const char *)__func__, is_matched);
+    //g_info("%s is_matched %i\n", (const char *)__func__, is_matched);
 
     if (is_matched) {
         gtk_widget_set_name(dialog_data->address_entry, "connection-address-entry");
@@ -345,7 +345,7 @@ fill_connect_settings_data_from_ini_file(ConnectSettingsData *connect_settings_d
     // domain
     free_memory_safely(&connect_settings_data->domain);
     connect_settings_data->domain = read_str_from_ini_file(paramToFileGrpoup, "domain");
-    //printf("%s connect_settings_data->domain %s\n", (const char *)__func__, connect_settings_data->domain);
+    //g_info("%s connect_settings_data->domain %s\n", (const char *)__func__, connect_settings_data->domain);
     // ip
     free_memory_safely(&connect_settings_data->ip);
     connect_settings_data->ip = read_str_from_ini_file(paramToFileGrpoup, "ip");

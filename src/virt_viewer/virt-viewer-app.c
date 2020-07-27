@@ -244,7 +244,7 @@ virt_viewer_app_simple_message_dialog(VirtViewerApp *self,
     gtk_dialog_run(GTK_DIALOG(dialog));
     gtk_widget_destroy(dialog);
 
-    printf("%s \n", msg);
+    g_info("%s", msg);
 
     g_free(msg);
 }
@@ -566,7 +566,7 @@ void virt_viewer_app_set_window_name(VirtViewerApp *app, const gchar *vm_verbose
 {
     gchar *username = NULL;
     g_object_get(app, "username", &username, NULL);
-    printf("remembered_user %s \n", username);
+    g_info("remembered_user %s", username);
 
     // virt viewer takes its name from guest-name so lets not overcomplicate
     gchar *window_name = g_strconcat("ВМ: ", vm_verbose_name, "    Пользователь: ", username, NULL);
@@ -1448,7 +1448,7 @@ static void
 virt_viewer_app_connected(VirtViewerSession *session G_GNUC_UNUSED,
                           VirtViewerApp *self)
 {
-    printf("%s \n", (const char *)__func__);
+    g_info("%s", (const char *)__func__);
     VirtViewerAppPrivate *priv = self->priv;
 
     // turn off polling
@@ -1473,7 +1473,7 @@ void
 virt_viewer_app_disconnected(VirtViewerSession *session G_GNUC_UNUSED, const gchar *msg,
                              VirtViewerApp *self)
 {
-    printf("%s \n", (const char *)__func__);
+    g_info("%s", (const char *)__func__);
     VirtViewerAppPrivate *priv = self->priv;
     gboolean connect_error = !priv->connected && !priv->cancelled;
 
@@ -2699,7 +2699,7 @@ virt_viewer_connect_timer(VirtViewerApp *self)
 
     is_connected = virt_viewer_app_initial_connect(self, NULL);
 
-    printf("%s active %i created %i is_connected %i \n",
+    g_info("%s active %i created %i is_connected %i",
            (const char *)__func__, virt_viewer_app_is_active(self), created, is_connected);
 
     return TRUE;

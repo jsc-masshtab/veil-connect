@@ -21,6 +21,7 @@
  * Author: Daniel P. Berrange <berrange@redhat.com>
  */
 
+
 #include <config.h>
 
 #include <glib.h>
@@ -257,16 +258,42 @@ gulong virt_viewer_signal_connect_object(gpointer instance,
     return ctx->handler_id;
 }
 
-static void log_handler(const gchar *log_domain,
+static const gchar *log_level_to_str(GLogLevelFlags log_level)
+{
+    switch (log_level) {
+        case G_LOG_FLAG_FATAL:
+            return "FATAL";
+        case G_LOG_LEVEL_ERROR:
+            return "ERROR";
+        case G_LOG_LEVEL_CRITICAL:
+            return "CRITICAL";
+        case G_LOG_LEVEL_WARNING:
+            return "W";
+        case G_LOG_LEVEL_MESSAGE:
+            return "M";
+        case G_LOG_LEVEL_INFO:
+            return "I";
+        case G_LOG_LEVEL_DEBUG:
+            return "D";
+        case G_LOG_FLAG_RECURSION:
+        case G_LOG_LEVEL_MASK:
+        default:
+            return "";
+    }
+}
+
+
+static void log_handler(const gchar *log_domain G_GNUC_UNUSED,
                         GLogLevelFlags log_level,
                         const gchar *message,
-                        gpointer unused_data)
+                        gpointer unused_data G_GNUC_UNUSED)
 {
-    if (glib_check_version(2, 32, 0) != NULL)
-        if (log_level >= G_LOG_LEVEL_DEBUG && !doDebug)
-            return;
+    GDateTime *datetime = g_date_time_new_now_local();
+    gchar *data_time_string = g_date_time_format(datetime, "%T");
+    g_date_time_unref(datetime);
 
-    g_log_default_handler(log_domain, log_level, message, unused_data);
+    printf("%s %s: %s\n",log_level_to_str(log_level), data_time_string, message);
+    g_free(data_time_string);
 }
 
 #ifdef G_OS_WIN32
@@ -295,7 +322,7 @@ void virt_viewer_util_init(const char *appname)
     /* Get redirection from parent */
     BOOL out_valid = is_handle_valid(GetStdHandle(STD_OUTPUT_HANDLE));
     BOOL err_valid = is_handle_valid(GetStdHandle(STD_ERROR_HANDLE));
-
+    
     /*
      * If not all output are redirected try to redirect to parent console.
      * If parent has no console (for instance as launched from GUI) just
@@ -763,7 +790,7 @@ void set_client_spice_cursor_visible(gboolean is_visible)
     const gchar *spice_cursor_env_var = "SPICE_DEBUG_CURSOR";
     if (is_visible) {
         gboolean is_var_set = g_setenv(spice_cursor_env_var, "1", TRUE);
-        printf("%s is_var_set: %i\n", (const char *)__func__, is_var_set);
+        g_info("%s is_var_set: %i", (const char *)__func__, is_var_set);
     } else {
         g_unsetenv(spice_cursor_env_var);
     }

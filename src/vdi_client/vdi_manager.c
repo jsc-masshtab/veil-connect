@@ -118,6 +118,8 @@ static void set_vdi_client_state(VdiClientState vdi_client_state, const gchar *m
             controls_blocked = FALSE;
             break;
         }
+        default:
+            break;
     }
 
     // control widgets state
@@ -207,7 +209,7 @@ static void on_get_vdi_pool_data_finished(GObject *source_object G_GNUC_UNUSED,
                                         GAsyncResult *res,
                                         gpointer user_data G_GNUC_UNUSED)
 {
-    printf("%s\n", (const char *)__func__);
+    g_info("%s", (const char *)__func__);
 
     GError *error;
     gpointer  ptr_res = g_task_propagate_pointer(G_TASK (res), &error); // take ownership
@@ -217,7 +219,7 @@ static void on_get_vdi_pool_data_finished(GObject *source_object G_GNUC_UNUSED,
     }
 
     gchar *response_body_str = ptr_res; // example "[{\"id\":17,\"name\":\"sad\"}]"
-    printf("%s : %s\n", (const char *)__func__, response_body_str);
+    g_info("%s : %s", (const char *)__func__, response_body_str);
 
     // parse vm data  json
     JsonParser *parser = json_parser_new();
@@ -243,7 +245,7 @@ static void on_get_vdi_pool_data_finished(GObject *source_object G_GNUC_UNUSED,
 
     // fill pool_widgets_array
     guint json_arrayLength = MIN(json_array_get_length(json_array), MAX_POOL_NUMBER);
-    printf("Number of vm pools: %i\n", json_arrayLength);
+    g_info("Number of vm pools: %i", json_arrayLength);
 
     for(int i = (int)json_arrayLength - 1; i >= 0; --i){
 
@@ -253,8 +255,8 @@ static void on_get_vdi_pool_data_finished(GObject *source_object G_GNUC_UNUSED,
         const gchar *pool_name = json_object_get_string_member_safely(object, "name");
         const gchar *os_type = json_object_get_string_member_safely(object, "os_type");
         const gchar *status = json_object_get_string_member_safely(object, "status");
-        //printf("os_type %s\n", os_type);
-        //printf("pool_name %s\n", pool_name);
+        //g_info("os_type %s\n", os_type);
+        //g_info("pool_name %s\n", pool_name);
         JsonArray *conn_types_json_array =
                 json_object_get_array_member_safely(object, "connection_types");
         register_pool(pool_id, pool_name, os_type, status, conn_types_json_array);
@@ -273,7 +275,7 @@ static void on_get_vm_from_pool_finished(GObject *source_object G_GNUC_UNUSED,
                                          GAsyncResult *res,
                                          gpointer user_data G_GNUC_UNUSED)
 {
-    printf("%s\n", (const char *)__func__);
+    g_info("%s", (const char *)__func__);
 
     VdiPoolWidget vdi_pool_widget = get_vdi_pool_widget_by_id(get_current_pool_id());
     enable_spinner_visible(&vdi_pool_widget, FALSE);
@@ -281,7 +283,7 @@ static void on_get_vm_from_pool_finished(GObject *source_object G_GNUC_UNUSED,
     GError *error = NULL;
     gpointer  ptr_res =  g_task_propagate_pointer (G_TASK (res), &error); // take ownership
     if(ptr_res == NULL){
-        printf("%s : FAIL \n", (const char *)__func__);
+        g_info("%s : FAIL", (const char *)__func__);
         set_vdi_client_state(VDI_RECEIVED_RESPONSE, "Не удалось получить вм из пула", TRUE);
         return;
     }
@@ -353,13 +355,13 @@ static gboolean on_ws_data_from_vdi_received(gboolean is_vdi_online)
 //// windows show callback
 //static gboolean mapped_user_function(GtkWidget *widget,GdkEvent  *event, gpointer   user_data)
 //{
-//    printf("%s\n", (const char *)__func__);
+//    g_info("%s\n", (const char *)__func__);
 //    return TRUE;
 //}
 // window close callback
 static gboolean on_window_deleted_cb(ConnectionInfo *ci)
 {
-    printf("%s\n", (const char *)__func__);
+    g_info("%s", (const char *)__func__);
     ci->response = FALSE;
     ci->dialog_window_response = GTK_RESPONSE_CLOSE;
     shutdown_loop(ci->loop);
@@ -368,7 +370,7 @@ static gboolean on_window_deleted_cb(ConnectionInfo *ci)
 // refresh button pressed callback
 static void on_button_renew_clicked(GtkButton *button G_GNUC_UNUSED, gpointer data G_GNUC_UNUSED) {
 
-    printf("%s\n", (const char *)__func__);
+    g_info("%s", (const char *)__func__);
     vdi_api_cancell_pending_requests();
     unregister_all_pools();
     refresh_vdi_pool_data_async();
@@ -376,7 +378,7 @@ static void on_button_renew_clicked(GtkButton *button G_GNUC_UNUSED, gpointer da
 // quit button pressed callback
 static void on_button_quit_clicked(GtkButton *button G_GNUC_UNUSED, gpointer data)
 {
-    printf("%s\n", (const char *)__func__);
+    g_info("%s", (const char *)__func__);
 
     // logout
     vdi_api_session_logout();
@@ -391,7 +393,7 @@ static void on_vm_start_button_clicked(GtkButton *button, gpointer data G_GNUC_U
 {
     const gchar *pool_id = g_object_get_data(G_OBJECT(button), "pool_id");
     set_current_pool_id(pool_id);
-    printf("%s  %s\n", (const char *)__func__, pool_id);
+    g_info("%s  %s", (const char *)__func__, pool_id);
     // start machine
     set_vdi_client_state(VDI_WAITING_FOR_VM_FROM_POOL, "Отправлен запрос на получение вм из пула", FALSE);
     // start spinner on vm widget

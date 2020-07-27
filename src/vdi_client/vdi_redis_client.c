@@ -14,11 +14,11 @@ static gboolean vdi_redis_client_check_if_reply_contains_errors(
     if (reply == NULL || reply->type == REDIS_REPLY_ERROR) {
 
         if (reply) {
-            printf("%s: Redis %s failed: %s\n", (const char *)__func__, cmd_category, reply->str);
+            g_info("%s: Redis %s failed: %s", (const char *)__func__, cmd_category, reply->str);
             vdi_redis_client_clear_redis_reply(reply);
 
         } else {
-            printf("%s: Redis %s failed:\n", (const char *)__func__, cmd_category);
+            g_info("%s: Redis %s failed:", (const char *)__func__, cmd_category);
         }
 
         redisFree(redis_client->redis_context);
@@ -43,18 +43,18 @@ void vdi_redis_client_init(RedisClient *redis_client)
     if (redis_client->redis_context == NULL || redis_client->redis_context->err) {
 
         if (redis_client->redis_context) {
-            printf("%s Connection error: %s\n", (const char *)__func__,
+            g_info("%s Connection error: %s\n", (const char *)__func__,
                    redis_client->redis_context->errstr);
             redisFree(redis_client->redis_context);
         } else {
-            printf("%s Connection error: can't allocate redis context\n", (const char *)__func__);
+            g_info("%s Connection error: can't allocate redis context\n", (const char *)__func__);
         }
 
         redis_client->redis_context = NULL;
         return;
     }
 
-    printf("%s Successfully connected to Reddis\n", (const char *)__func__);
+    g_info("%s Successfully connected to Reddis", (const char *)__func__);
 
     /// redis auth
     redisReply *reply = redisCommand(redis_client->redis_context, "AUTH %s", redis_client->password);
@@ -62,7 +62,7 @@ void vdi_redis_client_init(RedisClient *redis_client)
         return;
     vdi_redis_client_clear_redis_reply(reply);
 
-    printf("%s Successfully authenticated on Redis\n", (const char *)__func__);
+    g_info("%s Successfully authenticated on Redis", (const char *)__func__);
 
     /// select database
     reply = redisCommand(redis_client->redis_context, "SELECT %i", redis_client->db);
@@ -70,7 +70,7 @@ void vdi_redis_client_init(RedisClient *redis_client)
         return;
     vdi_redis_client_clear_redis_reply(reply);
 
-    printf("%s Redis db %i successfully selected\n", (const char *)__func__, redis_client->db);
+    g_info("%s Redis db %i successfully selected", (const char *)__func__, redis_client->db);
 
     /// redis subscribe
     reply = redisCommand(redis_client->redis_context, "SUBSCRIBE %s", redis_client->channel);
@@ -78,7 +78,7 @@ void vdi_redis_client_init(RedisClient *redis_client)
         return;
     vdi_redis_client_clear_redis_reply(reply);
 
-    printf("%s Successfully subscrubed to channel %s\n", (const char *)__func__,
+    g_info("%s Successfully subscrubed to channel %s", (const char *)__func__,
            redis_client->channel);
 
     redis_client->is_subscribed = TRUE;
@@ -95,7 +95,7 @@ void vdi_redis_client_deinit(RedisClient *redis_client)
 
         // dissconnect
         redisFree(redis_client->redis_context);
-        printf("Disconnected from Redis\n");
+        g_info("Disconnected from Redis");
     }
     redis_client->redis_context = NULL;
     redis_client->is_subscribed = FALSE;

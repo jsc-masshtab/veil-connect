@@ -86,19 +86,16 @@ main(int argc, char **argv)
     XInitThreads();
 #endif
 
-    // print version
-    printf("APP VERSION %s\n", VERSION);
-
     // start session
     start_vdi_session();
 
     // start app
-    int ret = 1;
     GApplication *app = NULL;
     virt_viewer_util_init("Veil Connect");
+    g_info("APP VERSION %s", VERSION);
     app = G_APPLICATION(remote_viewer_new());
 
-    ret = g_application_run(app, argc, argv);
+    int ret = g_application_run(app, argc, argv);
 
     // free resources
     stop_vdi_session();

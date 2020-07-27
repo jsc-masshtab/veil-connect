@@ -97,7 +97,7 @@ static void
 set_data_from_gui_in_outer_pointers(RemoteViewerData *ci)
 {
     *ci->domain = g_strdup(ci->connect_settings_data.domain);
-    //printf("%s *ci->domain %s\n", (const char *)__func__, *ci->domain);
+    //g_info("%s *ci->domain %s\n", (const char *)__func__, *ci->domain);
     *ci->ip = g_strdup(ci->connect_settings_data.ip);
     *ci->port = g_strdup_printf("%i", ci->connect_settings_data.port);
     *ci->user = g_strdup(gtk_entry_get_text(GTK_ENTRY(ci->login_entry)));
@@ -188,7 +188,7 @@ on_vdi_api_session_log_in_finished(GObject *source_object G_GNUC_UNUSED,
 
     GError *error = NULL;
     gboolean token_refreshed = g_task_propagate_boolean(G_TASK(res), &error);
-    printf("%s: is_token_refreshed %i\n", (const char *)__func__, token_refreshed);
+    g_info("%s: is_token_refreshed %i", (const char *)__func__, token_refreshed);
 
     set_auth_dialog_state(AUTH_GUI_DEFAULT_STATE, ci);
 
@@ -270,10 +270,10 @@ key_pressed_cb(GtkWidget *widget G_GNUC_UNUSED, GdkEvent *event, gpointer data)
     GtkWidget *window = ci->window;
     gboolean retval;
     if (event->type == GDK_KEY_PRESS) {
-        //printf("GDK_KEY_PRESS event->key.keyval %i \n", event->key.keyval);
+        //g_info("GDK_KEY_PRESS event->key.keyval %i \n", event->key.keyval);
         switch (event->key.keyval) {
             case GDK_KEY_Return:
-                printf("GDK_KEY_Return\n");
+                g_info("GDK_KEY_Return\n");
                 handle_connect_event(ci);
                 return TRUE;
             case GDK_KEY_Escape:

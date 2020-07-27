@@ -35,7 +35,7 @@ static void setup_header_for_api_call(SoupMessage *msg)
 {
     soup_message_headers_clear(msg->request_headers);
     gchar *authHeader = g_strdup_printf("jwt %s", vdiSession.jwt);
-    //printf("%s %s\n", (const char *)__func__, authHeader);
+    //g_info("%s %s\n", (const char *)__func__, authHeader);
     soup_message_headers_append(msg->request_headers, "Authorization", authHeader);
     g_free(authHeader);
     soup_message_headers_append(msg->request_headers, "Content-Type", "application/json");
@@ -45,10 +45,10 @@ static void setup_header_for_api_call(SoupMessage *msg)
 static guint send_message(SoupMessage *msg)
 {
     static int count = 0;
-    printf("Send_count: %i\n", ++count);
+    g_info("Send_count: %i", ++count);
 
     guint status = soup_session_send_message(vdiSession.soup_session, msg);
-    printf("%s: Successfully sent. Response code: %i reason_phrase: %s\n",
+    g_info("%s: Successfully sent. Response code: %i reason_phrase: %s",
             (const char *)__func__, status, msg->reason_phrase);
     return status;
 }
@@ -56,7 +56,7 @@ static guint send_message(SoupMessage *msg)
 // Получаем токен
 static gboolean vdi_api_session_get_token()
 {
-    printf("%s\n", (const char *)__func__);
+    g_info("%s", (const char *)__func__);
 
     if(vdiSession.auth_url == NULL)
         return FALSE;
@@ -74,7 +74,7 @@ static gboolean vdi_api_session_get_token()
     gchar *ldap_str = vdiSession.is_ldap ? g_strdup("true") : g_strdup("false");
     gchar *messageBodyStr = g_strdup_printf("{\"username\": \"%s\", \"password\": \"%s\", \"ldap\": %s}",
                                    vdiSession.vdi_username, vdiSession.vdi_password, ldap_str);
-    printf("%s  messageBodyStr %s\n", (const char *)__func__, messageBodyStr);
+    g_info("%s  messageBodyStr %s", (const char *)__func__, messageBodyStr);
     soup_message_set_request(msg, "application/json",
                              SOUP_MEMORY_COPY, messageBodyStr, strlen_safely(messageBodyStr));
     g_free(messageBodyStr);
@@ -84,12 +84,12 @@ static gboolean vdi_api_session_get_token()
     send_message(msg);
 
     // parse response
-    printf("msg->status_code %i\n", msg->status_code);
-    printf("msg->response_body->data %s\n", msg->response_body->data);
+    g_info("msg->status_code %i", msg->status_code);
+    g_info("msg->response_body->data %s", msg->response_body->data);
 
     if(msg->status_code != OK_RESPONSE) {
         g_object_unref(msg);
-        printf("%s : Unable to get token\n", (const char *)__func__);
+        g_info("%s : Unable to get token", (const char *)__func__);
         return FALSE;
     }
 
@@ -104,7 +104,7 @@ static gboolean vdi_api_session_get_token()
         case SERVER_REPLY_TYPE_DATA: {
             free_memory_safely(&vdiSession.jwt);
             vdiSession.jwt = g_strdup(json_object_get_string_member_safely(reply_json_object, "access_token"));
-            printf("new token: %s\n", vdiSession.jwt);
+            g_info("new token: %s", vdiSession.jwt);
 
             g_object_unref(msg);
             g_object_unref(parser);
@@ -128,7 +128,7 @@ static void vdi_api_session_register_for_license() {
     // do request to vdi server in order to get data fot Redis connection
     gchar *url_str = g_strdup_printf("%s/client/message_broker/", vdiSession.api_url);
     gchar *response_body_str = api_call("GET", url_str, NULL);
-    printf("%s: response_body_str %s\n", (const char *) __func__, response_body_str);
+    g_info("%s: response_body_str %s", (const char *) __func__, response_body_str);
     g_free(url_str);
 
     // parse the response
@@ -298,8 +298,8 @@ gchar *api_call(const char *method, const char *uri_string, const gchar *body_st
     for(int attempt_count = 0; attempt_count < max_attempt_count; attempt_count++) {
         // send request.
         send_message(msg);
-        printf("msg->status_code: %i\n", msg->status_code);
-        printf("msg->response_body: %s\n", msg->response_body->data);
+        g_info("msg->status_code: %i", msg->status_code);
+        g_info("msg->response_body: %s", msg->response_body->data);
 
         // if response is ok then fill response_body_str
         if (msg->status_code == OK_RESPONSE) { // we are happy now
@@ -338,7 +338,7 @@ void get_vdi_pool_data(GTask   *task,
                  gpointer       task_data G_GNUC_UNUSED,
                  GCancellable  *cancellable G_GNUC_UNUSED)
 {
-    //printf("In %s :thread id = %lu\n", (const char *)__func__, pthread_self());
+    //g_info("In %s :thread id = %lu\n", (const char *)__func__, pthread_self());
     gchar *url_str = g_strdup_printf("%s/client/pools", vdiSession.api_url);
     gchar *response_body_str = api_call("GET", url_str, NULL);
     g_free(url_str);
@@ -392,10 +392,10 @@ void get_vm_from_pool(GTask       *task,
     vdi_vm_data->vm_verbose_name = g_strdup(json_object_get_string_member_safely(
             data_member_object, "vm_verbose_name"));
 
-    printf("vm_host %s \n", vdi_vm_data->vm_host);
-    printf("vm_port %i \n", vdi_vm_data->vm_port);
-    printf("vm_password %s \n", vdi_vm_data->vm_password);
-    printf("vm_verbose_name %s \n", vdi_vm_data->vm_verbose_name);
+    g_info("vm_host %s", vdi_vm_data->vm_host);
+    g_info("vm_port %i", vdi_vm_data->vm_port);
+    g_info("vm_password %s", vdi_vm_data->vm_password);
+    g_info("vm_verbose_name %s", vdi_vm_data->vm_verbose_name);
 
     g_object_unref(parser);
     free_memory_safely(&response_body_str);
@@ -408,7 +408,7 @@ void do_action_on_vm(GTask      *task,
                   GCancellable  *cancellable G_GNUC_UNUSED)
 {
     ActionOnVmData *action_on_vm_data = g_task_get_task_data(task);
-    printf("%s: %s\n", (const char *)__func__, action_on_vm_data->action_on_vm_str);
+    g_info("%s: %s", (const char *)__func__, action_on_vm_data->action_on_vm_str);
 
     // url
     gchar *urlStr = g_strdup_printf("%s/client/pools/%s/%s", vdiSession.api_url,
@@ -434,7 +434,7 @@ gboolean vdi_api_session_logout(void)
     // disconnect from license server(redis)
     vdi_redis_client_deinit(&vdiSession.redis_client);
 
-    printf("%s \n", (const char *)__func__);
+    g_info("%s", (const char *)__func__);
     if (vdiSession.jwt) {
         gchar *url_str = g_strdup_printf("%s/logout", vdiSession.api_url);
 
@@ -442,7 +442,7 @@ gboolean vdi_api_session_logout(void)
         g_free(url_str);
 
         if (msg == NULL) {
-            printf("%s : Cant construct logout message\n", (const char *)__func__);
+            g_info("%s : Cant construct logout message", (const char *)__func__);
             return FALSE;
 
         } else {
@@ -466,7 +466,7 @@ gboolean vdi_api_session_logout(void)
         }
 
     } else {
-        printf("%s : No token info\n", (const char *)__func__);
+        g_info("%s : No token info", (const char *)__func__);
         return FALSE;
     }
 }

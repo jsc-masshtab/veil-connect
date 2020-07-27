@@ -345,9 +345,9 @@ retry_connnect_to_vm:
     /// instant connect attempt
     if (opt_manual_mode) {
         if (get_current_remote_protocol() == VDI_RDP_PROTOCOL) {
-//            printf("%s TEST user %s\n", (const char *)__func__, user);
-//            printf("%s TEST password %s\n", (const char *)__func__, password);
-//            printf("%s TEST ip %s\n", (const char *)__func__, ip);
+//            g_info("%s TEST user %s\n", (const char *)__func__, user);
+//            g_info("%s TEST password %s\n", (const char *)__func__, password);
+//            g_info("%s TEST ip %s\n", (const char *)__func__, ip);
             GtkResponseType rdp_viewer_res = rdp_viewer_start(user, password, domain, ip, atoi(port));
             remote_viewer_free_auth_data(&user, &password, &domain, &ip, &port, &vm_verbose_name);
             if (rdp_viewer_res == GTK_RESPONSE_CANCEL)
@@ -422,7 +422,7 @@ retry_connnect_to_vm:
         // connect to vm depending on remote protocol
         if (get_current_remote_protocol() == VDI_RDP_PROTOCOL) {
             GtkResponseType rdp_viewer_res = rdp_viewer_start(get_vdi_username(), get_vdi_password(), domain, ip, 0);
-            //printf("user: %s   pass: %s", get_vdi_username(), get_vdi_password());
+            //g_info("user: %s   pass: %s", get_vdi_username(), get_vdi_password());
             // quit if required
             if (rdp_viewer_res == GTK_RESPONSE_CLOSE) {
                 remote_viewer_free_auth_data(&user, &password, &domain, &ip, &port, &vm_verbose_name);
@@ -433,8 +433,8 @@ retry_connnect_to_vm:
                 launch_windows_rdp_client(get_vdi_username(), get_vdi_password(), ip, 0);
 #endif
         } else { // spice by default
-            printf("%s port %s\n", (const char *)__func__, port);
-            printf("%s user %s\n", (const char *)__func__, user);
+            g_info("%s port %s\n", (const char *)__func__, port);
+            g_info("%s user %s\n", (const char *)__func__, user);
             set_spice_session_data(app, ip, port, user, password);
             // start connect attempt timer
             virt_viewer_start_reconnect_poll(app);
