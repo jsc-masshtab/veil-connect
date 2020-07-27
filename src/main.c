@@ -31,10 +31,9 @@ void
 setup_logging()
 {
     // get ts
-    gint64 cur_ts = g_get_real_time();
-
     GDateTime *datetime = g_date_time_new_now_local();
-    gchar *data_time_string = g_date_time_format(datetime, "%c");
+    const gchar *data_time_string = g_date_time_format(datetime, "%Y_%m_%d___%H_%M_%S");
+    printf("data_time_string %s", data_time_string);
     g_date_time_unref(datetime);
 
     // log dir dipends on OS
@@ -93,6 +92,7 @@ main(int argc, char **argv)
     GApplication *app = NULL;
     virt_viewer_util_init("Veil Connect");
     g_info("APP VERSION %s", VERSION);
+
     app = G_APPLICATION(remote_viewer_new());
 
     int ret = g_application_run(app, argc, argv);
