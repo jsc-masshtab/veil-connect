@@ -528,7 +528,7 @@ pipeline {
                     scp ${WORKSPACE}/devops/veil-connect-linux-installer.sh uploader@192.168.10.144:/local_storage/veil-connect/${VERSION}
                     ssh uploader@192.168.10.144 chmod +x /local_storage/veil-connect/${VERSION}/veil-connect-linux-installer.sh
                     ssh uploader@192.168.10.144 "cd /local_storage/veil-connect/${VERSION}/ && tar cvf veil-connect-${VERSION}-linux.tar --exclude=*.exe ./*"
-                    ssh uploader@192.168.10.144 ln -sf /local_storage/veil-connect/${VERSION} /local_storage/veil-connect/latest
+                    ssh uploader@192.168.10.144 ln -sfT /local_storage/veil-connect/${VERSION} /local_storage/veil-connect/latest
                 '''
             }
         }
