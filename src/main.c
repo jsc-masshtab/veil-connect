@@ -32,20 +32,20 @@ setup_logging()
 {
     // get ts
     GDateTime *datetime = g_date_time_new_now_local();
-    const gchar *data_time_string = g_date_time_format(datetime, "%Y_%m_%d___%H_%M_%S");
-    printf("data_time_string %s", data_time_string);
+    gchar *data_time_string = g_date_time_format(datetime, "%Y_%m_%d___%H_%M_%S");
+    // printf("data_time_string %s", data_time_string);
     g_date_time_unref(datetime);
 
     // log dir dipends on OS
 #ifdef __linux__
-    const gchar *log_dir = "log/";
+    const gchar *log_dir = "log";
 #elif _WIN32
     const gchar *locap_app_data_path = g_getenv("LOCALAPPDATA");
 
     // create log dir in local
     gchar *log_dir = g_strdup_printf("%s/%s/log", locap_app_data_path, PACKAGE);
-    g_mkdir_with_parents(log_dir, 0755);
 #endif
+    g_mkdir_with_parents(log_dir, 0755);
 
     // crash handler
     gchar *bt_file_name = g_strconcat(log_dir, "/", data_time_string, "_backtrace.txt", NULL);
