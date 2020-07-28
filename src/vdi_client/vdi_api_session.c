@@ -39,7 +39,7 @@ static void setup_header_for_api_call(SoupMessage *msg)
     soup_message_headers_append(msg->request_headers, "Authorization", authHeader);
     g_free(authHeader);
     soup_message_headers_append(msg->request_headers, "Content-Type", "application/json");
-    soup_message_headers_append(msg->request_headers, "Client-Type", "thin-client");
+    soup_message_headers_append(msg->request_headers, "User-Agent", "thin-client");
 }
 
 static guint send_message(SoupMessage *msg)
@@ -68,7 +68,7 @@ static gboolean vdi_api_session_get_token()
 
     // set header
     soup_message_headers_append(msg->request_headers, "Content-Type", "application/json");
-    soup_message_headers_append(msg->request_headers, "Client-Type", "thin-client");
+    soup_message_headers_append(msg->request_headers, "User-Agent", "thin-client");
 
     // set body
     gchar *ldap_str = vdiSession.is_ldap ? g_strdup("true") : g_strdup("false");
