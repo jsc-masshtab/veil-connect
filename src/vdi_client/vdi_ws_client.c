@@ -25,10 +25,10 @@ void static async_create_ws_connect(GTask         *task,
 static void protocol_switching_callback(SoupMessage *ws_msg, gpointer user_data)
 {
 
-    printf("In %s :thread id = %lu\n", (const char *)__func__, pthread_self());
+    g_info("In %s :thread id = %lu", (const char *)__func__, pthread_self());
     VdiWsClient *vdi_ws_client = user_data;
 
-    printf("WS: %s %i\n", (const char *)__func__, vdi_ws_client->test_int);
+    g_info("WS: %s %i", (const char *)__func__, vdi_ws_client->test_int);
     vdi_ws_client->stream = soup_session_steal_connection(vdi_ws_client->ws_soup_session, ws_msg);
 }
 
@@ -43,7 +43,7 @@ static void async_create_ws_connect(GTask         *task G_GNUC_UNUSED,
     // hand shake preparation
     SoupMessage *ws_msg = soup_message_new("GET", vdi_ws_client->vdi_url);
     if (ws_msg == NULL) {
-        printf("%s Cant parse message\n", (const char *)__func__);
+        g_info("%s Cant parse message", (const char *)__func__);
         g_mutex_unlock(&vdi_ws_client->lock);
         return;
     }
@@ -66,7 +66,7 @@ static void async_create_ws_connect(GTask         *task G_GNUC_UNUSED,
             cancellable_sleep(TIMEOUT, &vdi_ws_client->is_running);
             continue;
         } else {
-            printf("WS: %s: SUCCESSFUL HANDSHAKE %i \n", (const char *)__func__, status);
+            g_info("WS: %s: SUCCESSFUL HANDSHAKE %i", (const char *)__func__, status);
             g_idle_add((GSourceFunc)vdi_ws_client->ws_data_received_callback, (gpointer)TRUE);
         }
 
@@ -86,7 +86,7 @@ static void async_create_ws_connect(GTask         *task G_GNUC_UNUSED,
                                                    &buffer,
                                                    buf_length, &bytes_read,
                                                    vdi_ws_client->cancel_job, &error);
-            //printf("WS: %s res: %i bytes_read: %lu\n", (const char *)__func__, res, bytes_read);
+            //g_info("WS: %s res: %i bytes_read: %lu\n", (const char *)__func__, res, bytes_read);
 
             if (bytes_read == 0) {
                 read_try_count ++;
@@ -113,8 +113,8 @@ static void async_create_ws_connect(GTask         *task G_GNUC_UNUSED,
 void start_vdi_ws_polling(VdiWsClient *vdi_ws_client, const gchar *vdi_ip, const gchar *vdi_port,
                           WsDataReceivedCallback ws_data_received_callback)
 {
-    printf("%s\n", (const char *)__func__);
-    printf("In %s :thread id = %lu\n", (const char *)__func__, pthread_self());
+    g_info("%s", (const char *)__func__);
+    g_info("In %s :thread id = %lu", (const char *)__func__, pthread_self());
     gboolean ssl_strict = FALSE;
     vdi_ws_client->ws_soup_session = soup_session_new_with_options("idle-timeout", 0, "timeout", 0,
                                                                    "ssl-strict", ssl_strict, NULL);
@@ -134,7 +134,7 @@ void start_vdi_ws_polling(VdiWsClient *vdi_ws_client, const gchar *vdi_ip, const
 
 void stop_vdi_ws_polling(VdiWsClient *vdi_ws_client)
 {
-    printf("%s\n", (const char *)__func__);
+    g_info("%s", (const char *)__func__);
 
     // cancell
     vdi_ws_client->is_running = FALSE;

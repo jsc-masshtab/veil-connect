@@ -192,7 +192,7 @@ static void rdp_viewer_handle_key_event(GdkEventKey *event, ExtendedRdpContext* 
 #endif
     BOOL is_success = freerdp_input_send_keyboard_event_ex(input, down, rdp_scancode);
     (void) is_success;
-//    printf("%s: hardkey %i %i keyval: %i down: %i\n", (const char *) __func__,
+//    g_info("%s: hardkey %i %i keyval: %i down: %i\n", (const char *) __func__,
 //           event->hardware_keycode, rdp_scancode, event->keyval, down);
 }
 
@@ -226,7 +226,7 @@ static gboolean rdp_display_mouse_moved(GtkWidget *widget G_GNUC_UNUSED, GdkEven
     rdp_display_translate_mouse_pos(&x, &y, event->x, event->y, rdp_viewer_data);
     BOOL is_success = freerdp_input_send_mouse_event(input, PTR_FLAGS_MOVE, x, y);
     (void)is_success;
-    //printf("%s: event->x %f, event->y %f  %i\n", (const char *)__func__, event->x, event->y, is_success);
+    //g_info("%s: event->x %f, event->y %f  %i\n", (const char *)__func__, event->x, event->y, is_success);
 
     return TRUE;
 }
@@ -264,7 +264,7 @@ static void rdp_viewer_handle_mouse_btn_event(GtkWidget *widget G_GNUC_UNUSED, G
         UINT16 x, y;
         rdp_display_translate_mouse_pos(&x, &y, event->x, event->y, rdp_viewer_data);
         freerdp_input_send_mouse_event(input, additional_flags | button, x, y);
-//        printf("%s: event->x %f, event->y %f  %i %i\n", (const char *)__func__,
+//        g_info("%s: event->x %f, event->y %f  %i %i\n", (const char *)__func__,
 //               event->x, event->y, event->button, event->state);
     }
 }
@@ -293,7 +293,7 @@ static gboolean rdp_display_wheel_scrolled(GtkWidget *widget G_GNUC_UNUSED, GdkE
 
     rdpContext* context = (rdpContext*)ex_rdp_context;
     rdpInput *input = context->input;
-    //printf("%s event->delta_y %f event->delta_x %f\n", (const char *)__func__, event->delta_y, event->delta_x);
+    //g_info("%s event->delta_y %f event->delta_x %f\n", (const char *)__func__, event->delta_y, event->delta_x);
 
     UINT16 x, y;
     rdp_display_translate_mouse_pos(&x, &y, event->x, event->y, rdp_viewer_data);
@@ -317,7 +317,7 @@ static void rdp_display_draw_text_message(cairo_t* context, const gchar *msg)
 
 static gboolean rdp_display_event_on_draw(GtkWidget* widget, cairo_t* context, gpointer user_data)
 {
-    //printf("%s START\n", (const char *)__func__);
+    //g_info("%s START\n", (const char *)__func__);
 
     RdpViewerData *rdp_viewer_data = (RdpViewerData *)user_data;
     rdp_viewer_data->is_rdp_display_being_redrawed = TRUE;

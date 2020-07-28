@@ -42,7 +42,7 @@ static gboolean update_cursor_callback(rdpContext* context)
         gdk_window_set_cursor(parent_window,  ex_rdp_context->gdk_cursor);
     }
 
-    //printf("%s ex_pointer->test_int: \n", (const char *)__func__);
+    //g_info("%s ex_pointer->test_int: ", (const char *)__func__);
     g_mutex_unlock(&ex_rdp_context->cursor_mutex);
 
     return FALSE;
@@ -71,16 +71,16 @@ static void destroy_rdp_context(ExtendedRdpContext* ex_rdp_context)
     if (ex_rdp_context) {
         // stopping RDP routine
 
-        printf("%s: abort now: %i\n", (const char *)__func__, ex_rdp_context->test_int);
+        g_info("%s: abort now: %i", (const char *)__func__, ex_rdp_context->test_int);
 
         freerdp_abort_connect(ex_rdp_context->context.instance);
         // wait untill rdp thread finished. todo: seriously think if some sort of event primitive could be used
-        printf("%s: before wait (&ex_rdp_context->rdp_routine_mutex);\n", (const char *)__func__);
+        g_info("%s: before wait (&ex_rdp_context->rdp_routine_mutex);", (const char *)__func__);
         wair_for_mutex_and_clear(&ex_rdp_context->rdp_routine_mutex);
-        printf("%s: before wait (&ex_rdp_context->cursor_mutex);\n", (const char *)__func__);
+        g_info("%s: before wait (&ex_rdp_context->cursor_mutex);", (const char *)__func__);
         wair_for_mutex_and_clear(&ex_rdp_context->cursor_mutex);
 
-        printf("%s: context free now: %i\n", (const char *)__func__, ex_rdp_context->test_int);
+        g_info("%s: context free now: %i", (const char *)__func__, ex_rdp_context->test_int);
         freerdp_client_context_free((rdpContext*)ex_rdp_context);
     }
 
@@ -89,7 +89,7 @@ static void destroy_rdp_context(ExtendedRdpContext* ex_rdp_context)
 
 GtkResponseType rdp_viewer_start(const gchar *usename, const gchar *password, gchar *domain, gchar *ip, int port)
 {
-    printf("%s domain %s\n", (const char *)__func__, domain);
+    g_info("%s domain %s", (const char *)__func__, domain);
 
     GtkResponseType dialog_window_response = GTK_RESPONSE_CLOSE;
     GMainLoop *loop;

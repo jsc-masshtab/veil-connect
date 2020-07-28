@@ -36,8 +36,8 @@ launch_windows_rdp_client(const gchar *usename, const gchar *password G_GNUC_UNU
     if (sourceFile == NULL || destFile == NULL)
     {
         // Unable to open
-        printf("\nUnable to open file.\n");
-        printf("Please check if file exists and you have read/write privilege.\n");
+        g_info("\nUnable to open file.");
+        g_info("Please check if file exists and you have read/write privilege.");
         return;
     }
     // Copy file
@@ -46,7 +46,7 @@ launch_windows_rdp_client(const gchar *usename, const gchar *password G_GNUC_UNU
     while ((ch = fgetc(sourceFile)) != EOF)
     {
         fputc(ch, destFile);
-        //printf("symbol: %i.\n", ch);
+        //g_info("symbol: %i.", ch);
     }
 
     // apend unique data
@@ -87,7 +87,7 @@ launch_windows_rdp_client(const gchar *usename, const gchar *password G_GNUC_UNU
                         &pi )           // Pointer to PROCESS_INFORMATION structure
             )
     {
-        printf( "CreateProcess failed (%d).\n", GetLastError() );
+        g_info( "CreateProcess failed (%d).", GetLastError() );
         g_free(cmd_line);
         return;
     }

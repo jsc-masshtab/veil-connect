@@ -26,7 +26,7 @@ gint64 json_object_get_int_member_safely(JsonObject *object, const gchar *member
     if (json_object_has_member(object, member_name))
         return json_object_get_int_member(object, member_name);
 
-    printf("json member '%s' does not exist \n", member_name);
+    g_info("json member '%s' does not exist", member_name);
     return 0;
 }
 
@@ -35,7 +35,7 @@ const gchar *json_object_get_string_member_safely(JsonObject *object, const gcha
     if (json_object_has_member(object, member_name))
         return json_object_get_string_member(object, member_name);
 
-    printf("json member '%s' does not exist \n", member_name);
+    g_info("json member '%s' does not exist", member_name);
     return "";
 }
 
@@ -44,7 +44,7 @@ JsonArray *json_object_get_array_member_safely(JsonObject *object, const gchar *
     if (json_object_has_member(object, member_name))
         return json_object_get_array_member(object, member_name);
 
-    printf("json member '%s' does not exist \n", member_name);
+    g_info("json member '%s' does not exist", member_name);
     return NULL;
 }
 
@@ -57,7 +57,7 @@ JsonObject *json_object_get_object_member_safely(JsonObject *object, const gchar
             return json_object_get_object_member(object, member_name);
     }
 
-    printf("json object member '%s' does not exist \n", member_name);
+    g_info("json object member '%s' does not exist", member_name);
     return NULL;
 }
 
@@ -84,12 +84,12 @@ JsonObject *jsonhandler_get_data_or_errors_object(JsonParser *parser, const gcha
                 return error_json_object_0;
             }
             else {
-                printf("Errors json first element in is NOT json object!\n");
+                g_info("Errors json first element in is NOT json object!");
                 goto total_fail;
             }
         }
         else {
-            printf("Errors json array is empty!\n");
+            g_info("Errors json array is empty!");
             goto total_fail;
         }
     }

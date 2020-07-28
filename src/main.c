@@ -31,36 +31,38 @@ void
 setup_logging()
 {
     // get ts
-    gint64 cur_ts = g_get_real_time();
-    gchar *ts_string = g_strdup_printf("%lld", (long long int)cur_ts);
+    GDateTime *datetime = g_date_time_new_now_local();
+    gchar *data_time_string = g_date_time_format(datetime, "%Y_%m_%d___%H_%M_%S");
+    // printf("data_time_string %s", data_time_string);
+    g_date_time_unref(datetime);
 
     // log dir dipends on OS
 #ifdef __linux__
-    const gchar *log_dir = "log/";
+    const gchar *log_dir = "log";
 #elif _WIN32
     const gchar *locap_app_data_path = g_getenv("LOCALAPPDATA");
 
     // create log dir in local
     gchar *log_dir = g_strdup_printf("%s/%s/log", locap_app_data_path, PACKAGE);
-    g_mkdir_with_parents(log_dir, 0755);
 #endif
+    g_mkdir_with_parents(log_dir, 0755);
 
     // crash handler
-    gchar *bt_file_name = g_strconcat(log_dir, "/", ts_string, "_backtrace.txt", NULL);
+    gchar *bt_file_name = g_strconcat(log_dir, "/", data_time_string, "_backtrace.txt", NULL);
     install_crash_handler(bt_file_name);
 
     //error output
-    gchar *stderr_file_name = g_strconcat(log_dir, "/", ts_string, "_stderr.txt", NULL);
+    gchar *stderr_file_name = g_strconcat(log_dir, "/", data_time_string, "_stderr.txt", NULL);
     FILE *err_file_desc = freopen(stderr_file_name, "w", stderr);
     (void)err_file_desc;
 
     //stdout output
-    gchar *stdout_file_name = g_strconcat(log_dir, "/", ts_string, "_stdout.txt", NULL);
+    gchar *stdout_file_name = g_strconcat(log_dir, "/", data_time_string, "_stdout.txt", NULL);
     FILE *out_file_desc = freopen(stdout_file_name, "w", stdout);
     (void)out_file_desc; // it would be polite to close file descriptors
 
     // free memory
-    g_free(ts_string);
+    g_free(data_time_string);
     g_free(bt_file_name);
     g_free(stderr_file_name);
     g_free(stdout_file_name);
@@ -83,19 +85,17 @@ main(int argc, char **argv)
     XInitThreads();
 #endif
 
-    // print version
-    printf("APP VERSION %s\n", VERSION);
-
     // start session
     start_vdi_session();
 
     // start app
-    int ret = 1;
     GApplication *app = NULL;
     virt_viewer_util_init("Veil Connect");
+    g_info("APP VERSION %s", VERSION);
+
     app = G_APPLICATION(remote_viewer_new());
 
-    ret = g_application_run(app, argc, argv);
+    int ret = g_application_run(app, argc, argv);
 
     // free resources
     stop_vdi_session();
