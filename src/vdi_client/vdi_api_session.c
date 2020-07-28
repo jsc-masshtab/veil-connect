@@ -373,33 +373,31 @@ void get_vm_from_pool(GTask       *task,
     JsonParser *parser = json_parser_new();
 
     ServerReplyType server_reply_type;
-    JsonObject *data_member_object = jsonhandler_get_data_or_errors_object(parser, response_body_str,
+    JsonObject *reply_json_object = jsonhandler_get_data_or_errors_object(parser, response_body_str,
             &server_reply_type);
-
-    // no point to parse if data is invalid
-    if (server_reply_type != SERVER_REPLY_TYPE_DATA) {
-        g_object_unref(parser);
-        free_memory_safely(&response_body_str);
-        g_task_return_pointer(task, NULL, NULL);
-        return;
-    }
+    g_info("%s: server_reply_type %i",  (const char *)__func__, server_reply_type);
 
     VdiVmData *vdi_vm_data = calloc(1, sizeof(VdiVmData));
-    vdi_vm_data->vm_host = g_strdup(json_object_get_string_member_safely(data_member_object, "host"));
-    vdi_vm_data->vm_port = json_object_get_int_member_safely(data_member_object, "port");
-    vdi_vm_data->vm_password = g_strdup(json_object_get_string_member_safely(data_member_object, "password"));
-    vdi_vm_data->message = g_strdup(json_object_get_string_member_safely(data_member_object, "message"));
-    vdi_vm_data->vm_verbose_name = g_strdup(json_object_get_string_member_safely(
-            data_member_object, "vm_verbose_name"));
 
-    g_info("vm_host %s", vdi_vm_data->vm_host);
-    g_info("vm_port %i", vdi_vm_data->vm_port);
-    g_info("vm_password %s", vdi_vm_data->vm_password);
-    g_info("vm_verbose_name %s", vdi_vm_data->vm_verbose_name);
+    if (server_reply_type == SERVER_REPLY_TYPE_DATA) {
+        vdi_vm_data->vm_host = g_strdup(json_object_get_string_member_safely(reply_json_object, "host"));
+        vdi_vm_data->vm_port = json_object_get_int_member_safely(reply_json_object, "port");
+        vdi_vm_data->vm_password = g_strdup(json_object_get_string_member_safely(reply_json_object, "password"));
+        vdi_vm_data->vm_verbose_name = g_strdup(json_object_get_string_member_safely(
+                reply_json_object, "vm_verbose_name"));
 
+        g_info("vm_host %s", vdi_vm_data->vm_host);
+        g_info("vm_port %i", vdi_vm_data->vm_port);
+        g_info("vm_password %s", vdi_vm_data->vm_password);
+        g_info("vm_verbose_name %s", vdi_vm_data->vm_verbose_name);
+    }
+
+    vdi_vm_data->message = g_strdup(json_object_get_string_member_safely(reply_json_object, "message"));
+
+    // no point to parse if data is invalid
     g_object_unref(parser);
     free_memory_safely(&response_body_str);
-    g_task_return_pointer(task, vdi_vm_data, NULL); // return pointer must be freed
+    g_task_return_pointer(task, vdi_vm_data, NULL);
 }
 
 void do_action_on_vm(GTask      *task,
