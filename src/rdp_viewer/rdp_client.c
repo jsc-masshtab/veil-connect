@@ -88,11 +88,23 @@ static GArray * rdp_client_create_params_array(ExtendedRdpContext* tf)
         add_rdp_param(rdp_params_dyn_array, gfx_h264_param_str);
         free_memory_safely(&rdp_h264_codec);
     }
-    // +drives,+home-drive
-    gboolean rdp_redirect_disks = read_int_from_ini_file("RDPSettings", "rdp_redirect_disks", FALSE);
-    if (rdp_redirect_disks) {
-        add_rdp_param(rdp_params_dyn_array, g_strdup("+drives"));
-        add_rdp_param(rdp_params_dyn_array, g_strdup("+home-drive"));
+    // drives (folders)
+    gchar *shared_folders_str = read_str_from_ini_file("RDPSettings", "rdp_shared_folders");
+
+    if (shared_folders_str) {
+        gchar **shared_folders_array = g_strsplit(shared_folders_str, ";", 10);
+
+        gchar **shared_folder;
+        for (shared_folder = shared_folders_array; *shared_folder; shared_folder++) {
+            // Проверяем, что строка непустая и добавляем драйв в опции rdp
+            if (**shared_folder != '\0') {
+                gchar *shared_folder_param_str = g_strdup_printf("/drive:%s", *shared_folder);
+                g_info("shared_folder_param_str %s", shared_folder_param_str);
+                add_rdp_param(rdp_params_dyn_array, shared_folder_param_str); // being removed later
+            }
+        }
+
+        g_strfreev(shared_folders_array);
     }
 
     // rdp_args

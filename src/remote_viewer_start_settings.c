@@ -34,8 +34,10 @@ typedef struct{
 
     GtkWidget *is_h264_used_check_btn;
     GtkWidget *rdp_h264_codec_entry;
+    GtkWidget *rdp_shared_folders_entry;
 
-    GtkWidget *rdp_redirect_disks_check_btn;
+    GtkWidget *btn_add_remote_folder;
+    GtkWidget *btn_remove_remote_folder;
 
     // control buttons
     GtkWidget *bt_cancel;
@@ -140,6 +142,76 @@ on_h264_used_check_btn_toggled(GtkToggleButton *h264_used_check_btn, gpointer us
     gboolean is_h264_used_check_btn_toggled = gtk_toggle_button_get_active(h264_used_check_btn);
     gtk_widget_set_sensitive(dialog_data->rdp_h264_codec_entry, is_h264_used_check_btn_toggled);
 }
+/*
+static void
+shared_folders_icon_released(GtkEntry            *entry,
+                               GtkEntryIconPosition icon_pos,
+                               GdkEvent            *event,
+                               gpointer             user_data)
+{
+    ConnectSettingsDialogData *dialog_data = (ConnectSettingsDialogData *)user_data;
+
+
+    //folders_selector_widget_get_folders(GTK_WINDOW(dialog_data->window));
+
+
+    GtkWidget *popup_window;
+    popup_window = gtk_window_new (GTK_WINDOW_TOPLEVEL);
+    gtk_window_set_title (GTK_WINDOW (popup_window), "Pop Up window");
+
+    gtk_window_set_transient_for(GTK_WINDOW (popup_window), GTK_WINDOW(dialog_data->window));
+    gtk_window_set_position (GTK_WINDOW (popup_window),GTK_WIN_POS_CENTER);
+    gtk_widget_show_all (popup_window);
+}*/
+
+static void
+btn_add_remote_folder_clicked_cb(GtkButton *button G_GNUC_UNUSED, ConnectSettingsDialogData *dialog_data)
+{
+    g_info("%s", __func__);
+    // get folder name
+    GtkWidget *dialog = gtk_file_chooser_dialog_new ("Open File",
+                                          GTK_WINDOW(dialog_data->window),
+                                          GTK_FILE_CHOOSER_ACTION_SELECT_FOLDER,
+                                          "Отмена",
+                                          GTK_RESPONSE_CANCEL,
+                                          "Выбрать",
+                                          GTK_RESPONSE_ACCEPT,
+                                          NULL);
+
+    gint res = gtk_dialog_run (GTK_DIALOG (dialog));
+
+    // add new folder
+    if (res == GTK_RESPONSE_ACCEPT)
+    {
+        GtkFileChooser *chooser = GTK_FILE_CHOOSER (dialog);
+        gchar *added_folder = gtk_file_chooser_get_filename (chooser);
+
+        if (added_folder) {
+            const gchar *current_folders_str = gtk_entry_get_text(GTK_ENTRY(dialog_data->rdp_shared_folders_entry));
+
+            if (current_folders_str && *current_folders_str != '\0') {
+                gchar *new_folders_str = g_strdup_printf("%s;%s", current_folders_str, added_folder);
+                gtk_entry_set_text(GTK_ENTRY(dialog_data->rdp_shared_folders_entry), new_folders_str);
+                g_free(new_folders_str);
+            }
+            else {
+                gtk_entry_set_text(GTK_ENTRY(dialog_data->rdp_shared_folders_entry), added_folder);
+            }
+        }
+
+        free_memory_safely(&added_folder);
+    }
+
+    gtk_widget_destroy(dialog);
+}
+
+static void
+btn_remove_remote_folder_clicked_cb(GtkButton *button G_GNUC_UNUSED, ConnectSettingsDialogData *dialog_data)
+{
+    g_info("%s", __func__);
+    // clear rdp_shared_folders_entry
+    gtk_entry_set_text(GTK_ENTRY(dialog_data->rdp_shared_folders_entry), "");
+}
 
 static void
 ok_button_clicked_cb(GtkButton *button G_GNUC_UNUSED, ConnectSettingsDialogData *dialog_data)
@@ -211,8 +283,10 @@ fill_connect_settings_gui(ConnectSettingsDialogData *dialog_data, ConnectSetting
         gtk_entry_set_text(GTK_ENTRY(dialog_data->rdp_h264_codec_entry), rdp_h264_codec);
     free_memory_safely(&rdp_h264_codec);
 
-    gboolean rdp_redirect_disks = read_int_from_ini_file("RDPSettings", "rdp_redirect_disks", FALSE);
-    gtk_toggle_button_set_active((GtkToggleButton *)dialog_data->rdp_redirect_disks_check_btn, rdp_redirect_disks);
+    gchar *shared_folders_str = read_str_from_ini_file("RDPSettings", "rdp_shared_folders");
+    if (shared_folders_str)
+        gtk_entry_set_text(GTK_ENTRY(dialog_data->rdp_shared_folders_entry), shared_folders_str);
+    free_memory_safely(&shared_folders_str);
 }
 
 static void
@@ -260,9 +334,8 @@ save_data_to_ini_file(ConnectSettingsDialogData *dialog_data)
     const gchar *rdp_h264_codec_str = gtk_entry_get_text(GTK_ENTRY(dialog_data->rdp_h264_codec_entry));
     write_str_to_ini_file("RDPSettings", "rdp_h264_codec", rdp_h264_codec_str);
 
-    gboolean rdp_redirect_disks = gtk_toggle_button_get_active(
-            (GtkToggleButton *)dialog_data->rdp_redirect_disks_check_btn);
-    write_int_to_ini_file("RDPSettings", "rdp_redirect_disks", rdp_redirect_disks);
+    const gchar *shared_folders_str = gtk_entry_get_text(GTK_ENTRY(dialog_data->rdp_shared_folders_entry));
+    write_str_to_ini_file("RDPSettings", "rdp_shared_folders", shared_folders_str);
 }
 
 GtkResponseType remote_viewer_start_settings_dialog(ConnectSettingsData *connect_settings_data, GtkWindow *parent)
@@ -305,9 +378,16 @@ GtkResponseType remote_viewer_start_settings_dialog(ConnectSettingsData *connect
     dialog_data.is_h264_used_check_btn = get_widget_from_builder(dialog_data.builder, "is_h264_used_check_btn");
     dialog_data.rdp_h264_codec_entry = get_widget_from_builder(dialog_data.builder, "rdp_h264_codec_entry");
 
-    dialog_data.rdp_redirect_disks_check_btn = get_widget_from_builder(dialog_data.builder, "redirect_disks_check_btn");
+    dialog_data.rdp_shared_folders_entry = get_widget_from_builder(dialog_data.builder, "rdp_shared_folders_entry");
+
+    dialog_data.btn_add_remote_folder = get_widget_from_builder(dialog_data.builder, "btn_add_remote_folder");
+    dialog_data.btn_remove_remote_folder = get_widget_from_builder(dialog_data.builder, "btn_remove_remote_folder");
 
     // Signals
+    g_signal_connect(dialog_data.btn_add_remote_folder, "clicked",
+            G_CALLBACK(btn_add_remote_folder_clicked_cb), &dialog_data);
+    g_signal_connect(dialog_data.btn_remove_remote_folder, "clicked",
+                     G_CALLBACK(btn_remove_remote_folder_clicked_cb), &dialog_data);
     g_signal_connect_swapped(dialog_data.window, "delete-event", G_CALLBACK(window_deleted_cb), &dialog_data);
     g_signal_connect(dialog_data.bt_cancel, "clicked", G_CALLBACK(cancel_button_clicked_cb), &dialog_data);
     g_signal_connect(dialog_data.bt_ok, "clicked", G_CALLBACK(ok_button_clicked_cb), &dialog_data);
