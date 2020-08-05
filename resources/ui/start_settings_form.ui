@@ -427,12 +427,11 @@
                     <property name="homogeneous">True</property>
                     <child>
                       <object class="GtkButton" id="btn_add_remote_folder">
-                        <property name="label">gtk-add</property>
+                        <property name="label">Добавить папку</property>
                         <property name="visible">True</property>
                         <property name="can_focus">True</property>
                         <property name="receives_default">True</property>
                         <property name="hexpand">True</property>
-                        <property name="use_stock">True</property>
                         <property name="always_show_image">True</property>
                       </object>
                       <packing>
@@ -443,12 +442,11 @@
                     </child>
                     <child>
                       <object class="GtkButton" id="btn_remove_remote_folder">
-                        <property name="label">gtk-clear</property>
+                        <property name="label">Очистить</property>
                         <property name="visible">True</property>
                         <property name="can_focus">True</property>
                         <property name="receives_default">True</property>
                         <property name="hexpand">True</property>
-                        <property name="use_stock">True</property>
                         <property name="always_show_image">True</property>
                       </object>
                       <packing>
@@ -495,10 +493,71 @@
               </packing>
             </child>
             <child>
-              <placeholder/>
+              <object class="GtkGrid">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <child>
+                  <object class="GtkButton" id="btn_archive_logs">
+                    <property name="label" translatable="yes">Архивировать логи</property>
+                    <property name="name">btn_archive_logs</property>
+                    <property name="visible">True</property>
+                    <property name="can_focus">True</property>
+                    <property name="receives_default">True</property>
+                    <property name="tooltip_text" translatable="yes">Логи будут добавлены в архив рядом с исполняемым файлом приложения. Работает на Linux и Windows 10</property>
+                  </object>
+                  <packing>
+                    <property name="left_attach">0</property>
+                    <property name="top_attach">0</property>
+                  </packing>
+                </child>
+                <child>
+                  <placeholder/>
+                </child>
+                <child>
+                  <placeholder/>
+                </child>
+                <child>
+                  <placeholder/>
+                </child>
+                <child>
+                  <placeholder/>
+                </child>
+                <child>
+                  <placeholder/>
+                </child>
+                <child>
+                  <placeholder/>
+                </child>
+                <child>
+                  <placeholder/>
+                </child>
+                <child>
+                  <placeholder/>
+                </child>
+                <child>
+                  <placeholder/>
+                </child>
+                <child>
+                  <placeholder/>
+                </child>
+                <child>
+                  <placeholder/>
+                </child>
+              </object>
+              <packing>
+                <property name="position">3</property>
+              </packing>
             </child>
             <child type="tab">
-              <placeholder/>
+              <object class="GtkLabel">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="label" translatable="yes">Служебные</property>
+              </object>
+              <packing>
+                <property name="position">3</property>
+                <property name="tab_fill">False</property>
+              </packing>
             </child>
           </object>
           <packing>

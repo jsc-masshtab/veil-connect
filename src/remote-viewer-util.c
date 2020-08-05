@@ -803,6 +803,18 @@ GtkWidget *get_widget_from_builder(GtkBuilder *builder, const gchar *name)
     return GTK_WIDGET(gtk_builder_get_object(builder, name));
 }
 
+gchar *get_log_dir_path()
+{
+    // log dir dipends on OS
+#ifdef __linux__
+    gchar *log_dir = g_strdup("log");
+#elif _WIN32
+    const gchar *locap_app_data_path = g_getenv("LOCALAPPDATA");
+    gchar *log_dir = g_strdup_printf("%s/%s/log", locap_app_data_path, PACKAGE);
+#endif
+    return log_dir;
+}
+
 /*
  * Local variables:
  *  c-indent-level: 4

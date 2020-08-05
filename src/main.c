@@ -36,15 +36,8 @@ setup_logging()
     // printf("data_time_string %s", data_time_string);
     g_date_time_unref(datetime);
 
-    // log dir dipends on OS
-#ifdef __linux__
-    const gchar *log_dir = "log";
-#elif _WIN32
-    const gchar *locap_app_data_path = g_getenv("LOCALAPPDATA");
-
-    // create log dir in local
-    gchar *log_dir = g_strdup_printf("%s/%s/log", locap_app_data_path, PACKAGE);
-#endif
+    gchar *log_dir = get_log_dir_path();
+    // create log dir
     g_mkdir_with_parents(log_dir, 0755);
 
     // crash handler
@@ -66,9 +59,7 @@ setup_logging()
     g_free(bt_file_name);
     g_free(stderr_file_name);
     g_free(stdout_file_name);
-#ifdef _WIN32
     g_free(log_dir);
-#endif
 }
 
 int

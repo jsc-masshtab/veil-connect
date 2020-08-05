@@ -39,6 +39,9 @@ typedef struct{
     GtkWidget *btn_add_remote_folder;
     GtkWidget *btn_remove_remote_folder;
 
+    // Service
+    GtkWidget *btn_archive_logs;
+
     // control buttons
     GtkWidget *bt_cancel;
     GtkWidget *bt_ok;
@@ -167,7 +170,6 @@ shared_folders_icon_released(GtkEntry            *entry,
 static void
 btn_add_remote_folder_clicked_cb(GtkButton *button G_GNUC_UNUSED, ConnectSettingsDialogData *dialog_data)
 {
-    g_info("%s", __func__);
     // get folder name
     GtkWidget *dialog = gtk_file_chooser_dialog_new ("Open File",
                                           GTK_WINDOW(dialog_data->window),
@@ -208,9 +210,24 @@ btn_add_remote_folder_clicked_cb(GtkButton *button G_GNUC_UNUSED, ConnectSetting
 static void
 btn_remove_remote_folder_clicked_cb(GtkButton *button G_GNUC_UNUSED, ConnectSettingsDialogData *dialog_data)
 {
-    g_info("%s", __func__);
     // clear rdp_shared_folders_entry
     gtk_entry_set_text(GTK_ENTRY(dialog_data->rdp_shared_folders_entry), "");
+}
+
+static void
+btn_archive_logs_clicked_cb(GtkButton *button G_GNUC_UNUSED, ConnectSettingsDialogData *dialog_data)
+{
+    gchar *log_dir = get_log_dir_path();
+    g_info("%s", __func__);
+
+#ifdef __linux__
+    gchar *tar_cmd = g_strdup_printf("tar -czvf log.tar.gz %s", log_dir);
+    system(tar_cmd);
+#elif _WIN32
+#endif
+
+    g_free(tar_cmd);
+    g_free(log_dir);
 }
 
 static void
@@ -383,17 +400,21 @@ GtkResponseType remote_viewer_start_settings_dialog(ConnectSettingsData *connect
     dialog_data.btn_add_remote_folder = get_widget_from_builder(dialog_data.builder, "btn_add_remote_folder");
     dialog_data.btn_remove_remote_folder = get_widget_from_builder(dialog_data.builder, "btn_remove_remote_folder");
 
+    dialog_data.btn_archive_logs = get_widget_from_builder(dialog_data.builder, "btn_archive_logs");
+
     // Signals
-    g_signal_connect(dialog_data.btn_add_remote_folder, "clicked",
-            G_CALLBACK(btn_add_remote_folder_clicked_cb), &dialog_data);
-    g_signal_connect(dialog_data.btn_remove_remote_folder, "clicked",
-                     G_CALLBACK(btn_remove_remote_folder_clicked_cb), &dialog_data);
     g_signal_connect_swapped(dialog_data.window, "delete-event", G_CALLBACK(window_deleted_cb), &dialog_data);
     g_signal_connect(dialog_data.bt_cancel, "clicked", G_CALLBACK(cancel_button_clicked_cb), &dialog_data);
     g_signal_connect(dialog_data.bt_ok, "clicked", G_CALLBACK(ok_button_clicked_cb), &dialog_data);
     g_signal_connect(dialog_data.port_entry, "insert-text", G_CALLBACK(on_insert_text_event), NULL);
     g_signal_connect(dialog_data.is_h264_used_check_btn, "toggled", G_CALLBACK(on_h264_used_check_btn_toggled),
             &dialog_data);
+    g_signal_connect(dialog_data.btn_add_remote_folder, "clicked",
+                     G_CALLBACK(btn_add_remote_folder_clicked_cb), &dialog_data);
+    g_signal_connect(dialog_data.btn_remove_remote_folder, "clicked",
+                     G_CALLBACK(btn_remove_remote_folder_clicked_cb), &dialog_data);
+    g_signal_connect(dialog_data.btn_archive_logs, "clicked",
+                     G_CALLBACK(btn_archive_logs_clicked_cb), &dialog_data);
 
     // read from file
     fill_connect_settings_data_from_ini_file(connect_settings_data);
