@@ -77,8 +77,6 @@ static GArray * rdp_client_create_params_array(ExtendedRdpContext* tf)
     add_rdp_param(rdp_params_dyn_array, g_strdup("/relax-order-checks"));
     add_rdp_param(rdp_params_dyn_array, g_strdup("+glyph-cache"));
 #endif
-    // custom from ini file
-    // GUI RDP params
     // /gfx-h264:AVC444
     gboolean is_rdp_h264_used = read_int_from_ini_file("RDPSettings", "is_rdp_h264_used", FALSE);
     if (is_rdp_h264_used) {
@@ -107,7 +105,7 @@ static GArray * rdp_client_create_params_array(ExtendedRdpContext* tf)
         g_strfreev(shared_folders_array);
     }
 
-    // rdp_args
+    // rdp_args     custom from ini file
     gchar *rdp_args_str = read_str_from_ini_file("RDPSettings", "rdp_args");
 
     if (rdp_args_str) {

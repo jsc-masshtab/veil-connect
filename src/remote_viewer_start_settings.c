@@ -186,7 +186,14 @@ btn_add_remote_folder_clicked_cb(GtkButton *button G_GNUC_UNUSED, ConnectSetting
     if (res == GTK_RESPONSE_ACCEPT)
     {
         GtkFileChooser *chooser = GTK_FILE_CHOOSER (dialog);
-        gchar *added_folder = gtk_file_chooser_get_filename (chooser);
+        gchar *added_folder = gtk_file_chooser_get_filename(chooser);
+
+#ifdef _WIN32
+        gchar *windows_style_path = replace_str(added_folder, "\\", "/");
+        free_memory_safely(&added_folder);
+        added_folder = windows_style_path;
+#endif
+        g_info("added folder: %s", added_folder);
 
         if (added_folder) {
             const gchar *current_folders_str = gtk_entry_get_text(GTK_ENTRY(dialog_data->rdp_shared_folders_entry));
@@ -224,6 +231,13 @@ btn_archive_logs_clicked_cb(GtkButton *button G_GNUC_UNUSED, ConnectSettingsDial
     gchar *tar_cmd = g_strdup_printf("tar -czvf log.tar.gz %s", log_dir);
     system(tar_cmd);
 #elif _WIN32
+    const gchar *locap_app_data_path = g_getenv("LOCALAPPDATA");
+    gchar *app_data_dir = g_strdup_printf("%s/%s", locap_app_data_path, PACKAGE);
+
+    gchar *tar_cmd = g_strdup_printf("tar -czvf log.tar.gz %s -С %s", log_dir, app_data_dir);
+    g_free(app_data_dir);
+
+    system(tar_cmd);
 #endif
 
     g_free(tar_cmd);
