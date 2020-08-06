@@ -12,6 +12,7 @@
 #include <string.h>
 
 #include <glib.h>
+#include <glib/gstdio.h>
 
 #include <freerdp/freerdp.h>
 #include <freerdp/constants.h>
@@ -94,10 +95,11 @@ static GArray * rdp_client_create_params_array(ExtendedRdpContext* tf)
 
         gchar **shared_folder;
         for (shared_folder = shared_folders_array; *shared_folder; shared_folder++) {
-            // Проверяем, что строка непустая и добавляем драйв в опции rdp
-            if (**shared_folder != '\0') {
+
+            // Проверяем, что строка непустая и папка доступна, и добавляем драйв в опции rdp
+            if( (**shared_folder != '\0') && (g_access(*shared_folder, R_OK) == 0) ) {
                 // create folder name (how it will be visible on the remote machine)
-                // Get rid of / and : because Freerdp dont like them on drive names (on Windows)...
+                // Get rid of / and : because Freerdp dosnt like them in drive names (on Windows)...
                 gchar *folder_name = replace_str(*shared_folder, "/", "_");
                 gchar *folder_name_2 = replace_str(folder_name, ":", "_");
 

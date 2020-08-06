@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <ctype.h>
+#include <glib/gstdio.h>
 
 #include <freerdp/codec/color.h>
 
@@ -65,6 +66,13 @@ cancel_button_clicked_cb(GtkButton *button G_GNUC_UNUSED, ConnectSettingsDialogD
     shutdown_loop(dialog_data->loop);
 }
 
+// Применяем к entry стиль такой, что она выглядет содержащей ошибку
+static void
+make_entry_red(GtkWidget *entry)
+{
+    gtk_widget_set_name(entry, "network_entry_with_errors");
+}
+
 /*Take data from GUI. Return true if there were no errors otherwise - false  */
 // У виджета есть понятие id имя, котоое уникально и есть понятие имя виджета, которое используется для css.
 static gboolean
@@ -82,7 +90,7 @@ fill_connect_settings_data_from_gui(ConnectSettingsData *connect_settings_data, 
         free_memory_safely(&connect_settings_data->domain);
         connect_settings_data->domain = g_strdup(domain_gui_str);
     } else {
-        gtk_widget_set_name(dialog_data->domain_entry, "network_entry_with_errors");
+        make_entry_red(dialog_data->domain_entry);
         is_ok = FALSE;
     }
 
@@ -97,7 +105,7 @@ fill_connect_settings_data_from_gui(ConnectSettingsData *connect_settings_data, 
         free_memory_safely(&connect_settings_data->ip);
         connect_settings_data->ip = g_strdup(address_gui_str);
     } else {
-        gtk_widget_set_name(dialog_data->address_entry, "network_entry_with_errors");
+        make_entry_red(dialog_data->address_entry);
         is_ok = FALSE;
     }
 
@@ -108,7 +116,7 @@ fill_connect_settings_data_from_gui(ConnectSettingsData *connect_settings_data, 
         gtk_widget_set_name(dialog_data->port_entry, "connection-port-entry");
         connect_settings_data->port = port_int;
     } else {
-        gtk_widget_set_name(dialog_data->port_entry, "network_entry_with_errors");
+        make_entry_red(dialog_data->port_entry);
         is_ok = FALSE;
     }
 
@@ -249,6 +257,21 @@ ok_button_clicked_cb(GtkButton *button G_GNUC_UNUSED, ConnectSettingsDialogData 
 {
     // fill connect_settings_data from gui
     gboolean is_success = fill_connect_settings_data_from_gui(dialog_data->p_connect_settings_data, dialog_data);
+
+   /* // Check some RDP settings
+    const gchar *shared_folders_str = gtk_entry_get_text(GTK_ENTRY(dialog_data->rdp_shared_folders_entry));
+    gchar **shared_folders_array = g_strsplit(shared_folders_str, ";", 10);
+
+    gchar **shared_folder;
+    for (shared_folder = shared_folders_array; *shared_folder; shared_folder++) {
+        // Подсвечиваем поле красным, если обнаружили некорректный путь
+        if(g_access(*shared_folder, R_OK) != 0) {
+            make_entry_red(dialog_data->rdp_shared_folders_entry);
+            is_success = FALSE;
+            break;
+        }
+    }
+    g_strfreev(shared_folders_array);*/
 
     // Close the window if settings are ok
     if (is_success) {
