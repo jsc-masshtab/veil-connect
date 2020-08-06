@@ -366,7 +366,10 @@ save_data_to_ini_file(ConnectSettingsDialogData *dialog_data)
     write_str_to_ini_file("RDPSettings", "rdp_h264_codec", rdp_h264_codec_str);
 
     const gchar *shared_folders_str = gtk_entry_get_text(GTK_ENTRY(dialog_data->rdp_shared_folders_entry));
-    write_str_to_ini_file("RDPSettings", "rdp_shared_folders", shared_folders_str);
+    // Пользовать мог ввести путь с виндусятскими разделителями, поэтому на всякий случай заменяем
+    gchar *folder_name = replace_str(shared_folders_str, "\\", "/");
+    write_str_to_ini_file("RDPSettings", "rdp_shared_folders", folder_name);
+    free_memory_safely(&folder_name);
 }
 
 GtkResponseType remote_viewer_start_settings_dialog(ConnectSettingsData *connect_settings_data, GtkWindow *parent)

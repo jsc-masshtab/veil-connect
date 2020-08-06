@@ -96,9 +96,17 @@ static GArray * rdp_client_create_params_array(ExtendedRdpContext* tf)
         for (shared_folder = shared_folders_array; *shared_folder; shared_folder++) {
             // Проверяем, что строка непустая и добавляем драйв в опции rdp
             if (**shared_folder != '\0') {
-                gchar *shared_folder_param_str = g_strdup_printf("/drive:%s", *shared_folder);
+                // create folder name (how it will be visible on the remote machine)
+                // Get rid of / and : because Freerdp dont like them on drive names (on Windows)...
+                gchar *folder_name = replace_str(*shared_folder, "/", "_");
+                gchar *folder_name_2 = replace_str(folder_name, ":", "_");
+
+                gchar *shared_folder_param_str = g_strdup_printf("/drive:%s,%s", folder_name_2, *shared_folder);
                 g_info("shared_folder_param_str %s", shared_folder_param_str);
                 add_rdp_param(rdp_params_dyn_array, shared_folder_param_str); // being removed later
+
+                g_free(folder_name);
+                g_free(folder_name_2);
             }
         }
 
