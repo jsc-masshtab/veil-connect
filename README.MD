@@ -14,7 +14,7 @@
 
 ## Building on Debian / Ubuntu
 ```
-sudo apt install spice-client-gtk libspice-client-gtk-3.0-dev libjson-glib-dev libxml2-dev libsoup2.4-dev freerdp2-dev libfreerdp-client2-2 libwinpr2-2 libwinpr2-dev gcc cmake pkg-config
+sudo apt install libhiredis-dev spice-client-gtk libspice-client-gtk-3.0-dev libjson-glib-dev libxml2-dev libsoup2.4-dev freerdp2-dev libfreerdp-client2-2 libwinpr2-2 libwinpr2-dev gcc cmake pkg-config
 mkdir build
 cd build
 cmake -DCMAKE_BUILD_TYPE=Release ../
