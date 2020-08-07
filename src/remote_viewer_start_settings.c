@@ -242,7 +242,7 @@ btn_archive_logs_clicked_cb(GtkButton *button G_GNUC_UNUSED, ConnectSettingsDial
     const gchar *locap_app_data_path = g_getenv("LOCALAPPDATA");
     gchar *app_data_dir = g_strdup_printf("%s/%s", locap_app_data_path, PACKAGE);
 
-    gchar *tar_cmd = g_strdup_printf("tar -czvf log.tar.gz %s -С %s", log_dir, app_data_dir);
+    gchar *tar_cmd = g_strdup_printf("tar.exe -czvf log.tar.gz %s -C %s", log_dir, app_data_dir);
     g_free(app_data_dir);
 
     system(tar_cmd);
