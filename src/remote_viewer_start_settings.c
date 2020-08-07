@@ -230,14 +230,14 @@ btn_remove_remote_folder_clicked_cb(GtkButton *button G_GNUC_UNUSED, ConnectSett
 }
 
 static void
-btn_archive_logs_clicked_cb(GtkButton *button G_GNUC_UNUSED, ConnectSettingsDialogData *dialog_data)
+btn_archive_logs_clicked_cb(GtkButton *button G_GNUC_UNUSED, ConnectSettingsDialogData *dialog_data G_GNUC_UNUSED)
 {
     gchar *log_dir = get_log_dir_path();
     g_info("%s", __func__);
 
 #ifdef __linux__
     gchar *tar_cmd = g_strdup_printf("tar -czvf log.tar.gz %s", log_dir);
-    system(tar_cmd);
+    int res = system(tar_cmd);
 #elif _WIN32
     const gchar *locap_app_data_path = g_getenv("LOCALAPPDATA");
     gchar *app_data_dir = g_strdup_printf("%s/%s", locap_app_data_path, PACKAGE);
@@ -245,8 +245,9 @@ btn_archive_logs_clicked_cb(GtkButton *button G_GNUC_UNUSED, ConnectSettingsDial
     gchar *tar_cmd = g_strdup_printf("tar.exe -czvf log.tar.gz %s -C %s", log_dir, app_data_dir);
     g_free(app_data_dir);
 
-    system(tar_cmd);
+    int res = system(tar_cmd);
 #endif
+    (void)res;
 
     g_free(tar_cmd);
     g_free(log_dir);

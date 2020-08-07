@@ -87,51 +87,51 @@ static LRESULT CALLBACK keyboard_hook_cb(int code, WPARAM wparam, LPARAM lparam)
 }
 #endif
 
-static void rdp_viewer_window_toggle_fullscreen(RdpViewerData *rdp_viewer_data, gboolean is_fullscreen)
+static void rdp_viewer_window_toggle_fullscreen(RdpWindowData *rdp_window_data, gboolean is_fullscreen)
 {
     if (is_fullscreen) {
         // turn on keyboard grab in full screen
 #ifdef G_OS_WIN32
-        win32_window = gdk_win32_window_get_impl_hwnd(gtk_widget_get_window(rdp_viewer_data->rdp_viewer_window));
+        win32_window = gdk_win32_window_get_impl_hwnd(gtk_widget_get_window(rdp_window_data->rdp_viewer_window));
 
-        if (rdp_viewer_data->keyboard_hook == NULL)
-            rdp_viewer_data->keyboard_hook = SetWindowsHookEx(WH_KEYBOARD_LL, keyboard_hook_cb,
+        if (rdp_window_data->keyboard_hook == NULL)
+            rdp_window_data->keyboard_hook = SetWindowsHookEx(WH_KEYBOARD_LL, keyboard_hook_cb,
                                                 GetModuleHandle(NULL), 0);
-        g_warn_if_fail(rdp_viewer_data->keyboard_hook != NULL);
+        g_warn_if_fail(rdp_window_data->keyboard_hook != NULL);
 #endif
-        GdkDisplay *display = gtk_widget_get_display(rdp_viewer_data->rdp_viewer_window);
-        rdp_viewer_data->seat = gdk_display_get_default_seat(display);
-        GdkGrabStatus ggs = gdk_seat_grab(rdp_viewer_data->seat,
-                                          gtk_widget_get_window(rdp_viewer_data->rdp_viewer_window),
+        GdkDisplay *display = gtk_widget_get_display(rdp_window_data->rdp_viewer_window);
+        rdp_window_data->seat = gdk_display_get_default_seat(display);
+        GdkGrabStatus ggs = gdk_seat_grab(rdp_window_data->seat,
+                                          gtk_widget_get_window(rdp_window_data->rdp_viewer_window),
                                           GDK_SEAT_CAPABILITY_KEYBOARD, TRUE, NULL, NULL, NULL, NULL);
 
         g_info("%s ggs: %i", (const char *)__func__, ggs);
 
         // fullscreen
-        gtk_window_set_resizable(GTK_WINDOW(rdp_viewer_data->rdp_viewer_window), TRUE);
-        gtk_window_fullscreen(GTK_WINDOW(rdp_viewer_data->rdp_viewer_window));
+        gtk_window_set_resizable(GTK_WINDOW(rdp_window_data->rdp_viewer_window), TRUE);
+        gtk_window_fullscreen(GTK_WINDOW(rdp_window_data->rdp_viewer_window));
         //gtk_window_set_resizable(GTK_WINDOW(rdp_viewer_window), FALSE);
 
         // show toolbar
-        gtk_widget_hide(rdp_viewer_data->top_menu);
-        gtk_widget_show(rdp_viewer_data->overlay_toolbar);
-        virt_viewer_timed_revealer_force_reveal(rdp_viewer_data->revealer, TRUE);
+        gtk_widget_hide(rdp_window_data->top_menu);
+        gtk_widget_show(rdp_window_data->overlay_toolbar);
+        virt_viewer_timed_revealer_force_reveal(rdp_window_data->revealer, TRUE);
 
     } else {
         // ungrab keyboard
-        if (rdp_viewer_data->seat)
-            gdk_seat_ungrab(rdp_viewer_data->seat);
+        if (rdp_window_data->seat)
+            gdk_seat_ungrab(rdp_window_data->seat);
 #ifdef G_OS_WIN32
-        if (rdp_viewer_data->keyboard_hook) {
-            UnhookWindowsHookEx(rdp_viewer_data->keyboard_hook);
-            rdp_viewer_data->keyboard_hook = NULL;
+        if (rdp_window_data->keyboard_hook) {
+            UnhookWindowsHookEx(rdp_window_data->keyboard_hook);
+            rdp_window_data->keyboard_hook = NULL;
         }
 #endif
         //  leave fulscreen
-        gtk_widget_hide(rdp_viewer_data->overlay_toolbar);
+        gtk_widget_hide(rdp_window_data->overlay_toolbar);
         //gtk_widget_set_size_request(priv->window, -1, -1);
-        gtk_window_unfullscreen(GTK_WINDOW(rdp_viewer_data->rdp_viewer_window));
-        gtk_widget_show(rdp_viewer_data->top_menu);
+        gtk_window_unfullscreen(GTK_WINDOW(rdp_window_data->rdp_viewer_window));
+        gtk_widget_show(rdp_window_data->top_menu);
     }
 }
 
@@ -149,8 +149,8 @@ static guint get_nkeys(const guint *keys)
 static gboolean rdp_viewer_window_deleted_cb(gpointer userdata)
 {
     g_info("%s", (const char *)__func__);
-    RdpViewerData *rdp_viewer_data = (RdpViewerData *)userdata;
-    shutdown_loop(*rdp_viewer_data->loop_p);
+    RdpWindowData *rdp_window_data = (RdpWindowData *)userdata;
+    shutdown_loop(*rdp_window_data->loop_p);
 
     return TRUE;
 }
@@ -158,9 +158,9 @@ static gboolean rdp_viewer_window_deleted_cb(gpointer userdata)
 static void rdp_viewer_event_on_mapped(GtkWidget *widget G_GNUC_UNUSED, GdkEvent *event G_GNUC_UNUSED,
         gpointer user_data)
 {
-    RdpViewerData *rdp_viewer_data = (RdpViewerData *)user_data;
+    RdpWindowData *rdp_window_data = (RdpWindowData *)user_data;
 
-    rdp_viewer_window_toggle_fullscreen(rdp_viewer_data, TRUE);
+    rdp_viewer_window_toggle_fullscreen(rdp_window_data, TRUE);
 }
 
 ////static GTimer *timer = NULL;
@@ -194,9 +194,9 @@ static void rdp_viewer_event_on_mapped(GtkWidget *widget G_GNUC_UNUSED, GdkEvent
 
 static gboolean gtk_update(gpointer user_data)
 {
-    RdpViewerData *rdp_viewer_data = (RdpViewerData *)user_data;
-    if (!rdp_viewer_data->is_rdp_display_being_redrawed)
-        gtk_widget_queue_draw(rdp_viewer_data->rdp_display);
+    RdpWindowData *rdp_window_data = (RdpWindowData *)user_data;
+    if (!rdp_window_data->is_rdp_display_being_redrawed)
+        gtk_widget_queue_draw(rdp_window_data->rdp_display);
 
     return TRUE;
 }
@@ -273,9 +273,9 @@ static void
 rdp_viewer_window_menu_switch_off(GtkWidget *menu G_GNUC_UNUSED, gpointer userdata)
 {
     g_info("%s", (const char *)__func__);
-    RdpViewerData *rdp_viewer_data = (RdpViewerData *)userdata;
-    *rdp_viewer_data->dialog_window_response_p = GTK_RESPONSE_CANCEL;
-    shutdown_loop(*rdp_viewer_data->loop_p);
+    RdpWindowData *rdp_window_data = (RdpWindowData *)userdata;
+    *rdp_window_data->dialog_window_response_p = GTK_RESPONSE_CANCEL;
+    shutdown_loop(*rdp_window_data->loop_p);
 }
 
 static void
@@ -320,7 +320,8 @@ rdp_viewer_window_menu_reboot_vm_force(GtkWidget *menu G_GNUC_UNUSED, gpointer u
     vdi_api_session_do_action_on_vm("reboot", TRUE);
 }
 
-static void rdp_viewer_control_menu_setup(GtkBuilder *builder, RdpViewerData *rdp_viewer_data)
+static void
+rdp_viewer_control_menu_setup(GtkBuilder *builder, RdpWindowData *rdp_window_data)
 {
     GtkMenuItem *menu_switch_off = GTK_MENU_ITEM(gtk_builder_get_object(builder, "menu-switch-off"));
     GtkMenuItem *menu_start_vm = GTK_MENU_ITEM(gtk_builder_get_object(builder, "menu-start-vm"));
@@ -330,7 +331,7 @@ static void rdp_viewer_control_menu_setup(GtkBuilder *builder, RdpViewerData *rd
     GtkMenuItem *menu_reboot_vm = GTK_MENU_ITEM(gtk_builder_get_object(builder, "menu-reboot-vm"));
     GtkMenuItem *menu_reboot_vm_force = GTK_MENU_ITEM(gtk_builder_get_object(builder, "menu-reboot-vm-force"));
 
-    g_signal_connect(menu_switch_off, "activate", G_CALLBACK(rdp_viewer_window_menu_switch_off), rdp_viewer_data);
+    g_signal_connect(menu_switch_off, "activate", G_CALLBACK(rdp_viewer_window_menu_switch_off), rdp_window_data);
     g_signal_connect(menu_start_vm, "activate", G_CALLBACK(rdp_viewer_window_menu_start_vm), NULL);
     g_signal_connect(menu_suspend_vm, "activate", G_CALLBACK(rdp_viewer_window_menu_suspend_vm), NULL);
     g_signal_connect(menu_shutdown_vm, "activate", G_CALLBACK(rdp_viewer_window_menu_shutdown_vm), NULL);
@@ -339,43 +340,76 @@ static void rdp_viewer_control_menu_setup(GtkBuilder *builder, RdpViewerData *rd
     g_signal_connect(menu_reboot_vm_force, "activate", G_CALLBACK(rdp_viewer_window_menu_reboot_vm_force), NULL);
 }
 
-static void rdp_viewer_item_fullscreen_activated(GtkWidget *menu G_GNUC_UNUSED, gpointer userdata)
+static void
+rdp_viewer_item_fullscreen_activated(GtkWidget *menu G_GNUC_UNUSED, gpointer userdata)
 {
     g_info("%s", (const char *)__func__);
-    RdpViewerData *rdp_viewer_data = (RdpViewerData *)userdata;
-    rdp_viewer_window_toggle_fullscreen(rdp_viewer_data, TRUE);
+    RdpWindowData *rdp_window_data = (RdpWindowData *)userdata;
+    rdp_viewer_window_toggle_fullscreen(rdp_window_data, TRUE);
 }
 
-static void rdp_viewer_window_toolbar_leave_fullscreen(GtkWidget *button G_GNUC_UNUSED, gpointer userdata)
+static void
+rdp_viewer_window_toolbar_leave_fullscreen(GtkWidget *button G_GNUC_UNUSED, gpointer userdata)
 {
-    RdpViewerData *rdp_viewer_data = (RdpViewerData *)userdata;
-    rdp_viewer_window_toggle_fullscreen(rdp_viewer_data, FALSE);
+    RdpWindowData *rdp_window_data = (RdpWindowData *)userdata;
+    rdp_viewer_window_toggle_fullscreen(rdp_window_data, FALSE);
 }
 
-static void rdp_viewer_toolbar_setup(GtkBuilder *builder, RdpViewerData *rdp_viewer_data)
+static void
+rdp_viewer_window_toolbar_leave_fullscreen_for_all_windows(GtkWidget *button G_GNUC_UNUSED, gpointer userdata)
+{
+    RdpWindowData *rdp_window_data = (RdpWindowData *)userdata;
+    GArray *rdp_windows_array = rdp_window_data->ex_rdp_context->rdp_windows_array;
+
+    // leave fullscreen on all windows
+    for (guint i = 0; i < rdp_windows_array->len; ++i) {
+        RdpWindowData *rdp_window_data_ = g_array_index(rdp_windows_array, RdpWindowData *, i);
+        rdp_viewer_window_toggle_fullscreen(rdp_window_data_, FALSE);
+    }
+}
+
+static GtkWidget *
+create_new_button_for_overlay_toolbar(RdpWindowData *rdp_window_data, const gchar *icon_name, const gchar *text)
+{
+    GtkWidget *button = GTK_WIDGET(gtk_tool_button_new(NULL, NULL));
+    gtk_tool_button_set_icon_name(GTK_TOOL_BUTTON(button), icon_name);
+    gtk_tool_button_set_label(GTK_TOOL_BUTTON(button), text);
+    gtk_tool_item_set_tooltip_text(GTK_TOOL_ITEM(button), text);
+    gtk_tool_item_set_is_important(GTK_TOOL_ITEM(button), TRUE);
+    gtk_widget_show(button);
+    gtk_toolbar_insert(GTK_TOOLBAR(rdp_window_data->overlay_toolbar), GTK_TOOL_ITEM(button), 0);
+
+    return button;
+    g_signal_connect(button, "clicked", G_CALLBACK(rdp_viewer_window_toolbar_leave_fullscreen), rdp_window_data);
+}
+
+static void rdp_viewer_toolbar_setup(GtkBuilder *builder, RdpWindowData *rdp_window_data)
 {
     GtkWidget *button;
 
     // create a toolbar which will be shown in fullscreen mode
-    rdp_viewer_data->overlay_toolbar = gtk_toolbar_new();
-    gtk_toolbar_set_show_arrow(GTK_TOOLBAR(rdp_viewer_data->overlay_toolbar), FALSE);
-    gtk_widget_set_no_show_all(rdp_viewer_data->overlay_toolbar, TRUE);
-    gtk_toolbar_set_style(GTK_TOOLBAR(rdp_viewer_data->overlay_toolbar), GTK_TOOLBAR_BOTH_HORIZ);
+    rdp_window_data->overlay_toolbar = gtk_toolbar_new();
+    gtk_toolbar_set_show_arrow(GTK_TOOLBAR(rdp_window_data->overlay_toolbar), FALSE);
+    gtk_widget_set_no_show_all(rdp_window_data->overlay_toolbar, TRUE);
+    gtk_toolbar_set_style(GTK_TOOLBAR(rdp_window_data->overlay_toolbar), GTK_TOOLBAR_BOTH_HORIZ);
 
-    /* Leave fullscreen */
-    button = GTK_WIDGET(gtk_tool_button_new(NULL, NULL));
-    gtk_tool_button_set_icon_name(GTK_TOOL_BUTTON(button), "view-restore");
-    gtk_tool_button_set_label(GTK_TOOL_BUTTON(button), ("Покинуть полный экран"));
-    gtk_tool_item_set_tooltip_text(GTK_TOOL_ITEM(button), ("Покинуть полный экран"));
-    gtk_tool_item_set_is_important(GTK_TOOL_ITEM(button), TRUE);
-    gtk_widget_show(button);
-    gtk_toolbar_insert(GTK_TOOLBAR(rdp_viewer_data->overlay_toolbar), GTK_TOOL_ITEM(button), 0);
-    g_signal_connect(button, "clicked", G_CALLBACK(rdp_viewer_window_toolbar_leave_fullscreen), rdp_viewer_data);
+    // Leave fullscreen
+    button = create_new_button_for_overlay_toolbar(rdp_window_data, "view-restore", "Покинуть полный экран");
+    g_signal_connect(button, "clicked", G_CALLBACK(rdp_viewer_window_toolbar_leave_fullscreen), rdp_window_data);
+
+    // Leave fullscreen for all windows at once
+    if (rdp_window_data->ex_rdp_context->context.settings->MonitorCount > 1) {
+        button = create_new_button_for_overlay_toolbar(rdp_window_data, "view-restore",
+                "Покинуть полный экран на всех окнах");
+        g_signal_connect(button, "clicked",
+                G_CALLBACK(rdp_viewer_window_toolbar_leave_fullscreen_for_all_windows),
+                rdp_window_data);
+    }
 
     // add tollbar to overlay
-    rdp_viewer_data->revealer = virt_viewer_timed_revealer_new(rdp_viewer_data->overlay_toolbar);
+    rdp_window_data->revealer = virt_viewer_timed_revealer_new(rdp_window_data->overlay_toolbar);
     GtkWidget *overlay = GTK_WIDGET(gtk_builder_get_object(builder, "viewer-overlay"));
-    gtk_overlay_add_overlay(GTK_OVERLAY(overlay), GTK_WIDGET(rdp_viewer_data->revealer));
+    gtk_overlay_add_overlay(GTK_OVERLAY(overlay), GTK_WIDGET(rdp_window_data->revealer));
 }
 
 static void fill_shortcuts_menu(GtkMenu *sub_menu_send, ExtendedRdpContext* ex_rdp_context)
@@ -392,25 +426,25 @@ static void fill_shortcuts_menu(GtkMenu *sub_menu_send, ExtendedRdpContext* ex_r
     }
 }
 
-RdpViewerData *rdp_viewer_window_create(ExtendedRdpContext *ex_rdp_context, UINT32 *last_rdp_error_p)
+RdpWindowData *rdp_viewer_window_create(ExtendedRdpContext *ex_rdp_context, UINT32 *last_rdp_error_p)
 {
-    RdpViewerData *rdp_viewer_data = malloc(sizeof(RdpViewerData));
-    memset(rdp_viewer_data, 0, sizeof(RdpViewerData));
+    RdpWindowData *rdp_window_data = malloc(sizeof(RdpWindowData));
+    memset(rdp_window_data, 0, sizeof(RdpWindowData));
 
-    rdp_viewer_data->ex_rdp_context = ex_rdp_context;
+    rdp_window_data->ex_rdp_context = ex_rdp_context;
 
     // gui  TODO: make a separate .ui form. Dont use virt-viewer_veil.ui
-    GtkBuilder *builder = rdp_viewer_data->builder = remote_viewer_util_load_ui("virt-viewer_veil.ui");
+    GtkBuilder *builder = rdp_window_data->builder = remote_viewer_util_load_ui("virt-viewer_veil.ui");
 
-    GtkWidget *rdp_viewer_window = rdp_viewer_data->rdp_viewer_window =
+    GtkWidget *rdp_viewer_window = rdp_window_data->rdp_viewer_window =
             GTK_WIDGET(gtk_builder_get_object(builder, "viewer"));
     gtk_widget_add_events(rdp_viewer_window, GDK_KEY_PRESS_MASK | GDK_KEY_RELEASE_MASK);
     g_signal_connect_swapped(rdp_viewer_window, "delete-event",
-                             G_CALLBACK(rdp_viewer_window_deleted_cb), rdp_viewer_data);
+                             G_CALLBACK(rdp_viewer_window_deleted_cb), rdp_window_data);
     g_signal_connect(rdp_viewer_window, "map-event",
-            G_CALLBACK(rdp_viewer_event_on_mapped), rdp_viewer_data);
+            G_CALLBACK(rdp_viewer_event_on_mapped), rdp_window_data);
 
-    rdp_viewer_data->top_menu = GTK_WIDGET(gtk_builder_get_object(builder, "top-menu"));
+    rdp_window_data->top_menu = GTK_WIDGET(gtk_builder_get_object(builder, "top-menu"));
 
     // usb menu is not required for rdp
     GtkWidget *menu_usb = GTK_WIDGET(gtk_builder_get_object(builder, "menu-file-usb"));
@@ -423,17 +457,17 @@ RdpViewerData *rdp_viewer_window_create(ExtendedRdpContext *ex_rdp_context, UINT
     gtk_widget_destroy(GTK_WIDGET(gtk_builder_get_object(builder, "menu-preferences")));
 
     // control menu
-    rdp_viewer_control_menu_setup(builder, rdp_viewer_data);
+    rdp_viewer_control_menu_setup(builder, rdp_window_data);
 
     // controll toolbar used in fullscreen
-    rdp_viewer_toolbar_setup(builder, rdp_viewer_data);
+    rdp_viewer_toolbar_setup(builder, rdp_window_data);
 
     // view menu
     gtk_widget_destroy(GTK_WIDGET(gtk_builder_get_object(builder, "menu-view-zoom")));
     gtk_widget_destroy(GTK_WIDGET(gtk_builder_get_object(builder, "menu-displays")));
     gtk_widget_destroy(GTK_WIDGET(gtk_builder_get_object(builder, "menu-view-release-cursor")));
     GtkWidget *item_fullscreen = GTK_WIDGET(gtk_builder_get_object(builder, "menu-view-fullscreen"));
-    g_signal_connect(item_fullscreen, "activate", G_CALLBACK(rdp_viewer_item_fullscreen_activated), rdp_viewer_data);
+    g_signal_connect(item_fullscreen, "activate", G_CALLBACK(rdp_viewer_item_fullscreen_activated), rdp_window_data);
 
     // shortcuts
     GtkWidget *menu_send = GTK_WIDGET(gtk_builder_get_object(builder, "menu-send"));
@@ -448,9 +482,9 @@ RdpViewerData *rdp_viewer_window_create(ExtendedRdpContext *ex_rdp_context, UINT
     g_signal_connect(item_about, "activate", G_CALLBACK(rdp_viewer_item_details_activated), NULL);
 
     // create RDP display
-    rdp_viewer_data->rdp_display = rdp_display_create(rdp_viewer_data, ex_rdp_context, last_rdp_error_p);
+    rdp_window_data->rdp_display = rdp_display_create(rdp_window_data, ex_rdp_context, last_rdp_error_p);
     GtkWidget *vbox = GTK_WIDGET(gtk_builder_get_object(builder, "viewer-box"));
-    gtk_box_pack_end(GTK_BOX(vbox), rdp_viewer_data->rdp_display, TRUE, TRUE, 0);
+    gtk_box_pack_end(GTK_BOX(vbox), rdp_window_data->rdp_display, TRUE, TRUE, 0);
 
     // show
     gtk_window_set_position(GTK_WINDOW(rdp_viewer_window), GTK_WIN_POS_CENTER);
@@ -460,29 +494,29 @@ RdpViewerData *rdp_viewer_window_create(ExtendedRdpContext *ex_rdp_context, UINT
     // get desired fps from ini file
     UINT32 rdp_fps = CLAMP(read_int_from_ini_file("RDPSettings", "rdp_fps", 30), 1, 60);
     guint redraw_timeout = 1000 / rdp_fps;
-    rdp_viewer_data->g_timeout_id = g_timeout_add(redraw_timeout, (GSourceFunc)gtk_update, rdp_viewer_data);
+    rdp_window_data->g_timeout_id = g_timeout_add(redraw_timeout, (GSourceFunc)gtk_update, rdp_window_data);
     //gtk_widget_add_tick_callback(rdp_display, gtk_update, context, NULL);
 
-    return rdp_viewer_data;
+    return rdp_window_data;
 }
 
-void rdp_viewer_window_destroy(RdpViewerData *rdp_viewer_data)
+void rdp_viewer_window_destroy(RdpWindowData *rdp_window_data)
 {
-    g_source_remove(rdp_viewer_data->g_timeout_id);
-    g_object_unref(rdp_viewer_data->builder);
-    gtk_widget_destroy(rdp_viewer_data->rdp_viewer_window);
-
-    free(rdp_viewer_data);
+    g_source_remove(rdp_window_data->g_timeout_id);
+    g_object_unref(rdp_window_data->builder);
+    gtk_widget_destroy(rdp_window_data->overlay_toolbar);
+    gtk_widget_destroy(rdp_window_data->rdp_viewer_window);
+    free(rdp_window_data);
 }
 
-void rdp_viewer_window_set_monitor_data(RdpViewerData *rdp_viewer_data, GdkRectangle geometry, int monitor_index)
+void rdp_viewer_window_set_monitor_data(RdpWindowData *rdp_window_data, GdkRectangle geometry, int monitor_index)
 {
-    rdp_viewer_data->monitor_index = monitor_index;
+    rdp_window_data->monitor_index = monitor_index;
     g_info("TESTT W: %u x H:%u", geometry.width, geometry.height);
-    rdp_viewer_data->monitor_geometry = geometry;
+    rdp_window_data->monitor_geometry = geometry;
 
-    gtk_window_resize(GTK_WINDOW(rdp_viewer_data->rdp_viewer_window),
-                      rdp_viewer_data->monitor_geometry.width, rdp_viewer_data->monitor_geometry.height);
-    gtk_window_move(GTK_WINDOW(rdp_viewer_data->rdp_viewer_window),
-                      rdp_viewer_data->monitor_geometry.x, rdp_viewer_data->monitor_geometry.y);
+    gtk_window_resize(GTK_WINDOW(rdp_window_data->rdp_viewer_window),
+                      rdp_window_data->monitor_geometry.width, rdp_window_data->monitor_geometry.height);
+    gtk_window_move(GTK_WINDOW(rdp_window_data->rdp_viewer_window),
+                      rdp_window_data->monitor_geometry.x, rdp_window_data->monitor_geometry.y);
 }

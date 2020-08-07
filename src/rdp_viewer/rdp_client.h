@@ -34,7 +34,7 @@ typedef struct {
     RdpgfxClientContext *gfx;
     EncomspClientContext *encomsp;
 
-    GArray *rdp_viewer_data_array;
+    GArray *rdp_windows_array;
 
     GdkPixbuf *frame_pix_buf; //frame image data
     GMutex primary_buffer_mutex; // mutex for protecting primary_buffer

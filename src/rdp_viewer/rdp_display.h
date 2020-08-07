@@ -12,12 +12,12 @@
 #include "rdp_viewer_window.h"
 
 //typedef struct{
-//    RdpViewerData *rdp_viewer_data;
+//    RdpWindowData *rdp_window_data;
 //    ExtendedRdpContext *ex_rdp_context;
 
 //} RdpDisplayData;
 
-GtkWidget *rdp_display_create(RdpViewerData *rdp_viewer_data, ExtendedRdpContext *ex_rdp_context, UINT32 *last_rdp_error_p);
+GtkWidget *rdp_display_create(RdpWindowData *rdp_window_data, ExtendedRdpContext *ex_rdp_context, UINT32 *last_rdp_error_p);
 
 
 

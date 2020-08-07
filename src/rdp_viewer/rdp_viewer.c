@@ -36,9 +36,9 @@ static gboolean update_cursor_callback(rdpContext* context)
 
     g_mutex_lock(&ex_rdp_context->cursor_mutex);
 
-    for (guint i = 0; i < ex_rdp_context->rdp_viewer_data_array->len; ++i) {
-        RdpViewerData *rdp_viewer_data = g_array_index(ex_rdp_context->rdp_viewer_data_array, RdpViewerData *, i);
-        GdkWindow *parent_window = gtk_widget_get_parent_window(rdp_viewer_data->rdp_display);
+    for (guint i = 0; i < ex_rdp_context->rdp_windows_array->len; ++i) {
+        RdpWindowData *rdp_window_data = g_array_index(ex_rdp_context->rdp_windows_array, RdpWindowData *, i);
+        GdkWindow *parent_window = gtk_widget_get_parent_window(rdp_window_data->rdp_display);
         gdk_window_set_cursor(parent_window,  ex_rdp_context->gdk_cursor);
     }
 
@@ -109,16 +109,16 @@ GtkResponseType rdp_viewer_start(const gchar *usename, const gchar *password, gc
     settings->ForceMultimon = TRUE;
 
     // create rdp viewer windows
-    GArray *rdp_viewer_data_array = g_array_new(FALSE, FALSE, sizeof(RdpViewerData *));
+    GArray *rdp_windows_array = g_array_new(FALSE, FALSE, sizeof(RdpWindowData *));
     int total_monitor_width = 0;
     int total_monitor_height = 0;
     for (int i = 0; i < monitor_number; ++i) {
         // create rdp viewer window
-        RdpViewerData *rdp_viewer_data = rdp_viewer_window_create(ex_rdp_context, &last_rdp_error);
-        g_array_append_val(rdp_viewer_data_array, rdp_viewer_data);
+        RdpWindowData *rdp_window_data = rdp_viewer_window_create(ex_rdp_context, &last_rdp_error);
+        g_array_append_val(rdp_windows_array, rdp_window_data);
         // set references
-        rdp_viewer_data->dialog_window_response_p = &dialog_window_response;
-        rdp_viewer_data->loop_p = &loop;
+        rdp_window_data->dialog_window_response_p = &dialog_window_response;
+        rdp_window_data->loop_p = &loop;
 
         // get monitor data
         GdkMonitor *monitor = gdk_display_get_monitor(display, i); // 0 i
@@ -128,7 +128,7 @@ GtkResponseType rdp_viewer_start(const gchar *usename, const gchar *password, gc
         //if (i ==1) geometry.x = geometry.width; // temp
 
         // set monitor data for rdp viewer window
-        rdp_viewer_window_set_monitor_data(rdp_viewer_data, geometry, i); // i
+        rdp_viewer_window_set_monitor_data(rdp_window_data, geometry, i); // i
 
         // set monitor data for rdp client
         settings->MonitorDefArray[i].x = geometry.x;
@@ -144,7 +144,7 @@ GtkResponseType rdp_viewer_start(const gchar *usename, const gchar *password, gc
         total_monitor_height += geometry.height;
     }
 
-    ex_rdp_context->rdp_viewer_data_array = rdp_viewer_data_array;
+    ex_rdp_context->rdp_windows_array = rdp_windows_array;
 
     const int max_image_width = 5120;//2560; 5120
     const int max_image_height = 2500; // 1440
@@ -165,11 +165,11 @@ GtkResponseType rdp_viewer_start(const gchar *usename, const gchar *password, gc
     destroy_rdp_context(ex_rdp_context);
     // destroy rdp windows
     guint i;
-    for (i = 0; i < rdp_viewer_data_array->len; ++i) {
-        RdpViewerData *rdp_viewer_data = g_array_index(rdp_viewer_data_array, RdpViewerData *, i);
-        rdp_viewer_window_destroy(rdp_viewer_data);
+    for (i = 0; i < rdp_windows_array->len; ++i) {
+        RdpWindowData *rdp_window_data = g_array_index(rdp_windows_array, RdpWindowData *, i);
+        rdp_viewer_window_destroy(rdp_window_data);
     }
-    g_array_free(rdp_viewer_data_array, TRUE);
+    g_array_free(rdp_windows_array, TRUE);
 
     return dialog_window_response;
 }
