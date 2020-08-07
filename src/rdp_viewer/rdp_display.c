@@ -331,8 +331,6 @@ static gboolean rdp_display_event_on_draw(GtkWidget* widget, cairo_t* context, g
 
         if (ex_rdp_contect->surface) {
 
-            //cairo_set_source_surface(context, ex_rdp_contect->surface,
-            //ex_rdp_contect->im_origin_x, ex_rdp_contect->im_origin_y);
             cairo_set_source_surface(context, ex_rdp_contect->surface, -rdp_window_data->monitor_geometry.x,
                                      -rdp_window_data->monitor_geometry.y);
             if (!fuzzy_compare(scale_f, 1))
