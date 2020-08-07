@@ -40,6 +40,8 @@ typedef struct{
     GtkWidget *btn_add_remote_folder;
     GtkWidget *btn_remove_remote_folder;
 
+    GtkWidget *is_multimon_check_btn;
+
     // Service
     GtkWidget *btn_archive_logs;
 
@@ -342,6 +344,9 @@ fill_connect_settings_gui(ConnectSettingsDialogData *dialog_data, ConnectSetting
     if (shared_folders_str)
         gtk_entry_set_text(GTK_ENTRY(dialog_data->rdp_shared_folders_entry), shared_folders_str);
     free_memory_safely(&shared_folders_str);
+
+    gboolean is_rdp_multimon = read_int_from_ini_file("RDPSettings", "is_multimon", FALSE);
+    gtk_toggle_button_set_active((GtkToggleButton *)dialog_data->is_multimon_check_btn, is_rdp_multimon);
 }
 
 static void
@@ -394,6 +399,9 @@ save_data_to_ini_file(ConnectSettingsDialogData *dialog_data)
     gchar *folder_name = replace_str(shared_folders_str, "\\", "/");
     write_str_to_ini_file("RDPSettings", "rdp_shared_folders", folder_name);
     free_memory_safely(&folder_name);
+
+    gboolean is_rdp_multimon = gtk_toggle_button_get_active((GtkToggleButton *)dialog_data->is_multimon_check_btn);
+    write_int_to_ini_file("RDPSettings", "is_multimon", is_rdp_multimon);
 }
 
 GtkResponseType remote_viewer_start_settings_dialog(ConnectSettingsData *connect_settings_data, GtkWindow *parent)
@@ -441,6 +449,9 @@ GtkResponseType remote_viewer_start_settings_dialog(ConnectSettingsData *connect
     dialog_data.btn_add_remote_folder = get_widget_from_builder(dialog_data.builder, "btn_add_remote_folder");
     dialog_data.btn_remove_remote_folder = get_widget_from_builder(dialog_data.builder, "btn_remove_remote_folder");
 
+    dialog_data.is_multimon_check_btn = get_widget_from_builder(dialog_data.builder, "is_multimon_check_btn");
+
+    // Service functions
     dialog_data.btn_archive_logs = get_widget_from_builder(dialog_data.builder, "btn_archive_logs");
 
     // Signals
