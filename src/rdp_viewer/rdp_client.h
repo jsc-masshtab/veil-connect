@@ -44,8 +44,8 @@ typedef struct {
     cairo_surface_t* surface; // image surface
     double im_origin_x; // origin point of image
     double im_origin_y; // origin point of image
-    int optimal_image_width;
-    int optimal_image_height;
+    int whole_image_width;
+    int whole_image_height;
 
 //    INT32 ninvalid;// number of invalid regions
 //    HGDI_RGN cinvalid;
@@ -80,7 +80,7 @@ rdpContext* rdp_client_create_context(void);
 void rdp_client_set_credentials(ExtendedRdpContext *ex_rdp_context,
                                 const gchar *usename, const gchar *password, gchar *domain, gchar *ip, int port);
 void rdp_client_set_rdp_image_size(ExtendedRdpContext *ex_rdp_context,
-                                         int optimal_image_width, int optimal_image_height);
+                                         int whole_image_width, int whole_image_height);
 
 void rdp_client_routine(GTask   *task,
                  gpointer       source_object G_GNUC_UNUSED,

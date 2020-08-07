@@ -64,8 +64,8 @@ static GArray * rdp_client_create_params_array(ExtendedRdpContext* tf)
     add_rdp_param(rdp_params_dyn_array, g_strdup_printf("/d:%s", tf->domain));
     add_rdp_param(rdp_params_dyn_array, g_strdup_printf("/u:%s", tf->usename));
     add_rdp_param(rdp_params_dyn_array, g_strdup_printf("/p:%s", tf->password));
-    add_rdp_param(rdp_params_dyn_array, g_strdup_printf("/w:%i", tf->optimal_image_width));
-    add_rdp_param(rdp_params_dyn_array, g_strdup_printf("/h:%i", tf->optimal_image_height));
+    add_rdp_param(rdp_params_dyn_array, g_strdup_printf("/w:%i", tf->whole_image_width));
+    add_rdp_param(rdp_params_dyn_array, g_strdup_printf("/h:%i", tf->whole_image_height));
     add_rdp_param(rdp_params_dyn_array, g_strdup("-clipboard"));
     add_rdp_param(rdp_params_dyn_array, g_strdup("/cert-ignore"));
     add_rdp_param(rdp_params_dyn_array, g_strdup("/sound:rate:44100,channel:2"));
@@ -165,10 +165,10 @@ void rdp_client_set_credentials(ExtendedRdpContext *ex_rdp_context,
 }
 
 void rdp_client_set_rdp_image_size(ExtendedRdpContext *ex_rdp_context,
-                                         int optimal_image_width, int optimal_image_height)
+                                         int whole_image_width, int whole_image_height)
 {
-    ex_rdp_context->optimal_image_width = optimal_image_width;
-    ex_rdp_context->optimal_image_height = optimal_image_height;
+    ex_rdp_context->whole_image_width = whole_image_width;
+    ex_rdp_context->whole_image_height = whole_image_height;
 }
 
 //===============================Thread for client routine==================================

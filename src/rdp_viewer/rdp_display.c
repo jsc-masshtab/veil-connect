@@ -341,16 +341,8 @@ static gboolean rdp_display_event_on_draw(GtkWidget* widget, cairo_t* context, g
             cairo_set_operator(context, CAIRO_OPERATOR_OVER);     // Ignore alpha channel from FreeRDP
             cairo_set_antialias(context, CAIRO_ANTIALIAS_FAST);
 
-            double x = 0;
-            double y = 0;
-            double width = (ex_rdp_contect->optimal_image_width - rdp_window_data->monitor_geometry.x);
-            double height = (ex_rdp_contect->optimal_image_height - rdp_window_data->monitor_geometry.y);
+            cairo_paint(context);
 
-            if (width > 0 && height > 0) {
-                cairo_rectangle(context, x, y, width, height);
-                cairo_clip(context);
-                cairo_paint(context);
-            }
         } else { // Поверхность создается сразу после подключения. Если ее нет, значит мы ожидаем подключение
             rdp_display_draw_text_message(context, "Ожидаем подключение");
         }

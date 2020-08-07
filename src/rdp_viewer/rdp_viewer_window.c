@@ -488,7 +488,7 @@ RdpWindowData *rdp_viewer_window_create(ExtendedRdpContext *ex_rdp_context, UINT
 
     // show
     gtk_window_set_position(GTK_WINDOW(rdp_viewer_window), GTK_WIN_POS_CENTER);
-    //gtk_window_resize(GTK_WINDOW(rdp_viewer_window), optimal_image_width, optimal_image_height);
+    //gtk_window_resize(GTK_WINDOW(rdp_viewer_window), whole_image_width, whole_image_height);
     gtk_widget_show_all(rdp_viewer_window);
 
     // get desired fps from ini file

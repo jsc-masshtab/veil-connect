@@ -20,6 +20,7 @@
 #include "remote-viewer-util.h"
 #include "config.h"
 
+#include "settingsfile.h"
 #include "async.h"
 
 #define MAX_MONITOR_AMOUNT 3
@@ -98,9 +99,12 @@ GtkResponseType rdp_viewer_start(const gchar *usename, const gchar *password, gc
     ExtendedRdpContext *ex_rdp_context = create_rdp_context(&last_rdp_error);
     rdp_client_set_credentials(ex_rdp_context, usename, password, domain, ip, port);
 
-    // determine monitor info
+    // get ini config data
+    gboolean is_multimon = read_int_from_ini_file("RDPSettings", "is_multimon", 0);
+
+    // determine monitor info   GdkMonitor * gdk_display_get_primary_monitor   (GdkDisplay *display);
     GdkDisplay *display = gdk_display_get_default();
-    int monitor_number = MIN(gdk_display_get_n_monitors(display), MAX_MONITOR_AMOUNT); // 2
+    int monitor_number = 1;//MIN(gdk_display_get_n_monitors(display), MAX_MONITOR_AMOUNT);
 
     // set monitor data for rdp client
     rdpSettings* settings = ex_rdp_context->context.settings;
@@ -113,6 +117,11 @@ GtkResponseType rdp_viewer_start(const gchar *usename, const gchar *password, gc
     int total_monitor_width = 0;
     int total_monitor_height = 0;
     for (int i = 0; i < monitor_number; ++i) {
+
+        // get monitor data
+        GdkMonitor *monitor = gdk_display_get_monitor(display, i);
+        gboolean is_mon_primary = gdk_monitor_is_primary(monitor);
+
         // create rdp viewer window
         RdpWindowData *rdp_window_data = rdp_viewer_window_create(ex_rdp_context, &last_rdp_error);
         g_array_append_val(rdp_windows_array, rdp_window_data);
@@ -120,25 +129,19 @@ GtkResponseType rdp_viewer_start(const gchar *usename, const gchar *password, gc
         rdp_window_data->dialog_window_response_p = &dialog_window_response;
         rdp_window_data->loop_p = &loop;
 
-        // get monitor data
-        GdkMonitor *monitor = gdk_display_get_monitor(display, i); // 0 i
-
+        // get monitor geometry
         GdkRectangle geometry;
         gdk_monitor_get_geometry(monitor, &geometry);
-        //if (i ==1) geometry.x = geometry.width; // temp
 
         // set monitor data for rdp viewer window
-        rdp_viewer_window_set_monitor_data(rdp_window_data, geometry, i); // i
+        rdp_viewer_window_set_monitor_data(rdp_window_data, geometry, i);
 
         // set monitor data for rdp client
         settings->MonitorDefArray[i].x = geometry.x;
         settings->MonitorDefArray[i].y = geometry.y;
         settings->MonitorDefArray[i].width = geometry.width;
         settings->MonitorDefArray[i].height = geometry.height;
-        //settings->MonitorDefArray[0].orig_screen = 0;
-//        if (i == 0) // make the first monitor primary
-//            settings->MonitorDefArray[i].is_primary = 1;
-        settings->MonitorDefArray[i].is_primary = gdk_monitor_is_primary(monitor);
+        settings->MonitorDefArray[i].is_primary = is_mon_primary;
 
         total_monitor_width += geometry.width;
         total_monitor_height += geometry.height;
