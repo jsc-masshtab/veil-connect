@@ -74,7 +74,7 @@ static gboolean vdi_api_session_get_token()
     gchar *ldap_str = vdiSession.is_ldap ? g_strdup("true") : g_strdup("false");
     gchar *messageBodyStr = g_strdup_printf("{\"username\": \"%s\", \"password\": \"%s\", \"ldap\": %s}",
                                    vdiSession.vdi_username, vdiSession.vdi_password, ldap_str);
-    g_info("%s  messageBodyStr %s", (const char *)__func__, messageBodyStr);
+    //g_info("%s  messageBodyStr %s", (const char *)__func__, messageBodyStr);
     soup_message_set_request(msg, "application/json",
                              SOUP_MEMORY_COPY, messageBodyStr, strlen_safely(messageBodyStr));
     g_free(messageBodyStr);
@@ -85,7 +85,7 @@ static gboolean vdi_api_session_get_token()
 
     // parse response
     g_info("msg->status_code %i", msg->status_code);
-    g_info("msg->response_body->data %s", msg->response_body->data);
+    //g_info("msg->response_body->data %s", msg->response_body->data);
 
     if(msg->status_code != OK_RESPONSE) {
         g_object_unref(msg);
@@ -104,7 +104,6 @@ static gboolean vdi_api_session_get_token()
         case SERVER_REPLY_TYPE_DATA: {
             free_memory_safely(&vdiSession.jwt);
             vdiSession.jwt = g_strdup(json_object_get_string_member_safely(reply_json_object, "access_token"));
-            g_info("new token: %s", vdiSession.jwt);
 
             g_object_unref(msg);
             g_object_unref(parser);
@@ -113,6 +112,8 @@ static gboolean vdi_api_session_get_token()
         case SERVER_REPLY_TYPE_ERROR:
         case SERVER_REPLY_TYPE_UNKNOWN:
         default: {
+            const gchar *message = json_object_get_string_member_safely(reply_json_object, "message");
+            g_info("%s : Unable to get token. %s", (const char *)__func__, message);
             g_object_unref(msg);
             g_object_unref(parser);
             return FALSE;
@@ -128,7 +129,7 @@ static void vdi_api_session_register_for_license() {
     // do request to vdi server in order to get data fot Redis connection
     gchar *url_str = g_strdup_printf("%s/client/message_broker/", vdiSession.api_url);
     gchar *response_body_str = api_call("GET", url_str, NULL);
-    g_info("%s: response_body_str %s", (const char *) __func__, response_body_str);
+    // g_info("%s: response_body_str %s", (const char *) __func__, response_body_str);
     g_free(url_str);
 
     // parse the response
@@ -299,7 +300,7 @@ gchar *api_call(const char *method, const char *uri_string, const gchar *body_st
         // send request.
         send_message(msg);
         g_info("msg->status_code: %i", msg->status_code);
-        g_info("msg->response_body: %s", msg->response_body->data);
+        //g_info("msg->response_body: %s", msg->response_body->data);
 
         // if response is ok then fill response_body_str
         if (msg->status_code == OK_RESPONSE) { // we are happy now
@@ -375,7 +376,7 @@ void get_vm_from_pool(GTask       *task,
     ServerReplyType server_reply_type;
     JsonObject *reply_json_object = jsonhandler_get_data_or_errors_object(parser, response_body_str,
             &server_reply_type);
-    g_info("%s: server_reply_type %i",  (const char *)__func__, server_reply_type);
+    g_info("%s: server_reply_type %i", (const char *)__func__, server_reply_type);
 
     VdiVmData *vdi_vm_data = calloc(1, sizeof(VdiVmData));
 
@@ -388,11 +389,12 @@ void get_vm_from_pool(GTask       *task,
 
         g_info("vm_host %s", vdi_vm_data->vm_host);
         g_info("vm_port %i", vdi_vm_data->vm_port);
-        g_info("vm_password %s", vdi_vm_data->vm_password);
+        //g_info("vm_password %s", vdi_vm_data->vm_password);
         g_info("vm_verbose_name %s", vdi_vm_data->vm_verbose_name);
     }
 
     vdi_vm_data->message = g_strdup(json_object_get_string_member_safely(reply_json_object, "message"));
+    g_info("%s: server_reply_type %s", (const char *)__func__, vdi_vm_data->message);
 
     // no point to parse if data is invalid
     g_object_unref(parser);

@@ -290,7 +290,7 @@ static void on_get_vm_from_pool_finished(GObject *source_object G_GNUC_UNUSED,
 
     VdiVmData *vdi_vm_data = ptr_res;
 
-    // if port == 0 it means VDI server can not provide a vm
+    // if port == 0 it means VDI server can not provide a vm. Should implement proper errors field!
     if (vdi_vm_data->vm_port == 0) {
         const gchar *user_message = vdi_vm_data->message ? vdi_vm_data->message : "Не удалось получить вм из пула";
         set_vdi_client_state(VDI_RECEIVED_RESPONSE, user_message, TRUE);

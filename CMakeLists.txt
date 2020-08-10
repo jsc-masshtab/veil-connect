@@ -3,6 +3,9 @@ project(veil_connect C)
 
 set(CMAKE_C_STANDARD 99)
 
+######################
+add_compile_options(-Wno-deprecated-declarations)
+
 INCLUDE_DIRECTORIES(
         .
         src
