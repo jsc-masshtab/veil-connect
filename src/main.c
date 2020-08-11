@@ -1,5 +1,5 @@
 /*
- * Veil VDI thin client
+ * Veil Connect
  * Based on virt-viewer and freerdp
  *
  */
@@ -8,18 +8,14 @@
 #include <X11/Xlib.h>
 #endif
 
-#include <fcntl.h>
-
 #include <config.h>
 #include <locale.h>
 #include <gio/gio.h>
 #include <gtk/gtk.h>
+#include <unistd.h>
 
-#include <glib/gi18n.h>
 #include <glib.h>
 #include <glib/gstdio.h>
-
-#include <stdlib.h>
 
 #include "settingsfile.h"
 #include "remote-viewer.h"
@@ -30,15 +26,22 @@
 void
 setup_logging()
 {
+    gchar *log_dir = get_log_dir_path();
+    // create log dir
+    g_mkdir_with_parents(log_dir, 0755);
+
+    // Return if we cant write to log dir
+    if (g_access(log_dir, W_OK) != 0) {
+        printf("Log directory is protected from writing\n");
+        g_free(log_dir);
+        return;
+    }
+
     // get ts
     GDateTime *datetime = g_date_time_new_now_local();
     gchar *data_time_string = g_date_time_format(datetime, "%Y_%m_%d___%H_%M_%S");
     // printf("data_time_string %s", data_time_string);
     g_date_time_unref(datetime);
-
-    gchar *log_dir = get_log_dir_path();
-    // create log dir
-    g_mkdir_with_parents(log_dir, 0755);
 
     // crash handler
     gchar *bt_file_name = g_strconcat(log_dir, "/", data_time_string, "_backtrace.txt", NULL);
