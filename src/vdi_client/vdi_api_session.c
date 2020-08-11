@@ -2,6 +2,7 @@
 // Created by solomin on 15.06.19.
 //
 #include <string.h>
+#include <stdlib.h>
 
 #include <libsoup/soup-session.h>
 #include "remote-viewer-util.h"
