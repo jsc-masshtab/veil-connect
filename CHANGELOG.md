@@ -1,4 +1,18 @@
 
+1.2.16 / 2020-08-17
+===================
+
+  * FEATURE_TG_9516 version patch increment
+  * FEATURE_TG_9516 Если не установлен USBdk то показываем сообщение об этом при попытке проброса USB
+  * FEATURE_TG_9514 Проброс принтеров
+
+1.2.15 / 2020-08-11
+===================
+
+  * FEATURE TG-9428 Added forgotten header
+  * FEATURE TG-9428 Supposed logging fix
+  * FEATURE TG-9318 Убраны пароли из логирования
+  * Added changelog
 
 1.2.14 / 2020-08-10
 ===================
