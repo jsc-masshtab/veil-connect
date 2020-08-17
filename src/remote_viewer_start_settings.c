@@ -41,6 +41,7 @@ typedef struct{
     GtkWidget *btn_remove_remote_folder;
 
     GtkWidget *is_multimon_check_btn;
+    GtkWidget *redirect_printers_check_btn;
 
     // Service
     GtkWidget *btn_archive_logs;
@@ -347,6 +348,9 @@ fill_connect_settings_gui(ConnectSettingsDialogData *dialog_data, ConnectSetting
 
     gboolean is_rdp_multimon = read_int_from_ini_file("RDPSettings", "is_multimon", FALSE);
     gtk_toggle_button_set_active((GtkToggleButton *)dialog_data->is_multimon_check_btn, is_rdp_multimon);
+
+    gboolean redirect_printers = read_int_from_ini_file("RDPSettings", "redirect_printers", FALSE);
+    gtk_toggle_button_set_active((GtkToggleButton *)dialog_data->redirect_printers_check_btn, redirect_printers);
 }
 
 static void
@@ -402,6 +406,10 @@ save_data_to_ini_file(ConnectSettingsDialogData *dialog_data)
 
     gboolean is_rdp_multimon = gtk_toggle_button_get_active((GtkToggleButton *)dialog_data->is_multimon_check_btn);
     write_int_to_ini_file("RDPSettings", "is_multimon", is_rdp_multimon);
+
+    gboolean redirect_printers = gtk_toggle_button_get_active(
+            (GtkToggleButton *)dialog_data->redirect_printers_check_btn);
+    write_int_to_ini_file("RDPSettings", "redirect_printers", redirect_printers);
 }
 
 GtkResponseType remote_viewer_start_settings_dialog(ConnectSettingsData *connect_settings_data, GtkWindow *parent)
@@ -450,6 +458,8 @@ GtkResponseType remote_viewer_start_settings_dialog(ConnectSettingsData *connect
     dialog_data.btn_remove_remote_folder = get_widget_from_builder(dialog_data.builder, "btn_remove_remote_folder");
 
     dialog_data.is_multimon_check_btn = get_widget_from_builder(dialog_data.builder, "is_multimon_check_btn");
+    dialog_data.redirect_printers_check_btn =
+            get_widget_from_builder(dialog_data.builder, "redirect_printers_check_btn");
 
     // Service functions
     dialog_data.btn_archive_logs = get_widget_from_builder(dialog_data.builder, "btn_archive_logs");
@@ -475,6 +485,7 @@ GtkResponseType remote_viewer_start_settings_dialog(ConnectSettingsData *connect
     // show window
     gtk_window_set_transient_for(GTK_WINDOW(dialog_data.window), parent);
     gtk_window_set_position(GTK_WINDOW(dialog_data.window), GTK_WIN_POS_CENTER);
+    //gtk_window_resize(GTK_WINDOW(dialog_data.window),         width,          height);
     gtk_widget_show_all(dialog_data.window);
     gtk_window_set_resizable(GTK_WINDOW(dialog_data.window), FALSE);
 

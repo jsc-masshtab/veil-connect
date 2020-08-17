@@ -56,7 +56,7 @@ static ExtendedRdpContext* create_rdp_context(UINT32 *last_rdp_error_p)
     ex_rdp_context->is_running = FALSE;
     //ex_rdp_context->update_image_callback = (UpdateImageCallback)update_image_callback;
     ex_rdp_context->update_cursor_callback = (UpdateCursorCallback)update_cursor_callback;
-    ex_rdp_context->test_int = 666; // temp
+    ex_rdp_context->test_int = 777; // temp
     ex_rdp_context->last_rdp_error_p = last_rdp_error_p;
     // init mutex for rdp_routine syncronization
     g_mutex_init(&ex_rdp_context->rdp_routine_mutex);
@@ -131,6 +131,11 @@ GtkResponseType rdp_viewer_start(const gchar *usename, const gchar *password, gc
     UINT32 last_rdp_error = 0;
     ExtendedRdpContext *ex_rdp_context = create_rdp_context(&last_rdp_error);
     rdp_client_set_credentials(ex_rdp_context, usename, password, domain, ip, port);
+
+    // Set some presettings
+    // printers
+    gboolean redirect_printers = read_int_from_ini_file("RDPSettings", "redirect_printers", FALSE);
+    ex_rdp_context->context.instance->settings->RedirectPrinters = (BOOL)redirect_printers;
 
     // get ini config data
     gboolean is_multimon = read_int_from_ini_file("RDPSettings", "is_multimon", 0);
