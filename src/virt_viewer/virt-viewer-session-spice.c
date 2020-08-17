@@ -794,6 +794,26 @@ static void
 virt_viewer_session_spice_usb_device_selection(VirtViewerSession *session,
                                                GtkWindow *parent)
 {
+#ifdef _WIN32
+    // На Windows для проброса USB необходим дополнительный софт USBdk.
+    // Проброс USB без этого софта может привести к крашу (в gtk-spice)
+    gboolean is_usbdk_installed = check_if_usbdk_installed();
+    if (!is_usbdk_installed) {
+        GtkWidget *dialog_msg = gtk_message_dialog_new(parent,
+                                                       GTK_DIALOG_MODAL | GTK_DIALOG_DESTROY_WITH_PARENT,
+                                                       GTK_MESSAGE_WARNING,
+                                                       GTK_BUTTONS_OK,
+                "Для корректной работы проброса USB-устройств требуется Spice USB Development Kit (UsbDK). "
+                "Убедитесь, что он установлен");
+        gtk_dialog_set_default_response(GTK_DIALOG(dialog_msg), GTK_RESPONSE_ACCEPT);
+
+        gtk_widget_show_all(dialog_msg);
+        gtk_dialog_run(GTK_DIALOG(dialog_msg));
+        gtk_widget_destroy(dialog_msg);
+        return;
+    }
+#endif
+
     VirtViewerSessionSpice *self = VIRT_VIEWER_SESSION_SPICE(session);
     VirtViewerSessionSpicePrivate *priv = self->priv;
     GtkWidget *dialog, *area, *usb_device_widget;

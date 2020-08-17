@@ -832,6 +832,17 @@ gchar* replace_str(const gchar *src, const gchar *find, const gchar *replace)
     return retval;
 }
 
+gboolean check_if_usbdk_installed()
+{
+    const gchar *program_files_path = g_getenv("PROGRAMFILES");
+    gchar *usbdk_file = g_strdup_printf("%s/%s", program_files_path,
+                                        "UsbDk Runtime Library/UsbDkController.exe");
+
+    gboolean usbdk_file_exists = (g_file_test(usbdk_file, G_FILE_TEST_EXISTS));
+    g_free(usbdk_file);
+
+    return usbdk_file_exists;
+}
 
 
 

@@ -102,8 +102,10 @@ GtkWidget *get_widget_from_builder(GtkBuilder *builder, const gchar *name);
 gchar *get_log_dir_path(void);
 
 // Replace substring
-gchar* replace_str(const gchar *src,const gchar *find,const gchar *replace);
+gchar* replace_str(const gchar *src, const gchar *find, const gchar *replace);
 
+// Check if software USBdk installed
+gboolean check_if_usbdk_installed(void);
 
 #endif
 
