@@ -182,6 +182,8 @@ pipeline {
                     }
                     steps {
                         sh script: '''
+                            mv CMakeLists64.txt CMakeLists.txt
+                            rm -f CMakeLists32.txt
                             mkdir build
                             cd build
                             cmake -DCMAKE_BUILD_TYPE=Release ../
@@ -201,6 +203,8 @@ pipeline {
                     }
                     steps {
                         sh script: '''
+                            mv CMakeLists64.txt CMakeLists.txt
+                            rm -f CMakeLists32.txt
                             mkdir build
                             cd build
                             cmake -DCMAKE_BUILD_TYPE=Release ../
@@ -220,6 +224,8 @@ pipeline {
                     }
                     steps {
                         sh script: '''
+                            mv CMakeLists64.txt CMakeLists.txt
+                            rm -f CMakeLists32.txt
                             mkdir build
                             cd build
                             cmake3 -DCMAKE_BUILD_TYPE=Release ../
@@ -239,6 +245,8 @@ pipeline {
                     }
                     steps {
                         sh script: '''
+                            mv CMakeLists64.txt CMakeLists.txt
+                            rm -f CMakeLists32.txt
                             mkdir build
                             cd build
                             cmake3 -DCMAKE_BUILD_TYPE=Release ../
@@ -383,7 +391,7 @@ pipeline {
                             xcopy C:\\msys32\\mingw64\\share\\glib-2.0 share\\glib-2.0 /E /H /I
                             xcopy C:\\msys32\\mingw64\\share\\icons share\\icons /E /H /I /Q
      
-                            for %%I in (freerdp2 freerdp-client2 winpr2 winpr-tools2) do (copy C:\\job\\FreeRDP-2.0.0-rc4\\Release\\%%I.dll)
+                            for %%I in (freerdp2 freerdp-client2 winpr2 winpr-tools2) do (copy C:\\job\\FreeRDP-2.2.0\\Release\\%%I.dll)
 
                             for %%I in (libatk-1.0-0 libbz2-1 libcairo-2 libcairo-gobject-2 libcares-3 libcroco-0.6-3 libcrypto-1_1-x64 ^
                             libdatrie-1 libdbus-1-3 libepoxy-0 libexpat-1 libffi-6 libfontconfig-1 libfreeglut libfreetype-6 libfribidi-0 ^
