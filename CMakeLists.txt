@@ -3,7 +3,10 @@ project(veil_connect C)
 
 set(CMAKE_C_STANDARD 99)
 
-######################
+######################CUSTOM CMAKE OPTIONS#############################
+option(BUILD_x32 "Use path to 32bit dependencies" OFF)
+
+######################COMPILER OPTIONS#################################
 add_compile_options(-Wno-deprecated-declarations)
 
 INCLUDE_DIRECTORIES(
@@ -142,10 +145,17 @@ if (UNIX)
 endif (UNIX)
 
 if (WIN32)
-    SET(LIBS_INCLUDE_PATH C:/msys32/mingw32/include/)
-    SET(FREERDP_PATH C:/job/FreeRDP-2.0.0-rc4/)
-    SET(HIREDIS_PATH C:/job/hiredis-mingw/)
-
+    if (BUILD_x32) # 32bit
+        message(STATUS "Using 32bit dependencies")
+        SET(LIBS_INCLUDE_PATH C:/msys32/mingw32/include/)
+        SET(FREERDP_PATH C:/job/FreeRDP-2.0.0-rc4/)
+        SET(HIREDIS_PATH C:/job/hiredis-mingw/)
+    else(BUILD_x32) # 64bit
+        message(STATUS "Using 64bit dependencies")
+        SET(LIBS_INCLUDE_PATH C:/msys32/mingw64/include/)
+        SET(FREERDP_PATH C:/job/FreeRDP-2.2.0/)
+        SET(HIREDIS_PATH C:/job/hiredis-mingw/)
+    endif(BUILD_x32)
     # hiredis port to Windows
     INCLUDE_DIRECTORIES(${HIREDIS_PATH})
     SET(LIBS ${LIBS} ${HIREDIS_PATH}cmake-build-release/libhiredis.a)
