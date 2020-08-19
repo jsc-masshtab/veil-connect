@@ -182,8 +182,6 @@ pipeline {
                     }
                     steps {
                         sh script: '''
-                            mv CMakeLists64.txt CMakeLists.txt
-                            rm -f CMakeLists32.txt
                             mkdir build
                             cd build
                             cmake -DCMAKE_BUILD_TYPE=Release ../
@@ -203,8 +201,6 @@ pipeline {
                     }
                     steps {
                         sh script: '''
-                            mv CMakeLists64.txt CMakeLists.txt
-                            rm -f CMakeLists32.txt
                             mkdir build
                             cd build
                             cmake -DCMAKE_BUILD_TYPE=Release ../
@@ -224,8 +220,6 @@ pipeline {
                     }
                     steps {
                         sh script: '''
-                            mv CMakeLists64.txt CMakeLists.txt
-                            rm -f CMakeLists32.txt
                             mkdir build
                             cd build
                             cmake3 -DCMAKE_BUILD_TYPE=Release ../
@@ -245,8 +239,6 @@ pipeline {
                     }
                     steps {
                         sh script: '''
-                            mv CMakeLists64.txt CMakeLists.txt
-                            rm -f CMakeLists32.txt
                             mkdir build
                             cd build
                             cmake3 -DCMAKE_BUILD_TYPE=Release ../
@@ -266,11 +258,9 @@ pipeline {
                     }
                     steps {
                         bat script: '''
-                            rename CMakeLists32.txt CMakeLists.txt
-                            del CMakeLists64.txt
                             mkdir build
                             cd build
-                            cmake -DCMAKE_BUILD_TYPE=Release -G "MinGW Makefiles" ..
+                            cmake -DCMAKE_BUILD_TYPE=Release -DBUILD_x32=ON -G "MinGW Makefiles" ..
                             mingw32-make
                         '''
                     }
@@ -286,8 +276,6 @@ pipeline {
                     }
                     steps {
                         bat script: '''
-                            rename CMakeLists64.txt CMakeLists.txt
-                            del CMakeLists32.txt
                             mkdir build
                             cd build
                             cmake -DCMAKE_BUILD_TYPE=Release -G "MinGW Makefiles" ..
