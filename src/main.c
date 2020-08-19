@@ -16,6 +16,7 @@
 
 #include <glib.h>
 #include <glib/gstdio.h>
+#include <fcntl.h>
 
 #include "settingsfile.h"
 #include "remote-viewer.h"
@@ -45,15 +46,18 @@ setup_logging()
 
     // crash handler
     gchar *bt_file_name = g_strconcat(log_dir, "/", data_time_string, "_backtrace.txt", NULL);
+    convert_string_to_locale_from_utf8(&bt_file_name);
     install_crash_handler(bt_file_name);
 
     //error output
     gchar *stderr_file_name = g_strconcat(log_dir, "/", data_time_string, "_stderr.txt", NULL);
+    convert_string_to_locale_from_utf8(&stderr_file_name);
     FILE *err_file_desc = freopen(stderr_file_name, "w", stderr);
     (void)err_file_desc;
 
     //stdout output
     gchar *stdout_file_name = g_strconcat(log_dir, "/", data_time_string, "_stdout.txt", NULL);
+    convert_string_to_locale_from_utf8(&stdout_file_name);
     FILE *out_file_desc = freopen(stdout_file_name, "w", stdout);
     (void)out_file_desc; // it would be polite to close file descriptors
 
@@ -70,7 +74,6 @@ main(int argc, char **argv)
 {
 #ifdef NDEBUG // logging errors and traceback in release mode
     setup_logging();
-#else
 #endif
     // disable stdout buffering
     setbuf(stdout, NULL);

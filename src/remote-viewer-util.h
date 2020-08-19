@@ -107,6 +107,9 @@ gchar* replace_str(const gchar *src, const gchar *find, const gchar *replace);
 // Check if software USBdk installed
 gboolean check_if_usbdk_installed(void);
 
+// Conver string from local to utf8
+void convert_string_to_locale_from_utf8(gchar **utf8_str);
+
 #endif
 
 /*
