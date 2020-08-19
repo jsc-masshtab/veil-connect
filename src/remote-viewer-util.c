@@ -33,12 +33,19 @@
 #include <io.h>
 #endif
 
+#include <glib.h>
+#include <glib/gstdio.h>
+#include <fcntl.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
 #include <string.h>
 #include <libxml/xpath.h>
 #include <libxml/uri.h>
+#include <locale.h>
+#include <gio/gio.h>
+#include <gtk/gtk.h>
+#include <fcntl.h>
 
 #include "remote-viewer-util.h"
 #include "settingsfile.h"
@@ -844,7 +851,19 @@ gboolean check_if_usbdk_installed()
     return usbdk_file_exists;
 }
 
+void convert_string_to_locale_from_utf8(gchar **utf8_str)
+{
+    if (!utf8_str || !(*utf8_str))
+        return;
 
+    gchar *local_str = g_locale_from_utf8(*utf8_str,
+                                          -1,
+                                          NULL,
+                                          NULL,
+                                          NULL);
+    g_free(*utf8_str);
+    *utf8_str = local_str;
+}
 
 /*
  * Local variables:
