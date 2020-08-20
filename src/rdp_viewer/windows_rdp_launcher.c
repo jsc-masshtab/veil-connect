@@ -9,6 +9,7 @@
 #endif
 
 #include "rdp_viewer.h"
+#include "remote-viewer-util.h"
 
 /// В msys2 не нашел gspawn-win32-helper. Без него запуск ппроцессов с помощтю gtk невозможен
 
@@ -27,16 +28,29 @@ launch_windows_rdp_client(const gchar *usename, const gchar *password G_GNUC_UNU
     FILE *destFile;
     int count;
 
-    const char *src_file_name = "rdp_data/rdp_template_file.txt";
-    sourceFile = fopen(src_file_name,"r");
-    const char *dest_file_name = "rdp_data/rdp_file.rdp";
-    destFile = fopen(dest_file_name, "w");
+    const char *rdp_template_filename = "rdp_data/rdp_template_file.txt";
+    sourceFile = fopen(rdp_template_filename,"r");
+    if (sourceFile == NULL) {
+        g_info("Unable to open file rdp_data/rdp_template_file.txt");
+        return;
+    }
+
+    gchar *app_data_dir = get_windows_app_data_location();
+    gchar *app_rdp_data_dir = g_strdup_printf("%s/rdp_data", app_data_dir);
+    g_mkdir_with_parents(app_rdp_data_dir, 0755);
+
+    char *rdp_data_file_name = g_strdup_printf("%s/rdp_file.rdp", app_rdp_data_dir);
+    g_free(app_rdp_data_dir);
+    g_free(app_data_dir);
+
+    convert_string_to_locale_from_utf8(&rdp_data_file_name);
+    destFile = fopen(rdp_data_file_name, "w");
 
     /* fopen() return NULL if unable to open file in given mode. */
-    if (sourceFile == NULL || destFile == NULL)
+    if (destFile == NULL)
     {
         // Unable to open
-        g_info("\nUnable to open file.");
+        g_info("\nUnable to open file rdp_file.rd.");
         g_info("Please check if file exists and you have read/write privilege.");
         return;
     }
@@ -72,7 +86,7 @@ launch_windows_rdp_client(const gchar *usename, const gchar *password G_GNUC_UNU
     ZeroMemory( &pi, sizeof(pi) );
 
     // Start the child process.
-    gchar *cmd_line = g_strdup_printf("mstsc %s", dest_file_name);
+    gchar *cmd_line = g_strdup_printf("mstsc %s", rdp_data_file_name);
 //    gchar *cmd_line = g_strdup(
 //            "mstsc C:\\job\\vdiserver\\desktop-client-c\\cmake-build-release\\rdp_datardp_file.rdp");
     if( !CreateProcess( NULL,   // No module name (use command line)

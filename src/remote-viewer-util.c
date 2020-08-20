@@ -865,6 +865,13 @@ void convert_string_to_locale_from_utf8(gchar **utf8_str)
     *utf8_str = local_str;
 }
 
+gchar *get_windows_app_data_location(void)
+{
+    const gchar *locap_app_data_path = g_getenv("LOCALAPPDATA");
+    gchar *app_data_dir = g_strdup_printf("%s/%s", locap_app_data_path, PACKAGE);
+    return app_data_dir;
+}
+
 /*
  * Local variables:
  *  c-indent-level: 4

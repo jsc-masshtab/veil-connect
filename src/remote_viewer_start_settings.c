@@ -242,8 +242,7 @@ btn_archive_logs_clicked_cb(GtkButton *button G_GNUC_UNUSED, ConnectSettingsDial
     gchar *tar_cmd = g_strdup_printf("tar -czvf log.tar.gz %s", log_dir);
     int res = system(tar_cmd);
 #elif _WIN32
-    const gchar *locap_app_data_path = g_getenv("LOCALAPPDATA");
-    gchar *app_data_dir = g_strdup_printf("%s/%s", locap_app_data_path, PACKAGE);
+    gchar *app_data_dir = get_windows_app_data_location();
 
     gchar *tar_cmd = g_strdup_printf("tar.exe -czvf log.tar.gz %s -C %s", log_dir, app_data_dir);
     g_free(app_data_dir);
