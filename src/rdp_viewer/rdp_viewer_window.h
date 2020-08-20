@@ -48,5 +48,5 @@ typedef struct{
 RdpWindowData *rdp_viewer_window_create(ExtendedRdpContext *ex_rdp_context, UINT32 *last_rdp_error_p);
 void rdp_viewer_window_destroy(RdpWindowData *rdp_window_data);
 void rdp_viewer_window_set_monitor_data(RdpWindowData *rdp_window_data, GdkRectangle geometry, int monitor_index);
-
+void rdp_viewer_window_cancel(RdpWindowData *rdp_window_data);
 #endif // RDP_VIEWER_WINDOW_H

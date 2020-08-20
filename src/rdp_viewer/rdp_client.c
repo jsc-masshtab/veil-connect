@@ -35,6 +35,7 @@
 #include "rdp_client.h"
 #include "rdp_cursor.h"
 #include "rdp_data.h"
+#include "rdp_viewer_window.h"
 
 #include "remote-viewer-util.h"
 #include "settingsfile.h"
@@ -464,26 +465,32 @@ static void rdp_post_disconnect(freerdp* instance)
     if (!instance->context)
         return;
 
-    ExtendedRdpContext* context = (ExtendedRdpContext*)instance->context;
+    ExtendedRdpContext* ex_rdp_context = (ExtendedRdpContext*)instance->context;
     PubSub_UnsubscribeChannelConnected(instance->context->pubSub,
                                        rdp_OnChannelConnectedEventHandler);
     PubSub_UnsubscribeChannelDisconnected(instance->context->pubSub,
                                           rdp_OnChannelDisconnectedEventHandler);
 
-    g_mutex_lock(&context->primary_buffer_mutex);
-    cairo_surface_destroy(context->surface);
-    context->surface = NULL;
-    g_mutex_unlock(&context->primary_buffer_mutex);
+    g_mutex_lock(&ex_rdp_context->primary_buffer_mutex);
+    cairo_surface_destroy(ex_rdp_context->surface);
+    ex_rdp_context->surface = NULL;
+    g_mutex_unlock(&ex_rdp_context->primary_buffer_mutex);
 
-    *(context->last_rdp_error_p) = freerdp_get_last_error(instance->context);
-    g_info("%s last_error_code: %u", (const char *)__func__, *context->last_rdp_error_p);
-//    if (last_error_code == ERRINFO_DISCONNECTED_BY_OTHER_CONNECTION) {
-//        g_info("%s ERRINFO_DISCONNECTED_BY_OTHER_CONNECTION\n", (const char *)__func__);
-//    }
-    //rdp_print_errinfo();
+    UINT32 last_error = freerdp_get_last_error(instance->context);
+    *(ex_rdp_context->last_rdp_error_p) = last_error;
+    g_info("%s last_error_code: %u", (const char *)__func__, last_error);
 
     gdi_free(instance);
-    /* TODO : Clean up custom stuff */
+
+    // Close rdp windows if LOGOFF_BY_USER received
+    if ((last_error & 0xFFFF) == ERRINFO_LOGOFF_BY_USER) {
+        g_info("HERE WE GO AGAIN");
+        // to close rdp window
+        if (ex_rdp_context->rdp_windows_array->len) {
+            RdpWindowData *rdp_window_data = g_array_index(ex_rdp_context->rdp_windows_array, RdpWindowData *, 0);
+            rdp_viewer_window_cancel(rdp_window_data);
+        }
+    }
 }
 
 /* RDP main loop.

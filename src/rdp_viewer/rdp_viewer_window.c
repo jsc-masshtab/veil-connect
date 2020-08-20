@@ -274,8 +274,7 @@ rdp_viewer_window_menu_switch_off(GtkWidget *menu G_GNUC_UNUSED, gpointer userda
 {
     g_info("%s", (const char *)__func__);
     RdpWindowData *rdp_window_data = (RdpWindowData *)userdata;
-    *rdp_window_data->dialog_window_response_p = GTK_RESPONSE_CANCEL;
-    shutdown_loop(*rdp_window_data->loop_p);
+    rdp_viewer_window_cancel(rdp_window_data);
 }
 
 static void
@@ -519,4 +518,10 @@ void rdp_viewer_window_set_monitor_data(RdpWindowData *rdp_window_data, GdkRecta
                       rdp_window_data->monitor_geometry.width, rdp_window_data->monitor_geometry.height);
     gtk_window_move(GTK_WINDOW(rdp_window_data->rdp_viewer_window),
                       rdp_window_data->monitor_geometry.x, rdp_window_data->monitor_geometry.y);
+}
+
+void rdp_viewer_window_cancel(RdpWindowData *rdp_window_data)
+{
+    *rdp_window_data->dialog_window_response_p = GTK_RESPONSE_CANCEL;
+    shutdown_loop(*rdp_window_data->loop_p);
 }
