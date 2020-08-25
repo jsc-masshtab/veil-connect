@@ -18,21 +18,21 @@ read OS
 
 case $OS in
     1|3|7)
-        sudo apt update
-        sudo apt install ./veil-connect_*-bionic_amd64.deb -y
+        apt-get update
+        apt-get install ./veil-connect_*-bionic_amd64.deb -y
         ;;
     2|4)
-        sudo apt update
-        sudo apt install ./veil-connect_*-buster_amd64.deb -y
+        apt-get update
+        apt-get install ./veil-connect_*-buster_amd64.deb -y
         ;;
     5)
-        sudo yum install epel-release -y
-        sudo yum install veil-connect-*.el7.x86_64.rpm -y
+        yum install epel-release -y
+        yum install veil-connect-*.el7.x86_64.rpm -y
         ;;
     6)
-        sudo yum install epel-release -y
-        sudo dnf --enablerepo=PowerTools install freerdp-devel -y
-        sudo yum install veil-connect-*.el8.x86_64.rpm -y
+        yum install epel-release -y
+        dnf --enablerepo=PowerTools install freerdp-devel -y
+        yum install veil-connect-*.el8.x86_64.rpm -y
         ;;
     *)
         echo "Error: Empty OS" ;;
