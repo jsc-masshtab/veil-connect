@@ -81,11 +81,11 @@ static void async_create_ws_connect(GTask         *task G_GNUC_UNUSED,
 
         // receiving messages
         while (vdi_ws_client->is_running && !g_io_stream_is_closed(vdi_ws_client->stream)) {
-            GError *error = NULL;
+            //GError *error = NULL;
             /*gboolean res = */g_input_stream_read_all(inputStream,
                                                    &buffer,
                                                    buf_length, &bytes_read,
-                                                   vdi_ws_client->cancel_job, &error);
+                                                   vdi_ws_client->cancel_job, NULL);
             //g_info("WS: %s res: %i bytes_read: %lu\n", (const char *)__func__, res, bytes_read);
 
             if (bytes_read == 0) {
@@ -106,6 +106,8 @@ static void async_create_ws_connect(GTask         *task G_GNUC_UNUSED,
         if (vdi_ws_client->stream)
             g_io_stream_close(vdi_ws_client->stream, NULL, NULL);
     }
+
+    g_object_unref(ws_msg);
 
     g_mutex_unlock(&vdi_ws_client->lock);
 }
