@@ -26,7 +26,6 @@ launch_windows_rdp_client(const gchar *usename, const gchar *password G_GNUC_UNU
     //open template for reading and take its content
     FILE *sourceFile;
     FILE *destFile;
-    int count;
 
     const char *rdp_template_filename = "rdp_data/rdp_template_file.txt";
     sourceFile = fopen(rdp_template_filename,"r");
@@ -52,6 +51,7 @@ launch_windows_rdp_client(const gchar *usename, const gchar *password G_GNUC_UNU
         // Unable to open
         g_info("\nUnable to open file rdp_file.rd.");
         g_info("Please check if file exists and you have read/write privilege.");
+        fclose(sourceFile);
         return;
     }
     // Copy file
@@ -101,7 +101,7 @@ launch_windows_rdp_client(const gchar *usename, const gchar *password G_GNUC_UNU
                         &pi )           // Pointer to PROCESS_INFORMATION structure
             )
     {
-        g_info( "CreateProcess failed (%d).", GetLastError() );
+        g_info( "CreateProcess failed (%lu).", GetLastError() );
         g_free(cmd_line);
         return;
     }
