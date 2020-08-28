@@ -56,6 +56,8 @@ static void add_rdp_param(GArray *rdp_params_dyn_array, gchar *rdp_param)
 
 static GArray * rdp_client_create_params_array(ExtendedRdpContext* tf)
 {
+    g_info("%s W: %i x H:%i", (const char*)__func__, tf->whole_image_width, tf->whole_image_height);
+
     GArray *rdp_params_dyn_array = g_array_new(FALSE, FALSE, sizeof(gchar *));
 
     add_rdp_param(rdp_params_dyn_array, g_strdup(PROGRAMM_NAME));

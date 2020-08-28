@@ -1,4 +1,37 @@
 
+n.n.n / 2020-08-28
+==================
+
+  * FIX TG-9620 Фикс задания высоты картинки при подключении по RDP
+  * Merge branch 'master' of http://gitlab.bazalt.team/vdi/veil-connect
+  * Fixed leak in vdi_ws_client.c
+
+1.2.18 / 2020-08-25
+===================
+
+  * Add openh264-6.dll to windows client
+  * Merge master to master
+  * small windows_rdp_launcher.c fix
+  * Merge branch 'feature_tg_9531' into 'master'
+  * FEATURE TG-9531 Update linux installer
+
+1.2.17 / 2020-08-20
+===================
+
+  * FEATURE_TG_9534 При дисконекте по инициативе юзера (LOGOFF_BY_USER) закрываем rdp окна
+  * FEATURE_TG_9543 RDP конфиг для нативного клиента создается в appdata (где у нас есть права на запись)
+  * Merge branch 'featute_tg_9543'
+  * FEATURE_TG_9543 Пишутся логи если путь содержит русские буквы
+  * Fix pipeline
+  * Введенf cmake опция BUILD_x32. (По дефолту OFF)
+  * Merge branch 'feature_tg_9542' into 'master'
+  * FEATURE TG-9542 Update FreeRDP version to 2.2.0
+  * Merge branch 'feature_tg_9532' into 'master'
+  * FEATURE TG-9532 Add build for 32-bit windows
+  * Merge branch 'feature_tg_9532' into 'master'
+  * FEATURE TG-9532 Add build for 32-bit windows
+  * FEATURE_TG_9516 updated CHANGELOG.md
+
 1.2.16 / 2020-08-17
 ===================
 

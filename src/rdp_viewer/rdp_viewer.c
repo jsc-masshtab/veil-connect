@@ -143,8 +143,10 @@ GtkResponseType rdp_viewer_start(const gchar *usename, const gchar *password, gc
     // determine monitor info
     GdkDisplay *display = gdk_display_get_default();
 
-    int total_monitor_width = 0;
-    int total_monitor_height = 0;
+    int total_monitor_width = 0; // Во freerdp нет мультимониторности. Единственный способ ее эмулиовать -
+    // это представить, что мониторы образуют прямоугольник и запросить картинку, шириной равной суммарной ширине
+    // мониторов.
+    int monitor_height = 0;
 
     // array which will contain rdp windows
     GArray *rdp_windows_array = g_array_new(FALSE, FALSE, sizeof(RdpWindowData *));
@@ -168,7 +170,7 @@ GtkResponseType rdp_viewer_start(const gchar *usename, const gchar *password, gc
                                                                                   &last_rdp_error, &loop,
                                                                                   &dialog_window_response);
             total_monitor_width += geometry.width;
-            total_monitor_height += geometry.height;
+            monitor_height = geometry.height;
         }
     // Create windows only for primary monitor
     } else {
@@ -181,7 +183,7 @@ GtkResponseType rdp_viewer_start(const gchar *usename, const gchar *password, gc
                                                                               &last_rdp_error, &loop,
                                                                               &dialog_window_response);
         total_monitor_width = geometry.width;
-        total_monitor_height = geometry.height;
+        monitor_height = geometry.height;
         RdpWindowData *rdp_window_data = g_array_index(rdp_windows_array, RdpWindowData *, 0);
 
         // Это необходимо, чтобы не было отступа при рисовании картинки или получени позиции мыши
@@ -192,7 +194,7 @@ GtkResponseType rdp_viewer_start(const gchar *usename, const gchar *password, gc
     const int max_image_width = 5120;//2560; 5120
     const int max_image_height = 2500; // 1440
     int image_width = MIN(max_image_width, total_monitor_width);
-    int image_height = MIN(max_image_height, total_monitor_height);
+    int image_height = MIN(max_image_height, monitor_height);
     rdp_client_set_rdp_image_size(ex_rdp_context, image_width, image_height);
 
     // launch RDP routine in thread
