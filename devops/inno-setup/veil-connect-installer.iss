@@ -74,7 +74,7 @@ begin
   Result := isMvcInstalled();
   if Not Result then
   begin
-    MsgBox('Для корректной работы программы требуется Распространяемый компонент Microsoft Visual C++ 2015. Убедитесь, что он установлен.', mbInformation, MB_OK);
+    MsgBox('Для корректной работы программы требуется Распространяемый компонент Microsoft Visual C++ 2019. Убедитесь, что он установлен.', mbInformation, MB_OK);
   end;
   Result := isUsbDkInstalled();
   if Not Result then
