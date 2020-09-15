@@ -68,11 +68,18 @@ typedef struct {
 
 ///////////////////////////////////////////////////////////////////////////////////////
 
-//static void
-//usbredir_dialog_set_usb_state(int usb_index, UsbState usb_state)
-//{
-//
-//}
+static const gchar *usbredir_dialog_get_usb_status_text(UsbState usb_state)
+{
+    switch (usb_state) {
+        case USB_STATE_BEING_REDIRECTED:
+            return "USB перенаправляется";
+        case USB_STATE_CANCELLING_REDIRECTION:
+            return"Завершаем перенаправление USB. Ожидайте";
+        case USB_STATE_NOT_USED:
+        default:
+            return "";
+    }
+}
 
 static void
 usbredir_dialog_on_usb_device_toggled(GtkCellRendererToggle *cell_renderer G_GNUC_UNUSED,
@@ -91,7 +98,6 @@ usbredir_dialog_on_usb_device_toggled(GtkCellRendererToggle *cell_renderer G_GNU
     }
 
     // handle
-    gchar *status_str = NULL;
     gboolean is_usb_redir_toggled = FALSE;
 
     GtkTreeIter iter;
@@ -114,7 +120,6 @@ usbredir_dialog_on_usb_device_toggled(GtkCellRendererToggle *cell_renderer G_GNU
             usbredir_controller_start_task(start_data);
 
             //
-            status_str = g_strdup("USB перенаправляется");
             is_usb_redir_toggled = TRUE;
             priv->usb_state_array[usb_index].usb_state = USB_STATE_BEING_REDIRECTED;
             break;
@@ -127,7 +132,6 @@ usbredir_dialog_on_usb_device_toggled(GtkCellRendererToggle *cell_renderer G_GNU
                     priv->usb_state_array[usb_index].usbaddr);
 
             //
-            status_str = g_strdup("Завершаем перенаправление USB. Ожидайте");
             priv->usb_state_array[usb_index].usb_state = USB_STATE_CANCELLING_REDIRECTION;
             break;
         }
@@ -141,12 +145,12 @@ usbredir_dialog_on_usb_device_toggled(GtkCellRendererToggle *cell_renderer G_GNU
 
     // gui
     GdkRGBA color = {0.0, 0.0, 0.0, 0.0};
+    const gchar *status_text = usbredir_dialog_get_usb_status_text(priv->usb_state_array[usb_index].usb_state);
     gtk_list_store_set(priv->usb_list_store, &iter,
                        COLUMN_USB_REDIR_TOGGLE, is_usb_redir_toggled,
-                       COLUMN_USB_REDIR_STATE, status_str,
+                       COLUMN_USB_REDIR_STATE, status_text,
                        COLUMN_USB_COLOR, &color,
                        -1);
-    free_memory_safely(&status_str);
 }
 
 static void
@@ -170,8 +174,6 @@ usbredir_dialog_usb_task_finished_callback(UsbRedirTaskResaultData *res_data, gp
         }
     }
 
-    // Если не нашли USB в списке, значит после редиректа  гуи форма была закрыта, далее юсб бала отключена,
-    // и гуи было открыто снова, но до фактического завершения таски редиректа
     if (found_usb_index == -1) {
         g_info("%s found_usb_index == -1", (const char*)__func__);
         return;
@@ -240,6 +242,8 @@ usbredir_dialog_add_columns_to_usb_view(UsbredirMainDialogData *priv)
     column = gtk_tree_view_column_new_with_attributes("Состояние", renderer, "text", COLUMN_USB_REDIR_STATE,
                                                       "foreground-rgba", COLUMN_USB_COLOR, NULL);
     gtk_tree_view_append_column(GTK_TREE_VIEW(priv->usb_devices_list_view), column);
+
+    gtk_tree_view_set_grid_lines(GTK_TREE_VIEW(priv->usb_devices_list_view), GTK_TREE_VIEW_GRID_LINES_HORIZONTAL);
 }
 
 static void
@@ -301,29 +305,15 @@ usbredir_dialog_fill_usb_model(UsbredirMainDialogData *priv)
         // Add a new row to the model
         gtk_list_store_append(priv->usb_list_store, &iter);
 
-        gchar *status_str = NULL;
-        switch (usb_device_data.usb_state) {
-            case USB_STATE_BEING_REDIRECTED:
-                status_str = g_strdup("USB перенаправляется");
-                break;
-            case USB_STATE_CANCELLING_REDIRECTION:
-                status_str = g_strdup("Завершаем перенаправление USB. Ожидайте");
-                break;
-            case USB_STATE_NOT_USED:
-            default:
-                status_str = g_strdup("");
-                break;
-        }
-
+        const gchar *status_text = usbredir_dialog_get_usb_status_text(priv->usb_state_array[i].usb_state);
         gboolean usb_toggle_value = (usb_device_data.usb_state == USB_STATE_BEING_REDIRECTED);
 
         gtk_list_store_set(priv->usb_list_store, &iter,
                            COLUMN_USB_NAME, usb_name,
                            COLUMN_USB_REDIR_TOGGLE, usb_toggle_value,
-                           COLUMN_USB_REDIR_STATE, status_str,
+                           COLUMN_USB_REDIR_STATE, status_text,
                            -1);
         g_free(usb_name);
-        free_memory_safely(&status_str);
     }
 
     // release
