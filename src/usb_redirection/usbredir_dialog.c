@@ -413,17 +413,18 @@ static void usbredir_dialog_determine_tk_address(GTask    *task,
     }
 
     gchar *address = NULL;
-    GError *error = NULL;
     gchar *standard_output = NULL;
     gchar *standard_error = NULL;
     gint exit_status = 0;
+
+#ifdef __linux__
     gchar *command_line = g_strdup_printf("ip route get %s", vdi_session_get_current_controller_address());
 
     gboolean cmd_res = g_spawn_command_line_sync(command_line,
                               &standard_output,
                               &standard_error,
                               &exit_status,
-                              &error);
+                              NULL);
     g_free(command_line);
 
     if (cmd_res) {
@@ -445,6 +446,8 @@ static void usbredir_dialog_determine_tk_address(GTask    *task,
     free_memory_safely(&standard_output);
     free_memory_safely(&standard_error);
 
+#elif _WIN32
+#endif
     g_task_return_pointer(task, address, NULL); // adress will be freed in callback
 }//"Error: inet prefix is expected rather than \"|\".\n"
 // ip route get 192.168.11.115 | grep -Po '(?<=src )(\d{1,3}.){4}'
