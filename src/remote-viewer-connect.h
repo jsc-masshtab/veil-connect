@@ -9,7 +9,7 @@
 
 #include <gtk/gtk.h>
 
-#include "vdi_api_session.h"
+#include "vdi_session.h"
 
 GtkResponseType remote_viewer_connect_dialog(gchar **user, gchar **password, gchar **domain,
                                       gchar **ip, gchar **port, gboolean *is_connect_to_prev_pool,

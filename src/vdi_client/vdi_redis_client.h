@@ -1,9 +1,10 @@
 #ifndef VDI_REDIS_CLIENT_H
 #define VDI_REDIS_CLIENT_H
 
+#include <hiredis.h>
+
 #include <gtk/gtk.h>
 
-#include <hiredis.h>
 
 typedef struct{
 

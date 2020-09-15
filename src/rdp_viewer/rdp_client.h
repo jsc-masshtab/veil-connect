@@ -39,8 +39,6 @@ typedef struct {
     GdkPixbuf *frame_pix_buf; //frame image data
     GMutex primary_buffer_mutex; // mutex for protecting primary_buffer
 
-    GMutex rdp_routine_mutex; // used to wait untill rdp_client_routine finished
-
     cairo_surface_t* surface; // image surface
     double im_origin_x; // origin point of image
     double im_origin_y; // origin point of image
@@ -82,10 +80,7 @@ void rdp_client_set_credentials(ExtendedRdpContext *ex_rdp_context,
 void rdp_client_set_rdp_image_size(ExtendedRdpContext *ex_rdp_context,
                                          int whole_image_width, int whole_image_height);
 
-void rdp_client_routine(GTask   *task,
-                 gpointer       source_object G_GNUC_UNUSED,
-                 gpointer       task_data G_GNUC_UNUSED,
-                 GCancellable  *cancellable G_GNUC_UNUSED);
+void* rdp_client_routine(ExtendedRdpContext *ex_contect);
 
 void rdp_client_adjust_im_origin_point(ExtendedRdpContext* ex_rdp_context);
 

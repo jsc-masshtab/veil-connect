@@ -13,7 +13,7 @@
 
 #include "remote-viewer-util.h"
 
-#include "vdi_api_session.h"
+#include "vdi_session.h"
 
 typedef struct{
 

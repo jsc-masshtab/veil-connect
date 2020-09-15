@@ -61,8 +61,8 @@ static void register_pool(const gchar *pool_id, const gchar *pool_name, const gc
         const gchar *status, JsonArray *conn_types_json_array);
 static VdiPoolWidget get_vdi_pool_widget_by_id(const gchar *searched_id);
 
-static void on_get_vdi_pool_data_finished(GObject *source_object, GAsyncResult *res, gpointer user_data);
-static void on_get_vm_from_pool_finished(GObject *source_object, GAsyncResult *res, gpointer user_data);
+static void on_vdi_session_get_vdi_pool_data_finished(GObject *source_object, GAsyncResult *res, gpointer user_data);
+static void on_vdi_session_get_vm_from_pool_finished(GObject *source_object, GAsyncResult *res, gpointer user_data);
 static gboolean on_ws_data_from_vdi_received(gboolean is_vdi_online);
 
 static gboolean on_window_deleted_cb(ConnectionInfo *ci);
@@ -134,9 +134,9 @@ static void set_vdi_client_state(VdiClientState vdi_client_state, const gchar *m
     if (vdi_manager.status_label) {
 
         if (error_message) {
-            gchar *finalMessage = g_strdup_printf("<span color=\"red\">%s</span>", message);
-            gtk_label_set_markup(GTK_LABEL (vdi_manager.status_label), finalMessage);
-            g_free(finalMessage);
+            gchar *final_message = g_strdup_printf("<span color=\"red\">%s</span>", message);
+            gtk_label_set_markup(GTK_LABEL (vdi_manager.status_label), final_message);
+            g_free(final_message);
 
         } else {
             gtk_label_set_text(GTK_LABEL(vdi_manager.status_label), message);
@@ -147,7 +147,7 @@ static void set_vdi_client_state(VdiClientState vdi_client_state, const gchar *m
 static void refresh_vdi_pool_data_async()
 {
     set_vdi_client_state(VDI_WAITING_FOR_POOL_DATA, "Отправлен запрос на список пулов", FALSE);
-    execute_async_task(get_vdi_pool_data, on_get_vdi_pool_data_finished, NULL, NULL);
+    execute_async_task(vdi_session_get_vdi_pool_data, on_vdi_session_get_vdi_pool_data_finished, NULL, NULL);
 }
 // clear array of virtual machine widgets
 static void unregister_all_pools()
@@ -205,13 +205,13 @@ static VdiPoolWidget get_vdi_pool_widget_by_id(const gchar *searched_id)
 
 //////////////////////////////// async task callbacks//////////////////////////////////////
 // callback which is invoked when pool data request finished
-static void on_get_vdi_pool_data_finished(GObject *source_object G_GNUC_UNUSED,
+static void on_vdi_session_get_vdi_pool_data_finished(GObject *source_object G_GNUC_UNUSED,
                                         GAsyncResult *res,
                                         gpointer user_data G_GNUC_UNUSED)
 {
     g_info("%s", (const char *)__func__);
 
-    GError *error;
+    GError *error = NULL;
     gpointer  ptr_res = g_task_propagate_pointer(G_TASK (res), &error); // take ownership
     if(ptr_res == NULL){
         set_vdi_client_state(VDI_RECEIVED_RESPONSE, "Не удалось получить список пулов", TRUE);
@@ -271,13 +271,13 @@ static void on_get_vdi_pool_data_finished(GObject *source_object G_GNUC_UNUSED,
 }
 
 // callback which is invoked when vm start request finished
-static void on_get_vm_from_pool_finished(GObject *source_object G_GNUC_UNUSED,
+static void on_vdi_session_get_vm_from_pool_finished(GObject *source_object G_GNUC_UNUSED,
                                          GAsyncResult *res,
                                          gpointer user_data G_GNUC_UNUSED)
 {
     g_info("%s", (const char *)__func__);
 
-    VdiPoolWidget vdi_pool_widget = get_vdi_pool_widget_by_id(get_current_pool_id());
+    VdiPoolWidget vdi_pool_widget = get_vdi_pool_widget_by_id(vdi_session_get_current_pool_id());
     enable_spinner_visible(&vdi_pool_widget, FALSE);
 
     GError *error = NULL;
@@ -288,15 +288,15 @@ static void on_get_vm_from_pool_finished(GObject *source_object G_GNUC_UNUSED,
         return;
     }
 
-    VdiVmData *vdi_vm_data = ptr_res;
+    VdiVmData *vdi_vm_data = (VdiVmData *)ptr_res;
 
-    // if port == 0 it means VDI server can not provide a vm. Should implement proper errors field!
+    // if port == 0 it means VDI server can not provide a vm. Should implement proper errors field on VDI server!
     if (vdi_vm_data->vm_port == 0) {
         const gchar *user_message = vdi_vm_data->message ? vdi_vm_data->message : "Не удалось получить вм из пула";
         set_vdi_client_state(VDI_RECEIVED_RESPONSE, user_message, TRUE);
     } else {
         // save to settings file the last pool we connected to
-        write_str_to_ini_file("RemoteViewerConnect", "last_pool_id", get_current_pool_id());
+        write_str_to_ini_file("RemoteViewerConnect", "last_pool_id", vdi_session_get_current_pool_id());
 
         free_memory_safely(vdi_manager.ip_ptr);
         *vdi_manager.ip_ptr = g_strdup(vdi_vm_data->vm_host);
@@ -317,7 +317,7 @@ static void on_get_vm_from_pool_finished(GObject *source_object G_GNUC_UNUSED,
         shutdown_loop(vdi_manager.ci.loop);
     }
     //
-    free_vdi_vm_data(vdi_vm_data);
+    vdi_api_session_free_vdi_vm_data(vdi_vm_data);
 }
 
 // ws data callback    "<span color=\"red\">%s</span>"
@@ -371,7 +371,7 @@ static gboolean on_window_deleted_cb(ConnectionInfo *ci)
 static void on_button_renew_clicked(GtkButton *button G_GNUC_UNUSED, gpointer data G_GNUC_UNUSED) {
 
     g_info("%s", (const char *)__func__);
-    vdi_api_cancell_pending_requests();
+    vdi_session_cancell_pending_requests();
     unregister_all_pools();
     refresh_vdi_pool_data_async();
 }
@@ -381,7 +381,7 @@ static void on_button_quit_clicked(GtkButton *button G_GNUC_UNUSED, gpointer dat
     g_info("%s", (const char *)__func__);
 
     // logout
-    vdi_api_session_logout();
+    vdi_session_logout();
 
     ConnectionInfo *ci = data;
     ci->response = FALSE;
@@ -392,7 +392,7 @@ static void on_button_quit_clicked(GtkButton *button G_GNUC_UNUSED, gpointer dat
 static void on_vm_start_button_clicked(GtkButton *button, gpointer data G_GNUC_UNUSED)
 {
     const gchar *pool_id = g_object_get_data(G_OBJECT(button), "pool_id");
-    set_current_pool_id(pool_id);
+    vdi_session_set_current_pool_id(pool_id);
     g_info("%s  %s", (const char *)__func__, pool_id);
     // start machine
     set_vdi_client_state(VDI_WAITING_FOR_VM_FROM_POOL, "Отправлен запрос на получение вм из пула", FALSE);
@@ -403,9 +403,9 @@ static void on_vm_start_button_clicked(GtkButton *button, gpointer data G_GNUC_U
     // take from gui currect remote protocol
     //gint remote_protocol_index = gtk_combo_box_get_active((GtkComboBox*)vdi_manager.combobox_remote_protocol);
     VdiVmRemoteProtocol remote_protocol =  vdi_pool_widget_get_current_protocol(&vdi_pool_widget);
-    set_current_remote_protocol(remote_protocol);
+    vdi_session_set_current_remote_protocol(remote_protocol);
     // execute task
-    execute_async_task(get_vm_from_pool, on_get_vm_from_pool_finished, NULL, NULL);
+    execute_async_task(vdi_session_get_vm_from_pool, on_vdi_session_get_vm_from_pool_finished, NULL, NULL);
 }
 
 static void
@@ -413,13 +413,13 @@ read_data_from_ini_file()
 {
     gint cur_remote_protocol_index = read_int_from_ini_file("General",
             "cur_remote_protocol_index", VDI_SPICE_PROTOCOL);
-    set_current_remote_protocol((VdiVmRemoteProtocol)cur_remote_protocol_index);
+    vdi_session_set_current_remote_protocol((VdiVmRemoteProtocol)cur_remote_protocol_index);
 }
 
 static void
 save_data_to_ini_file()
 {
-    write_int_to_ini_file("General", "cur_remote_protocol_index", (gint)get_current_remote_protocol());
+    write_int_to_ini_file("General", "cur_remote_protocol_index", (gint)vdi_session_get_current_remote_protocol());
 }
 
 /////////////////////////////////// main function
@@ -464,12 +464,13 @@ GtkResponseType vdi_manager_dialog(GtkWindow *main_window G_GNUC_UNUSED, gchar *
     read_data_from_ini_file();
 
     // show window
-    gtk_window_set_position (GTK_WINDOW(vdi_manager.window), GTK_WIN_POS_CENTER);
+    gtk_window_set_position(GTK_WINDOW(vdi_manager.window), GTK_WIN_POS_CENTER);
     gtk_window_set_default_size(GTK_WINDOW(vdi_manager.window), 650, 500);
     gtk_widget_show_all(vdi_manager.window);
 
     // start polling if vdi is online
-    start_vdi_ws_polling(&vdi_ws_client, get_vdi_ip(), get_vdi_port(), on_ws_data_from_vdi_received);
+    start_vdi_ws_polling(&vdi_ws_client, vdi_session_get_vdi_ip(), vdi_session_get_vdi_port(),
+            on_ws_data_from_vdi_received);
     // Пытаемся соединиться с vdi и получить список пулов. Получив список пулов нужно сгенерить
     // соответствующие кнопки  в скрол области.
     // get pool data
@@ -478,7 +479,7 @@ GtkResponseType vdi_manager_dialog(GtkWindow *main_window G_GNUC_UNUSED, gchar *
     create_loop_and_launch(&vdi_manager.ci.loop);
 
     // clear
-    vdi_api_cancell_pending_requests();
+    vdi_session_cancell_pending_requests();
     stop_vdi_ws_polling(&vdi_ws_client);
 
     // save data to ini file

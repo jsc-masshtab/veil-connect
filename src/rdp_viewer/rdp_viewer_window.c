@@ -10,11 +10,17 @@
 #include "rdp_display.h"
 #include "rdp_viewer_window.h"
 
-#include "vdi_api_session.h"
+#include "vdi_session.h"
 
 #include "settingsfile.h"
+#include "usbredir_dialog.h"
+#include "usbredir_controller.h"
+#include "usbredir_util.h"
 
 #define MAX_KEY_COMBO 4
+
+extern gboolean opt_manual_mode;
+
 struct keyComboDef {
     guint keys[MAX_KEY_COMBO];
     const char *label;
@@ -24,7 +30,7 @@ struct keyComboDef {
 // static variables and constants
 static const struct keyComboDef keyCombos[] = {
     { { RDP_SCANCODE_LCONTROL, RDP_SCANCODE_LMENU, RDP_SCANCODE_DELETE, GDK_KEY_VoidSymbol }, "Ctrl+Alt+_Del", NULL},
-    { { RDP_SCANCODE_LCONTROL, RDP_SCANCODE_LMENU, GDK_KEY_BackSpace, GDK_KEY_VoidSymbol }, "Ctrl+Alt+_Backspace", NULL},
+    { { RDP_SCANCODE_LCONTROL, RDP_SCANCODE_LMENU, GDK_KEY_BackSpace, GDK_KEY_VoidSymbol }, "Ctrl+Alt+_Backspace",NULL},
     { { RDP_SCANCODE_LCONTROL, RDP_SCANCODE_LMENU, RDP_SCANCODE_F1, GDK_KEY_VoidSymbol }, "Ctrl+Alt+F_1", NULL},
     { { RDP_SCANCODE_LCONTROL, RDP_SCANCODE_LMENU, RDP_SCANCODE_F2, GDK_KEY_VoidSymbol }, "Ctrl+Alt+F_2", NULL},
     { { RDP_SCANCODE_LCONTROL, RDP_SCANCODE_LMENU, RDP_SCANCODE_F3, GDK_KEY_VoidSymbol }, "Ctrl+Alt+F_3", NULL},
@@ -232,7 +238,7 @@ static void rdp_viewer_item_about_activated(GtkWidget *menu G_GNUC_UNUSED, gpoin
         gtk_about_dialog_set_logo_icon_name(GTK_ABOUT_DIALOG(dialog), "virt-viewer_veil");
     }
 
-    GtkWindow *rdp_viewer_window = userdata;
+    GtkWindow *rdp_viewer_window = (GtkWindow *)userdata;
     gtk_window_set_transient_for(GTK_WINDOW(dialog), rdp_viewer_window);
 
     gtk_builder_connect_signals(about, rdp_viewer_window);
@@ -240,6 +246,25 @@ static void rdp_viewer_item_about_activated(GtkWidget *menu G_GNUC_UNUSED, gpoin
     gtk_widget_show_all(dialog);
 
     g_object_unref(G_OBJECT(about));
+}
+
+static void rdp_viewer_item_menu_usb_activated(GtkWidget *menu G_GNUC_UNUSED, gpointer userdata)
+{
+    // Работает только в связке с veil
+    if (opt_manual_mode)
+        return;
+    // Не показывать если уже открыто
+    if (usbredir_controller_is_usb_tcp_window_shown())
+        return;
+
+    RdpWindowData *rdp_window_data = (RdpWindowData *)userdata;
+
+#ifdef _WIN32
+    if ( !usbredir_util_check_if_usbdk_installed(GTK_WINDOW(rdp_window_data->rdp_viewer_window)) )
+        return;
+#endif
+
+    usbredir_dialog_start(GTK_WINDOW(rdp_window_data->rdp_viewer_window));
 }
 
 static void rdp_viewer_window_send_key_shortcut(rdpContext* context, int key_shortcut_index)
@@ -281,42 +306,42 @@ static void
 rdp_viewer_window_menu_start_vm(GtkWidget *menu G_GNUC_UNUSED, gpointer userdata G_GNUC_UNUSED)
 {
     g_info("%s", (const char *)__func__);
-    vdi_api_session_do_action_on_vm("start", FALSE);
+    vdi_api_session_execute_task_do_action_on_vm("start", FALSE);
 }
 
 static void
 rdp_viewer_window_menu_suspend_vm(GtkWidget *menu G_GNUC_UNUSED, gpointer userdata G_GNUC_UNUSED)
 {
     g_info("%s", (const char *)__func__);
-    vdi_api_session_do_action_on_vm("suspend", FALSE);
+    vdi_api_session_execute_task_do_action_on_vm("suspend", FALSE);
 }
 
 static void
 rdp_viewer_window_menu_shutdown_vm(GtkWidget *menu G_GNUC_UNUSED, gpointer userdata G_GNUC_UNUSED)
 {
     g_info("%s", (const char *)__func__);
-    vdi_api_session_do_action_on_vm("shutdown", FALSE);
+    vdi_api_session_execute_task_do_action_on_vm("shutdown", FALSE);
 }
 
 static void
 rdp_viewer_window_menu_shutdown_vm_force(GtkWidget *menu G_GNUC_UNUSED, gpointer userdata G_GNUC_UNUSED)
 {
     g_info("%s", (const char *)__func__);
-    vdi_api_session_do_action_on_vm("shutdown", TRUE);
+    vdi_api_session_execute_task_do_action_on_vm("shutdown", TRUE);
 }
 
 static void
 rdp_viewer_window_menu_reboot_vm(GtkWidget *menu G_GNUC_UNUSED, gpointer userdata G_GNUC_UNUSED)
 {
     g_info("%s", (const char *)__func__);
-    vdi_api_session_do_action_on_vm("reboot", FALSE);
+    vdi_api_session_execute_task_do_action_on_vm("reboot", FALSE);
 }
 
 static void
 rdp_viewer_window_menu_reboot_vm_force(GtkWidget *menu G_GNUC_UNUSED, gpointer userdata G_GNUC_UNUSED)
 {
     g_info("%s", (const char *)__func__);
-    vdi_api_session_do_action_on_vm("reboot", TRUE);
+    vdi_api_session_execute_task_do_action_on_vm("reboot", TRUE);
 }
 
 static void
@@ -437,6 +462,11 @@ RdpWindowData *rdp_viewer_window_create(ExtendedRdpContext *ex_rdp_context, UINT
 
     GtkWidget *rdp_viewer_window = rdp_window_data->rdp_viewer_window =
             GTK_WIDGET(gtk_builder_get_object(builder, "viewer"));
+    gchar *title = g_strdup_printf("ВМ: %s     Пользователь: %s    %s", vdi_session_get_current_vm_name(),
+            ex_rdp_context->usename, PACKAGE);
+    gtk_window_set_title(GTK_WINDOW(rdp_viewer_window), title);
+    free_memory_safely(&title);
+
     gtk_widget_add_events(rdp_viewer_window, GDK_KEY_PRESS_MASK | GDK_KEY_RELEASE_MASK);
     g_signal_connect_swapped(rdp_viewer_window, "delete-event",
                              G_CALLBACK(rdp_viewer_window_deleted_cb), rdp_window_data);
@@ -446,8 +476,8 @@ RdpWindowData *rdp_viewer_window_create(ExtendedRdpContext *ex_rdp_context, UINT
     rdp_window_data->top_menu = GTK_WIDGET(gtk_builder_get_object(builder, "top-menu"));
 
     // usb menu is not required for rdp
-    GtkWidget *menu_usb = GTK_WIDGET(gtk_builder_get_object(builder, "menu-file-usb"));
-    gtk_widget_destroy(menu_usb); // rdp automaticly redirects usb if app is launched with corresponding flag
+    GtkWidget *menu_usb = GTK_WIDGET(gtk_builder_get_object(builder, "menu-file-usb-device-selection"));
+    g_signal_connect(menu_usb, "activate", G_CALLBACK(rdp_viewer_item_menu_usb_activated), rdp_window_data);
 
     // remove inapropriate items from settings menu
     gtk_widget_destroy(GTK_WIDGET(gtk_builder_get_object(builder, "menu-file-smartcard-insert")));
@@ -470,7 +500,7 @@ RdpWindowData *rdp_viewer_window_create(ExtendedRdpContext *ex_rdp_context, UINT
 
     // shortcuts
     GtkWidget *menu_send = GTK_WIDGET(gtk_builder_get_object(builder, "menu-send"));
-    GtkMenu *sub_menu_send = GTK_MENU(gtk_menu_new()); // todo: when will it get deleted?
+    GtkMenu *sub_menu_send = GTK_MENU(gtk_menu_new());
     gtk_menu_item_set_submenu(GTK_MENU_ITEM(menu_send), (GtkWidget*)sub_menu_send);
     fill_shortcuts_menu(sub_menu_send, ex_rdp_context);
 

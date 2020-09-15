@@ -11,8 +11,6 @@
 #include "rdp_viewer.h"
 #include "remote-viewer-util.h"
 
-/// В msys2 не нашел gspawn-win32-helper. Без него запуск ппроцессов с помощтю gtk невозможен
-
 
 void
 launch_windows_rdp_client(const gchar *usename, const gchar *password G_GNUC_UNUSED,
@@ -42,7 +40,7 @@ launch_windows_rdp_client(const gchar *usename, const gchar *password G_GNUC_UNU
     g_free(app_rdp_data_dir);
     g_free(app_data_dir);
 
-    convert_string_to_locale_from_utf8(&rdp_data_file_name);
+    convert_string_from_utf8_to_locale(&rdp_data_file_name);
     destFile = fopen(rdp_data_file_name, "w");
 
     /* fopen() return NULL if unable to open file in given mode. */

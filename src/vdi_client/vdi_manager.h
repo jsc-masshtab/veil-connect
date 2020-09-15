@@ -7,7 +7,7 @@
 
 #include <gtk/gtk.h>
 
-#include "vdi_api_session.h"
+#include "vdi_session.h"
 
 GtkResponseType vdi_manager_dialog(GtkWindow *main_window, gchar **ip, gchar **port,
                                    gchar **password, gchar **vm_verbose_name);

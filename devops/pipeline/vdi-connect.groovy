@@ -35,7 +35,7 @@ pipeline {
 
     parameters {
         string(      name: 'BRANCH',               defaultValue: 'master',          description: 'branch')
-        string(      name: 'VERSION',              defaultValue: '1.2.19',          description: 'version')
+        string(      name: 'VERSION',              defaultValue: '1.3.0',          description: 'version')
         booleanParam(name: 'DEBIAN',               defaultValue: true,              description: 'create DEB?')
         booleanParam(name: 'UBUNTU',               defaultValue: true,              description: 'create DEB?')
         booleanParam(name: 'CENTOS7',              defaultValue: true,              description: 'create RPM?')

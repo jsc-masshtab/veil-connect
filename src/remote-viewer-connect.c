@@ -18,6 +18,7 @@
 #include "async.h"
 #include "jsonhandler.h"
 #include "remote_viewer_start_settings.h"
+#include "usbredir_dialog.h"
 
 extern gboolean opt_manual_mode;
 
@@ -103,7 +104,7 @@ set_data_from_gui_in_outer_pointers(RemoteViewerData *ci)
     *ci->user = g_strdup(gtk_entry_get_text(GTK_ENTRY(ci->login_entry)));
     *ci->password = g_strdup(gtk_entry_get_text(GTK_ENTRY(ci->password_entry)));
 
-    set_current_remote_protocol(ci->connect_settings_data.remote_protocol_type);
+    vdi_session_set_current_remote_protocol(ci->connect_settings_data.remote_protocol_type);
 }
 
 // save data to ini file
@@ -142,7 +143,7 @@ set_message_to_info_label(GtkLabel *label, const gchar *message)
 
 // get vm from pool callback
 static void
-on_get_vm_from_pool_finished(GObject *source_object G_GNUC_UNUSED,
+on_vdi_session_get_vm_from_pool_finished(GObject *source_object G_GNUC_UNUSED,
                                          GAsyncResult *res,
                                          gpointer user_data G_GNUC_UNUSED)
 {
@@ -175,19 +176,19 @@ on_get_vm_from_pool_finished(GObject *source_object G_GNUC_UNUSED,
         shutdown_loop(ci->loop);
     }
 
-    free_vdi_vm_data(vdi_vm_data);
+    vdi_api_session_free_vdi_vm_data(vdi_vm_data);
 }
 
 // token fetch callback
 static void
-on_vdi_api_session_log_in_finished(GObject *source_object G_GNUC_UNUSED,
+on_vdi_session_log_in_finished(GObject *source_object G_GNUC_UNUSED,
                                       GAsyncResult *res,
                                       gpointer user_data)
 {
     RemoteViewerData *ci = user_data;
 
-    GError *error = NULL;
-    gboolean token_refreshed = g_task_propagate_boolean(G_TASK(res), &error);
+    //GError *error = NULL;
+    gboolean token_refreshed = g_task_propagate_boolean(G_TASK(res), NULL); // &error
     g_info("%s: is_token_refreshed %i", (const char *)__func__, token_refreshed);
 
     set_auth_dialog_state(AUTH_GUI_DEFAULT_STATE, ci);
@@ -207,7 +208,7 @@ void connect_to_vdi_server(RemoteViewerData *ci)
 {
     // set credential for connection to VDI server
     set_data_from_gui_in_outer_pointers(ci);
-    set_vdi_credentials(*ci->user, *ci->password, *ci->ip, *ci->port, ci->connect_settings_data.is_ldap);
+    vdi_session_set_credentials(*ci->user, *ci->password, *ci->ip, *ci->port, ci->connect_settings_data.is_ldap);
 
     set_auth_dialog_state(AUTH_GUI_CONNECT_TRY_STATE, ci);
 
@@ -222,18 +223,18 @@ void connect_to_vdi_server(RemoteViewerData *ci)
             set_auth_dialog_state(AUTH_GUI_DEFAULT_STATE, ci);
             return;
         }
-        set_current_pool_id(last_pool_id);
+        vdi_session_set_current_pool_id(last_pool_id);
         free_memory_safely(&last_pool_id);
 
         VdiVmRemoteProtocol remote_protocol = read_int_from_ini_file("General",
                 "cur_remote_protocol_index", VDI_SPICE_PROTOCOL);
-        set_current_remote_protocol(remote_protocol);
+        vdi_session_set_current_remote_protocol(remote_protocol);
 
-        // start async task  get_vm_from_pool
-        execute_async_task(get_vm_from_pool, on_get_vm_from_pool_finished, NULL, ci);
+        // start async task  vdi_session_get_vm_from_pool
+        execute_async_task(vdi_session_get_vm_from_pool, on_vdi_session_get_vm_from_pool_finished, NULL, ci);
     } else {
         // fetch token task starting
-        execute_async_task(vdi_api_session_log_in, on_vdi_api_session_log_in_finished, NULL, ci);
+        execute_async_task(vdi_session_log_in, on_vdi_session_log_in_finished, NULL, ci);
     }
 }
 

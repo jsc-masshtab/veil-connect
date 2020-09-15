@@ -16,12 +16,12 @@
 #include "rdp_viewer.h"
 #include "rdp_client.h"
 #include "rdp_viewer_window.h"
-
 #include "remote-viewer-util.h"
 #include "config.h"
 
 #include "settingsfile.h"
 #include "async.h"
+#include "usbredir_controller.h"
 
 #define MAX_MONITOR_AMOUNT 3
 
@@ -58,8 +58,6 @@ static ExtendedRdpContext* create_rdp_context(UINT32 *last_rdp_error_p)
     ex_rdp_context->update_cursor_callback = (UpdateCursorCallback)update_cursor_callback;
     ex_rdp_context->test_int = 777; // temp
     ex_rdp_context->last_rdp_error_p = last_rdp_error_p;
-    // init mutex for rdp_routine syncronization
-    g_mutex_init(&ex_rdp_context->rdp_routine_mutex);
     g_mutex_init(&ex_rdp_context->cursor_mutex);
 
     is_rdp_context_created = TRUE;
@@ -67,7 +65,7 @@ static ExtendedRdpContext* create_rdp_context(UINT32 *last_rdp_error_p)
     return ex_rdp_context;
 }
 
-static void destroy_rdp_context(ExtendedRdpContext* ex_rdp_context)
+static void destroy_rdp_context(ExtendedRdpContext* ex_rdp_context, GThread *rdp_client_routine_thread)
 {
     if (ex_rdp_context) {
         // stopping RDP routine
@@ -75,10 +73,9 @@ static void destroy_rdp_context(ExtendedRdpContext* ex_rdp_context)
         g_info("%s: abort now: %i", (const char *)__func__, ex_rdp_context->test_int);
 
         freerdp_abort_connect(ex_rdp_context->context.instance);
-        // wait untill rdp thread finished. todo: seriously think if some sort of event primitive could be used
-        g_info("%s: before wait (&ex_rdp_context->rdp_routine_mutex);", (const char *)__func__);
-        wair_for_mutex_and_clear(&ex_rdp_context->rdp_routine_mutex);
-        g_info("%s: before wait (&ex_rdp_context->cursor_mutex);", (const char *)__func__);
+        // wait until rdp thread finishes (it should happen after abort)
+        g_thread_join(rdp_client_routine_thread);
+
         wair_for_mutex_and_clear(&ex_rdp_context->cursor_mutex);
 
         g_info("%s: context free now: %i", (const char *)__func__, ex_rdp_context->test_int);
@@ -133,16 +130,14 @@ GtkResponseType rdp_viewer_start(const gchar *usename, const gchar *password, gc
     rdp_client_set_credentials(ex_rdp_context, usename, password, domain, ip, port);
 
     // Set some presettings
+    usbredir_controller_reset_tcp_usb_devices_on_next_gui_opening(TRUE);
     // printers
     gboolean redirect_printers = read_int_from_ini_file("RDPSettings", "redirect_printers", FALSE);
     ex_rdp_context->context.instance->settings->RedirectPrinters = (BOOL)redirect_printers;
-
     // get ini config data
     gboolean is_multimon = read_int_from_ini_file("RDPSettings", "is_multimon", 0);
-
     // determine monitor info
     GdkDisplay *display = gdk_display_get_default();
-
     int total_monitor_width = 0; // Во freerdp нет мультимониторности. Единственный способ ее эмулиовать -
     // это представить, что мониторы образуют прямоугольник и запросить картинку, шириной равной суммарной ширине
     // мониторов.
@@ -198,16 +193,15 @@ GtkResponseType rdp_viewer_start(const gchar *usename, const gchar *password, gc
     rdp_client_set_rdp_image_size(ex_rdp_context, image_width, image_height);
 
     // launch RDP routine in thread
-    GTask *task = g_task_new(NULL, NULL, NULL, NULL);
-    g_task_set_task_data(task, (rdpContext *)ex_rdp_context, NULL);
-    g_task_run_in_thread(task, rdp_client_routine);
-    g_object_unref(task);
+    GThread *rdp_client_routine_thread = g_thread_new(NULL, (GThreadFunc)rdp_client_routine, ex_rdp_context);
 
     // launch event loop
     create_loop_and_launch(&loop);
 
+    usbredir_controller_stop_all_cur_tasks(FALSE);
+
     // clear memory
-    destroy_rdp_context(ex_rdp_context);
+    destroy_rdp_context(ex_rdp_context, rdp_client_routine_thread);
 
     // destroy rdp windows
     guint i;
