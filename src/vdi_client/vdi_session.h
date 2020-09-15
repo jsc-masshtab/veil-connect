@@ -68,6 +68,7 @@ typedef struct{
     VdiVmRemoteProtocol current_remote_protocol;
     gchar *current_vm_id;
     gchar *current_vm_verbose_name;
+    gchar *current_controller_address;
 
     RedisClient redis_client;
 
@@ -125,31 +126,33 @@ VdiVmRemoteProtocol vdi_session_get_current_remote_protocol(void);
 // get current vm name
 const gchar *vdi_session_get_current_vm_name(void);
 
+const gchar *vdi_session_get_current_controller_address(void);
+
 //void gInputStreamToBuffer(GInputStream *inputStream, gchar *responseBuffer);
 // Do api call. Return response body
 gchar *vdi_session_api_call(const char *method, const char *uri_string, const gchar *body_str, int *resp_code);
 
 /// Functions for GTasks
 // Fetch token
-void vdi_session_log_in(GTask         *task,
+void vdi_session_log_in(GTask *task,
                    gpointer       source_object,
                    gpointer       task_data,
                    GCancellable  *cancellable);
 
 // Запрашиваем список пулов
-void vdi_session_get_vdi_pool_data(GTask         *task,
+void vdi_session_get_vdi_pool_data(GTask *task,
                        gpointer       source_object,
                        gpointer       task_data,
                        GCancellable  *cancellable);
 
 // Получаем виртуалку из пула
-void vdi_session_get_vm_from_pool(GTask         *task,
+void vdi_session_get_vm_from_pool(GTask *task,
                       gpointer       source_object,
                       gpointer       task_data,
                       GCancellable  *cancellable);
 
 // Do action on virtual machine
-void vdi_session_do_action_on_vm(GTask         *task,
+void vdi_session_do_action_on_vm(GTask *task,
                      gpointer       source_object,
                      gpointer       task_data,
                      GCancellable  *cancellable);

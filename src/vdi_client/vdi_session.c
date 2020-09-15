@@ -38,6 +38,7 @@ static void free_session_memory()
     free_memory_safely(&vdiSession.current_pool_id);
     free_memory_safely(&vdiSession.current_vm_id);
     free_memory_safely(&vdiSession.current_vm_verbose_name);
+    free_memory_safely(&vdiSession.current_controller_address);
 }
 
 static void setup_header_for_vdi_session_api_call(SoupMessage *msg)
@@ -277,6 +278,11 @@ const gchar *vdi_session_get_current_vm_name()
     return vdiSession.current_vm_verbose_name;
 }
 
+const gchar *vdi_session_get_current_controller_address()
+{
+    return vdiSession.current_controller_address;
+}
+
 gchar *vdi_session_api_call(const char *method, const char *uri_string, const gchar *body_str, int *resp_code)
 {
     gchar *response_body_str = NULL;
@@ -396,13 +402,20 @@ void vdi_session_get_vm_from_pool(GTask       *task,
         vdi_vm_data->vm_verbose_name = g_strdup(json_object_get_string_member_safely(
                 reply_json_object, "vm_verbose_name"));
 
+        // save some data in vdiSession
         free_memory_safely(&vdiSession.current_vm_verbose_name);
         vdiSession.current_vm_verbose_name = g_strdup(vdi_vm_data->vm_verbose_name);
+        free_memory_safely(&vdiSession.current_controller_address);
+        const gchar *vm_controller_address =
+                json_object_get_string_member_safely(reply_json_object, "vm_controller_address");
+        if (vm_controller_address)
+            vdiSession.current_controller_address = g_strdup(vm_controller_address);
 
         g_info("vm_host %s", vdi_vm_data->vm_host);
         g_info("vm_port %i", vdi_vm_data->vm_port);
         //g_info("vm_password %s", vdi_vm_data->vm_password);
         g_info("vm_verbose_name %s", vdi_vm_data->vm_verbose_name);
+        g_info("current_controller_address %s", vdiSession.current_controller_address);
     }
 
     vdi_vm_data->message = g_strdup(json_object_get_string_member_safely(reply_json_object, "message"));

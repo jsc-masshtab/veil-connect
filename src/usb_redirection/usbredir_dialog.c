@@ -353,10 +353,8 @@ usbredir_dialog_on_usb_tcp_reset_finished(GObject *source_object G_GNUC_UNUSED,
         gtk_label_set_text(GTK_LABEL(priv->status_label), "");
         gtk_widget_set_sensitive((GtkWidget*)priv->usb_devices_list_view, TRUE);
     } else {
-        gchar *message = g_strdup_printf("<span color=\"red\">%s</span>", message);
         gtk_label_set_markup(GTK_LABEL(priv->status_label),
                 "<span color=\"red\">Не удалось сбросить USB TCP устройства на виртуальной машине</span>");
-        g_free(message);
     }
 }
 
@@ -378,6 +376,78 @@ usbredir_dialog_check_if_usb_tcp_reset_required_and_reset(UsbredirMainDialogData
     usbredir_controller_reset_tcp_usb_devices_on_next_gui_opening(FALSE);
 }
 
+static void
+usbredir_dialog_on_determine_tk_address_finished(GObject *source_object G_GNUC_UNUSED,
+                                          GAsyncResult *res,
+                                          gpointer user_data)
+{
+    g_info("%s", (const char*)__func__);
+
+    UsbredirMainDialogData *priv = (UsbredirMainDialogData *)user_data;
+
+    gpointer ptr_res = g_task_propagate_pointer(G_TASK (res), NULL);
+    if (ptr_res) {
+        gchar *tk_address = (gchar *)ptr_res;
+        g_info("%s : %s", (const char*)__func__, tk_address);
+        gtk_entry_set_text((GtkEntry*)priv->tk_address_entry, tk_address);
+
+        free_memory_safely(&tk_address);
+    } else { // get from ini if we didnt determine it
+        gchar *current_tk_address = read_str_from_ini_file("General", "current_tk_address");
+        if (current_tk_address) {
+            gtk_entry_set_text((GtkEntry*)priv->tk_address_entry, current_tk_address);
+            g_free(current_tk_address);
+        }
+    }
+}
+
+//Return address In case of success. Must be freed if its not NULL
+static void usbredir_dialog_determine_tk_address(GTask    *task,
+                                                   gpointer       source_object G_GNUC_UNUSED,
+                                                   gpointer       task_data G_GNUC_UNUSED,
+                                                   GCancellable  *cancellable G_GNUC_UNUSED)
+{
+    if ( !vdi_session_get_current_controller_address() ) {
+        g_task_return_pointer(task, NULL, NULL);
+        return;
+    }
+
+    gchar *address = NULL;
+    GError *error = NULL;
+    gchar *standard_output = NULL;
+    gchar *standard_error = NULL;
+    gint exit_status = 0;
+    gchar *command_line = g_strdup_printf("ip route get %s", vdi_session_get_current_controller_address());
+
+    gboolean cmd_res = g_spawn_command_line_sync(command_line,
+                              &standard_output,
+                              &standard_error,
+                              &exit_status,
+                              &error);
+    g_free(command_line);
+
+    if (cmd_res) {
+        GRegex *regex = g_regex_new("(?<=src )(\\d{1,3}.){4}", 0, 0, NULL);
+
+        GMatchInfo *match_info;
+        g_regex_match(regex, standard_output, 0, &match_info);
+
+        gboolean is_success = g_match_info_matches(match_info);
+        if (is_success) {
+            address = g_match_info_fetch(match_info, 0);
+            g_print("Found address: %s\n", address);
+        }
+
+        g_match_info_free(match_info);
+        g_regex_unref(regex);
+    }
+
+    free_memory_safely(&standard_output);
+    free_memory_safely(&standard_error);
+
+    g_task_return_pointer(task, address, NULL); // adress will be freed in callback
+}//"Error: inet prefix is expected rather than \"|\".\n"
+// ip route get 192.168.11.115 | grep -Po '(?<=src )(\d{1,3}.){4}'
 void
 usbredir_dialog_start(GtkWindow *parent)
 {
@@ -390,11 +460,6 @@ usbredir_dialog_start(GtkWindow *parent)
     priv.usb_devices_list_view = get_widget_from_builder(builder, "usb_devices_list_view");
 
     priv.tk_address_entry = get_widget_from_builder(builder, "tk_address_entry");
-    gchar *current_tk_address = read_str_from_ini_file("General", "current_tk_address");
-    if (current_tk_address) {
-        gtk_entry_set_text((GtkEntry*)priv.tk_address_entry, current_tk_address);
-        g_free(current_tk_address);
-    }
 
     priv.status_label = get_widget_from_builder(builder, "status_label");
     //gtk_label_set_selectable (GTK_LABEL(priv.status_label), TRUE);
@@ -422,6 +487,10 @@ usbredir_dialog_start(GtkWindow *parent)
 
     // check if usb tcp reset required and reset
     usbredir_dialog_check_if_usb_tcp_reset_required_and_reset(&priv);
+
+    // try to get address on which the server will be created
+    execute_async_task(usbredir_dialog_determine_tk_address, usbredir_dialog_on_determine_tk_address_finished,
+                       NULL, &priv);
 
     // show window
     gtk_window_set_transient_for(GTK_WINDOW(priv.main_window), parent);

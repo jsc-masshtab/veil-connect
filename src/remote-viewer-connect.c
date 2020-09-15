@@ -151,8 +151,8 @@ on_vdi_session_get_vm_from_pool_finished(GObject *source_object G_GNUC_UNUSED,
 
     set_auth_dialog_state(AUTH_GUI_DEFAULT_STATE, ci);
 
-    GError *error = NULL;
-    gpointer  ptr_res =  g_task_propagate_pointer (G_TASK (res), &error); // take ownership
+    // GError *error = NULL;
+    gpointer  ptr_res = g_task_propagate_pointer(G_TASK (res), NULL); // take ownership
     if (ptr_res == NULL) {
         set_message_to_info_label(GTK_LABEL(ci->message_display_label), "Не удалось получить вм из пула");
         return;
