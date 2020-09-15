@@ -174,20 +174,14 @@ void rdp_client_set_rdp_image_size(ExtendedRdpContext *ex_rdp_context,
     ex_rdp_context->whole_image_height = whole_image_height;
 }
 
-//===============================Thread for client routine==================================
-void rdp_client_routine(GTask   *task,
-                 gpointer       source_object G_GNUC_UNUSED,
-                 gpointer       task_data G_GNUC_UNUSED,
-                 GCancellable  *cancellable G_GNUC_UNUSED)
+//===============================Thread client routine==================================
+void* rdp_client_routine(ExtendedRdpContext *ex_contect)
 {
     int status;
-    rdpContext *context = g_task_get_task_data(task);
-
-    ExtendedRdpContext* ex_contect = (ExtendedRdpContext*)context;
-    g_mutex_lock(&ex_contect->rdp_routine_mutex);
+    rdpContext *context = (rdpContext *)ex_contect;
 
     if (!context)
-        goto fail;
+        goto stop;
 
     // rdp params
     GArray *rdp_params_dyn_array = rdp_client_create_params_array(ex_contect);
@@ -215,10 +209,10 @@ void rdp_client_routine(GTask   *task,
     rdp_client_destroy_params_array(rdp_params_dyn_array);
 
     if (status)
-        goto fail;
+        goto stop;
 
     if (freerdp_client_start(context) != 0)
-        goto fail;
+        goto stop;
 
     ex_contect->is_running = TRUE;
 
@@ -228,10 +222,10 @@ void rdp_client_routine(GTask   *task,
     // stopping
     freerdp_client_stop(context);
 
-fail:
+stop:
     g_info("%s: g_mutex_unlock", (const char *)__func__);
-    g_mutex_unlock(&ex_contect->rdp_routine_mutex);
     ex_contect->is_running = FALSE;
+    return NULL;
 }
 
 //void rdp_client_adjust_im_origin_point(ExtendedRdpContext* ex_rdp_context)

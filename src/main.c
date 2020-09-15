@@ -22,7 +22,8 @@
 #include "remote-viewer.h"
 #include "remote-viewer-util.h"
 #include "crashhandler.h"
-#include "vdi_api_session.h"
+#include "vdi_session.h"
+#include "usbredir_controller.h"
 
 void
 setup_logging()
@@ -46,18 +47,18 @@ setup_logging()
 
     // crash handler
     gchar *bt_file_name = g_strconcat(log_dir, "/", data_time_string, "_backtrace.txt", NULL);
-    convert_string_to_locale_from_utf8(&bt_file_name);
+    convert_string_from_utf8_to_locale(&bt_file_name);
     install_crash_handler(bt_file_name);
 
     //error output
     gchar *stderr_file_name = g_strconcat(log_dir, "/", data_time_string, "_stderr.txt", NULL);
-    convert_string_to_locale_from_utf8(&stderr_file_name);
+    convert_string_from_utf8_to_locale(&stderr_file_name);
     FILE *err_file_desc = freopen(stderr_file_name, "w", stderr);
     (void)err_file_desc;
 
     //stdout output
     gchar *stdout_file_name = g_strconcat(log_dir, "/", data_time_string, "_stdout.txt", NULL);
-    convert_string_to_locale_from_utf8(&stdout_file_name);
+    convert_string_from_utf8_to_locale(&stdout_file_name);
     FILE *out_file_desc = freopen(stdout_file_name, "w", stdout);
     (void)out_file_desc; // it would be polite to close file descriptors
 
@@ -81,9 +82,11 @@ main(int argc, char **argv)
 #ifdef __linux__
     XInitThreads();
 #endif
+    // init usb redir
+    usbredir_controller_init();
 
     // start session
-    start_vdi_session();
+    vdi_session_create();
 
     // start app
     GApplication *app = NULL;
@@ -95,9 +98,10 @@ main(int argc, char **argv)
     int ret = g_application_run(app, argc, argv);
 
     // free resources
-    stop_vdi_session();
+    vdi_session_destroy();
     g_object_unref(app);
     free_ini_file_name();
+    usbredir_controller_deinit();
 
     return ret;
 }

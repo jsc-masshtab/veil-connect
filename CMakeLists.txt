@@ -16,11 +16,11 @@ INCLUDE_DIRECTORIES(
         src/utility
         src/vdi_client
         src/rdp_viewer
+        src/usb_redirection
 )
 
 #############################APP FILES#################################
-FILE(GLOB SRC_CODE
-
+list(APPEND SRC_CODE
         config.h
         src/remote-viewer.h
         src/remote-viewer.c
@@ -56,8 +56,6 @@ FILE(GLOB SRC_CODE
         src/virt_viewer/virt-viewer-window.c
         src/virt_viewer/virt-viewer-vm-connection.h
         src/virt_viewer/virt-viewer-vm-connection.c
-        src/virt_viewer/virt-viewer-display-vte.h
-        src/virt_viewer/virt-viewer-display-vte.c
         #HAVE_SPICE_GTK
         src/virt_viewer/virt-viewer-session-spice.h
         src/virt_viewer/virt-viewer-session-spice.c
@@ -96,8 +94,8 @@ FILE(GLOB SRC_CODE
 # vdi client
         src/vdi_client/vdi_manager.h
         src/vdi_client/vdi_manager.c
-        src/vdi_client/vdi_api_session.h
-        src/vdi_client/vdi_api_session.c
+        src/vdi_client/vdi_session.h
+        src/vdi_client/vdi_session.c
         src/vdi_client/vdi_pool_widget.h
         src/vdi_client/vdi_pool_widget.c
         src/vdi_client/vdi_ws_client.h
@@ -105,6 +103,31 @@ FILE(GLOB SRC_CODE
         src/vdi_client/vdi_redis_client.h
         src/vdi_client/vdi_redis_client.c
 )
+
+## usb_redirection
+list(APPEND SRC_CODE
+        src/usb_redirection/usbredirserver.h
+        src/usb_redirection/usbredirserver_data.h
+        src/usb_redirection/usbredirhost.h
+        src/usb_redirection/usbredirhost.c
+        src/usb_redirection/usbredir_controller.h
+        src/usb_redirection/usbredir_controller.c
+        src/usb_redirection/usbredir_dialog.h
+        src/usb_redirection/usbredir_dialog.c
+        src/usb_redirection/usbredir_util.h
+        src/usb_redirection/usbredir_util.c
+)
+if (UNIX)
+list(APPEND SRC_CODE
+        src/usb_redirection/usbredirserver_lin.c
+)
+endif (UNIX)
+if (WIN32)
+list(APPEND SRC_CODE
+        src/usb_redirection/usbredirserver_win.c
+)
+endif (WIN32)
+
 ###############################LIBRARIES###############################
     # GLIB
     find_package(PkgConfig REQUIRED)
@@ -156,6 +179,7 @@ if (WIN32)
         SET(FREERDP_PATH C:/job/FreeRDP-2.2.0/)
         SET(HIREDIS_PATH C:/job/hiredis-mingw/)
     endif(BUILD_x32)
+
     # hiredis port to Windows
     INCLUDE_DIRECTORIES(${HIREDIS_PATH})
     SET(LIBS ${LIBS} ${HIREDIS_PATH}cmake-build-release/libhiredis.a)
@@ -200,6 +224,13 @@ endif (WIN32)
     # json glib
     INCLUDE_DIRECTORIES(${LIBS_INCLUDE_PATH}json-glib-1.0)
     SET(LIBS ${LIBS} json-glib-1.0)
+
+    # libusb
+    INCLUDE_DIRECTORIES(${LIBS_INCLUDE_PATH}libusb-1.0)
+    SET(LIBS ${LIBS} usb-1.0) # libusb-1.0.a
+
+    # usbredirparser
+    SET(LIBS ${LIBS} usbredirparser) # usbredirhost
 
 #############################LINKING###################################
 ADD_EXECUTABLE(veil_connect ${GUI_TYPE} ${SRC_CODE})

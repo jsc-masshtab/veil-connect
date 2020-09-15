@@ -10,11 +10,11 @@
 #include <libsoup/soup-session.h>
 #include <libsoup/soup-message.h>
 
+#include "vdi_redis_client.h"
 #include "vdi_ws_client.h"
 #include "async.h"
-#include "vdi_redis_client.h"
 
-#define HTTP_RESPONSE_TIOMEOUT 10
+#define HTTP_RESPONSE_TIOMEOUT 15
 
 // remote protocol type
 typedef enum{
@@ -63,89 +63,113 @@ typedef struct{
     gchar *jwt;
     gboolean is_ldap;
 
+    // data aboyr current pool and vm
     gchar *current_pool_id;
     VdiVmRemoteProtocol current_remote_protocol;
+    gchar *current_vm_id;
+    gchar *current_vm_verbose_name;
 
     RedisClient redis_client;
 
 } VdiSession;
 
-// Data which passed to api_call
+// Data which passed to vdi_session_api_call
 typedef struct{
-    gchar *current_vm_id;
     gchar *action_on_vm_str;
     gboolean is_action_forced;
 
 } ActionOnVmData;
 
+typedef struct {
+    gchar *host_address;
+    int host_port;
+    int *p_running_flag;// pointer to a stack variable. never try to free it
+} AttachUsbData;
+
+typedef struct {
+    gchar *usb_uuid;
+    gboolean remove_all;
+} DetachUsbData;
+
 // Functions
 const gchar *vdi_session_remote_protocol_to_str(VdiVmRemoteProtocol vm_remote_protocol);
 // init session
-void start_vdi_session(void);
+void vdi_session_create(void);
 // deinit session
-void stop_vdi_session(void);
+void vdi_session_destroy(void);
 // get session
-SoupSession *get_soup_session(void);
+SoupSession *vdi_session_get_soup_session(void);
 // get vid server ip
-const gchar *get_vdi_ip(void);
+const gchar *vdi_session_get_vdi_ip(void);
 // get port
-const gchar *get_vdi_port(void);
+const gchar *vdi_session_get_vdi_port(void);
 // get username
-const gchar *get_vdi_username(void);
+const gchar *vdi_session_get_vdi_username(void);
 // get password
-const gchar *get_vdi_password(void);
+const gchar *vdi_session_get_vdi_password(void);
 // cancell pending requests
-void vdi_api_cancell_pending_requests(void);
+void vdi_session_cancell_pending_requests(void);
 // set vdi session credentials
-void set_vdi_credentials(const gchar *username, const gchar *password, const gchar *ip,
+void vdi_session_set_credentials(const gchar *username, const gchar *password, const gchar *ip,
                          const gchar *port, gboolean is_ldap);
 // set current vm id
-void set_current_pool_id(const gchar *current_pool_id);
+void vdi_session_set_current_pool_id(const gchar *current_pool_id);
 // get current vm id
-const gchar *get_current_pool_id(void);
+const gchar *vdi_session_get_current_pool_id(void);
 
 // set current remote protocol
-void set_current_remote_protocol(VdiVmRemoteProtocol remote_protocol);
+void vdi_session_set_current_remote_protocol(VdiVmRemoteProtocol remote_protocol);
 // get current remote protocol
-VdiVmRemoteProtocol get_current_remote_protocol(void);
+VdiVmRemoteProtocol vdi_session_get_current_remote_protocol(void);
 
+// get current vm name
+const gchar *vdi_session_get_current_vm_name(void);
 
 //void gInputStreamToBuffer(GInputStream *inputStream, gchar *responseBuffer);
 // Do api call. Return response body
-gchar *api_call(const char *method, const char *uri_string, const gchar *body_str);
+gchar *vdi_session_api_call(const char *method, const char *uri_string, const gchar *body_str, int *resp_code);
 
-/// Таски выполняемые в потоке
+/// Functions for GTasks
 // Fetch token
-void vdi_api_session_log_in(GTask         *task,
+void vdi_session_log_in(GTask         *task,
                    gpointer       source_object,
                    gpointer       task_data,
                    GCancellable  *cancellable);
 
 // Запрашиваем список пулов
-void get_vdi_pool_data(GTask         *task,
+void vdi_session_get_vdi_pool_data(GTask         *task,
                        gpointer       source_object,
                        gpointer       task_data,
                        GCancellable  *cancellable);
 
 // Получаем виртуалку из пула
-void get_vm_from_pool(GTask         *task,
+void vdi_session_get_vm_from_pool(GTask         *task,
                       gpointer       source_object,
                       gpointer       task_data,
                       GCancellable  *cancellable);
 
 // Do action on virtual machine
-void do_action_on_vm(GTask         *task,
+void vdi_session_do_action_on_vm(GTask         *task,
                      gpointer       source_object,
                      gpointer       task_data,
                      GCancellable  *cancellable);
 
 // Log out sync
-gboolean vdi_api_session_logout(void);
+gboolean vdi_session_logout(void);
+
+// Attach USB
+gchar *vdi_session_attach_usb(AttachUsbData *attach_usb_data);
+
+// Detach USB
+gboolean vdi_session_detach_usb(DetachUsbData *detach_usb_data);
+
 // Do action on vm async
-void vdi_api_session_do_action_on_vm(const gchar *actionStr, gboolean isForced);
+void vdi_api_session_execute_task_do_action_on_vm(const gchar *actionStr, gboolean isForced);
 
 
-void free_action_on_vm_data(ActionOnVmData *action_on_vm_data);
-void free_vdi_vm_data(VdiVmData *vdi_vm_data);
+void vdi_api_session_free_action_on_vm_data(ActionOnVmData *action_on_vm_data);
+void vdi_api_session_free_vdi_vm_data(VdiVmData *vdi_vm_data);
+void vdi_api_session_free_attach_usb_data(AttachUsbData *attach_usb_data);
+void vdi_api_session_free_detach_usb_data(DetachUsbData *detach_usb_data);
 
 #endif //VIRT_VIEWER_VEIL_VDI_API_SESSION_H

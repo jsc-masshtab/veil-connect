@@ -344,7 +344,7 @@ retry_auth:
 retry_connnect_to_vm:
     /// instant connect attempt
     if (opt_manual_mode) {
-        if (get_current_remote_protocol() == VDI_RDP_PROTOCOL) {
+        if (vdi_session_get_current_remote_protocol() == VDI_RDP_PROTOCOL) {
 //            g_info("%s TEST user %s\n", (const char *)__func__, user);
 //            g_info("%s TEST password %s\n", (const char *)__func__, password);
 //            g_info("%s TEST ip %s\n", (const char *)__func__, ip);
@@ -420,17 +420,18 @@ retry_connnect_to_vm:
         virt_viewer_app_set_window_name(app, vm_verbose_name);
 
         // connect to vm depending on remote protocol
-        if (get_current_remote_protocol() == VDI_RDP_PROTOCOL) {
-            GtkResponseType rdp_viewer_res = rdp_viewer_start(get_vdi_username(), get_vdi_password(), domain, ip, 0);
-            //g_info("user: %s   pass: %s", get_vdi_username(), get_vdi_password());
+        if (vdi_session_get_current_remote_protocol() == VDI_RDP_PROTOCOL) {
+            GtkResponseType rdp_viewer_res = rdp_viewer_start(vdi_session_get_vdi_username(),
+                    vdi_session_get_vdi_password(), domain, ip, 0);
+            //g_info("user: %s   pass: %s", vdi_session_get_vdi_username(), vdi_session_get_vdi_password());
             // quit if required
             if (rdp_viewer_res == GTK_RESPONSE_CLOSE) {
                 remote_viewer_free_auth_data(&user, &password, &domain, &ip, &port, &vm_verbose_name);
                 return FALSE;
             }
 #ifdef _WIN32
-        }else if (get_current_remote_protocol() == VDI_RDP_WINDOWS_NATIVE_PROTOCOL) {
-                launch_windows_rdp_client(get_vdi_username(), get_vdi_password(), ip, 0);
+        }else if (vdi_session_get_current_remote_protocol() == VDI_RDP_WINDOWS_NATIVE_PROTOCOL) {
+                launch_windows_rdp_client(vdi_session_get_vdi_username(), vdi_session_get_vdi_password(), ip, 0);
 #endif
         } else { // spice by default
             g_info("%s port %s\n", (const char *)__func__, port);
