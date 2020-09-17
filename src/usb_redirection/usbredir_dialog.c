@@ -361,6 +361,15 @@ usbredir_dialog_on_usb_tcp_reset_finished(GObject *source_object G_GNUC_UNUSED,
     }
 }
 
+static void take_tk_address_from_ini(GtkEntry* tk_address_entry)
+{
+    gchar *current_tk_address = read_str_from_ini_file("General", "current_tk_address");
+    if (current_tk_address) {
+        gtk_entry_set_text(tk_address_entry, current_tk_address);
+        g_free(current_tk_address);
+    }
+}
+
 //Return address In case of success. Must be freed if its not NULL
 static void usbredir_dialog_determine_tk_address(GTask    *task,
                                                  gpointer       source_object G_GNUC_UNUSED,
@@ -488,11 +497,7 @@ usbredir_dialog_on_determine_tk_address_finished(GObject *source_object G_GNUC_U
 
         free_memory_safely(&tk_address);
     } else { // get from ini if we didnt determine it
-        gchar *current_tk_address = read_str_from_ini_file("General", "current_tk_address");
-        if (current_tk_address) {
-            gtk_entry_set_text(GTK_ENTRY(priv->tk_address_entry), current_tk_address);
-            g_free(current_tk_address);
-        }
+        take_tk_address_from_ini(GTK_ENTRY(priv->tk_address_entry));
     }
 }
 
@@ -514,7 +519,10 @@ usbredir_dialog_check_if_reset_required_and_reset(UsbredirMainDialogData *priv)
         // try to get address on which the server will be created
         execute_async_task(usbredir_dialog_determine_tk_address, usbredir_dialog_on_determine_tk_address_finished,
                            NULL, priv);
+    } else {
+        take_tk_address_from_ini(GTK_ENTRY(priv->tk_address_entry));
     }
+
     usbredir_controller_reset_tcp_usb_devices_on_next_gui_opening(FALSE);
 }
 
