@@ -144,3 +144,9 @@
 
 /* Enable GNU extensions */
 #define _GNU_SOURCE /**/
+
+/*Vdi Server default port*/
+#define VDI_SERVER_DEFAULT_PORT 8888
+
+/*Endpoint lka thin client in nginx*/
+#define NGINX_VDI_API_PREFIX "api"

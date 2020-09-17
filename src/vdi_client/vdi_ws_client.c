@@ -8,6 +8,7 @@
 
 #include "remote-viewer-util.h"
 
+#include "config.h"
 #include "async.h"
 #include "vdi_ws_client.h"
 
@@ -124,8 +125,8 @@ void start_vdi_ws_polling(VdiWsClient *vdi_ws_client, const gchar *vdi_ip, const
     vdi_ws_client->ws_data_received_callback = ws_data_received_callback;
     vdi_ws_client->test_int = 666;// temp trash test
     const gchar *http_protocol = determine_http_protocol_by_port(vdi_port);
-    vdi_ws_client->vdi_url = g_strdup_printf("%s://%s:%s/api/ws/client/vdi_server_check",
-            http_protocol, vdi_ip, vdi_port);
+    vdi_ws_client->vdi_url = g_strdup_printf("%s://%s:%s/%s/ws/client/vdi_server_check",
+            http_protocol, vdi_ip, vdi_port, NGINX_VDI_API_PREFIX);
     vdi_ws_client->is_running = TRUE;
     vdi_ws_client->cancel_job = g_cancellable_new();
 

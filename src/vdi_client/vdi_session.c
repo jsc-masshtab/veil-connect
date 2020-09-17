@@ -8,6 +8,7 @@
 #include "remote-viewer-util.h"
 #include <json-glib/json-glib.h>
 
+#include "config.h"
 #include "vdi_session.h"
 #include "jsonhandler.h"
 
@@ -245,7 +246,8 @@ void vdi_session_set_credentials(const gchar *username, const gchar *password, c
     vdiSession.vdi_port = g_strdup(port);
 
     const gchar *http_protocol = determine_http_protocol_by_port(port);
-    vdiSession.api_url = g_strdup_printf("%s://%s:%s/api", http_protocol, vdiSession.vdi_ip, vdiSession.vdi_port); // api
+    vdiSession.api_url = g_strdup_printf("%s://%s:%s/%s", http_protocol,
+            vdiSession.vdi_ip, vdiSession.vdi_port, NGINX_VDI_API_PREFIX); // api
     vdiSession.auth_url = g_strdup_printf("%s/auth/", vdiSession.api_url);
 
     vdiSession.is_ldap = is_ldap;
