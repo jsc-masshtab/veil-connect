@@ -11,6 +11,7 @@
 #include "config.h"
 #include "vdi_session.h"
 #include "jsonhandler.h"
+#include "settingsfile.h"
 
 //#define RESPONSE_BUFFER_SIZE 200
 #define OK_RESPONSE 200
@@ -246,8 +247,15 @@ void vdi_session_set_credentials(const gchar *username, const gchar *password, c
     vdiSession.vdi_port = g_strdup(port);
 
     const gchar *http_protocol = determine_http_protocol_by_port(port);
-    vdiSession.api_url = g_strdup_printf("%s://%s:%s/%s", http_protocol,
-            vdiSession.vdi_ip, vdiSession.vdi_port, NGINX_VDI_API_PREFIX); // api
+
+    gboolean is_nginx_vdi_prefix_disabled = read_int_from_ini_file("General", "is_nginx_vdi_prefix_disabled", 0);
+    if (is_nginx_vdi_prefix_disabled)
+        vdiSession.api_url = g_strdup_printf("%s://%s:%s", http_protocol, vdiSession.vdi_ip, vdiSession.vdi_port);
+    else
+        vdiSession.api_url = g_strdup_printf("%s://%s:%s/%s", http_protocol,
+            vdiSession.vdi_ip, vdiSession.vdi_port, NGINX_VDI_API_PREFIX);
+
+
     vdiSession.auth_url = g_strdup_printf("%s/auth/", vdiSession.api_url);
 
     vdiSession.is_ldap = is_ldap;
