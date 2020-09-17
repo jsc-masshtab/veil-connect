@@ -169,35 +169,6 @@ static void rdp_viewer_event_on_mapped(GtkWidget *widget G_GNUC_UNUSED, GdkEvent
     rdp_viewer_window_toggle_fullscreen(rdp_window_data, TRUE);
 }
 
-////static GTimer *timer = NULL;
-//static gboolean gtk_update(GtkWidget *widget, GdkFrameClock *frame_clock, gpointer user_data)
-//{
-////    static int counter = 0;
-
-////    if (!timer) {
-////        timer = g_timer_new();
-////        g_timer_start(timer);
-////    }
-
-////    gdouble time_elapsed = g_timer_elapsed(timer, NULL);
-////    g_info("%s time_elapsed: %f \n", (const char *)__func__, time_elapsed);
-
-
-////    if (!is_running)
-////        return TRUE;
-
-//    //g_info("%s BEG \n", (const char *)__func__);
-
-//    //rdpContext* context = user_data;
-//    //ExtendedRdpContext* tf = (ExtendedRdpContext*)context;
-
-//    //int hor_squeez = 0;
-//    //gtk_widget_queue_draw_area(widget, hor_squeez, 0, 1024 - hor_squeez *2, 768);
-//    gtk_widget_queue_draw(widget);
-
-//    return TRUE;
-//}
-
 static gboolean gtk_update(gpointer user_data)
 {
     RdpWindowData *rdp_window_data = (RdpWindowData *)user_data;

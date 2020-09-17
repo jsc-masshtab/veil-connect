@@ -74,9 +74,10 @@ static GArray * rdp_client_create_params_array(ExtendedRdpContext* tf)
     add_rdp_param(rdp_params_dyn_array, g_strdup("/sound:rate:44100,channel:2"));
     add_rdp_param(rdp_params_dyn_array, g_strdup("/smartcard"));
     add_rdp_param(rdp_params_dyn_array, g_strdup("+fonts"));
+    add_rdp_param(rdp_params_dyn_array, g_strdup("/app:notepad"));
 
 #ifdef __linux__
-    add_rdp_param(rdp_params_dyn_array,g_strdup("/usb:auto"));
+    //add_rdp_param(rdp_params_dyn_array,g_strdup("/usb:auto"));
 #elif _WIN32
     add_rdp_param(rdp_params_dyn_array, g_strdup("/relax-order-checks"));
     add_rdp_param(rdp_params_dyn_array, g_strdup("+glyph-cache"));
@@ -384,7 +385,6 @@ static BOOL rdp_pre_connect(freerdp* instance)
     // its required for key event sending
     freerdp_keyboard_init(instance->context->settings->KeyboardLayout);
 
-    /* TODO: Any code your client requires */
     return TRUE;
 }
 
@@ -421,6 +421,15 @@ static BOOL rdp_post_connect(freerdp* instance)
 
     if (!rdp_register_pointer(instance->context->graphics))
         return FALSE;
+    /*
+    if (!instance->settings->SoftwareGdi)
+    {
+        brush_cache_register_callbacks(instance->update);
+        glyph_cache_register_callbacks(instance->update);
+        bitmap_cache_register_callbacks(instance->update);
+        offscreen_cache_register_callbacks(instance->update);
+        palette_cache_register_callbacks(instance->update);
+    }*/
 
     instance->update->BeginPaint = rdp_begin_paint;
     instance->update->EndPaint = rdp_end_paint;
@@ -439,9 +448,6 @@ static BOOL rdp_post_connect(freerdp* instance)
     int stride = cairo_format_stride_for_width(cairo_format, gdi->width);
     tf->surface = cairo_image_surface_create_for_data((unsigned char*)gdi->primary_buffer,
                                                       cairo_format, gdi->width, gdi->height, stride);
-
-    // calculate point in which the image is displayed
-    //rdp_client_adjust_im_origin_point(tf);
 
     g_mutex_unlock(&tf->primary_buffer_mutex);
 

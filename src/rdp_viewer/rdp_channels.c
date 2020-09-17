@@ -33,6 +33,7 @@
 
 #include "rdp_channels.h"
 #include "rdp_client.h"
+#include "rdp_rail.h"
 
 #include "remote-viewer-util.h"
 
@@ -72,6 +73,7 @@ static void rdp_encomsp_uninit(ExtendedRdpContext* tf, EncomspClientContext* enc
 void rdp_OnChannelConnectedEventHandler(void* context, ChannelConnectedEventArgs* e)
 {
     ExtendedRdpContext* tf = (ExtendedRdpContext*)context;
+    g_info("%s Channel %s", (const char*)__func__, e->name);
 
 	if (strcmp(e->name, RDPEI_DVC_CHANNEL_NAME) == 0)
 	{
@@ -86,6 +88,8 @@ void rdp_OnChannelConnectedEventHandler(void* context, ChannelConnectedEventArgs
 	}
 	else if (strcmp(e->name, RAIL_SVC_CHANNEL_NAME) == 0)
 	{
+        //e->pInterface;
+        rdp_rail_init(tf, (RailClientContext*)e->pInterface);
 	}
 	else if (strcmp(e->name, CLIPRDR_SVC_CHANNEL_NAME) == 0)
 	{
