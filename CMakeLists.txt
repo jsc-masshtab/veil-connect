@@ -201,11 +201,11 @@ if (WIN32)
             -lwsock32
             -lws2_32
             -liphlpapi
+            -lssp
     )
 
     SET(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)
     SET(GUI_TYPE WIN32) # switch off console
-
 endif (WIN32)
 
     # libxml
