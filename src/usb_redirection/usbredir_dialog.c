@@ -4,6 +4,7 @@
 
 #ifdef _WIN32
 #include <winsock2.h>
+#include <iphlpapi.h>
 #endif
 #include <libusb.h>
 #include <usbredirparser.h>
@@ -156,6 +157,8 @@ usbredir_dialog_on_usb_device_toggled(GtkCellRendererToggle *cell_renderer G_GNU
 static void
 usbredir_dialog_usb_task_finished_callback(UsbRedirTaskResaultData *res_data, gpointer user_data)
 {
+    if (!usbredir_controller_is_usb_tcp_window_shown())
+        return;
     g_info("%s", (const char*)__func__);
 
     UsbredirMainDialogData *priv = (UsbredirMainDialogData *)user_data;
@@ -358,54 +361,11 @@ usbredir_dialog_on_usb_tcp_reset_finished(GObject *source_object G_GNUC_UNUSED,
     }
 }
 
-static void
-usbredir_dialog_check_if_usb_tcp_reset_required_and_reset(UsbredirMainDialogData *priv)
-{
-    if (usbredir_controller_is_tcp_usb_devices_reset_required()) {
-        // set GUI
-        gtk_widget_set_sensitive((GtkWidget*)priv->usb_devices_list_view, FALSE);
-        gtk_spinner_start(GTK_SPINNER(priv->status_spinner));
-        gtk_label_set_text(GTK_LABEL(priv->status_label), "Сбрасываем USB TCP устройства на ВМ");
-
-        // send request to vdi (veil)
-        DetachUsbData *detach_usb_data = calloc(1, sizeof(DetachUsbData));
-        detach_usb_data->remove_all = TRUE;
-        execute_async_task(usbredir_dialog_dettach_usb, usbredir_dialog_on_usb_tcp_reset_finished,
-                detach_usb_data, priv);
-    }
-    usbredir_controller_reset_tcp_usb_devices_on_next_gui_opening(FALSE);
-}
-
-static void
-usbredir_dialog_on_determine_tk_address_finished(GObject *source_object G_GNUC_UNUSED,
-                                          GAsyncResult *res,
-                                          gpointer user_data)
-{
-    g_info("%s", (const char*)__func__);
-
-    UsbredirMainDialogData *priv = (UsbredirMainDialogData *)user_data;
-
-    gpointer ptr_res = g_task_propagate_pointer(G_TASK (res), NULL);
-    if (ptr_res) {
-        gchar *tk_address = (gchar *)ptr_res;
-        g_info("%s : %s", (const char*)__func__, tk_address);
-        gtk_entry_set_text((GtkEntry*)priv->tk_address_entry, tk_address);
-
-        free_memory_safely(&tk_address);
-    } else { // get from ini if we didnt determine it
-        gchar *current_tk_address = read_str_from_ini_file("General", "current_tk_address");
-        if (current_tk_address) {
-            gtk_entry_set_text((GtkEntry*)priv->tk_address_entry, current_tk_address);
-            g_free(current_tk_address);
-        }
-    }
-}
-
 //Return address In case of success. Must be freed if its not NULL
 static void usbredir_dialog_determine_tk_address(GTask    *task,
-                                                   gpointer       source_object G_GNUC_UNUSED,
-                                                   gpointer       task_data G_GNUC_UNUSED,
-                                                   GCancellable  *cancellable G_GNUC_UNUSED)
+                                                 gpointer       source_object G_GNUC_UNUSED,
+                                                 gpointer       task_data G_GNUC_UNUSED,
+                                                 GCancellable  *cancellable G_GNUC_UNUSED)
 {
     if ( !vdi_session_get_current_controller_address() ) {
         g_task_return_pointer(task, NULL, NULL);
@@ -425,7 +385,6 @@ static void usbredir_dialog_determine_tk_address(GTask    *task,
                               &standard_error,
                               &exit_status,
                               NULL);
-    g_free(command_line);
 
     if (cmd_res) {
         GRegex *regex = g_regex_new("(?<=src )(\\d{1,3}.){4}", 0, 0, NULL);
@@ -443,14 +402,122 @@ static void usbredir_dialog_determine_tk_address(GTask    *task,
         g_regex_unref(regex);
     }
 
+#elif _WIN32
+    // Get gateway from tracert     get_ip.bat %s
+    GError *error = NULL;
+    gchar *command_line = g_strdup_printf("tracert -h 1 %s",
+                                          vdi_session_get_current_controller_address());
+    g_info("command_line: %s", command_line);
+
+    gboolean cmd_res = g_spawn_command_line_sync(command_line,
+                                                 &standard_output,
+                                                 &standard_error,
+                                                 &exit_status,
+                                                 &error);
+    if (error)
+        g_info("error->message: %s", error->message);
+    g_clear_error(&error);
+
+    if (!cmd_res || !standard_output)
+        goto clean_mark;
+    g_strstrip(standard_output);
+
+    // 1
+    IP_ADAPTER_INFO  *pAdapterInfo;
+    ULONG            ulOutBufLen;
+    DWORD            dwRetVal;
+
+    // 2
+    pAdapterInfo = (IP_ADAPTER_INFO *) malloc( sizeof(IP_ADAPTER_INFO) );
+    ulOutBufLen = sizeof(IP_ADAPTER_INFO);
+
+    // 3
+    if (GetAdaptersInfo(pAdapterInfo, &ulOutBufLen) != ERROR_SUCCESS) {
+        free (pAdapterInfo);
+        pAdapterInfo = (IP_ADAPTER_INFO *) malloc( ulOutBufLen );
+    }
+
+    // 4
+    if ((dwRetVal = GetAdaptersInfo( pAdapterInfo, &ulOutBufLen)) != ERROR_SUCCESS) {
+        g_info("GetAdaptersInfo call failed with %d", dwRetVal);
+    }
+
+    // 5
+    PIP_ADAPTER_INFO pAdapter = pAdapterInfo;
+    while (pAdapter) {
+        g_info("IP Address: %s", pAdapter->IpAddressList.IpAddress.String);
+        g_info("Gateway: %s   %s", pAdapter->GatewayList.IpAddress.String, standard_output);
+        // != NULL means standard_output contains  pAdapter->GatewayList.IpAddress.String
+        if (strstr(standard_output, pAdapter->GatewayList.IpAddress.String) != NULL) {
+            address = g_strdup(pAdapter->IpAddressList.IpAddress.String);
+            break;
+        }
+
+        pAdapter = pAdapter->Next;
+    }
+
+    // 6
+    if (pAdapterInfo)
+        free(pAdapterInfo);
+#endif
+
+    clean_mark:
+    g_free(command_line);
     free_memory_safely(&standard_output);
     free_memory_safely(&standard_error);
 
-#elif _WIN32
-#endif
     g_task_return_pointer(task, address, NULL); // adress will be freed in callback
-}//"Error: inet prefix is expected rather than \"|\".\n"
-// ip route get 192.168.11.115 | grep -Po '(?<=src )(\d{1,3}.){4}'
+}
+
+static void
+usbredir_dialog_on_determine_tk_address_finished(GObject *source_object G_GNUC_UNUSED,
+                                                 GAsyncResult *res,
+                                                 gpointer user_data)
+{
+    if (!usbredir_controller_is_usb_tcp_window_shown())
+        return;
+    g_info("%s", (const char*)__func__);
+
+    UsbredirMainDialogData *priv = (UsbredirMainDialogData *)user_data;
+
+    gpointer ptr_res = g_task_propagate_pointer(G_TASK (res), NULL);
+    if (ptr_res) {
+        gchar *tk_address = (gchar *)ptr_res;
+        g_info("%s : %s", (const char*)__func__, tk_address);
+        gtk_entry_set_text((GtkEntry*)priv->tk_address_entry, tk_address);
+
+        free_memory_safely(&tk_address);
+    } else { // get from ini if we didnt determine it
+        gchar *current_tk_address = read_str_from_ini_file("General", "current_tk_address");
+        if (current_tk_address) {
+            gtk_entry_set_text(GTK_ENTRY(priv->tk_address_entry), current_tk_address);
+            g_free(current_tk_address);
+        }
+    }
+}
+
+static void
+usbredir_dialog_check_if_reset_required_and_reset(UsbredirMainDialogData *priv)
+{
+    if (usbredir_controller_is_tcp_usb_devices_reset_required()) {
+        // set GUI
+        gtk_widget_set_sensitive((GtkWidget*)priv->usb_devices_list_view, FALSE);
+        gtk_spinner_start(GTK_SPINNER(priv->status_spinner));
+        gtk_label_set_text(GTK_LABEL(priv->status_label), "Сбрасываем USB TCP устройства на ВМ");
+
+        // send request to vdi (veil)
+        DetachUsbData *detach_usb_data = calloc(1, sizeof(DetachUsbData));
+        detach_usb_data->remove_all = TRUE;
+        execute_async_task(usbredir_dialog_dettach_usb, usbredir_dialog_on_usb_tcp_reset_finished,
+                detach_usb_data, priv);
+
+        // try to get address on which the server will be created
+        execute_async_task(usbredir_dialog_determine_tk_address, usbredir_dialog_on_determine_tk_address_finished,
+                           NULL, priv);
+    }
+    usbredir_controller_reset_tcp_usb_devices_on_next_gui_opening(FALSE);
+}
+
 void
 usbredir_dialog_start(GtkWindow *parent)
 {
@@ -463,6 +530,7 @@ usbredir_dialog_start(GtkWindow *parent)
     priv.usb_devices_list_view = get_widget_from_builder(builder, "usb_devices_list_view");
 
     priv.tk_address_entry = get_widget_from_builder(builder, "tk_address_entry");
+    gtk_entry_set_text(GTK_ENTRY(priv.tk_address_entry), "");
 
     priv.status_label = get_widget_from_builder(builder, "status_label");
     //gtk_label_set_selectable (GTK_LABEL(priv.status_label), TRUE);
@@ -489,11 +557,7 @@ usbredir_dialog_start(GtkWindow *parent)
     gtk_tree_view_set_model(GTK_TREE_VIEW(priv.usb_devices_list_view), GTK_TREE_MODEL(priv.usb_list_store));
 
     // check if usb tcp reset required and reset
-    usbredir_dialog_check_if_usb_tcp_reset_required_and_reset(&priv);
-
-    // try to get address on which the server will be created
-    execute_async_task(usbredir_dialog_determine_tk_address, usbredir_dialog_on_determine_tk_address_finished,
-                       NULL, &priv);
+    usbredir_dialog_check_if_reset_required_and_reset(&priv);
 
     // show window
     gtk_window_set_transient_for(GTK_WINDOW(priv.main_window), parent);

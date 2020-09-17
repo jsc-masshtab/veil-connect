@@ -416,9 +416,6 @@ remote_viewer_connect_dialog(gchar **user, gchar **password, gchar **domain,
     // connect to the prev pool if requred
     fast_forward_connect_to_prev_pool_if_enabled(&ci);
 
-    /// temp  redis try
-
-
     create_loop_and_launch(&ci.loop);
 
     // save data to ini file if required

@@ -200,6 +200,7 @@ if (WIN32)
             -pthread
             -lwsock32
             -lws2_32
+            -liphlpapi
     )
 
     SET(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)
