@@ -51,14 +51,14 @@ rdp_encomsp_participant_created(EncomspClientContext* context,
 	return CHANNEL_RC_OK;
 }
 
-static void rdp_encomsp_init(ExtendedRdpContext* tf, EncomspClientContext* encomsp)
+static void rdp_encomsp_init(ExtendedRdpContext* ex_context, EncomspClientContext* encomsp)
 {
-	tf->encomsp = encomsp;
-	encomsp->custom = (void*)tf;
+	ex_context->encomsp = encomsp;
+	encomsp->custom = (void*)ex_context;
     encomsp->ParticipantCreated = (pcEncomspParticipantCreated)rdp_encomsp_participant_created;
 }
 
-static void rdp_encomsp_uninit(ExtendedRdpContext* tf, EncomspClientContext* encomsp)
+static void rdp_encomsp_uninit(ExtendedRdpContext* ex_context, EncomspClientContext* encomsp)
 {
 	if (encomsp)
 	{
@@ -66,63 +66,64 @@ static void rdp_encomsp_uninit(ExtendedRdpContext* tf, EncomspClientContext* enc
 		encomsp->ParticipantCreated = NULL;
 	}
 
-	if (tf)
-		tf->encomsp = NULL;
+	if (ex_context)
+		ex_context->encomsp = NULL;
 }
 
 void rdp_OnChannelConnectedEventHandler(void* context, ChannelConnectedEventArgs* e)
 {
-    ExtendedRdpContext* tf = (ExtendedRdpContext*)context;
+    ExtendedRdpContext* ex_context = (ExtendedRdpContext*)context;
     g_info("%s Channel %s", (const char*)__func__, e->name);
 
 	if (strcmp(e->name, RDPEI_DVC_CHANNEL_NAME) == 0)
 	{
-		tf->rdpei = (RdpeiClientContext*)e->pInterface;
+		ex_context->rdpei = (RdpeiClientContext*)e->pInterface;
 	}
 	else if (strcmp(e->name, TSMF_DVC_CHANNEL_NAME) == 0)
 	{
 	}
 	else if (strcmp(e->name, RDPGFX_DVC_CHANNEL_NAME) == 0)
 	{
-		gdi_graphics_pipeline_init(tf->context.gdi, (RdpgfxClientContext*)e->pInterface);
+		gdi_graphics_pipeline_init(ex_context->context.gdi, (RdpgfxClientContext*)e->pInterface);
 	}
 	else if (strcmp(e->name, RAIL_SVC_CHANNEL_NAME) == 0)
 	{
         //e->pInterface;
-        rdp_rail_init(tf, (RailClientContext*)e->pInterface);
+        rdp_rail_init(ex_context, (RailClientContext*)e->pInterface);
 	}
 	else if (strcmp(e->name, CLIPRDR_SVC_CHANNEL_NAME) == 0)
 	{
 	}
 	else if (strcmp(e->name, ENCOMSP_SVC_CHANNEL_NAME) == 0)
 	{
-        rdp_encomsp_init(tf, (EncomspClientContext*)e->pInterface);
+        rdp_encomsp_init(ex_context, (EncomspClientContext*)e->pInterface);
 	}
 }
 
 void rdp_OnChannelDisconnectedEventHandler(void* context, ChannelDisconnectedEventArgs* e)
 {
-    ExtendedRdpContext* tf = (ExtendedRdpContext*)context;
+    ExtendedRdpContext* ex_context = (ExtendedRdpContext*)context;
 
 	if (strcmp(e->name, RDPEI_DVC_CHANNEL_NAME) == 0)
 	{
-		tf->rdpei = NULL;
+		ex_context->rdpei = NULL;
 	}
 	else if (strcmp(e->name, TSMF_DVC_CHANNEL_NAME) == 0)
 	{
 	}
 	else if (strcmp(e->name, RDPGFX_DVC_CHANNEL_NAME) == 0)
 	{
-		gdi_graphics_pipeline_uninit(tf->context.gdi, (RdpgfxClientContext*)e->pInterface);
+		gdi_graphics_pipeline_uninit(ex_context->context.gdi, (RdpgfxClientContext*)e->pInterface);
 	}
 	else if (strcmp(e->name, RAIL_SVC_CHANNEL_NAME) == 0)
 	{
+        rdp_rail_uninit(ex_context, (RailClientContext*)e->pInterface);
 	}
 	else if (strcmp(e->name, CLIPRDR_SVC_CHANNEL_NAME) == 0)
 	{
 	}
 	else if (strcmp(e->name, ENCOMSP_SVC_CHANNEL_NAME) == 0)
 	{
-        rdp_encomsp_uninit(tf, (EncomspClientContext*)e->pInterface);
+        rdp_encomsp_uninit(ex_context, (EncomspClientContext*)e->pInterface);
 	}
 }

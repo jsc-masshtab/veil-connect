@@ -72,7 +72,8 @@ typedef struct {
 
     // rail
     RailClientContext* rail;
-    int app_windows_amount;
+    //int app_windows_amount;
+    GArray *app_windows_array;
 
 } ExtendedRdpContext;
 

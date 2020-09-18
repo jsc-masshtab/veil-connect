@@ -151,17 +151,27 @@ static UINT rdp_rail_server_get_appid_response(RailClientContext* context G_GNUC
 static BOOL rdp_rail_window_create(rdpContext* context G_GNUC_UNUSED,
         const WINDOW_ORDER_INFO* orderInfo G_GNUC_UNUSED,
         const WINDOW_STATE_ORDER* windowState G_GNUC_UNUSED)
-{
-    //g_info("%s windowState->numWindowRects: %i numVisibilityRects: %i",
-    //        (const char *)__func__, windowState->numWindowRects, windowState->numVisibilityRects);
-
+{// 0x1101DF1E
     ExtendedRdpContext* ex_context = (ExtendedRdpContext*)context;
 
     //if (ex_context->app_windows_amount > 2)
     //    return FALSE;
+    UINT32 fieldFlags = orderInfo->fieldFlags;
 
-    ex_context->app_windows_amount++;
-    g_info("%s win_amount %i", (const char *)__func__, ex_context->app_windows_amount);
+    g_info("orderInfo->windowId: %i    fieldFlags: %i", orderInfo->windowId, fieldFlags);
+
+    // Count open windows
+    // fieldFlags & WINDOW_ORDER_STATE_NEW) && (fieldFlags & WINDOW_ORDER_TYPE_WINDOW
+    // 285335326  0x1101DF1E
+    if (fieldFlags == 0x1101DF1E) {
+
+        g_array_append_val(ex_context->app_windows_array, orderInfo->windowId);
+        g_info("%s win_amount %i", (const char *) __func__, ex_context->app_windows_array->len);
+
+        g_info("windowState->numWindowRects: %i numVisibilityRects: %i showState: %i",
+               windowState->numWindowRects, windowState->numVisibilityRects,
+               windowState->showState);
+    }
     return TRUE;
 }
 
@@ -173,14 +183,24 @@ static BOOL rdp_rail_window_update(rdpContext* context G_GNUC_UNUSED,
     return TRUE;
 }
 
-static BOOL rdp_rail_window_delete(rdpContext* context, const WINDOW_ORDER_INFO* orderInfo G_GNUC_UNUSED)
+static BOOL rdp_rail_window_delete(rdpContext* context, const WINDOW_ORDER_INFO* orderInfo)
 {
     ExtendedRdpContext* ex_context = (ExtendedRdpContext*)context;
+    // orderInfo->fieldFlags & WINDOW_ORDER_TYPE_WINDOW
+    /*if (orderInfo->fieldFlags == 553648128) {
+        ex_context->app_windows_amount--;
+        g_info("%s win_amount %i orderInfo->windowId: %i    fieldFlags: %i", (const char *) __func__,
+               ex_context->app_windows_amount, orderInfo->windowId, orderInfo->fieldFlags);
+    }*/
+    for(guint i = 0; i < ex_context->app_windows_array->len; ++i) {
+        UINT32 window_id = g_array_index(ex_context->app_windows_array, UINT32, i);
+        if (orderInfo->windowId == window_id) {
+            g_array_remove_index_fast(ex_context->app_windows_array, i);
+            break;
+        }
+    }
 
-    ex_context->app_windows_amount--;
-    g_info("%s win_amount %i", (const char *)__func__, ex_context->app_windows_amount);
-
-    if (ex_context->app_windows_amount <= 1)
+    if (ex_context->app_windows_array->len == 0)
         freerdp_abort_connect(context->instance);
     return TRUE;
 }
@@ -236,14 +256,23 @@ int rdp_rail_init(ExtendedRdpContext* ex_rdp_context, RailClientContext* rail)
     rail->ServerLanguageBarInfo = rdp_rail_server_language_bar_info;
     rail->ServerGetAppIdResponse = rdp_rail_server_get_appid_response;
 
+    ex_rdp_context->app_windows_array = g_array_new(FALSE, FALSE, sizeof(UINT32));
+
     return 1;
 }
 
 int rdp_rail_uninit(ExtendedRdpContext* ex_rdp_context, RailClientContext* rail)
 {
-    if(ex_rdp_context->rail) {
+    g_info("%s", (const char *)__func__);
+
+    if (ex_rdp_context->rail) {
         ex_rdp_context->rail->custom = NULL;
         ex_rdp_context->rail = NULL;
+    }
+
+    if (ex_rdp_context->app_windows_array) {
+        g_array_free (ex_rdp_context->app_windows_array, TRUE);
+        ex_rdp_context->app_windows_array = NULL;
     }
 
     return 1;

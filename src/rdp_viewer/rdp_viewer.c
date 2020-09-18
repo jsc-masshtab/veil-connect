@@ -98,6 +98,7 @@ static GdkRectangle set_monitor_data_and_create_rdp_viewer_window(GdkMonitor *mo
 
     // set monitor data for rdp client
     rdpSettings* settings = ex_rdp_context->context.settings;
+
     settings->MonitorDefArray[index].x = geometry.x;
     settings->MonitorDefArray[index].y = geometry.y;
     settings->MonitorDefArray[index].width = geometry.width;
