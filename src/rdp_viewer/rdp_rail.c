@@ -4,6 +4,15 @@
 
 #include "rdp_rail.h"
 
+#define RAIL_ERROR_ARRAY_SIZE 7
+static const char* error_code_names[RAIL_ERROR_ARRAY_SIZE] = { "RAIL_EXEC_S_OK",
+                                          "RAIL_EXEC_E_HOOK_NOT_LOADED",
+                                          "RAIL_EXEC_E_DECODE_FAILED",
+                                          "RAIL_EXEC_E_NOT_IN_ALLOWLIST",
+                                          "RAIL_EXEC_E_FILE_NOT_FOUND",
+                                          "RAIL_EXEC_E_FAIL",
+                                          "RAIL_EXEC_E_SESSION_LOCKED" };
+
 static UINT rdp_rail_server_start_cmd(RailClientContext* context)
 {
     UINT status;
@@ -74,22 +83,120 @@ static UINT rdp_rail_server_start_cmd(RailClientContext* context)
     return context->ClientExecute(context, &exec);
 }
 
-static UINT rdp_rail_server_system_param(RailClientContext* context,
-                                        const RAIL_SYSPARAM_ORDER* sysparam)
+static UINT rdp_rail_server_execute_result(RailClientContext* context,
+                                          const RAIL_EXEC_RESULT_ORDER* execResult)
+{
+    ExtendedRdpContext* ex_context = (ExtendedRdpContext*)context->custom;
+
+    if (execResult->execResult != RAIL_EXEC_S_OK) {
+        if (execResult->execResult >= 0 && execResult->execResult < RAIL_ERROR_ARRAY_SIZE)
+            g_info("RAIL exec error: execResult=%s NtError=0x%X\n",
+                 error_code_names[execResult->execResult], execResult->rawResult);
+        else
+            g_info("RAIL exec error: Unknown error");
+        freerdp_abort_connect(ex_context->context.instance);
+    } else {
+        g_info("%s RAIL_EXEC_S_OK", (const char *)__func__);
+    }
+
+    return CHANNEL_RC_OK;
+}
+
+static UINT rdp_rail_server_system_param(RailClientContext* context G_GNUC_UNUSED,
+                                        const RAIL_SYSPARAM_ORDER* sysparam G_GNUC_UNUSED)
 {
     return CHANNEL_RC_OK;
 }
 
 static UINT rdp_rail_server_handshake(RailClientContext* context,
-                                     const RAIL_HANDSHAKE_ORDER* handshake)
+                                     const RAIL_HANDSHAKE_ORDER* handshake G_GNUC_UNUSED)
 {
     return rdp_rail_server_start_cmd(context);
 }
 
 static UINT rdp_rail_server_handshake_ex(RailClientContext* context,
-                                        const RAIL_HANDSHAKE_EX_ORDER* handshakeEx)
+                                        const RAIL_HANDSHAKE_EX_ORDER* handshakeEx G_GNUC_UNUSED)
 {
     return rdp_rail_server_start_cmd(context);
+}
+
+static UINT rdp_rail_server_min_max_info(RailClientContext* context G_GNUC_UNUSED,
+                                        const RAIL_MINMAXINFO_ORDER* minMaxInfo G_GNUC_UNUSED)
+{
+    g_info("%s  windowId %i maxWidth %i maxHeight %i maxPosX %i maxPosY %i minTrackWidth %i "
+           "minTrackHeight %i maxTrackWidth %i maxTrackHeight", (const char *)__func__,
+           minMaxInfo->maxWidth, minMaxInfo->maxHeight,
+           minMaxInfo->maxPosX, minMaxInfo->maxPosY, minMaxInfo->minTrackWidth,
+           minMaxInfo->minTrackHeight, minMaxInfo->maxTrackWidth,
+           minMaxInfo->maxTrackHeight);
+
+    return CHANNEL_RC_OK;
+}
+
+static UINT rdp_rail_server_language_bar_info(RailClientContext* context G_GNUC_UNUSED,
+                                             const RAIL_LANGBAR_INFO_ORDER* langBarInfo G_GNUC_UNUSED)
+{
+    return CHANNEL_RC_OK;
+}
+
+static UINT rdp_rail_server_get_appid_response(RailClientContext* context G_GNUC_UNUSED,
+                                              const RAIL_GET_APPID_RESP_ORDER* getAppIdResp G_GNUC_UNUSED)
+{
+    g_info("%s", (const char *)__func__);
+    return CHANNEL_RC_OK;
+}
+
+static BOOL rdp_rail_window_create(rdpContext* context G_GNUC_UNUSED,
+        const WINDOW_ORDER_INFO* orderInfo G_GNUC_UNUSED,
+        const WINDOW_STATE_ORDER* windowState G_GNUC_UNUSED)
+{
+    g_info("%s", (const char *)__func__);
+    return TRUE;
+}
+
+static BOOL rdp_rail_window_update(rdpContext* context G_GNUC_UNUSED,
+                                   const WINDOW_ORDER_INFO* orderInfo G_GNUC_UNUSED,
+                                   const WINDOW_STATE_ORDER* windowState G_GNUC_UNUSED)
+{
+    g_info("%s", (const char *)__func__);
+    return TRUE;
+}
+
+static BOOL rdp_rail_window_delete(rdpContext* context, const WINDOW_ORDER_INFO* orderInfo G_GNUC_UNUSED)
+{
+    g_info("%s", (const char *)__func__);
+    freerdp_abort_connect(context->instance);
+    return TRUE;
+}
+
+static BOOL rdp_rail_monitored_desktop(rdpContext* context G_GNUC_UNUSED,
+        const WINDOW_ORDER_INFO* orderInfo G_GNUC_UNUSED,
+        const MONITORED_DESKTOP_ORDER* monitoredDesktop G_GNUC_UNUSED)
+{
+    g_info("%s", (const char *)__func__);
+    return TRUE;
+}
+
+static BOOL rdp_rail_non_monitored_desktop(rdpContext* context G_GNUC_UNUSED,
+        const WINDOW_ORDER_INFO* orderInfo G_GNUC_UNUSED)
+{
+    g_info("%s", (const char *)__func__);
+    return TRUE;
+}
+
+static void rdp_rail_register_update_callbacks(rdpUpdate* update)
+{
+    rdpWindowUpdate* window = update->window;
+    window->WindowCreate = rdp_rail_window_create;
+    window->WindowUpdate = rdp_rail_window_update;
+    window->WindowDelete = rdp_rail_window_delete;
+    //window->WindowIcon = xf_rail_window_icon;
+    //window->WindowCachedIcon = xf_rail_window_cached_icon;
+    //window->NotifyIconCreate = xf_rail_notify_icon_create;
+    //window->NotifyIconUpdate = xf_rail_notify_icon_update;
+    //window->NotifyIconDelete = xf_rail_notify_icon_delete;
+    window->MonitoredDesktop = rdp_rail_monitored_desktop;
+    window->NonMonitoredDesktop = rdp_rail_non_monitored_desktop;
 }
 
 int rdp_rail_init(ExtendedRdpContext* ex_rdp_context, RailClientContext* rail)
@@ -100,38 +207,18 @@ int rdp_rail_init(ExtendedRdpContext* ex_rdp_context, RailClientContext* rail)
         return 0;
 
     //ex_rdp_context->rail = rail;
-    // xf_rail_register_update_callbacks(context->update);
+    rdp_rail_register_update_callbacks(context->update);
     rail->custom = (void*)ex_rdp_context;
 
-
-    //rail->ServerExecuteResult = xf_rail_server_execute_result;
+    rail->ServerExecuteResult = rdp_rail_server_execute_result;
     rail->ServerSystemParam = rdp_rail_server_system_param;
     rail->ServerHandshake = rdp_rail_server_handshake;
     rail->ServerHandshakeEx = rdp_rail_server_handshake_ex;
 
-    
     //rail->ServerLocalMoveSize = xf_rail_server_local_move_size;
-    //rail->ServerMinMaxInfo = xf_rail_server_min_max_info;
-    //rail->ServerLanguageBarInfo = xf_rail_server_language_bar_info;
-    //rail->ServerGetAppIdResponse = xf_rail_server_get_appid_response;
-
-
-    //ex_rdp_context->railWindows = HashTable_New(TRUE);
-    //
-    //if (!ex_rdp_context->railWindows)
-    //    return 0;
-    //
-    //ex_rdp_context->railWindows->keyCompare = rail_window_key_equals;
-    //ex_rdp_context->railWindows->hash = rail_window_key_hash;
-    //ex_rdp_context->railWindows->valueFree = rail_window_free;
-    //ex_rdp_context->railIconCache = RailIconCache_New(ex_rdp_context->context.settings);
-    //
-    //if (!ex_rdp_context->railIconCache)
-    //{
-    //    HashTable_Free(ex_rdp_context->railWindows);
-    //    return 0;
-    //}
-
+    rail->ServerMinMaxInfo = rdp_rail_server_min_max_info;
+    rail->ServerLanguageBarInfo = rdp_rail_server_language_bar_info;
+    rail->ServerGetAppIdResponse = rdp_rail_server_get_appid_response;
 
     return 1;
 }
