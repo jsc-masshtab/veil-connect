@@ -70,6 +70,10 @@ typedef struct {
     UpdateImageCallback update_image_callback; // callback for updating image in the main thread
     UpdateCursorCallback update_cursor_callback; // callback for updating cursor in the main thread
 
+    // rail
+    RailClientContext* rail;
+    int app_windows_amount;
+
 } ExtendedRdpContext;
 
 

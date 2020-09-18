@@ -2,6 +2,8 @@
 // Created by ubuntu on 17.09.2020.
 //
 
+//#include "freerdp/rail/rail.h"
+
 #include "rdp_rail.h"
 
 #define RAIL_ERROR_ARRAY_SIZE 7
@@ -150,7 +152,16 @@ static BOOL rdp_rail_window_create(rdpContext* context G_GNUC_UNUSED,
         const WINDOW_ORDER_INFO* orderInfo G_GNUC_UNUSED,
         const WINDOW_STATE_ORDER* windowState G_GNUC_UNUSED)
 {
-    g_info("%s", (const char *)__func__);
+    //g_info("%s windowState->numWindowRects: %i numVisibilityRects: %i",
+    //        (const char *)__func__, windowState->numWindowRects, windowState->numVisibilityRects);
+
+    ExtendedRdpContext* ex_context = (ExtendedRdpContext*)context;
+
+    //if (ex_context->app_windows_amount > 2)
+    //    return FALSE;
+
+    ex_context->app_windows_amount++;
+    g_info("%s win_amount %i", (const char *)__func__, ex_context->app_windows_amount);
     return TRUE;
 }
 
@@ -164,8 +175,13 @@ static BOOL rdp_rail_window_update(rdpContext* context G_GNUC_UNUSED,
 
 static BOOL rdp_rail_window_delete(rdpContext* context, const WINDOW_ORDER_INFO* orderInfo G_GNUC_UNUSED)
 {
-    g_info("%s", (const char *)__func__);
-    freerdp_abort_connect(context->instance);
+    ExtendedRdpContext* ex_context = (ExtendedRdpContext*)context;
+
+    ex_context->app_windows_amount--;
+    g_info("%s win_amount %i", (const char *)__func__, ex_context->app_windows_amount);
+
+    if (ex_context->app_windows_amount <= 1)
+        freerdp_abort_connect(context->instance);
     return TRUE;
 }
 
@@ -206,7 +222,7 @@ int rdp_rail_init(ExtendedRdpContext* ex_rdp_context, RailClientContext* rail)
     if (!ex_rdp_context || !rail)
         return 0;
 
-    //ex_rdp_context->rail = rail;
+    ex_rdp_context->rail = rail;
     rdp_rail_register_update_callbacks(context->update);
     rail->custom = (void*)ex_rdp_context;
 
@@ -225,5 +241,10 @@ int rdp_rail_init(ExtendedRdpContext* ex_rdp_context, RailClientContext* rail)
 
 int rdp_rail_uninit(ExtendedRdpContext* ex_rdp_context, RailClientContext* rail)
 {
+    if(ex_rdp_context->rail) {
+        ex_rdp_context->rail->custom = NULL;
+        ex_rdp_context->rail = NULL;
+    }
 
+    return 1;
 }
