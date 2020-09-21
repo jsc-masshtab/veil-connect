@@ -8,12 +8,12 @@
 
 #define RAIL_ERROR_ARRAY_SIZE 7
 static const char* error_code_names[RAIL_ERROR_ARRAY_SIZE] = { "RAIL_EXEC_S_OK",
-                                          "RAIL_EXEC_E_HOOK_NOT_LOADED",
-                                          "RAIL_EXEC_E_DECODE_FAILED",
-                                          "RAIL_EXEC_E_NOT_IN_ALLOWLIST (RDP server doesn't allow to launch this app)",
-                                          "RAIL_EXEC_E_FILE_NOT_FOUND",
-                                          "RAIL_EXEC_E_FAIL (Wrong application name?)",
-                                          "RAIL_EXEC_E_SESSION_LOCKED" };
+     "RAIL_EXEC_E_HOOK_NOT_LOADED (The server is not monitoring the current input desktop)",
+     "RAIL_EXEC_E_DECODE_FAILED (The request PDU was malformed)",
+     "RAIL_EXEC_E_NOT_IN_ALLOWLIST (The requested application was blocked by policy from being launched on the server)",
+     "RAIL_EXEC_E_FILE_NOT_FOUND (The application or file path could not be found)",
+     "RAIL_EXEC_E_FAIL (Wrong application name?)",
+     "RAIL_EXEC_E_SESSION_LOCKED (The remote session is locked)" };
 
 static UINT rdp_rail_server_start_cmd(RailClientContext* context)
 {
@@ -23,6 +23,18 @@ static UINT rdp_rail_server_start_cmd(RailClientContext* context)
     RAIL_CLIENT_STATUS_ORDER clientStatus = { 0 };
     ExtendedRdpContext* ex_context = (ExtendedRdpContext*)context->custom;
     rdpSettings* settings = ex_context->context.settings;
+
+#if FREERDP_VERSION_MINOR == 0
+    RAIL_HANDSHAKE_ORDER clientHandshake;
+    clientHandshake.buildNumber = 0x00001DB0;
+    context->ClientHandshake(context, &clientHandshake);
+
+    clientStatus.flags = RAIL_CLIENTSTATUS_ALLOWLOCALMOVESIZE;
+
+    if (settings->AutoReconnectionEnabled)
+        clientStatus.flags |= RAIL_CLIENTSTATUS_AUTORECONNECT;
+#endif
+#if FREERDP_VERSION_MINOR == 2
     clientStatus.flags = TS_RAIL_CLIENTSTATUS_ALLOWLOCALMOVESIZE;
 
     if (settings->AutoReconnectionEnabled)
@@ -33,6 +45,8 @@ static UINT rdp_rail_server_start_cmd(RailClientContext* context)
     clientStatus.flags |= TS_RAIL_CLIENTSTATUS_APPBAR_REMOTING_SUPPORTED;
     clientStatus.flags |= TS_RAIL_CLIENTSTATUS_POWER_DISPLAY_REQUEST_SUPPORTED;
     clientStatus.flags |= TS_RAIL_CLIENTSTATUS_BIDIRECTIONAL_CLOAK_SUPPORTED;
+#endif
+
     status = context->ClientInformation(context, &clientStatus);
 
     if (status != CHANNEL_RC_OK)
@@ -225,16 +239,16 @@ static BOOL rdp_rail_non_monitored_desktop(rdpContext* context G_GNUC_UNUSED,
 static void rdp_rail_register_update_callbacks(rdpUpdate* update)
 {
     rdpWindowUpdate* window = update->window;
-    window->WindowCreate = rdp_rail_window_create;
-    window->WindowUpdate = rdp_rail_window_update;
-    window->WindowDelete = rdp_rail_window_delete;
+    window->WindowCreate = (pWindowCreate)rdp_rail_window_create;
+    window->WindowUpdate = (pWindowUpdate)rdp_rail_window_update;
+    window->WindowDelete = (pWindowDelete)rdp_rail_window_delete;
     //window->WindowIcon = xf_rail_window_icon;
     //window->WindowCachedIcon = xf_rail_window_cached_icon;
     //window->NotifyIconCreate = xf_rail_notify_icon_create;
     //window->NotifyIconUpdate = xf_rail_notify_icon_update;
     //window->NotifyIconDelete = xf_rail_notify_icon_delete;
-    window->MonitoredDesktop = rdp_rail_monitored_desktop;
-    window->NonMonitoredDesktop = rdp_rail_non_monitored_desktop;
+    window->MonitoredDesktop = (pMonitoredDesktop)rdp_rail_monitored_desktop;
+    window->NonMonitoredDesktop = (pNonMonitoredDesktop)rdp_rail_non_monitored_desktop;
 }
 
 int rdp_rail_init(ExtendedRdpContext* ex_rdp_context, RailClientContext* rail)

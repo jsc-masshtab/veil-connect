@@ -18,6 +18,8 @@
 #include <glib/gstdio.h>
 #include <fcntl.h>
 
+#include <freerdp/version.h>
+
 #include "settingsfile.h"
 #include "remote-viewer.h"
 #include "remote-viewer-util.h"
@@ -91,7 +93,7 @@ main(int argc, char **argv)
     // start app
     GApplication *app = NULL;
     virt_viewer_util_init("Veil Connect");
-    g_info("APP VERSION %s", VERSION);
+    g_info("APP VERSION %s FREERDP_VERSION %s", VERSION, FREERDP_VERSION_FULL);
 
     app = G_APPLICATION(remote_viewer_new());
 
