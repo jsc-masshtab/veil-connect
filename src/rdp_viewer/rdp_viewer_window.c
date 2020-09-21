@@ -169,35 +169,6 @@ static void rdp_viewer_event_on_mapped(GtkWidget *widget G_GNUC_UNUSED, GdkEvent
     rdp_viewer_window_toggle_fullscreen(rdp_window_data, TRUE);
 }
 
-////static GTimer *timer = NULL;
-//static gboolean gtk_update(GtkWidget *widget, GdkFrameClock *frame_clock, gpointer user_data)
-//{
-////    static int counter = 0;
-
-////    if (!timer) {
-////        timer = g_timer_new();
-////        g_timer_start(timer);
-////    }
-
-////    gdouble time_elapsed = g_timer_elapsed(timer, NULL);
-////    g_info("%s time_elapsed: %f \n", (const char *)__func__, time_elapsed);
-
-
-////    if (!is_running)
-////        return TRUE;
-
-//    //g_info("%s BEG \n", (const char *)__func__);
-
-//    //rdpContext* context = user_data;
-//    //ExtendedRdpContext* tf = (ExtendedRdpContext*)context;
-
-//    //int hor_squeez = 0;
-//    //gtk_widget_queue_draw_area(widget, hor_squeez, 0, 1024 - hor_squeez *2, 768);
-//    gtk_widget_queue_draw(widget);
-
-//    return TRUE;
-//}
-
 static gboolean gtk_update(gpointer user_data)
 {
     RdpWindowData *rdp_window_data = (RdpWindowData *)user_data;
@@ -450,7 +421,7 @@ static void fill_shortcuts_menu(GtkMenu *sub_menu_send, ExtendedRdpContext* ex_r
     }
 }
 
-RdpWindowData *rdp_viewer_window_create(ExtendedRdpContext *ex_rdp_context, UINT32 *last_rdp_error_p)
+RdpWindowData *rdp_viewer_window_create(ExtendedRdpContext *ex_rdp_context)
 {
     RdpWindowData *rdp_window_data = malloc(sizeof(RdpWindowData));
     memset(rdp_window_data, 0, sizeof(RdpWindowData));
@@ -465,6 +436,7 @@ RdpWindowData *rdp_viewer_window_create(ExtendedRdpContext *ex_rdp_context, UINT
     gchar *title = g_strdup_printf("ВМ: %s     Пользователь: %s    %s", vdi_session_get_current_vm_name(),
             ex_rdp_context->usename, PACKAGE);
     gtk_window_set_title(GTK_WINDOW(rdp_viewer_window), title);
+    //gtk_window_set_deletable(GTK_WINDOW(rdp_viewer_window), FALSE);
     free_memory_safely(&title);
 
     gtk_widget_add_events(rdp_viewer_window, GDK_KEY_PRESS_MASK | GDK_KEY_RELEASE_MASK);
@@ -511,7 +483,7 @@ RdpWindowData *rdp_viewer_window_create(ExtendedRdpContext *ex_rdp_context, UINT
     g_signal_connect(item_about, "activate", G_CALLBACK(rdp_viewer_item_details_activated), NULL);
 
     // create RDP display
-    rdp_window_data->rdp_display = rdp_display_create(rdp_window_data, ex_rdp_context, last_rdp_error_p);
+    rdp_window_data->rdp_display = rdp_display_create(rdp_window_data, ex_rdp_context);
     GtkWidget *vbox = GTK_WIDGET(gtk_builder_get_object(builder, "viewer-box"));
     gtk_box_pack_end(GTK_BOX(vbox), rdp_window_data->rdp_display, TRUE, TRUE, 0);
 

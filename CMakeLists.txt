@@ -79,7 +79,8 @@ list(APPEND SRC_CODE
         src/rdp_viewer/rdp_viewer_window.c
         src/rdp_viewer/windows_rdp_launcher.h
         src/rdp_viewer/windows_rdp_launcher.c
-
+        src/rdp_viewer/rdp_rail.h
+        src/rdp_viewer/rdp_rail.c
 
 #utility
         src/utility/crashhandler.h

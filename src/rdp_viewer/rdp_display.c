@@ -12,6 +12,7 @@
 
 #include "rdp_display.h"
 #include "rdp_data.h"
+#include "rdp_rail.h"
 
 static double scale_f = 1; // todo: make local
 
@@ -305,13 +306,13 @@ static gboolean rdp_display_wheel_scrolled(GtkWidget *widget G_GNUC_UNUSED, GdkE
     return TRUE;
 }
 
-static void rdp_display_draw_text_message(cairo_t* context, const gchar *msg)
+static void rdp_display_draw_text_message(cairo_t* context, const gchar *msg, double y)
 {
     cairo_select_font_face(context, "Sans", CAIRO_FONT_SLANT_NORMAL, CAIRO_FONT_WEIGHT_NORMAL);
     cairo_set_font_size(context, 15);
     cairo_set_source_rgb(context, 0.1, 0.2, 0.9);
 
-    cairo_move_to(context, 50, 50);
+    cairo_move_to(context, 50, y);
     cairo_show_text(context, msg);
 }
 
@@ -323,39 +324,43 @@ static gboolean rdp_display_event_on_draw(GtkWidget* widget, cairo_t* context, g
     rdp_window_data->is_rdp_display_being_redrawed = TRUE;
 
     ExtendedRdpContext *ex_rdp_contect = rdp_window_data->ex_rdp_context;
-    //GtkWidget *rdp_viewer_window = rdp_window_data->rdp_viewer_window;
 
-    if (ex_rdp_contect && ex_rdp_contect->is_running) {
+    if (ex_rdp_contect) {
 
-        g_mutex_lock(&ex_rdp_contect->primary_buffer_mutex);
+        if (ex_rdp_contect->is_running) {
+            g_mutex_lock(&ex_rdp_contect->primary_buffer_mutex);
 
-        if (ex_rdp_contect->surface) {
+            if (ex_rdp_contect->surface) {
 
-            cairo_set_source_surface(context, ex_rdp_contect->surface, -rdp_window_data->monitor_geometry.x,
-                                     -rdp_window_data->monitor_geometry.y);
-            if (!fuzzy_compare(scale_f, 1))
-                cairo_surface_set_device_scale(ex_rdp_contect->surface, scale_f, scale_f);
+                cairo_set_source_surface(context, ex_rdp_contect->surface, -rdp_window_data->monitor_geometry.x,
+                                         -rdp_window_data->monitor_geometry.y);
+                if (!fuzzy_compare(scale_f, 1))
+                    cairo_surface_set_device_scale(ex_rdp_contect->surface, scale_f, scale_f);
 
-            cairo_set_operator(context, CAIRO_OPERATOR_OVER);     // Ignore alpha channel from FreeRDP
-            cairo_set_antialias(context, CAIRO_ANTIALIAS_FAST);
+                cairo_set_operator(context, CAIRO_OPERATOR_OVER);     // Ignore alpha channel from FreeRDP
+                cairo_set_antialias(context, CAIRO_ANTIALIAS_FAST);
 
-            cairo_paint(context);
+                cairo_paint(context);
 
-        } else { // Поверхность создается сразу после подключения. Если ее нет, значит мы ожидаем подключение
-            rdp_display_draw_text_message(context, "Ожидаем подключение");
+            } else { // Поверхность создается сразу после подключения. Если ее нет, значит мы ожидаем подключение
+                rdp_display_draw_text_message(context, "Ожидаем подключение", 50);
+            }
+
+            g_mutex_unlock(&ex_rdp_contect->primary_buffer_mutex);
+        } else {
+            /* Draw text */
+            gchar *msg = g_strdup_printf(("Нет соединения. Код: 0x%X %s"),
+                                         ex_rdp_contect->last_rdp_error, error_to_str(ex_rdp_contect->last_rdp_error));
+            rdp_display_draw_text_message(context, msg, 50);
+            g_free(msg);
+
+            if (ex_rdp_contect->rail_rdp_error != RAIL_EXEC_S_OK) {
+                msg = g_strdup_printf("Remote application error. 0x%X  %s", ex_rdp_contect->rail_rdp_error,
+                        rail_error_to_string(ex_rdp_contect->rail_rdp_error));
+                rdp_display_draw_text_message(context, msg, 100);
+                g_free(msg);
+            }
         }
-
-        g_mutex_unlock(&ex_rdp_contect->primary_buffer_mutex);
-
-    } else {
-        /* Draw text */
-        UINT32 *last_rdp_error_p = (g_object_get_data(G_OBJECT(widget), "last_rdp_error"));
-        UINT32 last_rdp_error = *last_rdp_error_p;
-        gchar *msg = g_strdup_printf(("Нет соединения. Код: %i %s"), last_rdp_error, error_to_str(last_rdp_error));
-
-        rdp_display_draw_text_message(context, msg);
-
-        g_free(msg);
     }
 
     rdp_window_data->is_rdp_display_being_redrawed = FALSE;
@@ -377,15 +382,12 @@ static gboolean rdp_display_event_on_configure(GtkWidget *widget G_GNUC_UNUSED,
     return TRUE;
 }
 
-GtkWidget *rdp_display_create(RdpWindowData *rdp_window_data, ExtendedRdpContext *ex_rdp_context,
-                              UINT32 *last_rdp_error_p)
+GtkWidget *rdp_display_create(RdpWindowData *rdp_window_data, ExtendedRdpContext *ex_rdp_context)
 {
     GtkWidget *rdp_display = gtk_drawing_area_new();
 
     gtk_widget_add_events(rdp_display, GDK_POINTER_MOTION_MASK | GDK_BUTTON_PRESS_MASK | GDK_BUTTON_RELEASE_MASK |
                           GDK_SCROLL_MASK | GDK_SMOOTH_SCROLL_MASK | GDK_KEY_PRESS_MASK | GDK_KEY_RELEASE_MASK);
-
-    g_object_set_data(G_OBJECT(rdp_display), "last_rdp_error", last_rdp_error_p);
 
     GtkWidget *rdp_viewer_window = rdp_window_data->rdp_viewer_window;
     g_signal_connect(rdp_viewer_window, "key-press-event", G_CALLBACK(rdp_display_key_pressed), ex_rdp_context);

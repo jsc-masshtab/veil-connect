@@ -54,6 +54,17 @@ static void add_rdp_param(GArray *rdp_params_dyn_array, gchar *rdp_param)
     g_array_append_val(rdp_params_dyn_array, rdp_param);
 }
 
+static void rdp_client_read_str_rdp_param_from_ini_and_add(GArray *rdp_params_dyn_array,
+        const gchar *ini_key, const gchar *rdp_param_name)
+{
+    gchar *ini_param = read_str_from_ini_file("RDPSettings", ini_key);
+    if (ini_param) {
+        g_strstrip(ini_param);
+        add_rdp_param(rdp_params_dyn_array, g_strdup_printf("%s:%s", rdp_param_name, ini_param));
+        g_free(ini_param);
+    }
+}
+
 static GArray * rdp_client_create_params_array(ExtendedRdpContext* tf)
 {
     g_info("%s W: %i x H:%i", (const char*)__func__, tf->whole_image_width, tf->whole_image_height);
@@ -74,22 +85,13 @@ static GArray * rdp_client_create_params_array(ExtendedRdpContext* tf)
     add_rdp_param(rdp_params_dyn_array, g_strdup("/sound:rate:44100,channel:2"));
     add_rdp_param(rdp_params_dyn_array, g_strdup("/smartcard"));
     add_rdp_param(rdp_params_dyn_array, g_strdup("+fonts"));
-
-#ifdef __linux__
-    add_rdp_param(rdp_params_dyn_array,g_strdup("/usb:auto"));
-#elif _WIN32
     add_rdp_param(rdp_params_dyn_array, g_strdup("/relax-order-checks"));
+#ifdef __linux__
+#elif _WIN32
     add_rdp_param(rdp_params_dyn_array, g_strdup("+glyph-cache"));
 #endif
     // /gfx-h264:AVC444
-    gboolean is_rdp_h264_used = read_int_from_ini_file("RDPSettings", "is_rdp_h264_used", FALSE);
-    if (is_rdp_h264_used) {
-        gchar *rdp_h264_codec = read_str_from_ini_file("RDPSettings", "rdp_h264_codec");
-        gchar *gfx_h264_param_str = g_strdup_printf("/gfx-h264:%s", rdp_h264_codec);
-        //g_info("gfx_h264_param_str:  %s\n", gfx_h264_param_str);
-        add_rdp_param(rdp_params_dyn_array, gfx_h264_param_str);
-        free_memory_safely(&rdp_h264_codec);
-    }
+    rdp_client_read_str_rdp_param_from_ini_and_add(rdp_params_dyn_array, "rdp_h264_codec", "/gfx-h264");
     // drives (folders)
     gchar *shared_folders_str = read_str_from_ini_file("RDPSettings", "rdp_shared_folders");
 
@@ -116,6 +118,13 @@ static GArray * rdp_client_create_params_array(ExtendedRdpContext* tf)
         }
 
         g_strfreev(shared_folders_array);
+    }
+
+    // remote app
+    gboolean is_remote_app = read_int_from_ini_file("RDPSettings", "is_remote_app", 0);
+    if (is_remote_app) {
+        rdp_client_read_str_rdp_param_from_ini_and_add(rdp_params_dyn_array, "remote_app_name", "/app");
+        rdp_client_read_str_rdp_param_from_ini_and_add(rdp_params_dyn_array, "remote_app_options", "/app-cmd");
     }
 
     // rdp_args     custom from ini file
@@ -200,7 +209,7 @@ void* rdp_client_routine(ExtendedRdpContext *ex_contect)
     // set rdp params
     status = freerdp_client_settings_parse_command_line(context->settings, argc, argv, FALSE);
     if (status)
-        *ex_contect->last_rdp_error_p = WRONG_FREERDP_ARGUMENTS;
+        ex_contect->last_rdp_error = WRONG_FREERDP_ARGUMENTS;
 
     status = freerdp_client_settings_command_line_status_print(context->settings, status, argc, argv);
 
@@ -384,7 +393,6 @@ static BOOL rdp_pre_connect(freerdp* instance)
     // its required for key event sending
     freerdp_keyboard_init(instance->context->settings->KeyboardLayout);
 
-    /* TODO: Any code your client requires */
     return TRUE;
 }
 
@@ -421,6 +429,15 @@ static BOOL rdp_post_connect(freerdp* instance)
 
     if (!rdp_register_pointer(instance->context->graphics))
         return FALSE;
+    /*
+    if (!instance->settings->SoftwareGdi)
+    {
+        brush_cache_register_callbacks(instance->update);
+        glyph_cache_register_callbacks(instance->update);
+        bitmap_cache_register_callbacks(instance->update);
+        offscreen_cache_register_callbacks(instance->update);
+        palette_cache_register_callbacks(instance->update);
+    }*/
 
     instance->update->BeginPaint = rdp_begin_paint;
     instance->update->EndPaint = rdp_end_paint;
@@ -439,9 +456,6 @@ static BOOL rdp_post_connect(freerdp* instance)
     int stride = cairo_format_stride_for_width(cairo_format, gdi->width);
     tf->surface = cairo_image_surface_create_for_data((unsigned char*)gdi->primary_buffer,
                                                       cairo_format, gdi->width, gdi->height, stride);
-
-    // calculate point in which the image is displayed
-    //rdp_client_adjust_im_origin_point(tf);
 
     g_mutex_unlock(&tf->primary_buffer_mutex);
 
@@ -473,13 +487,14 @@ static void rdp_post_disconnect(freerdp* instance)
     g_mutex_unlock(&ex_rdp_context->primary_buffer_mutex);
 
     UINT32 last_error = freerdp_get_last_error(instance->context);
-    *(ex_rdp_context->last_rdp_error_p) = last_error;
+    ex_rdp_context->last_rdp_error = last_error;
     g_info("%s last_error_code: %u", (const char *)__func__, last_error);
 
     gdi_free(instance);
 
-    // Close rdp windows if LOGOFF_BY_USER received
-    if ((last_error & 0xFFFF) == ERRINFO_LOGOFF_BY_USER) {
+    // Close rdp windows if LOGOFF_BY_USER received or there are no errors
+    if (((last_error & 0xFFFF) == ERRINFO_LOGOFF_BY_USER) ||
+    (last_error == 0 && ex_rdp_context->rail_rdp_error == 0)) {
         g_info("HERE WE GO AGAIN");
         // to close rdp window
         if (ex_rdp_context->rdp_windows_array->len) {

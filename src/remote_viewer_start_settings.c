@@ -22,7 +22,7 @@ typedef struct{
     GtkWidget *domain_entry;
     GtkWidget *address_entry;
     GtkWidget *port_entry;
-    GtkWidget *ldap_checkbutton;
+    GtkWidget *ldap_check_btn;
     GtkWidget *conn_to_prev_pool_checkbutton;
     GtkWidget *remote_protocol_combobox;
 
@@ -42,6 +42,10 @@ typedef struct{
 
     GtkWidget *is_multimon_check_btn;
     GtkWidget *redirect_printers_check_btn;
+
+    GtkWidget *remote_app_check_btn;
+    GtkWidget *remote_app_name_entry;
+    GtkWidget *remote_app_options_entry;
 
     // Service
     GtkWidget *btn_archive_logs;
@@ -123,7 +127,7 @@ fill_connect_settings_data_from_gui(ConnectSettingsData *connect_settings_data, 
         is_ok = FALSE;
     }
 
-    connect_settings_data->is_ldap = gtk_toggle_button_get_active((GtkToggleButton *)dialog_data->ldap_checkbutton);
+    connect_settings_data->is_ldap = gtk_toggle_button_get_active((GtkToggleButton *)dialog_data->ldap_check_btn);
     connect_settings_data->is_connect_to_prev_pool =
             gtk_toggle_button_get_active((GtkToggleButton *)dialog_data->conn_to_prev_pool_checkbutton);
 
@@ -156,6 +160,17 @@ on_h264_used_check_btn_toggled(GtkToggleButton *h264_used_check_btn, gpointer us
     gboolean is_h264_used_check_btn_toggled = gtk_toggle_button_get_active(h264_used_check_btn);
     gtk_widget_set_sensitive(dialog_data->rdp_h264_codec_entry, is_h264_used_check_btn_toggled);
 }
+
+static void
+on_remote_app_check_btn_toggled(GtkToggleButton *remote_app_check_btn, gpointer user_data)
+{
+    ConnectSettingsDialogData *dialog_data = (ConnectSettingsDialogData *)user_data;
+
+    gboolean is_remote_app_check_btn_toggled = gtk_toggle_button_get_active(remote_app_check_btn);
+    gtk_widget_set_sensitive(dialog_data->remote_app_name_entry, is_remote_app_check_btn_toggled);
+    gtk_widget_set_sensitive(dialog_data->remote_app_options_entry, is_remote_app_check_btn_toggled);
+}
+
 /*
 static void
 shared_folders_icon_released(GtkEntry            *entry,
@@ -306,7 +321,7 @@ fill_connect_settings_gui(ConnectSettingsDialogData *dialog_data, ConnectSetting
     }
     // ldap
     gboolean is_ldap_btn_checked = connect_settings_data->is_ldap;
-    gtk_toggle_button_set_active((GtkToggleButton *)dialog_data->ldap_checkbutton, is_ldap_btn_checked);
+    gtk_toggle_button_set_active((GtkToggleButton *)dialog_data->ldap_check_btn, is_ldap_btn_checked);
     // Connect to prev pool
     gboolean is_conn_to_prev_pool_btn_checked = connect_settings_data->is_connect_to_prev_pool;
     gtk_toggle_button_set_active((GtkToggleButton *)dialog_data->conn_to_prev_pool_checkbutton,
@@ -350,6 +365,19 @@ fill_connect_settings_gui(ConnectSettingsDialogData *dialog_data, ConnectSetting
 
     gboolean redirect_printers = read_int_from_ini_file("RDPSettings", "redirect_printers", FALSE);
     gtk_toggle_button_set_active((GtkToggleButton *)dialog_data->redirect_printers_check_btn, redirect_printers);
+
+    gboolean is_remote_app = read_int_from_ini_file("RDPSettings", "is_remote_app", 0);
+    gtk_toggle_button_set_active((GtkToggleButton *)dialog_data->remote_app_check_btn, is_remote_app);
+    gchar *remote_app_name = read_str_from_ini_file("RDPSettings", "remote_app_name");
+    if (remote_app_name) {
+        gtk_entry_set_text(GTK_ENTRY(dialog_data->remote_app_name_entry), remote_app_name);
+        g_free(remote_app_name);
+    }
+    gchar *remote_app_options = read_str_from_ini_file("RDPSettings", "remote_app_options");
+    if (remote_app_options) {
+        gtk_entry_set_text(GTK_ENTRY(dialog_data->remote_app_options_entry), remote_app_options);
+        g_free(remote_app_options);
+    }
 }
 
 static void
@@ -365,7 +393,7 @@ save_data_to_ini_file(ConnectSettingsDialogData *dialog_data)
     write_str_to_ini_file(paramToFileGrpoup, "ip", gtk_entry_get_text(GTK_ENTRY(dialog_data->address_entry)));
     write_str_to_ini_file(paramToFileGrpoup, "port", gtk_entry_get_text(GTK_ENTRY(dialog_data->port_entry)));
     // ldap
-    gboolean is_ldap_btn_checked = gtk_toggle_button_get_active((GtkToggleButton *)dialog_data->ldap_checkbutton);
+    gboolean is_ldap_btn_checked = gtk_toggle_button_get_active((GtkToggleButton *)dialog_data->ldap_check_btn);
     write_int_to_ini_file(paramToFileGrpoup, "is_ldap_btn_checked", is_ldap_btn_checked);
     // prev pool
     gboolean is_conn_to_prev_pool_btn_checked =
@@ -409,7 +437,15 @@ save_data_to_ini_file(ConnectSettingsDialogData *dialog_data)
     gboolean redirect_printers = gtk_toggle_button_get_active(
             (GtkToggleButton *)dialog_data->redirect_printers_check_btn);
     write_int_to_ini_file("RDPSettings", "redirect_printers", redirect_printers);
-}
+
+    gboolean is_remote_app = gtk_toggle_button_get_active((GtkToggleButton *)dialog_data->remote_app_check_btn);
+    write_int_to_ini_file("RDPSettings", "is_remote_app", is_remote_app);
+    write_str_to_ini_file("RDPSettings", "remote_app_name",
+            gtk_entry_get_text(GTK_ENTRY(dialog_data->remote_app_name_entry)));
+    write_str_to_ini_file("RDPSettings", "remote_app_options",
+                          gtk_entry_get_text(GTK_ENTRY(dialog_data->remote_app_options_entry)));
+
+} // remote_app_name_entry      remote_app_options_entry
 
 GtkResponseType remote_viewer_start_settings_dialog(ConnectSettingsData *connect_settings_data, GtkWindow *parent)
 {
@@ -430,8 +466,8 @@ GtkResponseType remote_viewer_start_settings_dialog(ConnectSettingsData *connect
     dialog_data.domain_entry = get_widget_from_builder(dialog_data.builder, "domain-entry");
     dialog_data.address_entry = get_widget_from_builder(dialog_data.builder, "connection-address-entry");
     dialog_data.port_entry = get_widget_from_builder(dialog_data.builder, "connection-port-entry");
-    dialog_data.ldap_checkbutton = get_widget_from_builder(dialog_data.builder, "ldap-button");
-    gtk_widget_set_sensitive(dialog_data.ldap_checkbutton, !opt_manual_mode);
+    dialog_data.ldap_check_btn = get_widget_from_builder(dialog_data.builder, "ldap-button");
+    gtk_widget_set_sensitive(dialog_data.ldap_check_btn, !opt_manual_mode);
     dialog_data.conn_to_prev_pool_checkbutton = get_widget_from_builder(dialog_data.builder, "connect-to-prev-button");
     gtk_widget_set_sensitive(dialog_data.conn_to_prev_pool_checkbutton, !opt_manual_mode);
     dialog_data.remote_protocol_combobox =get_widget_from_builder(dialog_data.builder, "combobox_remote_protocol");
@@ -460,6 +496,10 @@ GtkResponseType remote_viewer_start_settings_dialog(ConnectSettingsData *connect
     dialog_data.redirect_printers_check_btn =
             get_widget_from_builder(dialog_data.builder, "redirect_printers_check_btn");
 
+    dialog_data.remote_app_check_btn = get_widget_from_builder(dialog_data.builder, "remote_app_check_btn");
+    dialog_data.remote_app_name_entry = get_widget_from_builder(dialog_data.builder, "remote_app_name_entry");
+    dialog_data.remote_app_options_entry = get_widget_from_builder(dialog_data.builder, "remote_app_options_entry");
+
     // Service functions
     dialog_data.btn_archive_logs = get_widget_from_builder(dialog_data.builder, "btn_archive_logs");
 
@@ -476,6 +516,8 @@ GtkResponseType remote_viewer_start_settings_dialog(ConnectSettingsData *connect
                      G_CALLBACK(btn_remove_remote_folder_clicked_cb), &dialog_data);
     g_signal_connect(dialog_data.btn_archive_logs, "clicked",
                      G_CALLBACK(btn_archive_logs_clicked_cb), &dialog_data);
+    g_signal_connect(dialog_data.remote_app_check_btn, "toggled", G_CALLBACK(on_remote_app_check_btn_toggled),
+                     &dialog_data);
 
     // read from file
     fill_connect_settings_data_from_ini_file(connect_settings_data);
