@@ -14,7 +14,7 @@
 
 ## Building on Debian / Ubuntu
 ```
-sudo apt install libhiredis-dev spice-client-gtk libspice-client-gtk-3.0-dev libjson-glib-dev libxml2-dev libsoup2.4-dev freerdp2-dev libfreerdp-client2-2 libwinpr2-2 libwinpr2-dev gcc cmake pkg-config
+sudo apt install libhiredis-dev spice-client-gtk libspice-client-gtk-3.0-dev libjson-glib-dev libxml2-dev libsoup2.4-dev freerdp2-dev libfreerdp-client2-2 libwinpr2-2 libwinpr2-dev gcc cmake pkg-config libusb-1.0-0-dev libusbredirparser-dev
 mkdir build
 cd build
 cmake -DCMAKE_BUILD_TYPE=Release ../
@@ -25,7 +25,7 @@ make
 ```
 yum install curl
 yum install epel-release
-yum install spice-gtk3-devel freerdp-libs freerdp-devel json-glib-devel libsoup-devel libwinpr libxml2-devel gcc cmake3 gtk3-devel hiredis-devel
+yum install spice-gtk3-devel freerdp-libs freerdp-devel json-glib-devel libsoup-devel libwinpr libxml2-devel gcc cmake3 gtk3-devel hiredis-devel usbredir-devel libusb-devel
 mkdir build
 cd build
 cmake3 -DCMAKE_BUILD_TYPE=Release ../
@@ -68,6 +68,7 @@ pacman -S mingw64/mingw-w64-x86_64-libsoup
 
 pacman -S mingw64/mingw-w64-x86_64-spice-gtk
 
+pacman -S mingw64/mingw-w64-x86_64-libusb
 
 In file CmaleLists.txt in variable LIBS_INCLUDE_PATH set the path to MSYS_INCLUDE
 
