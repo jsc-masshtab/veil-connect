@@ -12,4 +12,6 @@
 int rdp_rail_init(ExtendedRdpContext* xfc, RailClientContext* rail);
 int rdp_rail_uninit(ExtendedRdpContext* xfc, RailClientContext* rail);
 
+const gchar *rail_error_to_string(UINT16 rail_error);
+
 #endif //VEIL_CONNECT_RDP_RAIL_H

@@ -421,7 +421,7 @@ static void fill_shortcuts_menu(GtkMenu *sub_menu_send, ExtendedRdpContext* ex_r
     }
 }
 
-RdpWindowData *rdp_viewer_window_create(ExtendedRdpContext *ex_rdp_context, UINT32 *last_rdp_error_p)
+RdpWindowData *rdp_viewer_window_create(ExtendedRdpContext *ex_rdp_context)
 {
     RdpWindowData *rdp_window_data = malloc(sizeof(RdpWindowData));
     memset(rdp_window_data, 0, sizeof(RdpWindowData));
@@ -483,7 +483,7 @@ RdpWindowData *rdp_viewer_window_create(ExtendedRdpContext *ex_rdp_context, UINT
     g_signal_connect(item_about, "activate", G_CALLBACK(rdp_viewer_item_details_activated), NULL);
 
     // create RDP display
-    rdp_window_data->rdp_display = rdp_display_create(rdp_window_data, ex_rdp_context, last_rdp_error_p);
+    rdp_window_data->rdp_display = rdp_display_create(rdp_window_data, ex_rdp_context);
     GtkWidget *vbox = GTK_WIDGET(gtk_builder_get_object(builder, "viewer-box"));
     gtk_box_pack_end(GTK_BOX(vbox), rdp_window_data->rdp_display, TRUE, TRUE, 0);
 

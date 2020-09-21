@@ -10,9 +10,9 @@
 static const char* error_code_names[RAIL_ERROR_ARRAY_SIZE] = { "RAIL_EXEC_S_OK",
                                           "RAIL_EXEC_E_HOOK_NOT_LOADED",
                                           "RAIL_EXEC_E_DECODE_FAILED",
-                                          "RAIL_EXEC_E_NOT_IN_ALLOWLIST",
+                                          "RAIL_EXEC_E_NOT_IN_ALLOWLIST (RDP server doesn't allow to launch this app)",
                                           "RAIL_EXEC_E_FILE_NOT_FOUND",
-                                          "RAIL_EXEC_E_FAIL",
+                                          "RAIL_EXEC_E_FAIL (Wrong application name?)",
                                           "RAIL_EXEC_E_SESSION_LOCKED" };
 
 static UINT rdp_rail_server_start_cmd(RailClientContext* context)
@@ -91,12 +91,12 @@ static UINT rdp_rail_server_execute_result(RailClientContext* context,
     ExtendedRdpContext* ex_context = (ExtendedRdpContext*)context->custom;
 
     if (execResult->execResult != RAIL_EXEC_S_OK) {
-        if (execResult->execResult >= 0 && execResult->execResult < RAIL_ERROR_ARRAY_SIZE)
-            g_info("RAIL exec error: execResult=%s NtError=0x%X\n",
-                 error_code_names[execResult->execResult], execResult->rawResult);
-        else
-            g_info("RAIL exec error: Unknown error");
+        g_info("RAIL exec error: execResult=%s NtError=0x%X\n",
+               rail_error_to_string(execResult->execResult), execResult->rawResult);
+        ex_context->rail_rdp_error = execResult->execResult;
+
         freerdp_abort_connect(ex_context->context.instance);
+
     } else {
         g_info("%s RAIL_EXEC_S_OK", (const char *)__func__);
     }
@@ -278,4 +278,12 @@ int rdp_rail_uninit(ExtendedRdpContext* ex_rdp_context, RailClientContext* rail)
     //}
 
     return 1;
+}
+
+const gchar *rail_error_to_string(UINT16 rail_error)
+{
+    if (rail_error >= 0 && rail_error < RAIL_ERROR_ARRAY_SIZE)
+        return error_code_names[rail_error];
+    else
+        return "RAIL exec error: Unknown error";
 }

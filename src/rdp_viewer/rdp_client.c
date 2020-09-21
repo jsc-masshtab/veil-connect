@@ -211,7 +211,7 @@ void* rdp_client_routine(ExtendedRdpContext *ex_contect)
     // set rdp params
     status = freerdp_client_settings_parse_command_line(context->settings, argc, argv, FALSE);
     if (status)
-        *ex_contect->last_rdp_error_p = WRONG_FREERDP_ARGUMENTS;
+        ex_contect->last_rdp_error = WRONG_FREERDP_ARGUMENTS;
 
     status = freerdp_client_settings_command_line_status_print(context->settings, status, argc, argv);
 
@@ -489,13 +489,14 @@ static void rdp_post_disconnect(freerdp* instance)
     g_mutex_unlock(&ex_rdp_context->primary_buffer_mutex);
 
     UINT32 last_error = freerdp_get_last_error(instance->context);
-    *(ex_rdp_context->last_rdp_error_p) = last_error;
+    ex_rdp_context->last_rdp_error = last_error;
     g_info("%s last_error_code: %u", (const char *)__func__, last_error);
 
     gdi_free(instance);
 
     // Close rdp windows if LOGOFF_BY_USER received or there are no errors
-    if ((last_error & 0xFFFF) == ERRINFO_LOGOFF_BY_USER || last_error == 0) {
+    if (((last_error & 0xFFFF) == ERRINFO_LOGOFF_BY_USER) ||
+    (last_error == 0 && ex_rdp_context->rail_rdp_error == 0)) {
         g_info("HERE WE GO AGAIN");
         // to close rdp window
         if (ex_rdp_context->rdp_windows_array->len) {

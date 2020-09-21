@@ -17,7 +17,7 @@
 
 //} RdpDisplayData;
 
-GtkWidget *rdp_display_create(RdpWindowData *rdp_window_data, ExtendedRdpContext *ex_rdp_context, UINT32 *last_rdp_error_p);
+GtkWidget *rdp_display_create(RdpWindowData *rdp_window_data, ExtendedRdpContext *ex_rdp_context);
 
 
 

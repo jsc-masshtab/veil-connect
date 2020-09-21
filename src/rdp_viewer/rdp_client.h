@@ -55,8 +55,6 @@ typedef struct {
 
     gboolean is_running; // is rdp routine running
 
-    UINT32 *last_rdp_error_p; // pointer to last_rdp_error
-
     // credentials
     gchar *usename;
     gchar *password;
@@ -72,8 +70,11 @@ typedef struct {
 
     // rail
     RailClientContext* rail;
-    //int app_windows_amount;
     GArray *app_windows_array;
+
+    // errors
+    UINT32 last_rdp_error; // main freerdp error
+    UINT32 rail_rdp_error; // remote app related error
 
 } ExtendedRdpContext;
 

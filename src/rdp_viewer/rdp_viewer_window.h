@@ -11,8 +11,6 @@ typedef struct{
     GtkResponseType *dialog_window_response_p;
     GMainLoop **loop_p;
 
-    UINT32 *last_rdp_error_p;
-
     // gui
     GtkBuilder *builder;
     GtkWidget *rdp_viewer_window;
@@ -45,7 +43,7 @@ typedef struct{
 } RdpWindowData;
 
 
-RdpWindowData *rdp_viewer_window_create(ExtendedRdpContext *ex_rdp_context, UINT32 *last_rdp_error_p);
+RdpWindowData *rdp_viewer_window_create(ExtendedRdpContext *ex_rdp_context);
 void rdp_viewer_window_destroy(RdpWindowData *rdp_window_data);
 void rdp_viewer_window_set_monitor_data(RdpWindowData *rdp_window_data, GdkRectangle geometry, int monitor_index);
 void rdp_viewer_window_cancel(RdpWindowData *rdp_window_data);
