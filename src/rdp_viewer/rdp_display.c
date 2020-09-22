@@ -185,6 +185,27 @@ static void rdp_viewer_handle_key_event(GdkEventKey *event, ExtendedRdpContext* 
         case GDK_KEY_Down:
             rdp_scancode = RDP_SCANCODE_DOWN;
             break;
+        case GDK_KEY_Insert:
+            rdp_scancode = RDP_SCANCODE_INSERT;
+            break;
+        case GDK_KEY_Home:
+            rdp_scancode = RDP_SCANCODE_HOME;
+            break;
+        case GDK_KEY_End:
+            rdp_scancode = RDP_SCANCODE_END;
+            break;
+        case GDK_KEY_Delete:
+            rdp_scancode = RDP_SCANCODE_DELETE;
+            break;
+        case GDK_KEY_Prior:
+            rdp_scancode = RDP_SCANCODE_PRIOR;
+            break;
+        case GDK_KEY_Next:
+            rdp_scancode = RDP_SCANCODE_NEXT;
+            break;
+        case GDK_KEY_KP_Divide:
+            rdp_scancode = RDP_SCANCODE_DIVIDE;
+            break;
         default:
             // other keys
             rdp_scancode = GetVirtualScanCodeFromVirtualKeyCode(event->hardware_keycode, 4);
@@ -193,8 +214,9 @@ static void rdp_viewer_handle_key_event(GdkEventKey *event, ExtendedRdpContext* 
 #endif
     BOOL is_success = freerdp_input_send_keyboard_event_ex(input, down, rdp_scancode);
     (void) is_success;
-//    g_info("%s: hardkey %i %i keyval: %i down: %i\n", (const char *) __func__,
-//           event->hardware_keycode, rdp_scancode, event->keyval, down);
+
+    g_info("%s: hardkey: 0x%X scancode: 0x%X keyval: 0x%X down: %i\n", (const char *) __func__,
+           event->hardware_keycode, rdp_scancode, event->keyval, down);
 }
 
 static gboolean rdp_display_key_pressed(GtkWidget *widget G_GNUC_UNUSED, GdkEventKey *event, gpointer user_data)

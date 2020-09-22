@@ -8,7 +8,6 @@
 #include "config.h"
 
 #include "rdp_display.h"
-#include "rdp_viewer_window.h"
 
 #include "vdi_session.h"
 

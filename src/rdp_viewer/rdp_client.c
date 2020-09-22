@@ -36,6 +36,7 @@
 #include "rdp_cursor.h"
 #include "rdp_data.h"
 #include "rdp_viewer_window.h"
+#include "rdp_keyboard.h"
 
 #include "remote-viewer-util.h"
 #include "settingsfile.h"
@@ -46,7 +47,7 @@
 #define TAG CLIENT_TAG(PROGRAMM_NAME)
 
 
-static DWORD WINAPI rdp_client_thread_proc(ExtendedRdpContext *tf);
+static DWORD WINAPI rdp_client_thread_proc(ExtendedRdpContext *ex);
 static int rdp_client_entry(RDP_CLIENT_ENTRY_POINTS* pEntryPoints);
 
 static void add_rdp_param(GArray *rdp_params_dyn_array, gchar *rdp_param)
@@ -65,21 +66,21 @@ static void rdp_client_read_str_rdp_param_from_ini_and_add(GArray *rdp_params_dy
     }
 }
 
-static GArray * rdp_client_create_params_array(ExtendedRdpContext* tf)
+static GArray * rdp_client_create_params_array(ExtendedRdpContext* ex)
 {
-    g_info("%s W: %i x H:%i", (const char*)__func__, tf->whole_image_width, tf->whole_image_height);
+    g_info("%s W: %i x H:%i", (const char*)__func__, ex->whole_image_width, ex->whole_image_height);
 
     GArray *rdp_params_dyn_array = g_array_new(FALSE, FALSE, sizeof(gchar *));
 
     add_rdp_param(rdp_params_dyn_array, g_strdup(PROGRAMM_NAME));
-    gchar *full_adress = tf->port != 0 ? g_strdup_printf("/v:%s:%i", tf->ip, tf->port) :
-            g_strdup_printf("/v:%s", tf->ip);
+    gchar *full_adress = ex->port != 0 ? g_strdup_printf("/v:%s:%i", ex->ip, ex->port) :
+            g_strdup_printf("/v:%s", ex->ip);
     add_rdp_param(rdp_params_dyn_array, full_adress);
-    add_rdp_param(rdp_params_dyn_array, g_strdup_printf("/d:%s", tf->domain));
-    add_rdp_param(rdp_params_dyn_array, g_strdup_printf("/u:%s", tf->usename));
-    add_rdp_param(rdp_params_dyn_array, g_strdup_printf("/p:%s", tf->password));
-    add_rdp_param(rdp_params_dyn_array, g_strdup_printf("/w:%i", tf->whole_image_width));
-    add_rdp_param(rdp_params_dyn_array, g_strdup_printf("/h:%i", tf->whole_image_height));
+    add_rdp_param(rdp_params_dyn_array, g_strdup_printf("/d:%s", ex->domain));
+    add_rdp_param(rdp_params_dyn_array, g_strdup_printf("/u:%s", ex->usename));
+    add_rdp_param(rdp_params_dyn_array, g_strdup_printf("/p:%s", ex->password));
+    add_rdp_param(rdp_params_dyn_array, g_strdup_printf("/w:%i", ex->whole_image_width));
+    add_rdp_param(rdp_params_dyn_array, g_strdup_printf("/h:%i", ex->whole_image_height));
     add_rdp_param(rdp_params_dyn_array, g_strdup("-clipboard"));
     add_rdp_param(rdp_params_dyn_array, g_strdup("/cert-ignore"));
     add_rdp_param(rdp_params_dyn_array, g_strdup("/sound:rate:44100,channel:2"));
@@ -265,9 +266,9 @@ static BOOL rdp_begin_paint(rdpContext* context)
     gdi->primary->hdc->hwnd->invalid->null = TRUE;
 
     // Lock mutex to protect buffer
-    //ExtendedRdpContext* tf = (ExtendedRdpContext*)context;
+    //ExtendedRdpContext* ex = (ExtendedRdpContext*)context;
 
-    //g_mutex_lock(&tf->primary_buffer_mutex);
+    //g_mutex_lock(&ex->primary_buffer_mutex);
     return TRUE;
 }
 
@@ -280,15 +281,15 @@ static BOOL rdp_end_paint(rdpContext* context)
     //g_info("%s\n", (const char *)__func__);
 
     rdpGdi* gdi = context->gdi;
-    //ExtendedRdpContext* tf = (ExtendedRdpContext*)context;
+    //ExtendedRdpContext* ex = (ExtendedRdpContext*)context;
 
     if (gdi->primary->hdc->hwnd->invalid->null) {
-        //g_mutex_unlock(&tf->primary_buffer_mutex);
+        //g_mutex_unlock(&ex->primary_buffer_mutex);
         return TRUE;
     }
 
     if (gdi->primary->hdc->hwnd->ninvalid < 1) {
-        //g_mutex_unlock(&tf->primary_buffer_mutex);
+        //g_mutex_unlock(&ex->primary_buffer_mutex);
         return TRUE;
     }
 
@@ -301,7 +302,7 @@ static BOOL rdp_end_paint(rdpContext* context)
     gdi->primary->hdc->hwnd->invalid->null = TRUE;
     gdi->primary->hdc->hwnd->ninvalid = 0;
 
-    //g_mutex_unlock(&tf->primary_buffer_mutex);
+    //g_mutex_unlock(&ex->primary_buffer_mutex);
     return TRUE;
 }
 
@@ -447,17 +448,17 @@ static BOOL rdp_post_connect(freerdp* instance)
     //instance->update->Synchronize = update_send_synchronize;
 
     // create image surface. TODO: must be recreated on resize
-    ExtendedRdpContext* tf = (ExtendedRdpContext*)instance->context;
-    rdpGdi* gdi = tf->context.gdi;
+    ExtendedRdpContext* ex = (ExtendedRdpContext*)instance->context;
+    rdpGdi* gdi = ex->context.gdi;
 
-    g_mutex_lock(&tf->primary_buffer_mutex);
+    g_mutex_lock(&ex->primary_buffer_mutex);
 
     g_info("%s W: %i H: %i", (const char *)__func__, gdi->width, gdi->height);
     int stride = cairo_format_stride_for_width(cairo_format, gdi->width);
-    tf->surface = cairo_image_surface_create_for_data((unsigned char*)gdi->primary_buffer,
+    ex->surface = cairo_image_surface_create_for_data((unsigned char*)gdi->primary_buffer,
                                                       cairo_format, gdi->width, gdi->height, stride);
 
-    g_mutex_unlock(&tf->primary_buffer_mutex);
+    g_mutex_unlock(&ex->primary_buffer_mutex);
 
     return TRUE;
 }
@@ -507,9 +508,9 @@ static void rdp_post_disconnect(freerdp* instance)
 /* RDP main loop.
  * Connects RDP, loops while running and handles event and dispatch, cleans up
  * after the connection ends. */
-static DWORD WINAPI rdp_client_thread_proc(ExtendedRdpContext* tf)
+static DWORD WINAPI rdp_client_thread_proc(ExtendedRdpContext* ex)
 {
-    freerdp* instance = (freerdp*)tf->context.instance;
+    freerdp* instance = (freerdp*)ex->context.instance;
     DWORD nCount;
     DWORD status;
     HANDLE handles[64];
@@ -522,6 +523,11 @@ static DWORD WINAPI rdp_client_thread_proc(ExtendedRdpContext* tf)
 
     while (!freerdp_shall_disconnect(instance))
     {
+        if (freerdp_focus_required(instance))
+        {
+            g_info(" if (freerdp_focus_required(instance))");
+            rdp_keyboard_focus_in(ex);
+        }
         //g_info("In RDP while\n");
         nCount = freerdp_get_event_handles(instance->context, &handles[0], 64);
 
@@ -573,14 +579,14 @@ static void rdp_client_global_uninit(void)
 
 static int rdp_logon_error_info(freerdp* instance, UINT32 data, UINT32 type)
 {
-    //ExtendedRdpContext* tf;
+    //ExtendedRdpContext* ex;
     const char* str_data = freerdp_get_logon_error_info_data(data);
     const char* str_type = freerdp_get_logon_error_info_type(type);
 
     if (!instance || !instance->context)
         return -1;
 
-    //tf = (ExtendedRdpContext*)instance->context;
+    //ex = (ExtendedRdpContext*)instance->context;
     WLog_INFO(TAG, "Logon Error Info %s [%s]", str_data, str_type);
 
     return 1;
@@ -588,8 +594,8 @@ static int rdp_logon_error_info(freerdp* instance, UINT32 data, UINT32 type)
 
 static BOOL rdp_client_new(freerdp* instance, rdpContext* context)
 {
-    ExtendedRdpContext* tf = (ExtendedRdpContext*)context;
-    g_info("%s: tf->test_int: %i", (const char *)__func__, tf->test_int);
+    ExtendedRdpContext* ex = (ExtendedRdpContext*)context;
+    g_info("%s: ex->test_int: %i", (const char *)__func__, ex->test_int);
 
     if (!instance || !context)
         return FALSE;
@@ -607,7 +613,7 @@ static BOOL rdp_client_new(freerdp* instance, rdpContext* context)
 
     instance->LogonErrorInfo = rdp_logon_error_info;
 
-    g_mutex_init(&tf->primary_buffer_mutex);
+    g_mutex_init(&ex->primary_buffer_mutex);
 
     return TRUE;
 }
@@ -633,8 +639,8 @@ static void rdp_client_free(freerdp* instance G_GNUC_UNUSED, rdpContext* context
 static int rdp_client_start(rdpContext* context)
 {
     /* TODO: Start client related stuff */
-    ExtendedRdpContext* tf = (ExtendedRdpContext*)context;
-    g_info("%s: %i", (const char *)__func__, tf->test_int);
+    ExtendedRdpContext* ex = (ExtendedRdpContext*)context;
+    g_info("%s: %i", (const char *)__func__, ex->test_int);
 
     return 0;
 }
@@ -642,8 +648,8 @@ static int rdp_client_start(rdpContext* context)
 static int rdp_client_stop(rdpContext* context)
 {
     /* TODO: Stop client related stuff */
-    ExtendedRdpContext* tf = (ExtendedRdpContext*)context;
-    g_info("%s: %i", (const char *)__func__, tf->test_int);
+    ExtendedRdpContext* ex = (ExtendedRdpContext*)context;
+    g_info("%s: %i", (const char *)__func__, ex->test_int);
 
     return 0;
 }

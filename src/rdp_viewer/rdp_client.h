@@ -45,9 +45,6 @@ typedef struct {
     int whole_image_width;
     int whole_image_height;
 
-//    INT32 ninvalid;// number of invalid regions
-//    HGDI_RGN cinvalid;
-
     GdkCursor *gdk_cursor; // cursor
     GMutex cursor_mutex; // mutex for protecting gdk_cursor
 
