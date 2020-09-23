@@ -86,13 +86,15 @@ static GArray * rdp_client_create_params_array(ExtendedRdpContext* ex)
     add_rdp_param(rdp_params_dyn_array, g_strdup("/sound:rate:44100,channel:2"));
     add_rdp_param(rdp_params_dyn_array, g_strdup("/smartcard"));
     add_rdp_param(rdp_params_dyn_array, g_strdup("+fonts"));
+    add_rdp_param(rdp_params_dyn_array, g_strdup("/relax-order-checks"));
 #ifdef __linux__
 #elif _WIN32
-    add_rdp_param(rdp_params_dyn_array, g_strdup("/relax-order-checks"));
     add_rdp_param(rdp_params_dyn_array, g_strdup("+glyph-cache"));
 #endif
     // /gfx-h264:AVC444
-    rdp_client_read_str_rdp_param_from_ini_and_add(rdp_params_dyn_array, "rdp_h264_codec", "/gfx-h264");
+    gboolean is_rdp_h264_used = read_int_from_ini_file("RDPSettings", "is_rdp_h264_used", FALSE);
+    if (is_rdp_h264_used)
+        rdp_client_read_str_rdp_param_from_ini_and_add(rdp_params_dyn_array, "rdp_h264_codec", "/gfx-h264");
     // drives (folders)
     gchar *shared_folders_str = read_str_from_ini_file("RDPSettings", "rdp_shared_folders");
 
