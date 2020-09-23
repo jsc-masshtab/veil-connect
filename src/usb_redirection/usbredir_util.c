@@ -297,10 +297,11 @@ int usbredir_util_init_libusb_and_set_options(libusb_context **ctx, int verbose)
 #ifdef _WIN32
     libusb_set_option(*ctx, LIBUSB_OPTION_USE_USBDK);
 #endif
-#if LIBUSB_API_VERSION >= 0x01000106
-    libusb_set_option(*ctx, LIBUSB_OPTION_LOG_LEVEL, verbose);
-#else
+//#if LIBUSB_API_VERSION >= 0x01000106
+//    libusb_set_option(*ctx, LIBUSB_OPTION_LOG_LEVEL, verbose);
+//#else
+//    libusb_set_debug(*ctx, verbose);
+//#endif
     libusb_set_debug(*ctx, verbose);
-#endif
     return 0;
 }
