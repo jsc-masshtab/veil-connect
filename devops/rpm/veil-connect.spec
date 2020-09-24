@@ -18,6 +18,8 @@ Requires: libwinpr
 Requires: libxml2-devel
 Requires: gtk3-devel
 Requires: hiredis-devel
+Requires: libusb-devel
+Requires: usbredir-devel
 
 %description
 Veil Connect Thin Client
