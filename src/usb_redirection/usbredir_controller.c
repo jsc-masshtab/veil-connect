@@ -2,6 +2,8 @@
 // Created by solomin on 03.09.2020.
 //
 
+#include <stdlib.h>
+
 #include "async.h"
 #include "remote-viewer-util.h"
 #include "usbredir_controller.h"

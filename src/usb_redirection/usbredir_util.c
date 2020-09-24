@@ -5,7 +5,7 @@
 #include <glib-object.h>
 #include <ctype.h>
 #include <stdlib.h>
-
+#include <string.h>
 #include <stdio.h>
 #ifdef __linux__
 #include <unistd.h>

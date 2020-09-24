@@ -2,6 +2,8 @@
 // Created by ubuntu on 09.09.2020.
 //
 
+#include <stdlib.h>
+
 #ifdef _WIN32
 #include <winsock2.h>
 #include <iphlpapi.h>
