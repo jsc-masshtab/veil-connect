@@ -3,6 +3,7 @@
 //
 
 //#include "freerdp/rail/rail.h"
+#include <freerdp/version.h>
 
 #include "rdp_rail.h"
 
@@ -34,7 +35,7 @@ static UINT rdp_rail_server_start_cmd(RailClientContext* context)
     if (settings->AutoReconnectionEnabled)
         clientStatus.flags |= RAIL_CLIENTSTATUS_AUTORECONNECT;
 #endif
-#if FREERDP_VERSION_MINOR == 2
+#if FREERDP_VERSION_MINOR >= 2
     clientStatus.flags = TS_RAIL_CLIENTSTATUS_ALLOWLOCALMOVESIZE;
 
     if (settings->AutoReconnectionEnabled)

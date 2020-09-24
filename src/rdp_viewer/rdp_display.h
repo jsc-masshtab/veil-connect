@@ -1,3 +1,9 @@
+/**
+ * FreeRDP: A Remote Desktop Protocol Implementation
+ * GTK GUI
+ * Solomin a.solomin@mashtab.otg
+ */
+
 #ifndef RDP_DISPLAY_H
 #define RDP_DISPLAY_H
 
