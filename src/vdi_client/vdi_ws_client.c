@@ -17,10 +17,8 @@
 #define WS_READ_TIMEOUT 200000
 
 // static functions declarations
-void static async_create_ws_connect(GTask         *task,
-                                    gpointer       source_object G_GNUC_UNUSED,
-                                    gpointer       task_data G_GNUC_UNUSED,
-                                    GCancellable  *cancellable G_GNUC_UNUSED);
+static void protocol_switching_callback(SoupMessage *ws_msg, gpointer user_data);
+static void *async_create_ws_connect(VdiWsClient *vdi_ws_client);
 
 // implementations
 
@@ -34,20 +32,13 @@ static void protocol_switching_callback(SoupMessage *ws_msg, gpointer user_data)
     vdi_ws_client->stream = soup_session_steal_connection(vdi_ws_client->ws_soup_session, ws_msg);
 }
 
-static void async_create_ws_connect(GTask         *task G_GNUC_UNUSED,
-                                    gpointer       source_object G_GNUC_UNUSED,
-                                    gpointer       task_data,
-                                    GCancellable  *cancellable G_GNUC_UNUSED)
+static void *async_create_ws_connect(VdiWsClient *vdi_ws_client)
 {
-    VdiWsClient *vdi_ws_client = task_data;
-    g_mutex_lock(&vdi_ws_client->lock);
-
     // hand shake preparation
     SoupMessage *ws_msg = soup_message_new("GET", vdi_ws_client->vdi_url);
     if (ws_msg == NULL) {
         g_info("%s Cant parse message", (const char *)__func__);
-        g_mutex_unlock(&vdi_ws_client->lock);
-        return;
+        return NULL;
     }
     soup_websocket_client_prepare_handshake(ws_msg, NULL, NULL);
     soup_message_headers_replace(ws_msg->request_headers, "Connection", "keep-alive, Upgrade");
@@ -111,7 +102,7 @@ static void async_create_ws_connect(GTask         *task G_GNUC_UNUSED,
 
     g_object_unref(ws_msg);
 
-    g_mutex_unlock(&vdi_ws_client->lock);
+    return NULL;
 }
 
 void start_vdi_ws_polling(VdiWsClient *vdi_ws_client, const gchar *vdi_ip, const gchar *vdi_port,
@@ -138,27 +129,22 @@ void start_vdi_ws_polling(VdiWsClient *vdi_ws_client, const gchar *vdi_ip, const
     vdi_ws_client->is_running = TRUE;
     vdi_ws_client->cancel_job = g_cancellable_new();
 
-    g_mutex_init(&vdi_ws_client->lock);
-
-    execute_async_task(async_create_ws_connect, NULL, vdi_ws_client, NULL);
+    vdi_ws_client->thread = g_thread_new(NULL, (GThreadFunc)async_create_ws_connect, vdi_ws_client);
 }
 
 void stop_vdi_ws_polling(VdiWsClient *vdi_ws_client)
 {
-    g_info("%s", (const char *)__func__);
-
     // cancell
     vdi_ws_client->is_running = FALSE;
     g_cancellable_cancel(vdi_ws_client->cancel_job);
     soup_session_abort(vdi_ws_client->ws_soup_session);
 
-    // for syncronization. wait untill thread ws job finished. Is there a better solution? (like event primitive)
-    g_mutex_lock(&vdi_ws_client->lock);
-    g_mutex_unlock(&vdi_ws_client->lock);
-    g_mutex_clear(&vdi_ws_client->lock);
+    // for syncronization. wait untill thread ws job finished.
+    g_thread_join(vdi_ws_client->thread);
 
     // free memory
     g_object_unref(vdi_ws_client->ws_soup_session);
     g_free(vdi_ws_client->vdi_url);
     g_object_unref(vdi_ws_client->cancel_job);
+    g_info("%s", (const char *)__func__);
 }

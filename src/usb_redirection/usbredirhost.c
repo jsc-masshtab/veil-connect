@@ -752,11 +752,12 @@ struct usbredirhost *usbredirhost_open_full(
     usbredirparser_init(host->parser, version, caps, USB_REDIR_CAPS_SIZE,
                         parser_flags);
 
-#if LIBUSB_API_VERSION >= 0x01000106
-    libusb_set_option(host->ctx, LIBUSB_OPTION_LOG_LEVEL, host->verbose);
-#else
+//#if LIBUSB_API_VERSION >= 0x01000106
+//    libusb_set_option(host->ctx, LIBUSB_OPTION_LOG_LEVEL, host->verbose);
+//#else
+//    libusb_set_debug(host->ctx, host->verbose);
+//#endif
     libusb_set_debug(host->ctx, host->verbose);
-#endif
 
     if (usbredirhost_set_device(host, usb_dev_handle) != usb_redir_success) {
         usbredirhost_close(host);

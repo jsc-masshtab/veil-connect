@@ -26,9 +26,9 @@ typedef struct{
 
     gboolean is_running;
 
-    GMutex lock;
-
     GCancellable *cancel_job;
+
+    GThread *thread;
 
 } VdiWsClient;
 
