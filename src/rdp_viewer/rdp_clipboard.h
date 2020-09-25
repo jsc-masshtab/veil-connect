@@ -16,6 +16,7 @@ typedef struct {
     gulong			clipboard_handler;
 
     gpointer		srv_data;
+
 } RdpClipboard;
 
 void rdp_cliprdr_init(ExtendedRdpContext *ex_context, CliprdrClientContext *cliprdr);
