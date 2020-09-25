@@ -278,7 +278,7 @@ int rdp_rail_init(ExtendedRdpContext* ex_rdp_context, RailClientContext* rail)
     return 1;
 }
 
-int rdp_rail_uninit(ExtendedRdpContext* ex_rdp_context, RailClientContext* rail)
+int rdp_rail_uninit(ExtendedRdpContext* ex_rdp_context, RailClientContext* rail G_GNUC_UNUSED)
 {
     g_info("%s", (const char *)__func__);
 

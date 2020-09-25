@@ -83,6 +83,8 @@ list(APPEND SRC_CODE
         src/rdp_viewer/rdp_rail.c
         src/rdp_viewer/rdp_keyboard.h
         src/rdp_viewer/rdp_keyboard.c
+        src/rdp_viewer/rdp_clipboard.h
+        src/rdp_viewer/rdp_clipboard.c
 
 #utility
         src/utility/crashhandler.h
@@ -234,7 +236,7 @@ endif (WIN32)
     SET(LIBS ${LIBS} usb-1.0) # libusb-1.0.a
 
     # usbredirparser
-    SET(LIBS ${LIBS} usbredirparser) # usbredirhost
+    SET(LIBS ${LIBS} usbredirparser) #
 
 #############################LINKING###################################
 ADD_EXECUTABLE(veil_connect ${GUI_TYPE} ${SRC_CODE})

@@ -81,7 +81,7 @@ static GArray * rdp_client_create_params_array(ExtendedRdpContext* ex)
     add_rdp_param(rdp_params_dyn_array, g_strdup_printf("/p:%s", ex->password));
     add_rdp_param(rdp_params_dyn_array, g_strdup_printf("/w:%i", ex->whole_image_width));
     add_rdp_param(rdp_params_dyn_array, g_strdup_printf("/h:%i", ex->whole_image_height));
-    add_rdp_param(rdp_params_dyn_array, g_strdup("-clipboard"));
+    //add_rdp_param(rdp_params_dyn_array, g_strdup("-clipboard"));
     add_rdp_param(rdp_params_dyn_array, g_strdup("/cert-ignore"));
     add_rdp_param(rdp_params_dyn_array, g_strdup("/sound:rate:44100,channel:2"));
     add_rdp_param(rdp_params_dyn_array, g_strdup("/smartcard"));
