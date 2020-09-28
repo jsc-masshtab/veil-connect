@@ -18,6 +18,7 @@
 #include <gtk/gtk.h>
 
 #include "rdp_cursor.h"
+//#include "rdp_clipboard.h"
 
 struct ExtendedRdpContext;
 
@@ -72,6 +73,9 @@ typedef struct {
     // errors
     UINT32 last_rdp_error; // main freerdp error
     UINT32 rail_rdp_error; // remote app related error
+
+    // clipboard
+    //RdpClipboard* clipboard;
 
 } ExtendedRdpContext;
 
