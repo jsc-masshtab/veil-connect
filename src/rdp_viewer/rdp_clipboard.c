@@ -18,9 +18,14 @@ typedef struct {
     ExtendedRdpContext *ex_context;
     RdpClipboard *clipboard;
     RdpClipboardEventType rdp_clipboard_event_type;
-    //gpointer custom_data; // Зависит от  типа rdp_clipboard_event_type
+
     GtkTargetList *target_list;
 
+    gpointer data;
+    UINT32 format;
+
+
+// union can be use to decrease size
 } RdpClipboardEventData;
 
 // We cant use GTK functions in thread so invoke callback which will beexecuted in the main thread
@@ -50,7 +55,6 @@ void rdp_cliprdr_request_data(GtkClipboard *gtkClipboard, GtkSelectionData *sele
 
     clipboard->context->ClientFormatDataRequest(clipboard->context ,pFormatDataRequest);
     free(pFormatDataRequest);
-
 
 
     ///* Busy wait clibpoard data for CLIPBOARD_TRANSFER_WAIT_TIME seconds */
@@ -107,33 +111,35 @@ void rdp_cliprdr_set_clipboard_data(RdpClipboardEventData *rdp_clipboard_event_d
     if (gtkClipboard && targets) {
         gtk_clipboard_set_with_data(gtkClipboard, targets, n_targets,
                                      (GtkClipboardGetFunc)rdp_cliprdr_request_data,
-                                     (GtkClipboardClearFunc)rdp_cliprdr_empty_clipboard, ex_context);
+                                     (GtkClipboardClearFunc)rdp_cliprdr_empty_clipboard,
+                                     rdp_clipboard_event_data->clipboard);
         gtk_target_table_free(targets, n_targets);
     }
 
     gtk_target_list_unref(rdp_clipboard_event_data->target_list);
 }
 
-//void rdp_cliprdr_set_clipboard_content(RdpClipboardEventData *rdp_clipboard_event_data)
-//{
-//    g_info("%s", (const char *)__func__);
-//
-//    GtkClipboard* gtkClipboard;
-//    ExtendedRdpContext *ex_context = rdp_clipboard_event_data->ex_context;
-//
-//
-//    RdpWindowData *rdp_window_data = g_array_index(ex_context->rdp_windows_array, RdpWindowData *, 0);
-//    gtkClipboard = gtk_widget_get_clipboard(rdp_window_data->rdp_viewer_window, GDK_SELECTION_CLIPBOARD);
-//
-//    if (ui->clipboard.format == CB_FORMAT_PNG || ui->clipboard.format == CF_DIB ||
-//    ui->clipboard.format == CF_DIBV5 || ui->clipboard.format == CB_FORMAT_JPEG) {
-//        gtk_clipboard_set_image( gtkClipboard, ui->clipboard.data );
-//        g_object_unref(ui->clipboard.data);
-//    }else  {
-//        gtk_clipboard_set_text( gtkClipboard, ui->clipboard.data, -1 );
-//        free(ui->clipboard.data);
-//    }
-//}
+void rdp_cliprdr_set_clipboard_content(RdpClipboardEventData *rdp_clipboard_event_data)
+{
+    g_info("%s", (const char *)__func__);
+
+    GtkClipboard* gtkClipboard;
+    ExtendedRdpContext *ex_context = rdp_clipboard_event_data->ex_context;
+
+
+    RdpWindowData *rdp_window_data = g_array_index(ex_context->rdp_windows_array, RdpWindowData *, 0);
+    gtkClipboard = gtk_widget_get_clipboard(rdp_window_data->rdp_viewer_window, GDK_SELECTION_CLIPBOARD);
+
+    RdpClipboard *clipboard = rdp_clipboard_event_data->clipboard;
+    if (clipboard->format == CB_FORMAT_PNG || clipboard->format == CF_DIB ||
+            clipboard->format == CF_DIBV5 || clipboard->format == CB_FORMAT_JPEG) {
+        gtk_clipboard_set_image(gtkClipboard, rdp_clipboard_event_data->data);
+        g_object_unref(rdp_clipboard_event_data->data);
+    }else  {
+        gtk_clipboard_set_text(gtkClipboard, rdp_clipboard_event_data->data, -1);
+        free(rdp_clipboard_event_data->data);
+    }
+}
 
 // Executed in the main thread (GTK requirement)
 static gboolean rdp_cliprdr_event_process(RdpClipboardEventData *rdp_clipboard_event_data)
@@ -157,7 +163,7 @@ static gboolean rdp_cliprdr_event_process(RdpClipboardEventData *rdp_clipboard_e
             break;
 
         case RDP_CLIPBOARD_SET_CONTENT:
-            //rdp_cliprdr_set_clipboard_content(gp, ui);
+            rdp_cliprdr_set_clipboard_content(rdp_clipboard_event_data);
             break;
     }
 
@@ -361,7 +367,7 @@ static UINT rdp_cliprdr_server_format_data_request(CliprdrClientContext* context
     return CHANNEL_RC_OK;
 }
 
-// Вызывается когда у себя делаешь Вставить первый раз (Должна)
+// Вызывается когда у себя делаешь Вставить первый раз
 static UINT rdp_cliprdr_server_format_data_response(CliprdrClientContext* context,
         const CLIPRDR_FORMAT_DATA_RESPONSE* formatDataResponse)
 {
@@ -467,26 +473,17 @@ static UINT rdp_cliprdr_server_format_data_response(CliprdrClientContext* contex
         }
     }
 
-    //pthread_mutex_lock(&clipboard->transfer_clip_mutex);
-    //pthread_cond_signal(&clipboard->transfer_clip_cond);
-    //if ( clipboard->srv_clip_data_wait == SCDW_BUSY_WAIT ) {
-    //    clipboard->srv_data = output;
-    //}else  {
-    //    // Clipboard data arrived from server when we are not busywaiting.
-    //    // Just put it on the local clipboard
-    //
-    //    ui = g_new0(RemminaPluginRdpUiObject, 1);
-    //    ui->type = REMMINA_RDP_UI_CLIPBOARD;
-    //    ui->clipboard.clipboard = clipboard;
-    //    ui->clipboard.type = REMMINA_RDP_UI_CLIPBOARD_SET_CONTENT;
-    //    ui->clipboard.data = output;
-    //    ui->clipboard.format = clipboard->format;
-    //    remmina_rdp_event_queue_ui_sync_retint(gp, ui);
-    //
-    //    clipboard->srv_clip_data_wait = SCDW_NONE;
-    //
-    //}
-    //pthread_mutex_unlock(&clipboard->transfer_clip_mutex);
+    // Schedule to execute in the main thread
+    RdpClipboardEventData *rdp_clipboard_event_data = calloc(1, sizeof(RdpClipboardEventData)); // will be freed
+    // in callback
+    rdp_clipboard_event_data->rdp_clipboard_event_type = RDP_CLIPBOARD_SET_CONTENT;
+
+    rdp_clipboard_event_data->ex_context = clipboard->ex_context;
+    rdp_clipboard_event_data->clipboard = clipboard;
+    rdp_clipboard_event_data->data = output;
+    rdp_clipboard_event_data->format = clipboard->format;
+
+    g_idle_add((GSourceFunc)rdp_cliprdr_event_process, rdp_clipboard_event_data);
 
     return CHANNEL_RC_OK;
 }
