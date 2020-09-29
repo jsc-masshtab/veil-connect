@@ -7,6 +7,8 @@
 #include "rdp_viewer_window.h"
 #include "rdp_clipboard.h"
 
+#define CLIPBOARD_TRANSFER_WAIT_TIME 1 // sec
+
 typedef enum {
     RDP_CLIPBOARD_FORMATLIST,
     RDP_CLIPBOARD_GET_DATA,
@@ -28,7 +30,7 @@ typedef struct {
 // union can be use to decrease size
 } RdpClipboardEventData;
 
-// We cant use GTK functions in thread so invoke callback which will beexecuted in the main thread
+// We cant use GTK functions in thread so invoke callback which will be executed in the main thread
 typedef gboolean (*RdpClipboardEventProcess) (RdpClipboardEventData *rdp_clipboard_event_data);
 
 void rdp_cliprdr_request_data(GtkClipboard *gtkClipboard, GtkSelectionData *selection_data, guint info,
@@ -49,6 +51,8 @@ void rdp_cliprdr_request_data(GtkClipboard *gtkClipboard, GtkSelectionData *sele
     clipboard->format = info;
 
     /* Request Clipboard content from the server, the request is async */
+    g_mutex_lock(&clipboard->transfer_clip_mutex);
+
     CLIPRDR_FORMAT_DATA_REQUEST *pFormatDataRequest =
             (CLIPRDR_FORMAT_DATA_REQUEST*)calloc(1, sizeof(CLIPRDR_FORMAT_DATA_REQUEST));
     pFormatDataRequest->requestedFormatId = clipboard->format;
@@ -56,39 +60,21 @@ void rdp_cliprdr_request_data(GtkClipboard *gtkClipboard, GtkSelectionData *sele
     clipboard->context->ClientFormatDataRequest(clipboard->context ,pFormatDataRequest);
     free(pFormatDataRequest);
 
-
     ///* Busy wait clibpoard data for CLIPBOARD_TRANSFER_WAIT_TIME seconds */
-    //gettimeofday(&tv, NULL);
-    //struct timespec to;
-    //struct timeval tv;
-    //int rc;
-    //to.tv_sec = tv.tv_sec + CLIPBOARD_TRANSFER_WAIT_TIME;
-    //to.tv_nsec = tv.tv_usec * 1000;
-    //rc = pthread_cond_timedwait(&clipboard->transfer_clip_cond, &clipboard->transfer_clip_mutex, &to);
-    //
-    //if ( rc == 0 ) {
-    //    /* Data has arrived without timeout */
-    //    if (clipboard->srv_data != NULL) {
-    //        if (info == CB_FORMAT_PNG || info == CF_DIB || info == CF_DIBV5 || info == CB_FORMAT_JPEG) {
-    //            gtk_selection_data_set_pixbuf(selection_data, clipboard->srv_data);
-    //            g_object_unref(clipboard->srv_data);
-    //        }else  {
-    //            gtk_selection_data_set_text(selection_data, clipboard->srv_data, -1);
-    //            free(clipboard->srv_data);
-    //        }
-    //    }
-    //    clipboard->srv_clip_data_wait = SCDW_NONE;
-    //} else {
-    //    clipboard->srv_clip_data_wait = SCDW_ASYNCWAIT;
-    //    if ( rc == ETIMEDOUT ) {
-    //        remmina_plugin_service->log_printf("[RDP] Clipboard data has not been transferred from the server in %d seconds. Try to paste later.\n",
-    //                                           CLIPBOARD_TRANSFER_WAIT_TIME);
-    //    }else  {
-    //        remmina_plugin_service->log_printf("[RDP] internal error: pthread_cond_timedwait() returned %d\n", rc);
-    //        clipboard->srv_clip_data_wait = SCDW_NONE;
-    //    }
-    //}
-    //pthread_mutex_unlock(&clipboard->transfer_clip_mutex);
+    // g_cond_wait_until return FALSE if end_time has passed
+    // GLib doc forces us to use g_cond_wait_until with while
+    clipboard->is_transfered = FALSE;
+    g_info("%s %li", (const char *)__func__, pthread_self());
+    gint64 end_time = g_get_monotonic_time() + CLIPBOARD_TRANSFER_WAIT_TIME * G_TIME_SPAN_SECOND;
+    while (!clipboard->is_transfered) {
+        if (g_cond_wait_until(&clipboard->transfer_clip_cond, &clipboard->transfer_clip_mutex,
+                              end_time) == FALSE) {
+            g_info("end_time has passed");
+            break;
+        }
+    }
+    g_info("Broke from while");
+    g_mutex_unlock(&clipboard->transfer_clip_mutex);
 }
 
 void rdp_cliprdr_empty_clipboard(GtkClipboard *gtkClipboard G_GNUC_UNUSED, RdpClipboard *clipboard G_GNUC_UNUSED)
@@ -168,8 +154,6 @@ static gboolean rdp_cliprdr_event_process(RdpClipboardEventData *rdp_clipboard_e
     }
 
     // free
-    //if (rdp_clipboard_event_data->custom_data)
-    //    free(rdp_clipboard_event_data->custom_data);
     free(rdp_clipboard_event_data);
 
     return FALSE;
@@ -473,6 +457,12 @@ static UINT rdp_cliprdr_server_format_data_response(CliprdrClientContext* contex
         }
     }
 
+    g_info("%s Before g_mutex_lock(&clipboard->transfer_clip_mutex); %lu", __func__, pthread_self());
+    g_mutex_lock(&clipboard->transfer_clip_mutex);
+    clipboard->is_transfered = TRUE;
+    g_cond_signal(&clipboard->transfer_clip_cond);
+    g_info("g_cond_signal(&clipboard->transfer_clip_cond);");
+
     // Schedule to execute in the main thread
     RdpClipboardEventData *rdp_clipboard_event_data = calloc(1, sizeof(RdpClipboardEventData)); // will be freed
     // in callback
@@ -484,6 +474,8 @@ static UINT rdp_cliprdr_server_format_data_response(CliprdrClientContext* contex
     rdp_clipboard_event_data->format = clipboard->format;
 
     g_idle_add((GSourceFunc)rdp_cliprdr_event_process, rdp_clipboard_event_data);
+
+    g_mutex_unlock(&clipboard->transfer_clip_mutex);
 
     return CHANNEL_RC_OK;
 }
@@ -497,6 +489,10 @@ void rdp_cliprdr_init(ExtendedRdpContext *ex_context, CliprdrClientContext *clip
     cliprdr->custom = (void*)clipboard;
     clipboard->ex_context = ex_context;
 
+    // clipboard->srv_clip_data_wait = SCDW_NONE; //srv_clip_data_wait
+    g_mutex_init(&clipboard->transfer_clip_mutex);
+    g_cond_init(&clipboard->transfer_clip_cond);
+
     cliprdr->MonitorReady = rdp_cliprdr_monitor_ready;
     cliprdr->ServerCapabilities = rdp_cliprdr_server_capabilities;
     cliprdr->ServerFormatList = rdp_cliprdr_server_format_list;
@@ -509,6 +505,10 @@ void rdp_cliprdr_uninit(ExtendedRdpContext *ex_context, CliprdrClientContext* cl
 {
     if (cliprdr->custom) {
         RdpClipboard* clipboard = (RdpClipboard*)cliprdr->custom;
+
+        g_mutex_clear(&clipboard->transfer_clip_mutex);
+        g_cond_clear(&clipboard->transfer_clip_cond);
+
         clipboard->context = NULL;
         free(cliprdr->custom);
     }

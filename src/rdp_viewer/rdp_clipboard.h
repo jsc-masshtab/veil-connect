@@ -5,6 +5,7 @@
 #ifndef VEIL_CONNECT_RDP_CLIPBOARD_H
 #define VEIL_CONNECT_RDP_CLIPBOARD_H
 
+
 #include "rdp_client.h"
 
 typedef struct {
@@ -16,6 +17,10 @@ typedef struct {
     gulong			clipboard_handler;
 
     gpointer		srv_data;
+
+    GMutex transfer_clip_mutex;
+    GCond transfer_clip_cond;
+    gboolean is_transfered;
 
 } RdpClipboard;
 
