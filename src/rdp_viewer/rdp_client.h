@@ -60,10 +60,7 @@ typedef struct {
     gchar *ip;
     int port;
 
-    //client monitors geometry info
-    //GdkRectangle client_monitors_geometry[MAX_DISPLAY_NUMBER];
-
-    UpdateImageCallback update_image_callback; // callback for updating image in the main thread
+    // UpdateImageCallback update_image_callback; // callback for updating image in the main thread
     UpdateCursorCallback update_cursor_callback; // callback for updating cursor in the main thread
 
     // rail
@@ -73,9 +70,6 @@ typedef struct {
     // errors
     UINT32 last_rdp_error; // main freerdp error
     UINT32 rail_rdp_error; // remote app related error
-
-    // clipboard
-    //RdpClipboard* clipboard;
 
 } ExtendedRdpContext;
 

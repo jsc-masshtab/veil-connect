@@ -16,8 +16,6 @@ typedef struct {
     UINT32			format;
     gulong			clipboard_handler;
 
-    gpointer		srv_data;
-
     GMutex transfer_clip_mutex;
     GCond transfer_clip_cond;
     gboolean is_transfered;

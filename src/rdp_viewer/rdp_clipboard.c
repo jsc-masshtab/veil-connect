@@ -82,7 +82,29 @@ void rdp_cliprdr_empty_clipboard(GtkClipboard *gtkClipboard G_GNUC_UNUSED, RdpCl
     g_info("%s", (const char *)__func__);
 }
 
-void rdp_cliprdr_set_clipboard_data(RdpClipboardEventData *rdp_clipboard_event_data)
+static void rdp_cliprdr_mt_get_format_list(RdpClipboardEventData *rdp_clipboard_event_data)
+{
+    g_info("%s", (const char *)__func__);
+    //CLIPRDR_FORMAT_LIST *client_format_list =
+    //        rdp_cliprdr_get_client_format_list(rdp_clipboard_event_data); // нахер? Мб при подключении прокинуть
+    //        // содержимое  буфера клиента
+}
+
+static void rdp_cliprdr_get_clipboard_data(RdpClipboardEventData *rdp_clipboard_event_data)
+{
+
+}
+
+static GtkClipboard* get_gtk_clipboard(ExtendedRdpContext *ex_context)
+{
+    if (ex_context->rdp_windows_array->len == 0)
+        return NULL;
+
+    RdpWindowData *rdp_window_data = g_array_index(ex_context->rdp_windows_array, RdpWindowData *, 0);
+    return gtk_widget_get_clipboard(rdp_window_data->rdp_viewer_window, GDK_SELECTION_CLIPBOARD);
+}
+
+static void rdp_cliprdr_set_clipboard_data(RdpClipboardEventData *rdp_clipboard_event_data)
 {
     g_info("%s", (const char *)__func__);
 
@@ -90,9 +112,7 @@ void rdp_cliprdr_set_clipboard_data(RdpClipboardEventData *rdp_clipboard_event_d
     ExtendedRdpContext *ex_context = rdp_clipboard_event_data->ex_context;
     GtkTargetEntry *targets = gtk_target_table_new_from_list(rdp_clipboard_event_data->target_list, &n_targets);
 
-    // get the first window
-    RdpWindowData *rdp_window_data = g_array_index(ex_context->rdp_windows_array, RdpWindowData *, 0);
-    GtkClipboard* gtkClipboard = gtk_widget_get_clipboard(rdp_window_data->rdp_viewer_window, GDK_SELECTION_CLIPBOARD);
+    GtkClipboard* gtkClipboard = get_gtk_clipboard(ex_context);
 
     if (gtkClipboard && targets) {
         gtk_clipboard_set_with_data(gtkClipboard, targets, n_targets,
@@ -105,23 +125,21 @@ void rdp_cliprdr_set_clipboard_data(RdpClipboardEventData *rdp_clipboard_event_d
     gtk_target_list_unref(rdp_clipboard_event_data->target_list);
 }
 
-void rdp_cliprdr_set_clipboard_content(RdpClipboardEventData *rdp_clipboard_event_data)
+static void rdp_cliprdr_set_clipboard_content(RdpClipboardEventData *rdp_clipboard_event_data)
 {
     g_info("%s", (const char *)__func__);
 
-    GtkClipboard* gtkClipboard;
     ExtendedRdpContext *ex_context = rdp_clipboard_event_data->ex_context;
 
 
-    RdpWindowData *rdp_window_data = g_array_index(ex_context->rdp_windows_array, RdpWindowData *, 0);
-    gtkClipboard = gtk_widget_get_clipboard(rdp_window_data->rdp_viewer_window, GDK_SELECTION_CLIPBOARD);
+    GtkClipboard* gtkClipboard = get_gtk_clipboard(ex_context);
 
     RdpClipboard *clipboard = rdp_clipboard_event_data->clipboard;
     if (clipboard->format == CB_FORMAT_PNG || clipboard->format == CF_DIB ||
             clipboard->format == CF_DIBV5 || clipboard->format == CB_FORMAT_JPEG) {
         gtk_clipboard_set_image(gtkClipboard, rdp_clipboard_event_data->data);
         g_object_unref(rdp_clipboard_event_data->data);
-    }else  {
+    }else {
         gtk_clipboard_set_text(gtkClipboard, rdp_clipboard_event_data->data, -1);
         free(rdp_clipboard_event_data->data);
     }
@@ -137,11 +155,11 @@ static gboolean rdp_cliprdr_event_process(RdpClipboardEventData *rdp_clipboard_e
     switch (rdp_clipboard_event_data->rdp_clipboard_event_type) {
 
         case RDP_CLIPBOARD_FORMATLIST:
-            //rdp_cliprdr_mt_get_format_list(gp, ui);
+            rdp_cliprdr_mt_get_format_list(rdp_clipboard_event_data);
             break;
 
         case RDP_CLIPBOARD_GET_DATA:
-            //rdp_cliprdr_get_clipboard_data(gp, ui);
+            rdp_cliprdr_get_clipboard_data(rdp_clipboard_event_data);
             break;
 
         case RDP_CLIPBOARD_SET_DATA:
@@ -157,6 +175,38 @@ static gboolean rdp_cliprdr_event_process(RdpClipboardEventData *rdp_clipboard_e
     free(rdp_clipboard_event_data);
 
     return FALSE;
+}
+
+// magic functions from remmina
+static UINT8* lf2crlf(UINT8* data, int* size)
+{
+    UINT8 c;
+    UINT8* outbuf;
+    UINT8* out;
+    UINT8* in_end;
+    UINT8* in;
+    int out_size;
+
+    out_size = (*size) * 2 + 1;
+    outbuf = (UINT8*)malloc(out_size);
+    out = outbuf;
+    in = data;
+    in_end = data + (*size);
+
+    while (in < in_end) {
+        c = *in++;
+        if (c == '\n') {
+            *out++ = '\r';
+            *out++ = '\n';
+        }else  {
+            *out++ = c;
+        }
+    }
+
+    *out++ = 0;
+    *size = out - outbuf;
+
+    return outbuf;
 }
 
 static void crlf2lf(UINT8* data, size_t* size)
@@ -217,6 +267,7 @@ static UINT rdp_cliprdr_send_client_format_list(RdpClipboard* clipboard)
     //    formats[i].formatId = clipboard->clientFormats[i].formatId;
     //    formats[i].formatName = clipboard->clientFormats[i].formatName;
     //}
+    // Used formats (todo: what about images?)
     formats[0].formatId = CF_RAW;
     formats[0].formatName = "_FREERDP_RAW";
     formats[1].formatId = CF_UNICODETEXT;
@@ -231,13 +282,16 @@ static UINT rdp_cliprdr_send_client_format_list(RdpClipboard* clipboard)
     ret = clipboard->context->ClientFormatList(clipboard->context, &formatList);
     free(formats);
 
-    //xfContext* xfc = clipboard->xfc;
-    //if (clipboard->owner && clipboard->owner != xfc->drawable)
-    //{
-    //    /* Request the owner for TARGETS, and wait for SelectionNotify event */
-    //    XConvertSelection(xfc->display, clipboard->clipboard_atom, clipboard->targets[1],
-    //                      clipboard->property_atom, xfc->drawable, CurrentTime);
-    //}
+    // Schedule to execute in the main thread
+    //RdpClipboardEventData *rdp_clipboard_event_data = calloc(1, sizeof(RdpClipboardEventData)); // will be freed
+    //// in callback
+    //rdp_clipboard_event_data->rdp_clipboard_event_type = RDP_CLIPBOARD_FORMATLIST;
+    //rdp_clipboard_event_data->pFormatList = pFormatList;
+    //
+    //rdp_clipboard_event_data->ex_context = clipboard->ex_context;
+    //rdp_clipboard_event_data->clipboard = clipboard;
+    //
+    //g_idle_add((GSourceFunc)rdp_cliprdr_event_process, rdp_clipboard_event_data);
 
     return ret;
 }
@@ -480,6 +534,123 @@ static UINT rdp_cliprdr_server_format_data_response(CliprdrClientContext* contex
     return CHANNEL_RC_OK;
 }
 
+static gboolean rdp_event_on_clipboard(GtkClipboard *gtkClipboard, GdkEvent *event, RdpClipboard* clipboard)
+{
+    /* Signal handler for GTK clipboard owner-change */
+    g_info("%s", (const char *)__func__);
+
+    //RemminaPluginRdpEvent rdp_event = { 0 };
+    //CLIPRDR_FORMAT_LIST* pFormatList;
+
+    /* Usually "owner-change" is fired when a user pres "COPY" on the client
+     * OR when this plugin calls gtk_clipboard_set_with_owner()
+     * after receivina a RDP server format list in remmina_rdp_cliprdr_server_format_list()
+     * In the latter case, we must ignore owner change */
+
+    //if (gtk_clipboard_get_owner(gtkClipboard) != (GObject*)gp) {
+    //    pFormatList = remmina_rdp_cliprdr_get_client_format_list(gp);
+    //    rdp_event.type = REMMINA_RDP_EVENT_TYPE_CLIPBOARD_SEND_CLIENT_FORMAT_LIST;
+    //    rdp_event.clipboard_formatlist.pFormatList = pFormatList;
+    //    remmina_rdp_event_event_push(gp, &rdp_event);
+    //}
+
+
+
+    // Попробуем напрямую послать данные
+    UINT8* inbuf = NULL;
+    UINT8* outbuf = NULL;
+    GdkPixbuf *image = NULL;
+    int size = 0;
+    ExtendedRdpContext *ex_context = clipboard->ex_context;
+    clipboard->format = CF_TEXT; // temp test
+    if (gtkClipboard) {
+        switch (clipboard->format) {
+            case CF_TEXT:
+            case CF_UNICODETEXT:
+            case CB_FORMAT_HTML:
+            {
+                inbuf = (UINT8*)gtk_clipboard_wait_for_text(gtkClipboard);
+                break;
+            }
+
+            case CB_FORMAT_PNG:
+            case CB_FORMAT_JPEG:
+            case CF_DIB:
+            case CF_DIBV5:
+            {
+                image = gtk_clipboard_wait_for_image(gtkClipboard);
+                break;
+            }
+        }
+    }
+
+    /* No data received, send nothing */
+    if (inbuf != NULL || image != NULL) {
+        switch (clipboard->format) {
+            case CF_TEXT:
+            case CB_FORMAT_HTML:
+            {
+                size = strlen((char*)inbuf);
+                outbuf = lf2crlf(inbuf, &size);
+                break;
+            }
+            case CF_UNICODETEXT:
+            {
+                size = strlen((char*)inbuf);
+                inbuf = lf2crlf(inbuf, &size);
+                size = (ConvertToUnicode(CP_UTF8, 0, (CHAR*)inbuf, -1, (WCHAR**)&outbuf, 0) ) * sizeof(WCHAR);
+                g_free(inbuf);
+                break;
+            }
+            case CB_FORMAT_PNG:
+            {
+                gchar* data;
+                gsize buffersize;
+                gdk_pixbuf_save_to_buffer(image, &data, &buffersize, "png", NULL, NULL);
+                outbuf = (UINT8*)malloc(buffersize);
+                memcpy(outbuf, data, buffersize);
+                size = buffersize;
+                g_object_unref(image);
+                break;
+            }
+            case CB_FORMAT_JPEG:
+            {
+                gchar* data;
+                gsize buffersize;
+                gdk_pixbuf_save_to_buffer(image, &data, &buffersize, "jpeg", NULL, NULL);
+                outbuf = (UINT8*)malloc(buffersize);
+                memcpy(outbuf, data, buffersize);
+                size = buffersize;
+                g_object_unref(image);
+                break;
+            }
+            case CF_DIB:
+            case CF_DIBV5:
+            {
+                gchar* data;
+                gsize buffersize;
+                gdk_pixbuf_save_to_buffer(image, &data, &buffersize, "bmp", NULL, NULL);
+                size = buffersize - 14;
+                outbuf = (UINT8*)malloc(size);
+                memcpy(outbuf, data + 14, size);
+                g_object_unref(image);
+                break;
+            }
+        }
+    }
+
+    //
+    CLIPRDR_FORMAT_DATA_RESPONSE response = { 0 };
+    response.msgType = CB_FORMAT_DATA_RESPONSE;
+    response.msgFlags = outbuf ? CB_RESPONSE_OK : CB_RESPONSE_FAIL;
+    response.dataLen = size;
+    response.requestedFormatData = outbuf;
+
+    clipboard->context->ClientFormatDataResponse(clipboard->context, &response);
+
+    return TRUE;
+}
+
 //GdkDisplay *display = gdk_display_get_default();
 //GtkClipboard *gtk_clipboard = gtk_clipboard_get_for_display(display, GDK_SELECTION_CLIPBOARD);
 void rdp_cliprdr_init(ExtendedRdpContext *ex_context, CliprdrClientContext *cliprdr)
@@ -489,7 +660,6 @@ void rdp_cliprdr_init(ExtendedRdpContext *ex_context, CliprdrClientContext *clip
     cliprdr->custom = (void*)clipboard;
     clipboard->ex_context = ex_context;
 
-    // clipboard->srv_clip_data_wait = SCDW_NONE; //srv_clip_data_wait
     g_mutex_init(&clipboard->transfer_clip_mutex);
     g_cond_init(&clipboard->transfer_clip_cond);
 
@@ -499,6 +669,12 @@ void rdp_cliprdr_init(ExtendedRdpContext *ex_context, CliprdrClientContext *clip
     cliprdr->ServerFormatListResponse = rdp_cliprdr_server_format_list_response;
     cliprdr->ServerFormatDataRequest = rdp_cliprdr_server_format_data_request;
     cliprdr->ServerFormatDataResponse = rdp_cliprdr_server_format_data_response;
+
+    // clipboard monitor. Copy event on client
+    GtkClipboard *gtkClipboard = get_gtk_clipboard(ex_context);
+    if (gtkClipboard)
+        clipboard->clipboard_handler = g_signal_connect(gtkClipboard, "owner-change",
+                                                        G_CALLBACK(rdp_event_on_clipboard), clipboard);
 }
 
 void rdp_cliprdr_uninit(ExtendedRdpContext *ex_context, CliprdrClientContext* cliprdr)
@@ -508,6 +684,13 @@ void rdp_cliprdr_uninit(ExtendedRdpContext *ex_context, CliprdrClientContext* cl
 
         g_mutex_clear(&clipboard->transfer_clip_mutex);
         g_cond_clear(&clipboard->transfer_clip_cond);
+
+        /* unregister the clipboard monitor */
+        if (clipboard->clipboard_handler) {
+            GtkClipboard *gtkClipboard = get_gtk_clipboard(ex_context);
+            g_signal_handler_disconnect(G_OBJECT(gtkClipboard), clipboard->clipboard_handler);
+            clipboard->clipboard_handler = 0;
+        }
 
         clipboard->context = NULL;
         free(cliprdr->custom);
