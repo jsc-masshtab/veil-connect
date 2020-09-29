@@ -397,7 +397,6 @@ static gboolean rdp_display_event_on_configure(GtkWidget *widget G_GNUC_UNUSED,
 
     if (ex_contect && ex_contect->is_running) {
         g_mutex_lock(&ex_contect->primary_buffer_mutex);
-        //rdp_client_adjust_im_origin_point(ex_contect);
         g_mutex_unlock(&ex_contect->primary_buffer_mutex);
     }
 
