@@ -11,7 +11,6 @@
 #define CLIPBOARD_TRANSFER_WAIT_TIME 1 // sec
 
 typedef enum {
-    RDP_CLIPBOARD_FORMATLIST,
     RDP_CLIPBOARD_GET_DATA,
     RDP_CLIPBOARD_SET_DATA,
     RDP_CLIPBOARD_SET_CONTENT
@@ -144,14 +143,6 @@ void rdp_cliprdr_request_data(GtkClipboard *gtkClipboard, GtkSelectionData *sele
 void rdp_cliprdr_empty_clipboard(GtkClipboard *gtkClipboard G_GNUC_UNUSED, RdpClipboard *clipboard G_GNUC_UNUSED)
 {
     g_info("%s", (const char *)__func__);
-}
-
-static void rdp_cliprdr_mt_get_format_list(RdpClipboardEventData *rdp_clipboard_event_data)
-{
-    g_info("%s", (const char *)__func__);
-    //CLIPRDR_FORMAT_LIST *client_format_list =
-    //        rdp_cliprdr_get_client_format_list(rdp_clipboard_event_data); // нахер? Мб при подключении прокинуть
-    //        // содержимое  буфера клиента
 }
 
 static void rdp_cliprdr_get_clipboard_data(RdpClipboardEventData *rdp_clipboard_event_data)
@@ -302,10 +293,6 @@ static gboolean rdp_cliprdr_event_process(RdpClipboardEventData *rdp_clipboard_e
         return FALSE;
 
     switch (rdp_clipboard_event_data->rdp_clipboard_event_type) {
-
-        case RDP_CLIPBOARD_FORMATLIST:
-            rdp_cliprdr_mt_get_format_list(rdp_clipboard_event_data);
-            break;
 
         case RDP_CLIPBOARD_GET_DATA:
             rdp_cliprdr_get_clipboard_data(rdp_clipboard_event_data);
@@ -696,8 +683,14 @@ static gboolean rdp_event_on_clipboard(GtkClipboard *gtkClipboard, GdkEvent *eve
     /* Signal handler for GTK clipboard owner-change */
     g_info("%s thread id %li",(const char*)__func__, pthread_self());
 
-    RdpWindowData *rdp_window_data = g_array_index(clipboard->ex_context->rdp_windows_array, RdpWindowData *, 0);
-    gboolean is_toplevel_focus = gtk_window_has_toplevel_focus(GTK_WINDOW(rdp_window_data->rdp_viewer_window));
+    // Смотрим находится ли какое-либо из окон в фокусе. Если находится, то игнорируем событие, так как
+    // манинимуляции с буфером были скорее всего на удаленной машине
+    gboolean is_toplevel_focus = FALSE;
+    GArray *rdp_windows_array = clipboard->ex_context->rdp_windows_array;
+    for (guint i = 0; i < rdp_windows_array->len; ++i) {
+        RdpWindowData *rdp_window_data = g_array_index(rdp_windows_array, RdpWindowData *, i);
+        is_toplevel_focus = gtk_window_has_toplevel_focus(GTK_WINDOW(rdp_window_data->rdp_viewer_window));
+    }
     g_info("%s is_focus: %i", (const char *)__func__, is_toplevel_focus);
 
     /* Usually "owner-change" is fired when a user pres "COPY" on the client
