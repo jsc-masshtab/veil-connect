@@ -95,6 +95,7 @@ main(int argc, char **argv)
     virt_viewer_util_init("Veil Connect");
     g_info("APP VERSION %s FREERDP_VERSION %s", VERSION, FREERDP_VERSION_FULL);
     g_info("Build data time: %s %s", __DATE__, __TIME__);
+    g_info("Main thread id %li", pthread_self());
 
     app = G_APPLICATION(remote_viewer_new());
 

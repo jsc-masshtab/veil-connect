@@ -19,6 +19,7 @@ typedef struct {
     GMutex transfer_clip_mutex;
     GCond transfer_clip_cond;
     gboolean is_transfered;
+    gboolean waiting_for_transfered_data;
 
 } RdpClipboard;
 

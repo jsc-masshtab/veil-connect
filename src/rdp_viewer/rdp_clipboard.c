@@ -1,5 +1,6 @@
 //
 // Created by ubuntu on 24.09.2020.
+// Based on remmina source code https://github.com/FreeRDP/Remmina
 //
 
 #include <stdlib.h>
@@ -102,12 +103,11 @@ void rdp_cliprdr_request_data(GtkClipboard *gtkClipboard, GtkSelectionData *sele
     /* Called by GTK when someone press "Paste" on the client side.
      * We ask to the server the data we need */
 
-    // clipboard->context;
-    //if ( clipboard->srv_clip_data_wait != SCDW_NONE ) {
-    //    remmina_plugin_service->log_printf("[RDP] Cannot paste now, I’m transferring clipboard data from server. "
-    //                                       "Try again later\n");
-    //    return;
-    //}
+    if (clipboard->waiting_for_transfered_data) {
+        g_info("[RDP] Cannot paste now, I’m transferring clipboard data from server. "
+                                           "Try again later");
+        return;
+    }
 
     clipboard->format = info;
 
@@ -125,6 +125,7 @@ void rdp_cliprdr_request_data(GtkClipboard *gtkClipboard, GtkSelectionData *sele
     // g_cond_wait_until return FALSE if end_time has passed
     // GLib doc forces us to use g_cond_wait_until with while
     clipboard->is_transfered = FALSE;
+    clipboard->waiting_for_transfered_data = TRUE;
     g_info("%s %li", (const char *)__func__, pthread_self());
     gint64 end_time = g_get_monotonic_time() + CLIPBOARD_TRANSFER_WAIT_TIME * G_TIME_SPAN_SECOND;
     while (!clipboard->is_transfered) {
@@ -134,6 +135,8 @@ void rdp_cliprdr_request_data(GtkClipboard *gtkClipboard, GtkSelectionData *sele
             break;
         }
     }
+    clipboard->waiting_for_transfered_data = FALSE;
+
     g_info("Broke from while");
     g_mutex_unlock(&clipboard->transfer_clip_mutex);
 }
@@ -341,51 +344,42 @@ static UINT rdp_cliprdr_send_client_capabilities(RdpClipboard* clipboard)
     return clipboard->context->ClientCapabilities(clipboard->context, &capabilities);
 }
 
-static UINT rdp_cliprdr_send_client_format_list(RdpClipboard* clipboard, gboolean alternative)
+static UINT rdp_cliprdr_send_used_client_format_list(RdpClipboard* clipboard)
 {
     g_info("%s", (const char *)__func__);
     CLIPRDR_FORMAT* formats = NULL;
     CLIPRDR_FORMAT_LIST formatList = { 0 };
 
-    UINT ret;
+    UINT32 numFormats = 5;
 
-    if (!alternative) {
-        UINT32 numFormats = 3;//clipboard->numClientFormats;
-
-        if (numFormats) {
-            if (!(formats = (CLIPRDR_FORMAT *)calloc(numFormats, sizeof(CLIPRDR_FORMAT)))) {
-                g_info("failed to allocate %" PRIu32 " CLIPRDR_FORMAT structs", numFormats);
-                return CHANNEL_RC_NO_MEMORY;
-            }
-        }
-
-        //for (UINT32 i = 0; i < numFormats; i++) {
-        //    formats[i].formatId = clipboard->clientFormats[i].formatId;
-        //    formats[i].formatName = clipboard->clientFormats[i].formatName;
-        //}
-        // Used formats (todo: what about images?)
-        formats[0].formatId = CF_RAW;
-        formats[0].formatName = "_FREERDP_RAW";
-        formats[1].formatId = CF_UNICODETEXT;
-        formats[1].formatName = "UTF8_STRING";
-        formats[2].formatId = CB_FORMAT_HTML;
-        formats[2].formatName = "HTML Format";
-
-        formatList.msgFlags = CB_RESPONSE_OK;
-        formatList.numFormats = numFormats;
-        formatList.formats = formats;
-        formatList.msgType = CB_FORMAT_LIST;
-        ret = clipboard->context->ClientFormatList(clipboard->context, &formatList);
-        free(formats);
-
-    } else {
-
+    if (!(formats = (CLIPRDR_FORMAT *)calloc(numFormats, sizeof(CLIPRDR_FORMAT)))) {
+        g_info("failed to allocate %" PRIu32 " CLIPRDR_FORMAT structs", numFormats);
+        return CHANNEL_RC_NO_MEMORY;
     }
+
+    // Used formats
+    formats[0].formatId = CF_RAW;
+    formats[0].formatName = "_FREERDP_RAW";
+    formats[1].formatId = CF_UNICODETEXT;
+    formats[1].formatName = "UTF8_STRING";
+    formats[2].formatId = CB_FORMAT_HTML;
+    formats[2].formatName = "HTML Format";
+    formats[3].formatId = CB_FORMAT_PNG;
+    formats[3].formatName = "image/png";
+    formats[4].formatId = CB_FORMAT_JPEG;
+    formats[4].formatName = "image/jpeg";
+
+    formatList.msgFlags = CB_RESPONSE_OK;
+    formatList.numFormats = numFormats;
+    formatList.formats = formats;
+    formatList.msgType = CB_FORMAT_LIST;
+    UINT ret = clipboard->context->ClientFormatList(clipboard->context, &formatList);
+    free(formats);
 
     return ret;
 }
 
-static UINT32 remmina_rdp_cliprdr_get_format_from_gdkatom(GdkAtom atom)
+static UINT32 rdp_cliprdr_get_format_from_gdkatom(GdkAtom atom)
 {
     UINT32 rc;
     gchar* name = gdk_atom_name(atom);
@@ -412,7 +406,7 @@ static UINT32 remmina_rdp_cliprdr_get_format_from_gdkatom(GdkAtom atom)
     return rc;
 }
 
-static CLIPRDR_FORMAT_LIST remmina_rdp_cliprdr_get_client_format_list(RdpClipboard* clipboard)
+static CLIPRDR_FORMAT_LIST rdp_cliprdr_get_client_format_list(RdpClipboard* clipboard)
 {
     g_info("%s", (const char *)__func__);
 
@@ -437,7 +431,7 @@ static CLIPRDR_FORMAT_LIST remmina_rdp_cliprdr_get_client_format_list(RdpClipboa
         all_formats = (CLIPRDR_FORMAT *)calloc(1, n_targets * sizeof(CLIPRDR_FORMAT));
         gint srvcount = 0;
         for (int i = 0; i < n_targets; i++) {
-            gint formatId = remmina_rdp_cliprdr_get_format_from_gdkatom(targets[i]);
+            gint formatId = rdp_cliprdr_get_format_from_gdkatom(targets[i]);
 
             if ( formatId != 0 ) {
                 all_formats[srvcount].formatId = formatId;
@@ -460,7 +454,7 @@ static CLIPRDR_FORMAT_LIST remmina_rdp_cliprdr_get_client_format_list(RdpClipboa
     if (result)
         g_free(targets);
 
-    cliprdr_format_list.msgType = CB_FORMAT_LIST_RESPONSE;
+    cliprdr_format_list.msgType = CB_FORMAT_LIST;
     cliprdr_format_list.msgFlags = CB_RESPONSE_OK;
 
     return cliprdr_format_list;
@@ -476,7 +470,7 @@ static UINT rdp_cliprdr_monitor_ready(CliprdrClientContext* context, const CLIPR
     if ((ret = rdp_cliprdr_send_client_capabilities(clipboard)) != CHANNEL_RC_OK)
         return ret;
 
-    if ((ret = rdp_cliprdr_send_client_format_list(clipboard, FALSE)) != CHANNEL_RC_OK)
+    if ((ret = rdp_cliprdr_send_used_client_format_list(clipboard)) != CHANNEL_RC_OK)
         return ret;
 
     return CHANNEL_RC_OK;
@@ -488,7 +482,7 @@ static UINT rdp_cliprdr_server_capabilities(CliprdrClientContext* context, const
     return CHANNEL_RC_OK;
 }
 
-// Эта функция вызывается когда копируешь что-то на ВМ
+//
 static UINT rdp_cliprdr_server_format_list(CliprdrClientContext* context, const CLIPRDR_FORMAT_LIST* formatList)
 {
     g_info("%s", (const char *)__func__);
@@ -568,7 +562,7 @@ static UINT rdp_cliprdr_server_format_data_request(CliprdrClientContext* context
     return CHANNEL_RC_OK;
 }
 
-// Вызывается когда у себя делаешь Вставить первый раз
+//
 static UINT rdp_cliprdr_server_format_data_response(CliprdrClientContext* context,
         const CLIPRDR_FORMAT_DATA_RESPONSE* formatDataResponse)
 {
@@ -700,7 +694,7 @@ static UINT rdp_cliprdr_server_format_data_response(CliprdrClientContext* contex
 static gboolean rdp_event_on_clipboard(GtkClipboard *gtkClipboard, GdkEvent *event, RdpClipboard* clipboard)
 {
     /* Signal handler for GTK clipboard owner-change */
-
+    g_info("%s thread id %li",(const char*)__func__, pthread_self());
 
     RdpWindowData *rdp_window_data = g_array_index(clipboard->ex_context->rdp_windows_array, RdpWindowData *, 0);
     gboolean is_toplevel_focus = gtk_window_has_toplevel_focus(GTK_WINDOW(rdp_window_data->rdp_viewer_window));
@@ -710,7 +704,7 @@ static gboolean rdp_event_on_clipboard(GtkClipboard *gtkClipboard, GdkEvent *eve
     */
 
     if (!is_toplevel_focus) {
-        CLIPRDR_FORMAT_LIST formatList = remmina_rdp_cliprdr_get_client_format_list(clipboard);
+        CLIPRDR_FORMAT_LIST formatList = rdp_cliprdr_get_client_format_list(clipboard);
         clipboard->context->ClientFormatList(clipboard->context, &formatList);
         if (formatList.formats)
             free(formatList.formats);
@@ -740,6 +734,7 @@ void rdp_cliprdr_init(ExtendedRdpContext *ex_context, CliprdrClientContext *clip
 
     // clipboard monitor. Copy event on client
     GtkClipboard *gtkClipboard = get_gtk_clipboard(ex_context);
+    g_info("%s thread id %li",(const char*)__func__, pthread_self());
     if (gtkClipboard)
         clipboard->clipboard_handler = g_signal_connect(gtkClipboard, "owner-change",
                                                         G_CALLBACK(rdp_event_on_clipboard), clipboard);
