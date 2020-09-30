@@ -341,53 +341,136 @@ static UINT rdp_cliprdr_send_client_capabilities(RdpClipboard* clipboard)
     return clipboard->context->ClientCapabilities(clipboard->context, &capabilities);
 }
 
-static UINT rdp_cliprdr_send_client_format_list(RdpClipboard* clipboard)
+static UINT rdp_cliprdr_send_client_format_list(RdpClipboard* clipboard, gboolean alternative)
 {
     g_info("%s", (const char *)__func__);
     CLIPRDR_FORMAT* formats = NULL;
     CLIPRDR_FORMAT_LIST formatList = { 0 };
 
     UINT ret;
-    UINT32 numFormats = 3;//clipboard->numClientFormats;
 
-    if (numFormats) {
-        if (!(formats = (CLIPRDR_FORMAT*)calloc(numFormats, sizeof(CLIPRDR_FORMAT)))) {
-            g_info("failed to allocate %" PRIu32 " CLIPRDR_FORMAT structs", numFormats);
-            return CHANNEL_RC_NO_MEMORY;
+    if (!alternative) {
+        UINT32 numFormats = 3;//clipboard->numClientFormats;
+
+        if (numFormats) {
+            if (!(formats = (CLIPRDR_FORMAT *) calloc(numFormats, sizeof(CLIPRDR_FORMAT)))) {
+                g_info("failed to allocate %" PRIu32 " CLIPRDR_FORMAT structs", numFormats);
+                return CHANNEL_RC_NO_MEMORY;
+            }
         }
+
+        //for (UINT32 i = 0; i < numFormats; i++) {
+        //    formats[i].formatId = clipboard->clientFormats[i].formatId;
+        //    formats[i].formatName = clipboard->clientFormats[i].formatName;
+        //}
+        // Used formats (todo: what about images?)
+        formats[0].formatId = CF_RAW;
+        formats[0].formatName = "_FREERDP_RAW";
+        formats[1].formatId = CF_UNICODETEXT;
+        formats[1].formatName = "UTF8_STRING";
+        formats[2].formatId = CB_FORMAT_HTML;
+        formats[2].formatName = "HTML Format";
+
+        formatList.msgFlags = CB_RESPONSE_OK;
+        formatList.numFormats = numFormats;
+        formatList.formats = formats;
+        formatList.msgType = CB_FORMAT_LIST;
+        ret = clipboard->context->ClientFormatList(clipboard->context, &formatList);
+        free(formats);
+
+    } else {
+
     }
 
-    //for (UINT32 i = 0; i < numFormats; i++) {
-    //    formats[i].formatId = clipboard->clientFormats[i].formatId;
-    //    formats[i].formatName = clipboard->clientFormats[i].formatName;
-    //}
-    // Used formats (todo: what about images?)
-    formats[0].formatId = CF_RAW;
-    formats[0].formatName = "_FREERDP_RAW";
-    formats[1].formatId = CF_UNICODETEXT;
-    formats[1].formatName = "UTF8_STRING";
-    formats[2].formatId = CB_FORMAT_HTML;
-    formats[2].formatName = "HTML Format";
-
-    formatList.msgFlags = CB_RESPONSE_OK;
-    formatList.numFormats = numFormats;
-    formatList.formats = formats;
-    formatList.msgType = CB_FORMAT_LIST;
-    ret = clipboard->context->ClientFormatList(clipboard->context, &formatList);
-    free(formats);
-
-    // Schedule to execute in the main thread
-    //RdpClipboardEventData *rdp_clipboard_event_data = calloc(1, sizeof(RdpClipboardEventData)); // will be freed
-    //// in callback
-    //rdp_clipboard_event_data->rdp_clipboard_event_type = RDP_CLIPBOARD_FORMATLIST;
-    //rdp_clipboard_event_data->pFormatList = pFormatList;
-    //
-    //rdp_clipboard_event_data->ex_context = clipboard->ex_context;
-    //rdp_clipboard_event_data->clipboard = clipboard;
-    //
-    //g_idle_add((GSourceFunc)rdp_cliprdr_event_process, rdp_clipboard_event_data);
-
     return ret;
+}
+
+static UINT32 remmina_rdp_cliprdr_get_format_from_gdkatom(GdkAtom atom)
+{
+    UINT32 rc;
+    gchar* name = gdk_atom_name(atom);
+    rc = 0;
+    if (g_strcmp0("UTF8_STRING", name) == 0 || g_strcmp0("text/plain;charset=utf-8", name) == 0) {
+        rc = CF_UNICODETEXT;
+    }
+    if (g_strcmp0("TEXT", name) == 0 || g_strcmp0("text/plain", name) == 0) {
+        rc =  CF_TEXT;
+    }
+    if (g_strcmp0("text/html", name) == 0) {
+        rc =  CB_FORMAT_HTML;
+    }
+    if (g_strcmp0("image/png", name) == 0) {
+        rc =  CB_FORMAT_PNG;
+    }
+    if (g_strcmp0("image/jpeg", name) == 0) {
+        rc =  CB_FORMAT_JPEG;
+    }
+    if (g_strcmp0("image/bmp", name) == 0) {
+        rc =  CF_DIB;
+    }
+    g_free(name);
+    return rc;
+}
+
+static CLIPRDR_FORMAT_LIST *remmina_rdp_cliprdr_get_client_format_list(RdpClipboard* clipboard)
+{
+    g_info("%s", (const char *)__func__);
+
+    ExtendedRdpContext *ex_context = clipboard->ex_context;
+    GdkAtom* targets;
+    gboolean result = 0;
+    gint loccount, srvcount;
+    gint formatId, i;
+    CLIPRDR_FORMAT *formats;
+    struct retp_t {
+        CLIPRDR_FORMAT_LIST pFormatList;
+        CLIPRDR_FORMAT formats[];
+    } *retp;
+
+    formats = NULL;
+
+    retp = NULL;
+
+    GtkClipboard *gtkClipboard = get_gtk_clipboard(ex_context);
+    if (gtkClipboard) {
+        result = gtk_clipboard_wait_for_targets(gtkClipboard, &targets, &loccount);
+    }
+
+    if (result && loccount > 0) {
+        formats = (CLIPRDR_FORMAT*)malloc(loccount * sizeof(CLIPRDR_FORMAT));
+        srvcount = 0;
+        for (i = 0; i < loccount; i++) {
+            formatId = remmina_rdp_cliprdr_get_format_from_gdkatom(targets[i]);
+            if ( formatId != 0 ) {
+                formats[srvcount].formatId = formatId;
+                formats[srvcount].formatName = NULL;
+                srvcount++;
+            }
+        }
+        if (srvcount > 0) {
+            retp = (struct retp_t *)malloc(sizeof(struct retp_t) + sizeof(CLIPRDR_FORMAT) * srvcount);
+            retp->pFormatList.formats = retp->formats;
+            retp->pFormatList.numFormats = srvcount;
+            memcpy(retp->formats, formats, sizeof(CLIPRDR_FORMAT) * srvcount);
+        } else {
+            retp = (struct retp_t *)malloc(sizeof(struct retp_t));
+            retp->pFormatList.formats = NULL;
+            retp->pFormatList.numFormats = 0;
+        }
+        free(formats);
+    } else {
+        retp = (struct retp_t *)malloc(sizeof(struct retp_t) + sizeof(CLIPRDR_FORMAT));
+        retp->pFormatList.formats = NULL;
+        retp->pFormatList.numFormats = 0;
+    }
+
+    if (result)
+        g_free(targets);
+
+    retp->pFormatList.msgType = CB_FORMAT_LIST_RESPONSE;
+    retp->pFormatList.msgFlags = CB_RESPONSE_OK;
+
+    return (CLIPRDR_FORMAT_LIST*)retp;
 }
 
 static UINT rdp_cliprdr_monitor_ready(CliprdrClientContext* context, const CLIPRDR_MONITOR_READY* monitorReady)
@@ -400,7 +483,7 @@ static UINT rdp_cliprdr_monitor_ready(CliprdrClientContext* context, const CLIPR
     if ((ret = rdp_cliprdr_send_client_capabilities(clipboard)) != CHANNEL_RC_OK)
         return ret;
 
-    if ((ret = rdp_cliprdr_send_client_format_list(clipboard)) != CHANNEL_RC_OK)
+    if ((ret = rdp_cliprdr_send_client_format_list(clipboard, FALSE)) != CHANNEL_RC_OK)
         return ret;
 
     return CHANNEL_RC_OK;
@@ -630,23 +713,15 @@ static gboolean rdp_event_on_clipboard(GtkClipboard *gtkClipboard, GdkEvent *eve
     gboolean is_toplevel_focus = gtk_window_has_toplevel_focus(GTK_WINDOW(rdp_window_data->rdp_viewer_window));
     g_info("%s is_focus: %i", (const char *)__func__, is_toplevel_focus);
 
-    //RemminaPluginRdpEvent rdp_event = { 0 };
-    //CLIPRDR_FORMAT_LIST* pFormatList;
-
     /* Usually "owner-change" is fired when a user pres "COPY" on the client
      * OR when this plugin calls gtk_clipboard_set_with_owner()
      * after receivina a RDP server format list in remmina_rdp_cliprdr_server_format_list()
      * In the latter case, we must ignore owner change */
 
-    //if (gtk_clipboard_get_owner(gtkClipboard) != (GObject*)gp) {
-    //    pFormatList = remmina_rdp_cliprdr_get_client_format_list(gp);
-    //    rdp_event.type = REMMINA_RDP_EVENT_TYPE_CLIPBOARD_SEND_CLIENT_FORMAT_LIST;
-    //    rdp_event.clipboard_formatlist.pFormatList = pFormatList;
-    //    remmina_rdp_event_event_push(gp, &rdp_event);
-    //}
-
-    if (!is_toplevel_focus)
-        rdp_cliprdr_send_client_format_list(clipboard);
+    if (!is_toplevel_focus) {
+        CLIPRDR_FORMAT_LIST* pFormatList = remmina_rdp_cliprdr_get_client_format_list(clipboard);
+        clipboard->context->ClientFormatList(clipboard->context, pFormatList);
+    }
 
     return TRUE;
 }
