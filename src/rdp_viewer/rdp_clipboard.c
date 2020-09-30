@@ -353,7 +353,7 @@ static UINT rdp_cliprdr_send_client_format_list(RdpClipboard* clipboard, gboolea
         UINT32 numFormats = 3;//clipboard->numClientFormats;
 
         if (numFormats) {
-            if (!(formats = (CLIPRDR_FORMAT *) calloc(numFormats, sizeof(CLIPRDR_FORMAT)))) {
+            if (!(formats = (CLIPRDR_FORMAT *)calloc(numFormats, sizeof(CLIPRDR_FORMAT)))) {
                 g_info("failed to allocate %" PRIu32 " CLIPRDR_FORMAT structs", numFormats);
                 return CHANNEL_RC_NO_MEMORY;
             }
@@ -412,65 +412,58 @@ static UINT32 remmina_rdp_cliprdr_get_format_from_gdkatom(GdkAtom atom)
     return rc;
 }
 
-static CLIPRDR_FORMAT_LIST *remmina_rdp_cliprdr_get_client_format_list(RdpClipboard* clipboard)
+static CLIPRDR_FORMAT_LIST remmina_rdp_cliprdr_get_client_format_list(RdpClipboard* clipboard)
 {
     g_info("%s", (const char *)__func__);
 
     ExtendedRdpContext *ex_context = clipboard->ex_context;
     GdkAtom* targets;
-    gboolean result = 0;
-    gint loccount, srvcount;
-    gint formatId, i;
-    CLIPRDR_FORMAT *formats;
-    struct retp_t {
-        CLIPRDR_FORMAT_LIST pFormatList;
-        CLIPRDR_FORMAT formats[];
-    } *retp;
+    gboolean result = FALSE;
+    gint n_targets;
 
-    formats = NULL;
-
-    retp = NULL;
+    CLIPRDR_FORMAT_LIST cliprdr_format_list;
+    cliprdr_format_list.formats = NULL;
+    cliprdr_format_list.numFormats = 0;
 
     GtkClipboard *gtkClipboard = get_gtk_clipboard(ex_context);
     if (gtkClipboard) {
-        result = gtk_clipboard_wait_for_targets(gtkClipboard, &targets, &loccount);
+        result = gtk_clipboard_wait_for_targets(gtkClipboard, &targets, &n_targets);
     }
 
-    if (result && loccount > 0) {
-        formats = (CLIPRDR_FORMAT*)malloc(loccount * sizeof(CLIPRDR_FORMAT));
-        srvcount = 0;
-        for (i = 0; i < loccount; i++) {
-            formatId = remmina_rdp_cliprdr_get_format_from_gdkatom(targets[i]);
+    CLIPRDR_FORMAT* all_formats = NULL;
+    if (result && n_targets > 0) {
+        // Судя по всему есть множество форматов которые нам не подходят, поэтому нужен
+        // промежуточный массив
+        all_formats = (CLIPRDR_FORMAT *)calloc(1, n_targets * sizeof(CLIPRDR_FORMAT));
+        gint srvcount = 0;
+        for (int i = 0; i < n_targets; i++) {
+            gint formatId = remmina_rdp_cliprdr_get_format_from_gdkatom(targets[i]);
+
             if ( formatId != 0 ) {
-                formats[srvcount].formatId = formatId;
-                formats[srvcount].formatName = NULL;
+                all_formats[srvcount].formatId = formatId;
+                all_formats[srvcount].formatName = NULL;
                 srvcount++;
             }
         }
+
         if (srvcount > 0) {
-            retp = (struct retp_t *)malloc(sizeof(struct retp_t) + sizeof(CLIPRDR_FORMAT) * srvcount);
-            retp->pFormatList.formats = retp->formats;
-            retp->pFormatList.numFormats = srvcount;
-            memcpy(retp->formats, formats, sizeof(CLIPRDR_FORMAT) * srvcount);
-        } else {
-            retp = (struct retp_t *)malloc(sizeof(struct retp_t));
-            retp->pFormatList.formats = NULL;
-            retp->pFormatList.numFormats = 0;
+            cliprdr_format_list.formats = (CLIPRDR_FORMAT*)calloc(1, sizeof(CLIPRDR_FORMAT) * srvcount); // will
+            // be freed after usage
+            memcpy(cliprdr_format_list.formats, all_formats, sizeof(CLIPRDR_FORMAT) * srvcount);
+            cliprdr_format_list.numFormats = srvcount;
         }
-        free(formats);
-    } else {
-        retp = (struct retp_t *)malloc(sizeof(struct retp_t) + sizeof(CLIPRDR_FORMAT));
-        retp->pFormatList.formats = NULL;
-        retp->pFormatList.numFormats = 0;
     }
+
+    if (all_formats)
+        free(all_formats);
 
     if (result)
         g_free(targets);
 
-    retp->pFormatList.msgType = CB_FORMAT_LIST_RESPONSE;
-    retp->pFormatList.msgFlags = CB_RESPONSE_OK;
+    cliprdr_format_list.msgType = CB_FORMAT_LIST_RESPONSE;
+    cliprdr_format_list.msgFlags = CB_RESPONSE_OK;
 
-    return (CLIPRDR_FORMAT_LIST*)retp;
+    return cliprdr_format_list;
 }
 
 static UINT rdp_cliprdr_monitor_ready(CliprdrClientContext* context, const CLIPRDR_MONITOR_READY* monitorReady)
@@ -714,13 +707,13 @@ static gboolean rdp_event_on_clipboard(GtkClipboard *gtkClipboard, GdkEvent *eve
     g_info("%s is_focus: %i", (const char *)__func__, is_toplevel_focus);
 
     /* Usually "owner-change" is fired when a user pres "COPY" on the client
-     * OR when this plugin calls gtk_clipboard_set_with_owner()
-     * after receivina a RDP server format list in remmina_rdp_cliprdr_server_format_list()
-     * In the latter case, we must ignore owner change */
+    */
 
     if (!is_toplevel_focus) {
-        CLIPRDR_FORMAT_LIST* pFormatList = remmina_rdp_cliprdr_get_client_format_list(clipboard);
-        clipboard->context->ClientFormatList(clipboard->context, pFormatList);
+        CLIPRDR_FORMAT_LIST formatList = remmina_rdp_cliprdr_get_client_format_list(clipboard);
+        clipboard->context->ClientFormatList(clipboard->context, &formatList);
+        if (formatList.formats)
+            free(formatList.formats);
     }
 
     return TRUE;
