@@ -624,7 +624,11 @@ static UINT rdp_cliprdr_server_format_data_response(CliprdrClientContext* contex
 static gboolean rdp_event_on_clipboard(GtkClipboard *gtkClipboard, GdkEvent *event, RdpClipboard* clipboard)
 {
     /* Signal handler for GTK clipboard owner-change */
-    g_info("%s", (const char *)__func__);
+
+
+    RdpWindowData *rdp_window_data = g_array_index(clipboard->ex_context->rdp_windows_array, RdpWindowData *, 0);
+    gboolean is_toplevel_focus = gtk_window_has_toplevel_focus(GTK_WINDOW(rdp_window_data->rdp_viewer_window));
+    g_info("%s is_focus: %i", (const char *)__func__, is_toplevel_focus);
 
     //RemminaPluginRdpEvent rdp_event = { 0 };
     //CLIPRDR_FORMAT_LIST* pFormatList;
@@ -641,7 +645,8 @@ static gboolean rdp_event_on_clipboard(GtkClipboard *gtkClipboard, GdkEvent *eve
     //    remmina_rdp_event_event_push(gp, &rdp_event);
     //}
 
-    rdp_cliprdr_send_client_format_list(clipboard);
+    if (!is_toplevel_focus)
+        rdp_cliprdr_send_client_format_list(clipboard);
 
     return TRUE;
 }
