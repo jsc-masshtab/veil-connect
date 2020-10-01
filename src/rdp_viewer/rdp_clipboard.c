@@ -270,7 +270,6 @@ static void rdp_cliprdr_set_clipboard_content(RdpClipboardEventData *rdp_clipboa
 
     ExtendedRdpContext *ex_context = rdp_clipboard_event_data->ex_context;
 
-
     GtkClipboard* gtkClipboard = get_gtk_clipboard(ex_context);
 
     if (!rdp_clipboard_event_data->data) {
@@ -285,6 +284,7 @@ static void rdp_cliprdr_set_clipboard_content(RdpClipboardEventData *rdp_clipboa
         g_object_unref(rdp_clipboard_event_data->data);
     } else {
         const gchar *text = (gchar *)rdp_clipboard_event_data->data;
+        g_info("text: ", text);
         gtk_clipboard_set_text(gtkClipboard, text, -1);
         free(rdp_clipboard_event_data->data);
     }
@@ -581,7 +581,7 @@ static UINT rdp_cliprdr_server_format_data_response(CliprdrClientContext* contex
                 crlf2lf(output, &size);
 #elif _WIN32
                 gchar *utf8_str = g_utf16_to_utf8((const gunichar2 *)(data), size, NULL, NULL, NULL);
-                output = (gchar *)utf8_str;
+                output = (gpointer)utf8_str;
 #endif
                 break;
             }
