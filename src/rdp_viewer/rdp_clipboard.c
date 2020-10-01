@@ -26,7 +26,6 @@ typedef struct {
     gpointer data;
     UINT32 format;
 
-
 // union can be use to decrease size
 } RdpClipboardEventData;
 
@@ -125,7 +124,7 @@ void rdp_cliprdr_request_data(GtkClipboard *gtkClipboard, GtkSelectionData *sele
     // GLib doc forces us to use g_cond_wait_until with while
     clipboard->is_transfered = FALSE;
     clipboard->waiting_for_transfered_data = TRUE;
-    g_info("%s %li", (const char *)__func__, pthread_self());
+    //g_info("%s %li", (const char *)__func__, pthread_self());
     gint64 end_time = g_get_monotonic_time() + CLIPBOARD_TRANSFER_WAIT_TIME * G_TIME_SPAN_SECOND;
     while (!clipboard->is_transfered) {
         if (g_cond_wait_until(&clipboard->transfer_clip_cond, &clipboard->transfer_clip_mutex,
@@ -274,13 +273,19 @@ static void rdp_cliprdr_set_clipboard_content(RdpClipboardEventData *rdp_clipboa
 
     GtkClipboard* gtkClipboard = get_gtk_clipboard(ex_context);
 
+    if (!rdp_clipboard_event_data->data) {
+        g_info("%s rdp_clipboard_event_data->data == NULL", (const char *)__func__);
+        return;
+    }
+
     RdpClipboard *clipboard = rdp_clipboard_event_data->clipboard;
     if (clipboard->format == CB_FORMAT_PNG || clipboard->format == CF_DIB ||
             clipboard->format == CF_DIBV5 || clipboard->format == CB_FORMAT_JPEG) {
         gtk_clipboard_set_image(gtkClipboard, rdp_clipboard_event_data->data);
         g_object_unref(rdp_clipboard_event_data->data);
-    }else {
-        gtk_clipboard_set_text(gtkClipboard, rdp_clipboard_event_data->data, -1);
+    } else {
+        const gchar *text = (gchar *)rdp_clipboard_event_data->data;
+        gtk_clipboard_set_text(gtkClipboard, text, -1);
         free(rdp_clipboard_event_data->data);
     }
 }
@@ -337,7 +342,7 @@ static UINT rdp_cliprdr_send_used_client_format_list(RdpClipboard* clipboard)
     CLIPRDR_FORMAT* formats = NULL;
     CLIPRDR_FORMAT_LIST formatList = { 0 };
 
-    UINT32 numFormats = 5;
+    UINT32 numFormats = 4; // 5
 
     if (!(formats = (CLIPRDR_FORMAT *)calloc(numFormats, sizeof(CLIPRDR_FORMAT)))) {
         g_info("failed to allocate %" PRIu32 " CLIPRDR_FORMAT structs", numFormats);
@@ -345,16 +350,16 @@ static UINT rdp_cliprdr_send_used_client_format_list(RdpClipboard* clipboard)
     }
 
     // Used formats
-    formats[0].formatId = CF_RAW;
-    formats[0].formatName = "_FREERDP_RAW";
-    formats[1].formatId = CF_UNICODETEXT;
-    formats[1].formatName = "UTF8_STRING";
-    formats[2].formatId = CB_FORMAT_HTML;
-    formats[2].formatName = "HTML Format";
-    formats[3].formatId = CB_FORMAT_PNG;
-    formats[3].formatName = "image/png";
-    formats[4].formatId = CB_FORMAT_JPEG;
-    formats[4].formatName = "image/jpeg";
+    formats[0].formatId = CF_UNICODETEXT;
+    formats[0].formatName = "UTF8_STRING";
+    formats[1].formatId = CB_FORMAT_HTML;
+    formats[1].formatName = "HTML Format";
+    formats[2].formatId = CB_FORMAT_PNG;
+    formats[2].formatName = "image/png";
+    formats[3].formatId = CB_FORMAT_JPEG;
+    formats[3].formatName = "image/jpeg";
+    //formats[4].formatId = CF_RAW; // no on Windows
+    //formats[4].formatName = "_FREERDP_RAW";
 
     formatList.msgFlags = CB_RESPONSE_OK;
     formatList.numFormats = numFormats;
@@ -549,7 +554,6 @@ static UINT rdp_cliprdr_server_format_data_request(CliprdrClientContext* context
     return CHANNEL_RC_OK;
 }
 
-//
 static UINT rdp_cliprdr_server_format_data_response(CliprdrClientContext* context,
         const CLIPRDR_FORMAT_DATA_RESPONSE* formatDataResponse)
 {
@@ -559,7 +563,6 @@ static UINT rdp_cliprdr_server_format_data_response(CliprdrClientContext* contex
     size_t size;
     GdkPixbufLoader *pixbuf;
     gpointer output = NULL;
-
     RdpClipboard *clipboard = (RdpClipboard*)context->custom;
 
     data = formatDataResponse->requestedFormatData;
@@ -573,8 +576,13 @@ static UINT rdp_cliprdr_server_format_data_response(CliprdrClientContext* contex
         switch (clipboard->format) {
             case CF_UNICODETEXT:
             {
+#ifdef __linux__
                 size = ConvertFromUnicode(CP_UTF8, 0, (WCHAR*)data, size / 2, (CHAR**)&output, 0, NULL, NULL);
                 crlf2lf(output, &size);
+#elif _WIN32
+                gchar *utf8_str = g_utf16_to_utf8((const gunichar2 *)(data), size, NULL, NULL, NULL);
+                output = (gchar *)utf8_str;
+#endif
                 break;
             }
 
@@ -655,7 +663,7 @@ static UINT rdp_cliprdr_server_format_data_response(CliprdrClientContext* contex
         }
     }
 
-    g_info("%s Before g_mutex_lock(&clipboard->transfer_clip_mutex); %lu", __func__, pthread_self());
+    //g_info("%s Before g_mutex_lock(&clipboard->transfer_clip_mutex); %lu", __func__, pthread_self());
     g_mutex_lock(&clipboard->transfer_clip_mutex);
     clipboard->is_transfered = TRUE;
     g_cond_signal(&clipboard->transfer_clip_cond);
@@ -681,7 +689,7 @@ static UINT rdp_cliprdr_server_format_data_response(CliprdrClientContext* contex
 static gboolean rdp_event_on_clipboard(GtkClipboard *gtkClipboard, GdkEvent *event, RdpClipboard* clipboard)
 {
     /* Signal handler for GTK clipboard owner-change */
-    g_info("%s thread id %li",(const char*)__func__, pthread_self());
+    g_info("%s",(const char*)__func__);
 
     // Смотрим находится ли какое-либо из окон в фокусе. Если находится, то игнорируем событие, так как
     // манинимуляции с буфером были скорее всего на удаленной машине
@@ -727,7 +735,7 @@ void rdp_cliprdr_init(ExtendedRdpContext *ex_context, CliprdrClientContext *clip
 
     // clipboard monitor. Copy event on client
     GtkClipboard *gtkClipboard = get_gtk_clipboard(ex_context);
-    g_info("%s thread id %li",(const char*)__func__, pthread_self());
+    g_info("%s",(const char*)__func__);
     if (gtkClipboard)
         clipboard->clipboard_handler = g_signal_connect(gtkClipboard, "owner-change",
                                                         G_CALLBACK(rdp_event_on_clipboard), clipboard);
