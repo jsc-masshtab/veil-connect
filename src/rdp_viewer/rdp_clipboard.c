@@ -284,7 +284,7 @@ static void rdp_cliprdr_set_clipboard_content(RdpClipboardEventData *rdp_clipboa
         g_object_unref(rdp_clipboard_event_data->data);
     } else {
         const gchar *text = (gchar *)rdp_clipboard_event_data->data;
-        g_info("text: ", text);
+        g_info("text: %s", text);
         gtk_clipboard_set_text(gtkClipboard, text, -1);
         free(rdp_clipboard_event_data->data);
     }

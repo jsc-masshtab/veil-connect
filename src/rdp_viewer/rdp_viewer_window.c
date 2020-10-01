@@ -92,9 +92,13 @@ static LRESULT CALLBACK keyboard_hook_cb(int code, WPARAM wparam, LPARAM lparam)
 }
 #endif
 
-static void rdp_viewer_window_toggle_fullscreen(RdpWindowData *rdp_window_data, gboolean is_fullscreen)
+// Toggle keyboard grabbing mode
+static void rdp_viewer_window_toggle_keyboard_grab(RdpWindowData *rdp_window_data, gboolean is_grabbed)
 {
-    if (is_fullscreen) {
+    if (is_grabbed) {
+        if (rdp_window_data->seat)
+            return;
+
         // turn on keyboard grab in full screen
 #ifdef G_OS_WIN32
         win32_window = gdk_win32_window_get_impl_hwnd(gtk_widget_get_window(rdp_window_data->rdp_viewer_window));
@@ -112,10 +116,32 @@ static void rdp_viewer_window_toggle_fullscreen(RdpWindowData *rdp_window_data, 
 
         g_info("%s ggs: %i", (const char *)__func__, ggs);
 
+    } else {
+        // ungrab keyboard
+        if (rdp_window_data->seat) {
+            gdk_seat_ungrab(rdp_window_data->seat);
+            rdp_window_data->seat = NULL;
+        }
+#ifdef G_OS_WIN32
+        if (rdp_window_data->keyboard_hook) {
+            UnhookWindowsHookEx(rdp_window_data->keyboard_hook);
+            rdp_window_data->keyboard_hook = NULL;
+        }
+#endif
+    }
+}
+
+// Toggle fullscreen mode
+static void rdp_viewer_window_toggle_fullscreen(RdpWindowData *rdp_window_data, gboolean is_fullscreen)
+{
+    if (is_fullscreen) {
+        // grab keyboard
+        //rdp_viewer_window_toggle_keyboard_grab(rdp_window_data, TRUE);
+        //rdp_window_data->is_grab_keyboard_on_focus_in_mode = TRUE; // we want the keyboard to be grabbed only in focus
+
         // fullscreen
         gtk_window_set_resizable(GTK_WINDOW(rdp_window_data->rdp_viewer_window), TRUE);
         gtk_window_fullscreen(GTK_WINDOW(rdp_window_data->rdp_viewer_window));
-        //gtk_window_set_resizable(GTK_WINDOW(rdp_viewer_window), FALSE);
 
         // show toolbar
         gtk_widget_hide(rdp_window_data->top_menu);
@@ -124,14 +150,8 @@ static void rdp_viewer_window_toggle_fullscreen(RdpWindowData *rdp_window_data, 
 
     } else {
         // ungrab keyboard
-        if (rdp_window_data->seat)
-            gdk_seat_ungrab(rdp_window_data->seat);
-#ifdef G_OS_WIN32
-        if (rdp_window_data->keyboard_hook) {
-            UnhookWindowsHookEx(rdp_window_data->keyboard_hook);
-            rdp_window_data->keyboard_hook = NULL;
-        }
-#endif
+        rdp_window_data->is_grab_keyboard_on_focus_in_mode = FALSE;
+        rdp_viewer_window_toggle_keyboard_grab(rdp_window_data, FALSE);
         //  leave fulscreen
         gtk_widget_hide(rdp_window_data->overlay_toolbar);
         //gtk_widget_set_size_request(priv->window, -1, -1);
@@ -160,13 +180,45 @@ static gboolean rdp_viewer_window_deleted_cb(gpointer userdata)
     return TRUE;
 }
 
-static void rdp_viewer_event_on_mapped(GtkWidget *widget G_GNUC_UNUSED, GdkEvent *event G_GNUC_UNUSED,
+static void rdp_viewer_window_event_on_mapped(GtkWidget *widget G_GNUC_UNUSED, GdkEvent *event G_GNUC_UNUSED,
         gpointer user_data)
 {
     RdpWindowData *rdp_window_data = (RdpWindowData *)user_data;
 
     rdp_viewer_window_toggle_fullscreen(rdp_window_data, TRUE);
 }
+
+//static gboolean rdp_viewer_window_event_focus_in(GtkWidget *widget, GdkEvent *event, gpointer user_data)
+//{
+//    g_info("%s %p", (const char *)__func__, widget);
+//    RdpWindowData *rdp_window_data = (RdpWindowData *)user_data;
+//    if (rdp_window_data->is_grab_keyboard_on_focus_in_mode) {
+//        rdp_viewer_window_toggle_keyboard_grab(rdp_window_data, TRUE);
+//    }
+//    return FALSE;
+//}
+//
+//static gboolean rdp_viewer_window_event_focus_out(GtkWidget *widget, GdkEvent *event, gpointer user_data)
+//{
+//    g_info("%s %p", (const char *)__func__, widget);
+//    RdpWindowData *rdp_window_data = (RdpWindowData *)user_data;
+//    rdp_viewer_window_toggle_keyboard_grab(rdp_window_data, FALSE);
+//
+//    return FALSE;
+//}
+// it seems focus-in-event and focus-out-event don’t work when keyboard is grabbed
+gboolean rdp_viewer_window_on_state_event(GtkWidget *widget, GdkEventWindowState  *event, gpointer user_data)
+{
+    g_info("%s %p event->type: %i", (const char *)__func__, widget, event->type);
+    if (event->changed_mask & GDK_WINDOW_STATE_FOCUSED) {
+        if (event->new_window_state & GDK_WINDOW_STATE_FOCUSED)
+            g_info("FOCUS IN");
+        else
+            g_info("FOCUS OUT");
+    }
+    return FALSE;
+}
+
 
 static gboolean gtk_update(gpointer user_data)
 {
@@ -438,11 +490,17 @@ RdpWindowData *rdp_viewer_window_create(ExtendedRdpContext *ex_rdp_context)
     //gtk_window_set_deletable(GTK_WINDOW(rdp_viewer_window), FALSE);
     free_memory_safely(&title);
 
-    gtk_widget_add_events(rdp_viewer_window, GDK_KEY_PRESS_MASK | GDK_KEY_RELEASE_MASK);
+    gtk_widget_add_events(rdp_viewer_window, GDK_KEY_PRESS_MASK | GDK_KEY_RELEASE_MASK | GDK_FOCUS_CHANGE_MASK);
     g_signal_connect_swapped(rdp_viewer_window, "delete-event",
                              G_CALLBACK(rdp_viewer_window_deleted_cb), rdp_window_data);
     g_signal_connect(rdp_viewer_window, "map-event",
-            G_CALLBACK(rdp_viewer_event_on_mapped), rdp_window_data);
+            G_CALLBACK(rdp_viewer_window_event_on_mapped), rdp_window_data);
+    //g_signal_connect(rdp_viewer_window, "focus-in-event",
+    //                 G_CALLBACK(rdp_viewer_window_event_focus_in), rdp_window_data);
+    //g_signal_connect(rdp_viewer_window, "focus-out-event",
+    //                 G_CALLBACK(rdp_viewer_window_event_focus_out), rdp_window_data);
+    g_signal_connect(rdp_viewer_window, "window-state-event",
+                     G_CALLBACK(rdp_viewer_window_on_state_event), rdp_window_data);
 
     rdp_window_data->top_menu = GTK_WIDGET(gtk_builder_get_object(builder, "top-menu"));
 

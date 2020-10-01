@@ -36,6 +36,7 @@ typedef struct{
     ExtendedRdpContext *ex_rdp_context;
 
     GdkSeat *seat;
+    gboolean is_grab_keyboard_on_focus_in_mode;
 #ifdef _WIN32
     HHOOK keyboard_hook;
 #endif
