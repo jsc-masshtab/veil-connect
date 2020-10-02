@@ -498,7 +498,6 @@ static void rdp_post_disconnect(freerdp* instance)
     // Close rdp windows if LOGOFF_BY_USER received or there are no errors
     if (((last_error & 0xFFFF) == ERRINFO_LOGOFF_BY_USER) ||
     (last_error == 0 && ex_rdp_context->rail_rdp_error == 0)) {
-        g_info("HERE WE GO AGAIN");
         // to close rdp window
         if (ex_rdp_context->rdp_windows_array->len) {
             RdpWindowData *rdp_window_data = g_array_index(ex_rdp_context->rdp_windows_array, RdpWindowData *, 0);

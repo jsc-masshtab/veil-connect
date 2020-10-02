@@ -92,6 +92,37 @@ static LRESULT CALLBACK keyboard_hook_cb(int code, WPARAM wparam, LPARAM lparam)
 }
 #endif
 
+static gboolean rdp_viewer_window_grab_try(gpointer user_data)
+{
+    RdpWindowData *rdp_window_data = (RdpWindowData *)user_data;
+
+#ifdef G_OS_WIN32
+    win32_window = gdk_win32_window_get_impl_hwnd(gtk_widget_get_window(rdp_window_data->rdp_viewer_window));
+
+        if (rdp_window_data->keyboard_hook == NULL)
+            rdp_window_data->keyboard_hook = SetWindowsHookEx(WH_KEYBOARD_LL, keyboard_hook_cb,
+                                                GetModuleHandle(NULL), 0);
+        g_warn_if_fail(rdp_window_data->keyboard_hook != NULL);
+#endif
+    GdkDisplay *display = gtk_widget_get_display(rdp_window_data->rdp_viewer_window);
+    rdp_window_data->seat = gdk_display_get_default_seat(display);
+    g_info("Going to grab now");
+    GdkGrabStatus ggs = gdk_seat_grab(rdp_window_data->seat,
+                                      gtk_widget_get_window(rdp_window_data->rdp_viewer_window),
+                                      GDK_SEAT_CAPABILITY_KEYBOARD, TRUE, NULL, NULL, NULL, NULL);
+
+    if (ggs != GDK_GRAB_SUCCESS) {
+        // При неудаче GTK зачем-то скрывает окно. Поэтому показываем.
+        GdkWindow *gdk_window = gtk_widget_get_window(rdp_window_data->rdp_viewer_window);
+        gdk_window_show(gdk_window);
+    }
+
+    g_info("%s ggs: %i", (const char *)__func__, ggs);
+
+    rdp_window_data->grab_try_event_source_id = 0;
+    return G_SOURCE_REMOVE;
+}
+
 // Toggle keyboard grabbing mode
 static void rdp_viewer_window_toggle_keyboard_grab(RdpWindowData *rdp_window_data, gboolean is_grabbed)
 {
@@ -99,24 +130,18 @@ static void rdp_viewer_window_toggle_keyboard_grab(RdpWindowData *rdp_window_dat
         if (rdp_window_data->seat)
             return;
 
-        // turn on keyboard grab in full screen
-#ifdef G_OS_WIN32
-        win32_window = gdk_win32_window_get_impl_hwnd(gtk_widget_get_window(rdp_window_data->rdp_viewer_window));
-
-        if (rdp_window_data->keyboard_hook == NULL)
-            rdp_window_data->keyboard_hook = SetWindowsHookEx(WH_KEYBOARD_LL, keyboard_hook_cb,
-                                                GetModuleHandle(NULL), 0);
-        g_warn_if_fail(rdp_window_data->keyboard_hook != NULL);
-#endif
-        GdkDisplay *display = gtk_widget_get_display(rdp_window_data->rdp_viewer_window);
-        rdp_window_data->seat = gdk_display_get_default_seat(display);
-        GdkGrabStatus ggs = gdk_seat_grab(rdp_window_data->seat,
-                                          gtk_widget_get_window(rdp_window_data->rdp_viewer_window),
-                                          GDK_SEAT_CAPABILITY_KEYBOARD, TRUE, NULL, NULL, NULL, NULL);
-
-        g_info("%s ggs: %i", (const char *)__func__, ggs);
+        // Если сделать захват клавы прямо в обработчике ивента focus in, то проявляется необъяснимое поведение gtk
+        // Поэтому делаем это чуть позже
+        rdp_window_data->grab_try_event_source_id =
+                g_timeout_add(50, (GSourceFunc)rdp_viewer_window_grab_try, rdp_window_data);
 
     } else {
+        //  Отменяем запрос 'сделать захват клавы', если он внезапно присутствуюет
+        if (rdp_window_data->grab_try_event_source_id) {
+            g_source_remove(rdp_window_data->grab_try_event_source_id);
+            rdp_window_data->grab_try_event_source_id = 0;
+        }
+
         // ungrab keyboard
         if (rdp_window_data->seat) {
             gdk_seat_ungrab(rdp_window_data->seat);
@@ -184,32 +209,13 @@ static void rdp_viewer_window_event_on_mapped(GtkWidget *widget G_GNUC_UNUSED, G
         gpointer user_data)
 {
     RdpWindowData *rdp_window_data = (RdpWindowData *)user_data;
-
     rdp_viewer_window_toggle_fullscreen(rdp_window_data, TRUE);
 }
 
-//static gboolean rdp_viewer_window_event_focus_in(GtkWidget *widget, GdkEvent *event, gpointer user_data)
-//{
-//    g_info("%s %p", (const char *)__func__, widget);
-//    RdpWindowData *rdp_window_data = (RdpWindowData *)user_data;
-//    if (rdp_window_data->is_grab_keyboard_on_focus_in_mode) {
-//        rdp_viewer_window_toggle_keyboard_grab(rdp_window_data, TRUE);
-//    }
-//    return FALSE;
-//}
-//
-//static gboolean rdp_viewer_window_event_focus_out(GtkWidget *widget, GdkEvent *event, gpointer user_data)
-//{
-//    g_info("%s %p", (const char *)__func__, widget);
-//    RdpWindowData *rdp_window_data = (RdpWindowData *)user_data;
-//    rdp_viewer_window_toggle_keyboard_grab(rdp_window_data, FALSE);
-//
-//    return FALSE;
-//}
 // it seems focus-in-event and focus-out-event don’t work when keyboard is grabbed
 gboolean rdp_viewer_window_on_state_event(GtkWidget *widget, GdkEventWindowState  *event, gpointer user_data)
 {
-    g_info("%s %p event->type: %i", (const char *)__func__, widget, event->type);
+    //g_info("%s %p event->type: %i", (const char *)__func__, widget, event->type);
 
     RdpWindowData *rdp_window_data = (RdpWindowData *)user_data;
 
@@ -503,10 +509,6 @@ RdpWindowData *rdp_viewer_window_create(ExtendedRdpContext *ex_rdp_context)
                              G_CALLBACK(rdp_viewer_window_deleted_cb), rdp_window_data);
     g_signal_connect(rdp_viewer_window, "map-event",
             G_CALLBACK(rdp_viewer_window_event_on_mapped), rdp_window_data);
-    //g_signal_connect(rdp_viewer_window, "focus-in-event",
-    //                 G_CALLBACK(rdp_viewer_window_event_focus_in), rdp_window_data);
-    //g_signal_connect(rdp_viewer_window, "focus-out-event",
-    //                 G_CALLBACK(rdp_viewer_window_event_focus_out), rdp_window_data);
     g_signal_connect(rdp_viewer_window, "window-state-event",
                      G_CALLBACK(rdp_viewer_window_on_state_event), rdp_window_data);
 
