@@ -136,8 +136,8 @@ static void rdp_viewer_window_toggle_fullscreen(RdpWindowData *rdp_window_data, 
 {
     if (is_fullscreen) {
         // grab keyboard
-        //rdp_viewer_window_toggle_keyboard_grab(rdp_window_data, TRUE);
-        //rdp_window_data->is_grab_keyboard_on_focus_in_mode = TRUE; // we want the keyboard to be grabbed only in focus
+        rdp_viewer_window_toggle_keyboard_grab(rdp_window_data, TRUE);
+        rdp_window_data->is_grab_keyboard_on_focus_in_mode = TRUE; // we want the keyboard to be grabbed only in focus
 
         // fullscreen
         gtk_window_set_resizable(GTK_WINDOW(rdp_window_data->rdp_viewer_window), TRUE);
@@ -210,15 +210,23 @@ static void rdp_viewer_window_event_on_mapped(GtkWidget *widget G_GNUC_UNUSED, G
 gboolean rdp_viewer_window_on_state_event(GtkWidget *widget, GdkEventWindowState  *event, gpointer user_data)
 {
     g_info("%s %p event->type: %i", (const char *)__func__, widget, event->type);
+
+    RdpWindowData *rdp_window_data = (RdpWindowData *)user_data;
+
     if (event->changed_mask & GDK_WINDOW_STATE_FOCUSED) {
-        if (event->new_window_state & GDK_WINDOW_STATE_FOCUSED)
+
+        if (event->new_window_state & GDK_WINDOW_STATE_FOCUSED) {
             g_info("FOCUS IN");
-        else
+            if (rdp_window_data->is_grab_keyboard_on_focus_in_mode) {
+                rdp_viewer_window_toggle_keyboard_grab(rdp_window_data, TRUE);
+            }
+        } else {
             g_info("FOCUS OUT");
+            rdp_viewer_window_toggle_keyboard_grab(rdp_window_data, FALSE);
+        }
     }
     return FALSE;
 }
-
 
 static gboolean gtk_update(gpointer user_data)
 {
@@ -387,7 +395,7 @@ rdp_viewer_control_menu_setup(GtkBuilder *builder, RdpWindowData *rdp_window_dat
 }
 
 static void
-rdp_viewer_item_fullscreen_activated(GtkWidget *menu G_GNUC_UNUSED, gpointer userdata)
+rdp_viewer_item_fullscreen_activate_request(GtkWidget *menu G_GNUC_UNUSED, gpointer userdata)
 {
     g_info("%s", (const char *)__func__);
     RdpWindowData *rdp_window_data = (RdpWindowData *)userdata;
@@ -525,7 +533,8 @@ RdpWindowData *rdp_viewer_window_create(ExtendedRdpContext *ex_rdp_context)
     gtk_widget_destroy(GTK_WIDGET(gtk_builder_get_object(builder, "menu-displays")));
     gtk_widget_destroy(GTK_WIDGET(gtk_builder_get_object(builder, "menu-view-release-cursor")));
     GtkWidget *item_fullscreen = GTK_WIDGET(gtk_builder_get_object(builder, "menu-view-fullscreen"));
-    g_signal_connect(item_fullscreen, "activate", G_CALLBACK(rdp_viewer_item_fullscreen_activated), rdp_window_data);
+    g_signal_connect(item_fullscreen, "activate", G_CALLBACK(rdp_viewer_item_fullscreen_activate_request),
+            rdp_window_data);
 
     // shortcuts
     GtkWidget *menu_send = GTK_WIDGET(gtk_builder_get_object(builder, "menu-send"));
