@@ -1,9 +1,9 @@
 #ifndef RDP_VIEWER_WINDOW_H
 #define RDP_VIEWER_WINDOW_H
 
-#include <gtk/gtk.h>
-
 #include "rdp_client.h"
+
+#include <gtk/gtk.h>
 
 #include "remote-viewer-timed-revealer.h"
 

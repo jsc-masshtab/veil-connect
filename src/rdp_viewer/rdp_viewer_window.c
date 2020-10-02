@@ -1,14 +1,14 @@
+
+#include "rdp_viewer_window.h"
+
 #ifdef _WIN32
 #include <gdk/gdkwin32.h>
 #endif
-
-#include "rdp_viewer_window.h"
 
 #include "remote-viewer-util.h"
 #include "config.h"
 
 #include "rdp_display.h"
-
 #include "vdi_session.h"
 
 #include "settingsfile.h"

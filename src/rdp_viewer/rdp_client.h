@@ -7,6 +7,8 @@
 #ifndef FREERDP_CLIENT_SAMPLE_H
 #define FREERDP_CLIENT_SAMPLE_H
 
+#include <winsock2.h>
+
 #include <freerdp/freerdp.h>
 #include <freerdp/client/rdpei.h>
 #include <freerdp/client/tsmf.h>
