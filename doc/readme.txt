@@ -1,7 +1,7 @@
 ﻿# Установка Veil Connect (Linux версия)
 
 1. Распаковать архив командой:
-    tar -xvf veil-connect-1.2.14-linux.tar
+    tar -xvf veil-connect-*-linux.tar
 2. Выполнить запуск установочного скрипта (потребуется пароль sudo):
     sudo bash veil-connect-linux-installer.sh
 3. Выбрать операционную систему с помощью клавиш 1-7 и нажать Enter
