@@ -35,9 +35,11 @@ pipeline {
 
     parameters {
         string(      name: 'BRANCH',               defaultValue: 'master',          description: 'branch')
-        string(      name: 'VERSION',              defaultValue: '1.3.3',          description: 'version')
-        booleanParam(name: 'DEBIAN',               defaultValue: true,              description: 'create DEB?')
-        booleanParam(name: 'UBUNTU',               defaultValue: true,              description: 'create DEB?')
+        string(      name: 'VERSION',              defaultValue: '1.3.3',           description: 'version')
+        booleanParam(name: 'DEBIAN_9',             defaultValue: true,              description: 'create DEB?')
+        booleanParam(name: 'DEBIAN_10',            defaultValue: true,              description: 'create DEB?')
+        booleanParam(name: 'UBUNTU_18',            defaultValue: true,              description: 'create DEB?')
+        booleanParam(name: 'UBUNTU_20',            defaultValue: true,              description: 'create DEB?')
         booleanParam(name: 'CENTOS7',              defaultValue: true,              description: 'create RPM?')
         booleanParam(name: 'CENTOS8',              defaultValue: true,              description: 'create RPM?')
         booleanParam(name: 'WIN32',                defaultValue: true,              description: 'create EXE?')
@@ -48,10 +50,30 @@ pipeline {
     stages {
         stage ('create environment') {
             parallel {
-                stage ('debian. create environment') {
+                stage ('debian 9. create environment') {
                     when {
                         beforeAgent true
-                        expression { params.DEBIAN == true }
+                        expression { params.DEBIAN_9 == true }
+                    }
+                    agent {
+                        label 'debian9'
+                    }
+                    steps {
+                        cleanWs()
+                        checkout([ $class: 'GitSCM',
+                            branches: [[name: '$BRANCH']],
+                            doGenerateSubmoduleConfigurations: false,
+                            extensions: [], submoduleCfg: [],
+                            userRemoteConfigs: [[credentialsId: '',
+                            url: 'http://gitlab+deploy-token-3:LD2jHQCWDYSEt-8AJQzs@gitlab.bazalt.team/vdi/veil-connect.git']]
+                        ])
+                    }
+                }
+
+                stage ('debian 10. create environment') {
+                    when {
+                        beforeAgent true
+                        expression { params.DEBIAN_10 == true }
                     }
                     agent {
                         label 'bld-agent-01'
@@ -68,13 +90,33 @@ pipeline {
                     }
                 }
 
-                stage ('ubuntu. create environment') {
+                stage ('ubuntu 18. create environment') {
                     when {
                         beforeAgent true
-                        expression { params.UBUNTU == true || params.UNIVERSAL == true }
+                        expression { params.UBUNTU_18 == true || params.UNIVERSAL == true }
                     }
                     agent {
                         label 'ubuntu18'
+                    }
+                    steps {
+                        cleanWs()
+                        checkout([ $class: 'GitSCM',
+                            branches: [[name: '$BRANCH']],
+                            doGenerateSubmoduleConfigurations: false,
+                            extensions: [], submoduleCfg: [],
+                            userRemoteConfigs: [[credentialsId: '',
+                            url: 'http://gitlab+deploy-token-3:LD2jHQCWDYSEt-8AJQzs@gitlab.bazalt.team/vdi/veil-connect.git']]
+                        ])
+                    }
+                }
+
+                stage ('ubuntu 20. create environment') {
+                    when {
+                        beforeAgent true
+                        expression { params.UBUNTU_20 == true || params.UNIVERSAL == true }
+                    }
+                    agent {
+                        label 'ubuntu20'
                     }
                     steps {
                         cleanWs()
@@ -172,10 +214,29 @@ pipeline {
 
         stage ('build') {
             parallel {
-                stage ('debian. build') {
+                stage ('debian 9. build') {
                     when {
                         beforeAgent true
-                        expression { params.DEBIAN == true }
+                        expression { params.DEBIAN_9 == true }
+                    }
+                    agent {
+                        label 'debian9'
+                    }
+                    steps {
+                        sh script: '''
+                            mkdir build
+                            cd build
+                            cmake -DCMAKE_BUILD_TYPE=Release ../
+                            make
+                            rm -rf CMakeCache.txt  CMakeFiles  Makefile  cmake_install.cmake
+                        '''
+                    }
+                }
+
+                stage ('debian 10. build') {
+                    when {
+                        beforeAgent true
+                        expression { params.DEBIAN_10 == true }
                     }
                     agent {
                         label 'bld-agent-01'
@@ -191,13 +252,32 @@ pipeline {
                     }
                 }
 
-                stage ('ubuntu. build') {
+                stage ('ubuntu 18. build') {
                     when {
                         beforeAgent true
-                        expression { params.UBUNTU == true }
+                        expression { params.UBUNTU_18 == true }
                     }
                     agent {
                         label 'ubuntu18'
+                    }
+                    steps {
+                        sh script: '''
+                            mkdir build
+                            cd build
+                            cmake -DCMAKE_BUILD_TYPE=Release ../
+                            make
+                            rm -rf CMakeCache.txt  CMakeFiles  Makefile  cmake_install.cmake
+                        '''
+                    }
+                }
+
+                stage ('ubuntu 20. build') {
+                    when {
+                        beforeAgent true
+                        expression { params.UBUNTU_20 == true }
+                    }
+                    agent {
+                        label 'ubuntu20'
                     }
                     steps {
                         sh script: '''
@@ -428,10 +508,34 @@ pipeline {
         
         stage ('make installer') {
             parallel {
-                stage ('debian. make installer') {
+                stage ('debian 9. make installer') {
                     when {
                         beforeAgent true
-                        expression { params.DEBIAN == true }
+                        expression { params.DEBIAN_9 == true }
+                    }
+                    agent {
+                        label 'debian9'
+                    }
+                    steps {
+                        sh script: '''
+                            mkdir -p ${WORKSPACE}/devops/deb/root/opt/veil-connect
+                            mkdir -p ${WORKSPACE}/devops/deb/root/usr/share/applications
+                            cp -r ${WORKSPACE}/build/* ${WORKSPACE}/doc/veil-connect.ico ${WORKSPACE}/devops/deb/root/opt/veil-connect
+                            cp ${WORKSPACE}/doc/veil-connect.desktop ${WORKSPACE}/devops/deb/root/usr/share/applications
+                            sed -i -e "s:%%VER%%:${VERSION}-stretch:g" ${WORKSPACE}/devops/deb/root/DEBIAN/control
+                            chmod -R 777 ${WORKSPACE}/devops/deb/root
+                            chmod -R 755 ${WORKSPACE}/devops/deb/root/DEBIAN
+                            sudo chown -R root:root ${WORKSPACE}/devops/deb/root
+                            cd ${WORKSPACE}/devops/deb
+                            dpkg-deb -b root .
+                        '''
+                    }
+                }
+
+                stage ('debian 10. make installer') {
+                    when {
+                        beforeAgent true
+                        expression { params.DEBIAN_10 == true }
                     }
                     agent {
                         label 'bld-agent-01'
@@ -452,10 +556,10 @@ pipeline {
                     }
                 }
 
-                stage ('ubuntu. make installer') {
+                stage ('ubuntu 18. make installer') {
                     when {
                         beforeAgent true
-                        expression { params.UBUNTU == true }
+                        expression { params.UBUNTU_18 == true }
                     }
                     agent {
                         label 'ubuntu18'
@@ -467,6 +571,30 @@ pipeline {
                             cp -r ${WORKSPACE}/build/* ${WORKSPACE}/doc/veil-connect.ico ${WORKSPACE}/devops/deb/root/opt/veil-connect
                             cp ${WORKSPACE}/doc/veil-connect.desktop ${WORKSPACE}/devops/deb/root/usr/share/applications
                             sed -i -e "s:%%VER%%:${VERSION}-bionic:g" ${WORKSPACE}/devops/deb/root/DEBIAN/control
+                            chmod -R 777 ${WORKSPACE}/devops/deb/root
+                            chmod -R 755 ${WORKSPACE}/devops/deb/root/DEBIAN
+                            sudo chown -R root:root ${WORKSPACE}/devops/deb/root
+                            cd ${WORKSPACE}/devops/deb
+                            dpkg-deb -b root .
+                        '''
+                    }
+                }
+
+                stage ('ubuntu 20. make installer') {
+                    when {
+                        beforeAgent true
+                        expression { params.UBUNTU_20 == true }
+                    }
+                    agent {
+                        label 'ubuntu20'
+                    }
+                    steps {
+                        sh script: '''
+                            mkdir -p ${WORKSPACE}/devops/deb/root/opt/veil-connect
+                            mkdir -p ${WORKSPACE}/devops/deb/root/usr/share/applications
+                            cp -r ${WORKSPACE}/build/* ${WORKSPACE}/doc/veil-connect.ico ${WORKSPACE}/devops/deb/root/opt/veil-connect
+                            cp ${WORKSPACE}/doc/veil-connect.desktop ${WORKSPACE}/devops/deb/root/usr/share/applications
+                            sed -i -e "s:%%VER%%:${VERSION}-focal:g" ${WORKSPACE}/devops/deb/root/DEBIAN/control
                             chmod -R 777 ${WORKSPACE}/devops/deb/root
                             chmod -R 755 ${WORKSPACE}/devops/deb/root/DEBIAN
                             sudo chown -R root:root ${WORKSPACE}/devops/deb/root
@@ -558,10 +686,26 @@ pipeline {
         
         stage ('deploy to repo') {
             parallel {
-                stage ('debian. deploy to repo') {
+                stage ('debian 9. deploy to repo') {
                     when {
                         beforeAgent true
-                        expression { params.DEBIAN == true }
+                        expression { params.DEBIAN_9 == true }
+                    }
+                    agent {
+                        label 'debian9'
+                    }
+                    steps {
+                        sh script: '''
+                            ssh uploader@192.168.10.144 mkdir -p /local_storage/veil-connect/${VERSION}/linux
+                            scp ${WORKSPACE}/devops/deb/*.deb uploader@192.168.10.144:/local_storage/veil-connect/${VERSION}/linux
+                        '''
+                    }
+                }
+
+                stage ('debian 10. deploy to repo') {
+                    when {
+                        beforeAgent true
+                        expression { params.DEBIAN_10 == true }
                     }
                     agent {
                         label 'bld-agent-01'
@@ -574,13 +718,29 @@ pipeline {
                     }
                 }
 
-                stage ('ubuntu. deploy to repo') {
+                stage ('ubuntu 18. deploy to repo') {
                     when {
                         beforeAgent true
-                        expression { params.UBUNTU == true }
+                        expression { params.UBUNTU_18 == true }
                     }
                     agent {
                         label 'ubuntu18'
+                    }
+                    steps {
+                        sh script: '''
+                            ssh uploader@192.168.10.144 mkdir -p /local_storage/veil-connect/${VERSION}/linux
+                            scp ${WORKSPACE}/devops/deb/*.deb uploader@192.168.10.144:/local_storage/veil-connect/${VERSION}/linux
+                        '''
+                    }
+                }
+
+                stage ('ubuntu 20. deploy to repo') {
+                    when {
+                        beforeAgent true
+                        expression { params.UBUNTU_20 == true }
+                    }
+                    agent {
+                        label 'ubuntu20'
                     }
                     steps {
                         sh script: '''
@@ -671,9 +831,18 @@ pipeline {
                     scp ${WORKSPACE}/doc/readme.txt uploader@192.168.10.144:/local_storage/veil-connect/${VERSION}/linux
                     scp ${WORKSPACE}/devops/veil-connect-linux-installer.sh uploader@192.168.10.144:/local_storage/veil-connect/${VERSION}/linux
                     ssh uploader@192.168.10.144 chmod +x /local_storage/veil-connect/${VERSION}/linux/veil-connect-linux-installer.sh
+                    
+                    # freerdp 2.2 debs for astra linux:
+                    ssh uploader@192.168.10.144 "cp -r /local_storage/freerdp2-astra /local_storage/veil-connect/${VERSION}/linux"
+                    
+                    # archivation
                     ssh uploader@192.168.10.144 "cd /local_storage/veil-connect/${VERSION}/linux && tar cvf veil-connect-${VERSION}-linux.tar --exclude=*.txt ./*"
 
+                    # remove files
                     ssh uploader@192.168.10.144 rm -f /local_storage/veil-connect/${VERSION}/linux/*.deb /local_storage/veil-connect/${VERSION}/linux/*.rpm /local_storage/veil-connect/${VERSION}/linux/*.sh
+                    ssh uploader@192.168.10.144 rm -rf /local_storage/veil-connect/${VERSION}/linux/freerdp2-astra
+                    
+                    # create symlink to latest version
                     ssh uploader@192.168.10.144 ln -sfT /local_storage/veil-connect/${VERSION} /local_storage/veil-connect/latest
                 '''
             }
