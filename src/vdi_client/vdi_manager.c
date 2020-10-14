@@ -178,7 +178,8 @@ static void register_pool(const gchar *pool_id, const gchar *pool_name, const gc
                                                       conn_types_json_array, vdi_manager.gtk_flow_box);
     g_array_append_val (vdi_manager.pool_widgets_array, vdi_pool_widget);
     // connect start button to callback
-    g_signal_connect(vdi_pool_widget.vm_start_button, "clicked", G_CALLBACK(on_vm_start_button_clicked), NULL);
+    g_signal_connect(vdi_pool_widget.vm_start_button, "clicked", G_CALLBACK(on_vm_start_button_clicked),
+            vdi_pool_widget.pool_id);
 }
 
 // find a virtual machine widget by id
@@ -389,9 +390,9 @@ static void on_button_quit_clicked(GtkButton *button G_GNUC_UNUSED, gpointer dat
     shutdown_loop(ci->loop);
 }
 // vm start button pressed callback
-static void on_vm_start_button_clicked(GtkButton *button, gpointer data G_GNUC_UNUSED)
+static void on_vm_start_button_clicked(GtkButton *button G_GNUC_UNUSED, gpointer data)
 {
-    const gchar *pool_id = g_object_get_data(G_OBJECT(button), "pool_id");
+    const gchar *pool_id = (const gchar *)data;
     vdi_session_set_current_pool_id(pool_id);
     g_info("%s  %s", (const char *)__func__, pool_id);
     // start machine
@@ -402,7 +403,8 @@ static void on_vm_start_button_clicked(GtkButton *button, gpointer data G_GNUC_U
 
     // take from gui currect remote protocol
     //gint remote_protocol_index = gtk_combo_box_get_active((GtkComboBox*)vdi_manager.combobox_remote_protocol);
-    VdiVmRemoteProtocol remote_protocol =  vdi_pool_widget_get_current_protocol(&vdi_pool_widget);
+    VdiVmRemoteProtocol remote_protocol = vdi_pool_widget_get_current_protocol(&vdi_pool_widget);
+    g_info("%s remote_protocol %s", (const char *)__func__, vdi_session_remote_protocol_str(remote_protocol));
     vdi_session_set_current_remote_protocol(remote_protocol);
     // execute task
     execute_async_task(vdi_session_get_vm_from_pool, on_vdi_session_get_vm_from_pool_finished, NULL, NULL);

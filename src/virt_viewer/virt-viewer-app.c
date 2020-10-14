@@ -63,7 +63,7 @@
 #include "virt-viewer-session-spice.h"
 #endif
 
-#define RECONNECT_TIMEOUT 1000
+#define RECONNECT_TIMEOUT 3000
 
 gboolean doDebug = FALSE;
 

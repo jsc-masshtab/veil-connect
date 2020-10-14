@@ -8,17 +8,17 @@
 #define MAX_PROTOCOLS_NUMBER 32 // for sanity check
 
 static void vdi_pool_widget_check_protocol_available_and_add(
-        JsonArray *conn_types_json_array, const gchar *protocol,
+        JsonArray *conn_types_json_array, VdiVmRemoteProtocol protocol,
         GtkWidget *combobox_remote_protocol)
 {
     guint protocols_number = MIN(json_array_get_length(conn_types_json_array), MAX_PROTOCOLS_NUMBER);
     for(int i = 0; i < (int)protocols_number; ++i) {
 
         const gchar *protocol_name = json_array_get_string_element(conn_types_json_array, (guint)i);
-        // We expect from server "SPICE", "RDP", "NATIVE_RDP" (26.04.2020)
-        if (g_strcmp0(protocol_name, protocol) == 0) {
+        //
+        if (g_strcmp0(protocol_name, vdi_session_remote_protocol_str(protocol)) == 0) {
             gtk_combo_box_text_append_text((GtkComboBoxText*)combobox_remote_protocol, protocol_name);
-            return; // in case if the server sent duplicates
+            return;
         }
     }
 }
@@ -72,12 +72,14 @@ VdiPoolWidget build_pool_widget(const gchar *pool_id, const gchar *pool_name,
     gtk_box_pack_start((GtkBox *)vdi_pool_widget.gtk_box, vdi_pool_widget.combobox_remote_protocol,
                        TRUE, TRUE, 0);
     //fill combobox_remote_protocol
-    vdi_pool_widget_check_protocol_available_and_add(conn_types_json_array, "SPICE",
+    vdi_pool_widget_check_protocol_available_and_add(conn_types_json_array, VDI_SPICE_PROTOCOL,
             vdi_pool_widget.combobox_remote_protocol);
-    vdi_pool_widget_check_protocol_available_and_add(conn_types_json_array, "RDP",
+    vdi_pool_widget_check_protocol_available_and_add(conn_types_json_array, VDI_SPICE_DIRECT_PROTOCOL,
+                                                     vdi_pool_widget.combobox_remote_protocol);
+    vdi_pool_widget_check_protocol_available_and_add(conn_types_json_array, VDI_RDP_PROTOCOL,
                                                      vdi_pool_widget.combobox_remote_protocol);
 #ifdef _WIN32
-    vdi_pool_widget_check_protocol_available_and_add(conn_types_json_array, "NATIVE_RDP",
+    vdi_pool_widget_check_protocol_available_and_add(conn_types_json_array, VDI_RDP_WINDOWS_NATIVE_PROTOCOL,
                                                      vdi_pool_widget.combobox_remote_protocol);
 #endif
     gtk_combo_box_set_active((GtkComboBox*)vdi_pool_widget.combobox_remote_protocol, 0);
@@ -90,7 +92,6 @@ VdiPoolWidget build_pool_widget(const gchar *pool_id, const gchar *pool_name,
     gtk_button_set_image(GTK_BUTTON (vdi_pool_widget.vm_start_button), vdi_pool_widget.image_widget);
     gtk_button_set_image_position(GTK_BUTTON (vdi_pool_widget.vm_start_button), GTK_POS_BOTTOM);
 
-    g_object_set_data((GObject *)vdi_pool_widget.vm_start_button, "pool_id", (gpointer)vdi_pool_widget.pool_id);
     gtk_box_pack_start((GtkBox *)vdi_pool_widget.gtk_box, vdi_pool_widget.vm_start_button, TRUE, TRUE, 0);
 
     // main_widget setup
@@ -110,21 +111,10 @@ VdiPoolWidget build_pool_widget(const gchar *pool_id, const gchar *pool_name,
 
 VdiVmRemoteProtocol vdi_pool_widget_get_current_protocol(VdiPoolWidget *vdi_pool_widget)
 {
-    //vdi_pool_widget->combobox_remote_protocol
     gchar *current_protocol_str = gtk_combo_box_text_get_active_text(
             (GtkComboBoxText*)vdi_pool_widget->combobox_remote_protocol);
-
-    VdiVmRemoteProtocol protocol = VDI_ANOTHER_REMOTE_PROTOCOL;
-    if (g_strcmp0("SPICE", current_protocol_str) == 0)
-        protocol = VDI_SPICE_PROTOCOL;
-    else if (g_strcmp0("RDP", current_protocol_str) == 0)
-        protocol = VDI_RDP_PROTOCOL;
-    else if (g_strcmp0("NATIVE_RDP", current_protocol_str) == 0)
-        protocol = VDI_RDP_WINDOWS_NATIVE_PROTOCOL;
-
-    free_memory_safely(&current_protocol_str);
-
-    return protocol;
+    g_info("%s current_protocol_str %s", (const char *)__func__, current_protocol_str);
+    return vdi_session_str_to_remote_protocol(current_protocol_str);
 }
 
 void enable_spinner_visible(VdiPoolWidget *vdi_pool_widget, gboolean enable)

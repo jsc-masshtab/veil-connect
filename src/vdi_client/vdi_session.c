@@ -169,21 +169,6 @@ static void vdi_api_session_register_for_license() {
     g_object_unref(parser);
 }
 
-const gchar *vdi_session_remote_protocol_to_str(VdiVmRemoteProtocol vm_remote_protocol)
-{
-    switch (vm_remote_protocol) {
-        case VDI_SPICE_PROTOCOL:
-            return "spice";
-        case VDI_RDP_PROTOCOL:
-        case VDI_RDP_WINDOWS_NATIVE_PROTOCOL:
-            return "rdp";
-        case VDI_ANOTHER_REMOTE_PROTOCOL:
-            return "unknown_protocol";
-        default:
-            return "";
-    }
-}
-
 void vdi_session_create()
 {
     memset(&vdiSession, 0, sizeof(VdiSession));
@@ -204,11 +189,6 @@ void vdi_session_destroy()
     g_object_unref(vdiSession.soup_session);
 
     free_session_memory();
-}
-
-SoupSession *vdi_session_get_soup_session()
-{
-    return vdiSession.soup_session;
 }
 
 const gchar *vdi_session_get_vdi_ip()
@@ -281,6 +261,56 @@ void vdi_session_set_current_remote_protocol(VdiVmRemoteProtocol remote_protocol
 VdiVmRemoteProtocol vdi_session_get_current_remote_protocol()
 {
     return vdiSession.current_remote_protocol;
+}
+
+VdiVmRemoteProtocol vdi_session_str_to_remote_protocol(const gchar *protocol_str)
+{
+    VdiVmRemoteProtocol protocol = VDI_ANOTHER_REMOTE_PROTOCOL;
+    if (g_strcmp0("SPICE", protocol_str) == 0)
+        protocol = VDI_SPICE_PROTOCOL;
+    else if (g_strcmp0("SPICE_DIRECT", protocol_str) == 0)
+        protocol = VDI_SPICE_DIRECT_PROTOCOL;
+    else if (g_strcmp0("RDP", protocol_str) == 0)
+        protocol = VDI_RDP_PROTOCOL;
+    else if (g_strcmp0("NATIVE_RDP", protocol_str) == 0)
+        protocol = VDI_RDP_WINDOWS_NATIVE_PROTOCOL;
+
+    return protocol;
+}
+
+const gchar *vdi_session_remote_protocol_str(VdiVmRemoteProtocol protocol)
+{
+    switch (protocol) {
+        case VDI_SPICE_PROTOCOL:
+            return "SPICE";
+        case VDI_SPICE_DIRECT_PROTOCOL:
+            return "SPICE_DIRECT";
+        case VDI_RDP_PROTOCOL:
+            return "RDP";
+        case VDI_RDP_WINDOWS_NATIVE_PROTOCOL:
+            return "NATIVE_RDP";
+        case VDI_ANOTHER_REMOTE_PROTOCOL:
+        default:
+            return "UNKNOWN_PROTOCOL";
+    }
+}
+
+// todo: в будущем перейти к заглавным буквам. Оставлено для совместимости со старыми версиями vdi
+static const gchar *vdi_session_remote_protocol_to_str_old(VdiVmRemoteProtocol vm_remote_protocol)
+{
+    switch (vm_remote_protocol) {
+        case VDI_SPICE_PROTOCOL:
+            return "spice";
+        case VDI_SPICE_DIRECT_PROTOCOL:
+            return "spice_direct";
+        case VDI_RDP_PROTOCOL:
+            return "rdp";
+        case VDI_RDP_WINDOWS_NATIVE_PROTOCOL:
+            return "native_rdp";
+        case VDI_ANOTHER_REMOTE_PROTOCOL:
+        default:
+            return "unknown_protocol";
+    }
 }
 
 const gchar *vdi_session_get_current_vm_name()
@@ -382,8 +412,9 @@ void vdi_session_get_vm_from_pool(GTask       *task,
 
     // get vm from pool
     gchar *url_str = g_strdup_printf("%s/client/pools/%s", vdiSession.api_url, vdiSession.current_pool_id);
+    // todo: use vdi_session_remote_protocol_str in future. Cant replace now cause some people use old vdi server
     gchar *bodyStr = g_strdup_printf("{\"remote_protocol\":\"%s\"}",
-                                     vdi_session_remote_protocol_to_str(vdiSession.current_remote_protocol));
+                                     vdi_session_remote_protocol_to_str_old(vdiSession.current_remote_protocol));
 
     gchar *response_body_str = vdi_session_api_call("POST", url_str, bodyStr, NULL);
     g_free(url_str);

@@ -19,6 +19,7 @@
 // remote protocol type
 typedef enum{
     VDI_SPICE_PROTOCOL,
+    VDI_SPICE_DIRECT_PROTOCOL,
     VDI_RDP_PROTOCOL,
     VDI_RDP_WINDOWS_NATIVE_PROTOCOL,
     VDI_ANOTHER_REMOTE_PROTOCOL
@@ -93,13 +94,10 @@ typedef struct {
 } DetachUsbData;
 
 // Functions
-const gchar *vdi_session_remote_protocol_to_str(VdiVmRemoteProtocol vm_remote_protocol);
 // init session
 void vdi_session_create(void);
 // deinit session
 void vdi_session_destroy(void);
-// get session
-SoupSession *vdi_session_get_soup_session(void);
 // get vid server ip
 const gchar *vdi_session_get_vdi_ip(void);
 // get port
@@ -122,6 +120,9 @@ const gchar *vdi_session_get_current_pool_id(void);
 void vdi_session_set_current_remote_protocol(VdiVmRemoteProtocol remote_protocol);
 // get current remote protocol
 VdiVmRemoteProtocol vdi_session_get_current_remote_protocol(void);
+
+VdiVmRemoteProtocol vdi_session_str_to_remote_protocol(const gchar *protocol_str);
+const gchar *vdi_session_remote_protocol_str(VdiVmRemoteProtocol protocol);
 
 // get current vm name
 const gchar *vdi_session_get_current_vm_name(void);

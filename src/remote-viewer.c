@@ -404,9 +404,8 @@ retry_connnect_to_vm:
         if (!is_connect_to_prev_pool) {
             remote_viewer_free_auth_data(&user, &password, &domain, &ip, &port, &vm_verbose_name);
             // show VDI manager window
-            GtkResponseType vdi_dialog_window_response =
-                    vdi_manager_dialog(virt_viewer_window_get_window(main_window), &ip, &port,
-                                       &password, &vm_verbose_name);
+            GtkResponseType vdi_dialog_window_response = vdi_manager_dialog(virt_viewer_window_get_window(main_window),
+                    &ip, &port, &password, &vm_verbose_name);
             if (vdi_dialog_window_response == GTK_RESPONSE_CANCEL) {
                 remote_viewer_free_auth_data(&user, &password, &domain, &ip, &port, &vm_verbose_name);
                 goto retry_auth;
