@@ -73,6 +73,8 @@ typedef struct {
     UINT32 last_rdp_error; // main freerdp error
     UINT32 rail_rdp_error; // remote app related error
 
+    GMainLoop **p_loop;
+
 } ExtendedRdpContext;
 
 

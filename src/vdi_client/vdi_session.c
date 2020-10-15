@@ -31,7 +31,6 @@ static void free_session_memory()
     free_memory_safely(&vdiSession.vdi_username);
     free_memory_safely(&vdiSession.vdi_password);
     free_memory_safely(&vdiSession.vdi_ip);
-    free_memory_safely(&vdiSession.vdi_port);
 
     free_memory_safely(&vdiSession.api_url);
     free_memory_safely(&vdiSession.auth_url);
@@ -196,7 +195,7 @@ const gchar *vdi_session_get_vdi_ip()
     return vdiSession.vdi_ip;
 }
 
-const gchar *vdi_session_get_vdi_port(void)
+int vdi_session_get_vdi_port(void)
 {
     return vdiSession.vdi_port;
 }
@@ -217,22 +216,22 @@ void vdi_session_cancell_pending_requests()
 }
 
 void vdi_session_set_credentials(const gchar *username, const gchar *password, const gchar *ip,
-                         const gchar *port, gboolean is_ldap)
+                         int port, gboolean is_ldap)
 {
     free_session_memory();
 
     vdiSession.vdi_username = g_strdup(username);
     vdiSession.vdi_password = g_strdup(password);
     vdiSession.vdi_ip = g_strdup(ip);
-    vdiSession.vdi_port = g_strdup(port);
+    vdiSession.vdi_port = port;
 
     const gchar *http_protocol = determine_http_protocol_by_port(port);
 
     gboolean is_nginx_vdi_prefix_disabled = read_int_from_ini_file("General", "is_nginx_vdi_prefix_disabled", 0);
     if (is_nginx_vdi_prefix_disabled)
-        vdiSession.api_url = g_strdup_printf("%s://%s:%s", http_protocol, vdiSession.vdi_ip, vdiSession.vdi_port);
+        vdiSession.api_url = g_strdup_printf("%s://%s:%i", http_protocol, vdiSession.vdi_ip, vdiSession.vdi_port);
     else
-        vdiSession.api_url = g_strdup_printf("%s://%s:%s/%s", http_protocol,
+        vdiSession.api_url = g_strdup_printf("%s://%s:%i/%s", http_protocol,
             vdiSession.vdi_ip, vdiSession.vdi_port, NGINX_VDI_API_PREFIX);
 
 

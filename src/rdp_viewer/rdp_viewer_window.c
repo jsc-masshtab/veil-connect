@@ -200,6 +200,7 @@ static gboolean rdp_viewer_window_deleted_cb(gpointer userdata)
 {
     g_info("%s", (const char *)__func__);
     RdpWindowData *rdp_window_data = (RdpWindowData *)userdata;
+    *rdp_window_data->dialog_window_response_p = GTK_RESPONSE_CLOSE;
     shutdown_loop(*rdp_window_data->loop_p);
 
     return TRUE;
@@ -581,7 +582,7 @@ void rdp_viewer_window_destroy(RdpWindowData *rdp_window_data)
 void rdp_viewer_window_set_monitor_data(RdpWindowData *rdp_window_data, GdkRectangle geometry, int monitor_index)
 {
     rdp_window_data->monitor_index = monitor_index;
-    g_info("TESTT W: %u x H:%u", geometry.width, geometry.height);
+    g_info("%s W: %u x H:%u", (const char *)__func__, geometry.width, geometry.height);
     rdp_window_data->monitor_geometry = geometry;
 
     gtk_window_resize(GTK_WINDOW(rdp_window_data->rdp_viewer_window),

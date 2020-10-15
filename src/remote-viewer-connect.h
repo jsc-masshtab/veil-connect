@@ -10,10 +10,9 @@
 #include <gtk/gtk.h>
 
 #include "vdi_session.h"
+#include "connect_settings_data.h"
 
-GtkResponseType remote_viewer_connect_dialog(gchar **user, gchar **password, gchar **domain,
-                                      gchar **ip, gchar **port, gboolean *is_connect_to_prev_pool,
-                                      gchar **vm_verbose_name);
+GtkResponseType remote_viewer_connect_dialog(ConnectSettingsData *connect_settings_data);
 
 #endif /* REMOTE_VIEWER_CONNECT_H */
 

@@ -1161,7 +1161,7 @@ virt_viewer_session_spice_get_main_channel(VirtViewerSessionSpice *self)
     return self->priv->main_channel;
 }
 
-void // todo: избавиться от этого
+void
 virt_viewer_session_spice_set_credentials(gchar *username, gchar *password)
 {
     free_memory_safely(&spice_session_username);

@@ -54,7 +54,7 @@ typedef struct{
     GtkWidget *bt_cancel;
     GtkWidget *bt_ok;
 
-    ConnectSettingsData *p_connect_settings_data;
+    ConnectSettingsData *p_conn_data;
 
 } ConnectSettingsDialogData;
 
@@ -83,7 +83,7 @@ make_entry_red(GtkWidget *entry)
 /*Take data from GUI. Return true if there were no errors otherwise - false  */
 // У виджета есть понятие id имя, котоое уникально и есть понятие имя виджета, которое используется для css.
 static gboolean
-fill_connect_settings_data_from_gui(ConnectSettingsData *connect_settings_data, ConnectSettingsDialogData *dialog_data)
+fill_p_conn_data_from_gui(ConnectSettingsData *p_conn_data, ConnectSettingsDialogData *dialog_data)
 {
     gboolean is_ok = TRUE;
     const gchar *pattern = "^$|[а-яА-ЯёЁa-zA-Z0-9]+[а-яА-ЯёЁa-zA-Z0-9.\\-_+ ]*$";
@@ -94,8 +94,7 @@ fill_connect_settings_data_from_gui(ConnectSettingsData *connect_settings_data, 
 
     if (is_matched) {
         gtk_widget_set_name(dialog_data->domain_entry, "domain-entry");
-        free_memory_safely(&connect_settings_data->domain);
-        connect_settings_data->domain = g_strdup(domain_gui_str);
+        update_string_safely(&p_conn_data->domain, domain_gui_str);
     } else {
         make_entry_red(dialog_data->domain_entry);
         is_ok = FALSE;
@@ -109,8 +108,7 @@ fill_connect_settings_data_from_gui(ConnectSettingsData *connect_settings_data, 
 
     if (is_matched) {
         gtk_widget_set_name(dialog_data->address_entry, "connection-address-entry");
-        free_memory_safely(&connect_settings_data->ip);
-        connect_settings_data->ip = g_strdup(address_gui_str);
+        update_string_safely(&p_conn_data->ip, address_gui_str);
     } else {
         make_entry_red(dialog_data->address_entry);
         is_ok = FALSE;
@@ -121,19 +119,22 @@ fill_connect_settings_data_from_gui(ConnectSettingsData *connect_settings_data, 
     int port_int = atoi(port_str);
     if ( (g_strcmp0(port_str, "") == 0) || (port_int >= 0 && port_int <= 65535) ) {
         gtk_widget_set_name(dialog_data->port_entry, "connection-port-entry");
-        connect_settings_data->port = port_int;
+        p_conn_data->port = port_int;
     } else {
         make_entry_red(dialog_data->port_entry);
         is_ok = FALSE;
     }
 
-    connect_settings_data->is_ldap = gtk_toggle_button_get_active((GtkToggleButton *)dialog_data->ldap_check_btn);
-    connect_settings_data->is_connect_to_prev_pool =
+    p_conn_data->is_ldap = gtk_toggle_button_get_active((GtkToggleButton *)dialog_data->ldap_check_btn);
+    p_conn_data->is_connect_to_prev_pool =
             gtk_toggle_button_get_active((GtkToggleButton *)dialog_data->conn_to_prev_pool_checkbutton);
 
-    if (dialog_data->remote_protocol_combobox)
-        connect_settings_data->remote_protocol_type = (VdiVmRemoteProtocol)(
-                gtk_combo_box_get_active((GtkComboBox*)dialog_data->remote_protocol_combobox));
+    if (dialog_data->remote_protocol_combobox) {
+        gchar *current_protocol_str = gtk_combo_box_text_get_active_text(
+                (GtkComboBoxText*)dialog_data->remote_protocol_combobox);
+        p_conn_data->remote_protocol_type = vdi_session_str_to_remote_protocol(current_protocol_str);
+        free_memory_safely(&current_protocol_str);
+    }
 
     return is_ok;
 }
@@ -273,8 +274,8 @@ btn_archive_logs_clicked_cb(GtkButton *button G_GNUC_UNUSED, ConnectSettingsDial
 static void
 ok_button_clicked_cb(GtkButton *button G_GNUC_UNUSED, ConnectSettingsDialogData *dialog_data)
 {
-    // fill connect_settings_data from gui
-    gboolean is_success = fill_connect_settings_data_from_gui(dialog_data->p_connect_settings_data, dialog_data);
+    // fill p_conn_data from gui
+    gboolean is_success = fill_p_conn_data_from_gui(dialog_data->p_conn_data, dialog_data);
 
    /* // Check some RDP settings
     const gchar *shared_folders_str = gtk_entry_get_text(GTK_ENTRY(dialog_data->rdp_shared_folders_entry));
@@ -299,19 +300,19 @@ ok_button_clicked_cb(GtkButton *button G_GNUC_UNUSED, ConnectSettingsDialogData 
 }
 
 static void
-fill_connect_settings_gui(ConnectSettingsDialogData *dialog_data, ConnectSettingsData *connect_settings_data)
+fill_connect_settings_gui(ConnectSettingsDialogData *dialog_data, ConnectSettingsData *p_conn_data)
 {
     /// General settings
     // domain
-    if (connect_settings_data->domain) {
-        gtk_entry_set_text(GTK_ENTRY(dialog_data->domain_entry), connect_settings_data->domain);
+    if (p_conn_data->domain) {
+        gtk_entry_set_text(GTK_ENTRY(dialog_data->domain_entry), p_conn_data->domain);
     }
     // ip
-    if (connect_settings_data->ip) {
-        gtk_entry_set_text(GTK_ENTRY(dialog_data->address_entry), connect_settings_data->ip);
+    if (p_conn_data->ip) {
+        gtk_entry_set_text(GTK_ENTRY(dialog_data->address_entry), p_conn_data->ip);
     }
     // port.
-    int port_from_config_file = connect_settings_data->port;
+    int port_from_config_file = p_conn_data->port;
     if (port_from_config_file != 0) {
         gchar *port_str = g_strdup_printf("%i", port_from_config_file);
         gtk_entry_set_text(GTK_ENTRY(dialog_data->port_entry), port_str);
@@ -320,16 +321,18 @@ fill_connect_settings_gui(ConnectSettingsDialogData *dialog_data, ConnectSetting
         gtk_entry_set_text(GTK_ENTRY(dialog_data->port_entry), "");
     }
     // ldap
-    gboolean is_ldap_btn_checked = connect_settings_data->is_ldap;
+    gboolean is_ldap_btn_checked = p_conn_data->is_ldap;
     gtk_toggle_button_set_active((GtkToggleButton *)dialog_data->ldap_check_btn, is_ldap_btn_checked);
     // Connect to prev pool
-    gboolean is_conn_to_prev_pool_btn_checked = connect_settings_data->is_connect_to_prev_pool;
+    gboolean is_conn_to_prev_pool_btn_checked = p_conn_data->is_connect_to_prev_pool;
     gtk_toggle_button_set_active((GtkToggleButton *)dialog_data->conn_to_prev_pool_checkbutton,
                                  is_conn_to_prev_pool_btn_checked);
-    // remote protocol
-    gint remote_protocol_type = (gint)connect_settings_data->remote_protocol_type;
-    if (dialog_data->remote_protocol_combobox)
-        gtk_combo_box_set_active((GtkComboBox*)dialog_data->remote_protocol_combobox, remote_protocol_type);
+
+    if (dialog_data->remote_protocol_combobox) {
+        // индекс 0 - спайс индекс 1 - рдп
+        gint index = (p_conn_data->remote_protocol_type == VDI_SPICE_PROTOCOL) ? 0 : 1;
+        gtk_combo_box_set_active((GtkComboBox *) dialog_data->remote_protocol_combobox, index);
+    }
 
     /// Spice settings
     gboolean is_spice_client_cursor_visible =
@@ -401,8 +404,11 @@ save_data_to_ini_file(ConnectSettingsDialogData *dialog_data)
     write_int_to_ini_file(paramToFileGrpoup, "is_conn_to_prev_pool_btn_checked", is_conn_to_prev_pool_btn_checked);
 
     if (dialog_data->remote_protocol_combobox) {
-        gint cur_remote_protocol_index = gtk_combo_box_get_active((GtkComboBox*)dialog_data->remote_protocol_combobox);
-        write_int_to_ini_file("General", "cur_remote_protocol_index", cur_remote_protocol_index);
+        gint remote_protocol_combobox_index =
+                gtk_combo_box_get_active((GtkComboBox*)dialog_data->remote_protocol_combobox);
+        // индекс 0 - спайс индекс 1 - рдп
+        VdiVmRemoteProtocol protocol = (remote_protocol_combobox_index == 0) ? VDI_SPICE_PROTOCOL : VDI_RDP_PROTOCOL;
+        write_int_to_ini_file("General", "cur_remote_protocol_index", protocol);
     }
 
     /// Spice debug cursor enabling
@@ -447,12 +453,12 @@ save_data_to_ini_file(ConnectSettingsDialogData *dialog_data)
 
 } // remote_app_name_entry      remote_app_options_entry
 
-GtkResponseType remote_viewer_start_settings_dialog(ConnectSettingsData *connect_settings_data, GtkWindow *parent)
+GtkResponseType remote_viewer_start_settings_dialog(ConnectSettingsData *p_conn_data, GtkWindow *parent)
 {
     ConnectSettingsDialogData dialog_data;
     memset(&dialog_data, 0, sizeof(ConnectSettingsDialogData));
 
-    dialog_data.p_connect_settings_data = connect_settings_data;
+    dialog_data.p_conn_data = p_conn_data;
     dialog_data.dialog_window_response = GTK_RESPONSE_OK;
 
     // gui widgets
@@ -520,8 +526,8 @@ GtkResponseType remote_viewer_start_settings_dialog(ConnectSettingsData *connect
                      &dialog_data);
 
     // read from file
-    fill_connect_settings_data_from_ini_file(connect_settings_data);
-    fill_connect_settings_gui(&dialog_data, connect_settings_data);
+    fill_p_conn_data_from_ini_file(p_conn_data);
+    fill_connect_settings_gui(&dialog_data, p_conn_data);
 
     // show window
     gtk_window_set_transient_for(GTK_WINDOW(dialog_data.window), parent);
@@ -542,33 +548,26 @@ GtkResponseType remote_viewer_start_settings_dialog(ConnectSettingsData *connect
     return dialog_data.dialog_window_response;
 }
 
-void
-fill_connect_settings_data_from_ini_file(ConnectSettingsData *connect_settings_data)
+void fill_p_conn_data_from_ini_file(ConnectSettingsData *p_conn_data)
 {
     // Main settings
     const gchar *paramToFileGrpoup = opt_manual_mode ? "RemoteViewerConnectManual" : "RemoteViewerConnect";
     // domain
-    free_memory_safely(&connect_settings_data->domain);
-    connect_settings_data->domain = read_str_from_ini_file(paramToFileGrpoup, "domain");
-    //g_info("%s connect_settings_data->domain %s\n", (const char *)__func__, connect_settings_data->domain);
+    gchar *domain = read_str_from_ini_file(paramToFileGrpoup, "domain");
+    update_string_safely(&p_conn_data->domain, domain);
+    free_memory_safely(&domain);
     // ip
-    free_memory_safely(&connect_settings_data->ip);
-    connect_settings_data->ip = read_str_from_ini_file(paramToFileGrpoup, "ip");
+    gchar *ip = read_str_from_ini_file(paramToFileGrpoup, "ip");
+    update_string_safely(&p_conn_data->ip, ip);
+    free_memory_safely(&ip);
     // port
-    connect_settings_data->port = read_int_from_ini_file(paramToFileGrpoup, "port", 443);
+    p_conn_data->port = read_int_from_ini_file(paramToFileGrpoup, "port", 443);
     // ldap
-    connect_settings_data->is_ldap = read_int_from_ini_file("RemoteViewerConnect", "is_ldap_btn_checked", 0);
+    p_conn_data->is_ldap = read_int_from_ini_file("RemoteViewerConnect", "is_ldap_btn_checked", 0);
     // Connect to prev pool
-    connect_settings_data->is_connect_to_prev_pool =
+    p_conn_data->is_connect_to_prev_pool =
             read_int_from_ini_file("RemoteViewerConnect", "is_conn_to_prev_pool_btn_checked", 0);
     // remote protocol
-    gint remote_protocol_type = read_int_from_ini_file("General",
-            "cur_remote_protocol_index", VDI_SPICE_PROTOCOL);
-    connect_settings_data->remote_protocol_type = (VdiVmRemoteProtocol)remote_protocol_type;
+    gint remote_protocol_type = read_int_from_ini_file("General", "cur_remote_protocol_index", VDI_SPICE_PROTOCOL);
+    p_conn_data->remote_protocol_type = (VdiVmRemoteProtocol)remote_protocol_type;
 }
-
-//void free_connect_settings_data(ConnectSettingsData *connect_settings_data)
-//{
-//    free_memory_safely(&connect_settings_data->ip);
-//    free(connect_settings_data);
-//}

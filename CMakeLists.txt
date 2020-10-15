@@ -22,6 +22,7 @@ INCLUDE_DIRECTORIES(
 #############################APP FILES#################################
 list(APPEND SRC_CODE
         config.h
+        src/connect_settings_data.h
         src/remote-viewer.h
         src/remote-viewer.c
         src/remote-viewer-connect.c

@@ -48,8 +48,6 @@ typedef struct{
 
 } VdiVmData;
 
-// vdi session todo: по-хорошему надо защитить поля от одновременного домтупа из разных потоков
-// soup_session - thread safe. его не надо защищать
 typedef struct{
 
     SoupSession *soup_session;
@@ -57,7 +55,7 @@ typedef struct{
     gchar *vdi_username;
     gchar *vdi_password;
     gchar *vdi_ip;
-    gchar *vdi_port; // todo: make it int!
+    int vdi_port;
 
     gchar *api_url;
     gchar *auth_url;
@@ -101,7 +99,7 @@ void vdi_session_destroy(void);
 // get vid server ip
 const gchar *vdi_session_get_vdi_ip(void);
 // get port
-const gchar *vdi_session_get_vdi_port(void);
+int vdi_session_get_vdi_port(void);
 // get username
 const gchar *vdi_session_get_vdi_username(void);
 // get password
@@ -110,7 +108,7 @@ const gchar *vdi_session_get_vdi_password(void);
 void vdi_session_cancell_pending_requests(void);
 // set vdi session credentials
 void vdi_session_set_credentials(const gchar *username, const gchar *password, const gchar *ip,
-                         const gchar *port, gboolean is_ldap);
+                         int port, gboolean is_ldap);
 // set current vm id
 void vdi_session_set_current_pool_id(const gchar *current_pool_id);
 // get current vm id

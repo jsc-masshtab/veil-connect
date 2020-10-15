@@ -7,7 +7,6 @@
 #include <config.h>
 
 #include "settingsfile.h"
-//#include "virt-viewer-session-spice.h"
 #include "remote-viewer-connect.h"
 #include "remote-viewer-util.h"
 #include <glib/gi18n.h>
@@ -47,21 +46,10 @@ typedef struct
     GtkWidget *header_label;
 
     // remote viewer settings
-    ConnectSettingsData connect_settings_data;
+    ConnectSettingsData *p_conn_data;
 
     // pointers to data
     gchar *current_pool_id;
-
-    gchar **user;
-    gchar **password;
-
-    gchar **domain;
-    gchar **ip;
-    gchar **port;
-
-    gboolean *is_connect_to_prev_pool_ptr;
-
-    gchar **vm_verbose_name;
 
 } RemoteViewerData;
 
@@ -91,20 +79,18 @@ set_auth_dialog_state(AuthDialogState auth_dialog_state, RemoteViewerData *ci)
         gtk_spinner_start((GtkSpinner *)ci->connect_spinner);
         break;
     }
+    default: {
+        break;
+    }
     }
 }
 // header-label
 static void
 set_data_from_gui_in_outer_pointers(RemoteViewerData *ci)
 {
-    *ci->domain = g_strdup(ci->connect_settings_data.domain);
-    //g_info("%s *ci->domain %s\n", (const char *)__func__, *ci->domain);
-    *ci->ip = g_strdup(ci->connect_settings_data.ip);
-    *ci->port = g_strdup_printf("%i", ci->connect_settings_data.port);
-    *ci->user = g_strdup(gtk_entry_get_text(GTK_ENTRY(ci->login_entry)));
-    *ci->password = g_strdup(gtk_entry_get_text(GTK_ENTRY(ci->password_entry)));
-
-    vdi_session_set_current_remote_protocol(ci->connect_settings_data.remote_protocol_type);
+    update_string_safely(&ci->p_conn_data->user, gtk_entry_get_text(GTK_ENTRY(ci->login_entry)));
+    update_string_safely(&ci->p_conn_data->password, gtk_entry_get_text(GTK_ENTRY(ci->password_entry)));
+    vdi_session_set_current_remote_protocol(ci->p_conn_data->remote_protocol_type);
 }
 
 // save data to ini file
@@ -167,11 +153,11 @@ on_vdi_session_get_vm_from_pool_finished(GObject *source_object G_GNUC_UNUSED,
     } else {
         ci->dialog_window_response = GTK_RESPONSE_OK;
 
-        *ci->ip = g_strdup(vdi_vm_data->vm_host);
-        *ci->port = g_strdup_printf("%i", vdi_vm_data->vm_port);
-        *ci->user = NULL;
-        *ci->password = g_strdup(vdi_vm_data->vm_password);
-        *ci->vm_verbose_name = g_strdup(vdi_vm_data->vm_verbose_name);
+        update_string_safely(&ci->p_conn_data->ip, vdi_vm_data->vm_host);
+        ci->p_conn_data->port = vdi_vm_data->vm_port;
+        free_memory_safely(&ci->p_conn_data->user);
+        update_string_safely(&ci->p_conn_data->password, vdi_vm_data->vm_password);
+        update_string_safely(&ci->p_conn_data->vm_verbose_name, vdi_vm_data->vm_verbose_name);
 
         shutdown_loop(ci->loop);
     }
@@ -208,13 +194,13 @@ void connect_to_vdi_server(RemoteViewerData *ci)
 {
     // set credential for connection to VDI server
     set_data_from_gui_in_outer_pointers(ci);
-    vdi_session_set_credentials(*ci->user, *ci->password, *ci->ip, *ci->port, ci->connect_settings_data.is_ldap);
+    vdi_session_set_credentials(ci->p_conn_data->user, ci->p_conn_data->password,
+                                ci->p_conn_data->ip, ci->p_conn_data->port, ci->p_conn_data->is_ldap);
 
     set_auth_dialog_state(AUTH_GUI_CONNECT_TRY_STATE, ci);
 
     // 2 варианта: подключиться к сразу к предыдущему пулу, либо перейти к vdi менеджеру для выбора пула
-    *ci->is_connect_to_prev_pool_ptr  = ci->connect_settings_data.is_connect_to_prev_pool;
-    if (*ci->is_connect_to_prev_pool_ptr) {
+    if (ci->p_conn_data->is_connect_to_prev_pool) {
 
         // get pool id from settings file
         gchar *last_pool_id = read_str_from_ini_file("RemoteViewerConnect", "last_pool_id");
@@ -223,6 +209,8 @@ void connect_to_vdi_server(RemoteViewerData *ci)
             set_auth_dialog_state(AUTH_GUI_DEFAULT_STATE, ci);
             return;
         }
+
+        set_message_to_info_label(GTK_LABEL(ci->message_display_label), "Автоподключение к предыдущему пулу");
         vdi_session_set_current_pool_id(last_pool_id);
         free_memory_safely(&last_pool_id);
 
@@ -241,7 +229,7 @@ void connect_to_vdi_server(RemoteViewerData *ci)
 static void
 handle_connect_event(RemoteViewerData *ci)
 {
-    if (strlen_safely(ci->connect_settings_data.ip) > 0) {
+    if (strlen_safely(ci->p_conn_data->ip) > 0) {
         // In manual mode we shudown the loop.
         if (opt_manual_mode) {
             ci->dialog_window_response = GTK_RESPONSE_OK;
@@ -293,7 +281,7 @@ settings_button_clicked_cb(GtkButton *button G_GNUC_UNUSED, gpointer data)
 {
     RemoteViewerData *ci = data;
 
-    GtkResponseType res = remote_viewer_start_settings_dialog(&ci->connect_settings_data, GTK_WINDOW(ci->window));
+    GtkResponseType res = remote_viewer_start_settings_dialog(ci->p_conn_data, GTK_WINDOW(ci->window));
     (void)res;
 }
 
@@ -329,7 +317,7 @@ read_data_from_ini_file(RemoteViewerData *ci)
         free_memory_safely(&user_from_settings_file);
     }
 
-    fill_connect_settings_data_from_ini_file(&ci->connect_settings_data);
+    fill_p_conn_data_from_ini_file(ci->p_conn_data);
 }
 
 // В этом ёба режиме сразу автоматом пытаемся подрубиться к предыдущему пулу не дожидаясь действий пользователя.
@@ -352,11 +340,8 @@ static void fast_forward_connect_to_prev_pool_if_enabled(RemoteViewerData *ci)
 *
 * @brief Opens connect dialog for remote viewer
 */
-// todo: порт передавать как число, а не строку. Передавать структуру, а не 100500 аргументов
 GtkResponseType
-remote_viewer_connect_dialog(gchar **user, gchar **password, gchar **domain,
-                             gchar **ip, gchar **port, gboolean *is_connect_to_prev_pool,
-                             gchar **vm_verbose_name)
+remote_viewer_connect_dialog(ConnectSettingsData *connect_settings_data)
 {
     GtkBuilder *builder;
 
@@ -364,14 +349,8 @@ remote_viewer_connect_dialog(gchar **user, gchar **password, gchar **domain,
     memset(&ci, 0, sizeof(RemoteViewerData));
     ci.dialog_window_response = GTK_RESPONSE_CLOSE;
 
-    // save pointers
-    ci.user = user;
-    ci.password = password;
-    ci.domain = domain;
-    ci.ip = ip;
-    ci.port = port;
-    ci.is_connect_to_prev_pool_ptr = is_connect_to_prev_pool;
-    ci.vm_verbose_name = vm_verbose_name;
+    // save pointer
+    ci.p_conn_data = connect_settings_data;
 
     /* Create the widgets */
     builder = remote_viewer_util_load_ui("remote-viewer-connect_veil.ui");
@@ -423,10 +402,6 @@ remote_viewer_connect_dialog(gchar **user, gchar **password, gchar **domain,
 
     g_object_unref(builder);
     gtk_widget_destroy(ci.window);
-    free_memory_safely(&ci.connect_settings_data.ip);
-    free_memory_safely(&ci.connect_settings_data.domain);
 
     return ci.dialog_window_response;
 }
-
-

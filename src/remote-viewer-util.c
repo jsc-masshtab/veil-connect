@@ -772,7 +772,7 @@ configerror:
 // todo: rename to free_string_safely
 void free_memory_safely(gchar **string_ptr)
 {
-    if(string_ptr && *string_ptr) {
+    if (string_ptr && *string_ptr) {
         g_free(*string_ptr);
         *string_ptr = NULL;
     }
@@ -786,10 +786,17 @@ size_t strlen_safely(const gchar * str)
         return 0;
 }
 
-const gchar* determine_http_protocol_by_port(const gchar *port)
+void update_string_safely(gchar **string_ptr, const gchar *new_string)
+{
+    free_memory_safely(string_ptr);
+    if (string_ptr)
+        *string_ptr = g_strdup(new_string);
+}
+
+const gchar* determine_http_protocol_by_port(int port)
 {
     const int https_port = 443;
-    return ((atoi(port) == https_port) ? "https" : "http");
+    return ((port == https_port) ? "https" : "http");
 }
 
 void set_client_spice_cursor_visible(gboolean is_visible)

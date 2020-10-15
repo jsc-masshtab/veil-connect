@@ -5,25 +5,11 @@
 
 #include <winpr/wtypes.h>
 
-#include "vdi_session.h"
-
-typedef struct{
-
-   // General
-   gchar *domain;
-   gchar *ip;
-   int port;
-
-   gboolean is_ldap;
-   gboolean is_connect_to_prev_pool;
-
-   VdiVmRemoteProtocol remote_protocol_type;
-
-} ConnectSettingsData;
+#include "connect_settings_data.h"
 
 
-GtkResponseType remote_viewer_start_settings_dialog(ConnectSettingsData *connect_settings_data, GtkWindow *parent);
-void fill_connect_settings_data_from_ini_file(ConnectSettingsData *connect_settings_data);
+GtkResponseType remote_viewer_start_settings_dialog(ConnectSettingsData *p_conn_data, GtkWindow *parent);
+void fill_p_conn_data_from_ini_file(ConnectSettingsData *p_conn_data);
 
 
 #endif // REMOTE_VIEWER_START_SETTINGS_H

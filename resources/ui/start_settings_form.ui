@@ -220,6 +220,7 @@
                         <property name="visible">True</property>
                         <property name="can_focus">True</property>
                         <property name="receives_default">False</property>
+                        <property name="tooltip_text" translatable="yes">Подключение к предыдущему пулу</property>
                         <property name="halign">start</property>
                         <property name="draw_indicator">True</property>
                       </object>
@@ -236,8 +237,8 @@
                         <property name="can_focus">False</property>
                         <property name="active">0</property>
                         <items>
-                          <item translatable="yes">spice</item>
-                          <item translatable="yes">rdp</item>
+                          <item translatable="yes">SPICE</item>
+                          <item translatable="yes">RDP</item>
                         </items>
                       </object>
                       <packing>

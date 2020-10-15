@@ -39,12 +39,9 @@ typedef struct{
 
     GArray *pool_widgets_array;
 
-    gchar **ip_ptr;
-    gchar **port_ptr;
-    gchar **password_ptr;
-    gchar **vm_verbose_name_ptr;
-
     ConnectionInfo ci;
+
+    ConnectSettingsData *p_conn_data;
 } VdiManager;
 
 // todo: Когда-нибудь в будущем избавлюсь от этих переменных уровня единицы трансляции.
@@ -88,10 +85,7 @@ static void set_init_values()
 
     vdi_manager.pool_widgets_array = NULL;
 
-    vdi_manager.ip_ptr = NULL;
-    vdi_manager.port_ptr = NULL;
-    vdi_manager.password_ptr = NULL;
-    vdi_manager.vm_verbose_name_ptr = NULL;
+    vdi_manager.p_conn_data = NULL;
 }
 
 // Set GUI state
@@ -299,16 +293,10 @@ static void on_vdi_session_get_vm_from_pool_finished(GObject *source_object G_GN
         // save to settings file the last pool we connected to
         write_str_to_ini_file("RemoteViewerConnect", "last_pool_id", vdi_session_get_current_pool_id());
 
-        free_memory_safely(vdi_manager.ip_ptr);
-        *vdi_manager.ip_ptr = g_strdup(vdi_vm_data->vm_host);
-        free_memory_safely(vdi_manager.port_ptr);
-        *vdi_manager.port_ptr = g_strdup_printf("%i", vdi_vm_data->vm_port);
-
-        free_memory_safely(vdi_manager.password_ptr);
-        *vdi_manager.password_ptr = g_strdup(vdi_vm_data->vm_password);
-
-        free_memory_safely(vdi_manager.vm_verbose_name_ptr);
-        *vdi_manager.vm_verbose_name_ptr = g_strdup(vdi_vm_data->vm_verbose_name);
+        update_string_safely(&vdi_manager.p_conn_data->ip, vdi_vm_data->vm_host);
+        vdi_manager.p_conn_data->port = vdi_vm_data->vm_port;
+        update_string_safely(&vdi_manager.p_conn_data->password, vdi_vm_data->vm_password);
+        update_string_safely(&vdi_manager.p_conn_data->vm_verbose_name, vdi_vm_data->vm_verbose_name);
         //
         set_vdi_client_state(VDI_RECEIVED_RESPONSE, "Получена вм из пула", FALSE);
 
@@ -324,19 +312,6 @@ static void on_vdi_session_get_vm_from_pool_finished(GObject *source_object G_GN
 // ws data callback    "<span color=\"red\">%s</span>"
 static gboolean on_ws_data_from_vdi_received(gboolean is_vdi_online)
 {
-//    gchar *message;
-//    if (vdi_manager.label_is_vdi_online){
-//        if (is_vdi_online){
-//            message = g_strdup("<span background=\"green\" color=\"white\">      </span>");
-//        }
-//        else{
-//            message = g_strdup("<span background=\"red\" color=\"white\">      </span>");
-//        }
-//
-//        gtk_label_set_markup(GTK_LABEL (vdi_manager.label_is_vdi_online), message);
-//        g_free(message);
-//    }
-
     if (vdi_manager.label_is_vdi_online) {
 
         gchar *resource_path;
@@ -402,7 +377,6 @@ static void on_vm_start_button_clicked(GtkButton *button G_GNUC_UNUSED, gpointer
     enable_spinner_visible(&vdi_pool_widget, TRUE);
 
     // take from gui currect remote protocol
-    //gint remote_protocol_index = gtk_combo_box_get_active((GtkComboBox*)vdi_manager.combobox_remote_protocol);
     VdiVmRemoteProtocol remote_protocol = vdi_pool_widget_get_current_protocol(&vdi_pool_widget);
     g_info("%s remote_protocol %s", (const char *)__func__, vdi_session_remote_protocol_str(remote_protocol));
     vdi_session_set_current_remote_protocol(remote_protocol);
@@ -425,17 +399,13 @@ save_data_to_ini_file()
 }
 
 /////////////////////////////////// main function
-GtkResponseType vdi_manager_dialog(GtkWindow *main_window G_GNUC_UNUSED, gchar **ip, gchar **port,
-                                   gchar **password, gchar **vm_verbose_name)
+GtkResponseType vdi_manager_dialog(GtkWindow *main_window G_GNUC_UNUSED, ConnectSettingsData *con_data)
 {
     set_init_values();
     vdi_manager.ci.response = FALSE;
     vdi_manager.ci.loop = NULL;
     vdi_manager.ci.dialog_window_response = GTK_RESPONSE_CANCEL;
-    vdi_manager.ip_ptr = ip;
-    vdi_manager.port_ptr = port;
-    vdi_manager.password_ptr = password;
-    vdi_manager.vm_verbose_name_ptr = vm_verbose_name;
+    vdi_manager.p_conn_data = con_data;
 
     /* Create the widgets */
     vdi_manager.builder = remote_viewer_util_load_ui("vdi_manager_form.ui");

@@ -8,8 +8,8 @@
 #include <gtk/gtk.h>
 
 #include "vdi_session.h"
+#include "connect_settings_data.h"
 
-GtkResponseType vdi_manager_dialog(GtkWindow *main_window, gchar **ip, gchar **port,
-                                   gchar **password, gchar **vm_verbose_name);
+GtkResponseType vdi_manager_dialog(GtkWindow *main_window, ConnectSettingsData *con_data);
 
 #endif //VIRT_VIEWER_VEIL_VDI_MANAGER_H

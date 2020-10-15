@@ -105,7 +105,7 @@ static void *async_create_ws_connect(VdiWsClient *vdi_ws_client)
     return NULL;
 }
 
-void start_vdi_ws_polling(VdiWsClient *vdi_ws_client, const gchar *vdi_ip, const gchar *vdi_port,
+void start_vdi_ws_polling(VdiWsClient *vdi_ws_client, const gchar *vdi_ip, int vdi_port,
                           WsDataReceivedCallback ws_data_received_callback)
 {
     g_info("%s", (const char *)__func__);
@@ -120,10 +120,10 @@ void start_vdi_ws_polling(VdiWsClient *vdi_ws_client, const gchar *vdi_ip, const
 
     gboolean is_nginx_vdi_prefix_disabled = read_int_from_ini_file("General", "is_nginx_vdi_prefix_disabled", 0);
     if (is_nginx_vdi_prefix_disabled)
-        vdi_ws_client->vdi_url = g_strdup_printf("%s://%s:%s/ws/client/vdi_server_check",
+        vdi_ws_client->vdi_url = g_strdup_printf("%s://%s:%i/ws/client/vdi_server_check",
                 http_protocol, vdi_ip, vdi_port);
     else
-        vdi_ws_client->vdi_url = g_strdup_printf("%s://%s:%s/%s/ws/client/vdi_server_check",
+        vdi_ws_client->vdi_url = g_strdup_printf("%s://%s:%i/%s/ws/client/vdi_server_check",
             http_protocol, vdi_ip, vdi_port, NGINX_VDI_API_PREFIX);
 
     vdi_ws_client->is_running = TRUE;

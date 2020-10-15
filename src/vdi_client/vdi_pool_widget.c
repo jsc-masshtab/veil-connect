@@ -114,7 +114,10 @@ VdiVmRemoteProtocol vdi_pool_widget_get_current_protocol(VdiPoolWidget *vdi_pool
     gchar *current_protocol_str = gtk_combo_box_text_get_active_text(
             (GtkComboBoxText*)vdi_pool_widget->combobox_remote_protocol);
     g_info("%s current_protocol_str %s", (const char *)__func__, current_protocol_str);
-    return vdi_session_str_to_remote_protocol(current_protocol_str);
+
+    VdiVmRemoteProtocol protocol = vdi_session_str_to_remote_protocol(current_protocol_str);
+    free_memory_safely(&current_protocol_str);
+    return protocol;
 }
 
 void enable_spinner_visible(VdiPoolWidget *vdi_pool_widget, gboolean enable)

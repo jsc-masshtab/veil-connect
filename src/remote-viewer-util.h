@@ -47,6 +47,7 @@ typedef struct
     GtkResponseType dialog_window_response;
 } ConnectionInfo;
 
+
 #define VIRT_VIEWER_ERROR virt_viewer_error_quark ()
 #define VIRT_VIEWER_RESOURCE_PREFIX  "/org/virt-manager/virt-viewer"
 
@@ -87,9 +88,11 @@ GHashTable* virt_viewer_parse_monitor_mappings(gchar **mappings,
 
 void free_memory_safely(gchar **string_ptr);
 
-size_t strlen_safely(const gchar * str);
+size_t strlen_safely(const gchar *str);
 
-const gchar* determine_http_protocol_by_port(const gchar *port);
+void update_string_safely(gchar **string_ptr, const gchar *new_string);
+
+const gchar* determine_http_protocol_by_port(int port);
 
 // enable spice debug cursor
 // use env variable to activate spice debug cursor

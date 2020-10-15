@@ -123,9 +123,10 @@ GtkResponseType rdp_viewer_start(const gchar *usename, const gchar *password, gc
     g_info("%s domain %s", (const char *)__func__, domain);
 
     GtkResponseType dialog_window_response = GTK_RESPONSE_CLOSE;
-    GMainLoop *loop;
+    GMainLoop *loop = NULL;
     // create RDP context
     ExtendedRdpContext *ex_rdp_context = create_rdp_context();
+    ex_rdp_context->p_loop = &loop;
     rdp_client_set_credentials(ex_rdp_context, usename, password, domain, ip, port);
 
     // Set some presettings
