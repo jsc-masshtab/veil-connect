@@ -528,7 +528,6 @@ pipeline {
                             sudo chown -R root:root ${WORKSPACE}/devops/deb/root
                             cd ${WORKSPACE}/devops/deb
                             dpkg-deb -b root .
-                            sudo chown -R jenkins:jenkins ${WORKSPACE}
                         '''
                     }
                 }
@@ -539,7 +538,7 @@ pipeline {
                         expression { params.DEBIAN_10 == true }
                     }
                     agent {
-                        label 'bld-agent'
+                        label 'bld-agent-01'
                     }
                     steps {
                         sh script: '''
@@ -553,7 +552,6 @@ pipeline {
                             sudo chown -R root:root ${WORKSPACE}/devops/deb/root
                             cd ${WORKSPACE}/devops/deb
                             dpkg-deb -b root .
-                            sudo chown -R jenkins:jenkins ${WORKSPACE}
                         '''
                     }
                 }
@@ -578,7 +576,6 @@ pipeline {
                             sudo chown -R root:root ${WORKSPACE}/devops/deb/root
                             cd ${WORKSPACE}/devops/deb
                             dpkg-deb -b root .
-                            sudo chown -R jenkins:jenkins ${WORKSPACE}
                         '''
                     }
                 }
@@ -603,7 +600,6 @@ pipeline {
                             sudo chown -R root:root ${WORKSPACE}/devops/deb/root
                             cd ${WORKSPACE}/devops/deb
                             dpkg-deb -b root .
-                            sudo chown -R jenkins:jenkins ${WORKSPACE}
                         '''
                     }
                 }
@@ -627,7 +623,6 @@ pipeline {
                             cp -r ${WORKSPACE}/build/* ${WORKSPACE}/doc/veil-connect.ico ~/rpmbuild/BUILD/opt/veil-connect
                             cp ${WORKSPACE}/doc/veil-connect.desktop ~/rpmbuild/BUILD/usr/share/applications
                             rpmbuild -bb ~/rpmbuild/SPECS/veil-connect.spec
-                            
                         '''
                     }
                 }
