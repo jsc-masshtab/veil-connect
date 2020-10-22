@@ -50,6 +50,8 @@
 #include "remote-viewer-util.h"
 #include "settingsfile.h"
 
+extern gboolean opt_manual_mode;
+
 void
 create_loop_and_launch(GMainLoop **loop)
 {
@@ -895,6 +897,11 @@ void show_about_dialog(GtkWindow *parent_window, gpointer data_for_builder_conne
     gtk_widget_show_all(dialog);
 
     g_object_unref(G_OBJECT(about));
+}
+
+const gchar *get_cur_ini_param_group()
+{
+    return opt_manual_mode ? "RemoteViewerConnectManual" : "RemoteViewerConnect";
 }
 
 /*

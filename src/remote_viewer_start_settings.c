@@ -24,6 +24,7 @@ typedef struct{
     GtkWidget *port_entry;
     GtkWidget *ldap_check_btn;
     GtkWidget *conn_to_prev_pool_checkbutton;
+    GtkWidget *save_password_checkbtn;
     GtkWidget *remote_protocol_combobox;
 
     // spice settings
@@ -327,6 +328,8 @@ fill_connect_settings_gui(ConnectSettingsDialogData *dialog_data, ConnectSetting
     gboolean is_conn_to_prev_pool_btn_checked = p_conn_data->is_connect_to_prev_pool;
     gtk_toggle_button_set_active((GtkToggleButton *)dialog_data->conn_to_prev_pool_checkbutton,
                                  is_conn_to_prev_pool_btn_checked);
+    // pswd
+    gtk_toggle_button_set_active((GtkToggleButton *)dialog_data->save_password_checkbtn, p_conn_data->to_save_pswd);
 
     if (dialog_data->remote_protocol_combobox) {
         // индекс 0 - спайс индекс 1 - рдп
@@ -389,7 +392,7 @@ save_data_to_ini_file(ConnectSettingsDialogData *dialog_data)
     if (dialog_data->dialog_window_response != GTK_RESPONSE_OK)
         return;
 
-    const gchar *paramToFileGrpoup = opt_manual_mode ? "RemoteViewerConnectManual" : "RemoteViewerConnect";
+    const gchar *paramToFileGrpoup = get_cur_ini_param_group();
     // domain
     write_str_to_ini_file(paramToFileGrpoup, "domain", gtk_entry_get_text(GTK_ENTRY(dialog_data->domain_entry)));
     // ip port
@@ -402,6 +405,10 @@ save_data_to_ini_file(ConnectSettingsDialogData *dialog_data)
     gboolean is_conn_to_prev_pool_btn_checked =
             gtk_toggle_button_get_active((GtkToggleButton *)dialog_data->conn_to_prev_pool_checkbutton);
     write_int_to_ini_file(paramToFileGrpoup, "is_conn_to_prev_pool_btn_checked", is_conn_to_prev_pool_btn_checked);
+    // pswd
+    dialog_data->p_conn_data->to_save_pswd = gtk_toggle_button_get_active(
+            (GtkToggleButton *)dialog_data->save_password_checkbtn);
+    write_int_to_ini_file(paramToFileGrpoup, "to_save_pswd", dialog_data->p_conn_data->to_save_pswd);
 
     if (dialog_data->remote_protocol_combobox) {
         gint remote_protocol_combobox_index =
@@ -468,6 +475,7 @@ GtkResponseType remote_viewer_start_settings_dialog(ConnectSettingsData *p_conn_
     // main buttons
     dialog_data.bt_cancel = get_widget_from_builder(dialog_data.builder, "btn_cancel");
     dialog_data.bt_ok = get_widget_from_builder(dialog_data.builder, "btn_ok");
+
     // main settinfs
     dialog_data.domain_entry = get_widget_from_builder(dialog_data.builder, "domain-entry");
     dialog_data.address_entry = get_widget_from_builder(dialog_data.builder, "connection-address-entry");
@@ -476,11 +484,13 @@ GtkResponseType remote_viewer_start_settings_dialog(ConnectSettingsData *p_conn_
     gtk_widget_set_sensitive(dialog_data.ldap_check_btn, !opt_manual_mode);
     dialog_data.conn_to_prev_pool_checkbutton = get_widget_from_builder(dialog_data.builder, "connect-to-prev-button");
     gtk_widget_set_sensitive(dialog_data.conn_to_prev_pool_checkbutton, !opt_manual_mode);
+    dialog_data.save_password_checkbtn = get_widget_from_builder(dialog_data.builder, "save_password_btn");
     dialog_data.remote_protocol_combobox =get_widget_from_builder(dialog_data.builder, "combobox_remote_protocol");
     if (!opt_manual_mode) {
         gtk_widget_destroy(dialog_data.remote_protocol_combobox);
         dialog_data.remote_protocol_combobox = NULL;
     }
+
     // spice settings
     dialog_data.client_cursor_visible_checkbutton =
             get_widget_from_builder(dialog_data.builder, "menu-show-client-cursor");
@@ -551,7 +561,7 @@ GtkResponseType remote_viewer_start_settings_dialog(ConnectSettingsData *p_conn_
 void fill_p_conn_data_from_ini_file(ConnectSettingsData *p_conn_data)
 {
     // Main settings
-    const gchar *paramToFileGrpoup = opt_manual_mode ? "RemoteViewerConnectManual" : "RemoteViewerConnect";
+    const gchar *paramToFileGrpoup = get_cur_ini_param_group();
     // domain
     gchar *domain = read_str_from_ini_file(paramToFileGrpoup, "domain");
     update_string_safely(&p_conn_data->domain, domain);
@@ -567,6 +577,10 @@ void fill_p_conn_data_from_ini_file(ConnectSettingsData *p_conn_data)
     // Connect to prev pool
     p_conn_data->is_connect_to_prev_pool =
             read_int_from_ini_file("RemoteViewerConnect", "is_conn_to_prev_pool_btn_checked", 0);
+    // pswd
+    const gchar *group_name = get_cur_ini_param_group();
+    p_conn_data->to_save_pswd = read_int_from_ini_file(group_name, "to_save_pswd", 1);
+
     // remote protocol
     gint remote_protocol_type = read_int_from_ini_file("General", "cur_remote_protocol_index", VDI_SPICE_PROTOCOL);
     p_conn_data->remote_protocol_type = (VdiVmRemoteProtocol)remote_protocol_type;

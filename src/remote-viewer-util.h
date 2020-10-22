@@ -114,6 +114,8 @@ gchar *get_windows_app_data_location(void);
 
 void show_about_dialog(GtkWindow *parent_window, gpointer data_for_builder_connect_signal);
 
+const gchar *get_cur_ini_param_group(void);
+
 #endif
 
 /*

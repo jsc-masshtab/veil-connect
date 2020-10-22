@@ -97,9 +97,10 @@ set_data_from_gui_in_outer_pointers(RemoteViewerData *ci)
 static void
 save_data_to_ini_file(RemoteViewerData *ci)
 {
-    const gchar *paramToFileGrpoup = opt_manual_mode ? "RemoteViewerConnectManual" : "RemoteViewerConnect";
+    const gchar *paramToFileGrpoup = get_cur_ini_param_group();
     write_str_to_ini_file(paramToFileGrpoup, "username", gtk_entry_get_text(GTK_ENTRY(ci->login_entry)));
-    write_str_to_ini_file(paramToFileGrpoup, "password", gtk_entry_get_text(GTK_ENTRY(ci->password_entry)));
+    if (ci->p_conn_data->to_save_pswd)
+        write_str_to_ini_file(paramToFileGrpoup, "password", gtk_entry_get_text(GTK_ENTRY(ci->password_entry)));
 }
 
 // set error message
@@ -302,7 +303,7 @@ static void
 read_data_from_ini_file(RemoteViewerData *ci)
 {
     // set params save group
-    const gchar *paramToFileGrpoup = opt_manual_mode ? "RemoteViewerConnectManual" : "RemoteViewerConnect";
+    const gchar *paramToFileGrpoup = get_cur_ini_param_group();
 
     //password
     gchar *password_from_settings_file = read_str_from_ini_file(paramToFileGrpoup, "password");
@@ -364,11 +365,6 @@ remote_viewer_connect_dialog(ConnectSettingsData *connect_settings_data)
     ci.message_display_label = GTK_WIDGET(gtk_builder_get_object(builder, "message-display-label"));
     ci.header_label = GTK_WIDGET(gtk_builder_get_object(builder, "header-label"));
     gtk_label_set_text(GTK_LABEL(ci.header_label), VERSION);
-
-//    // Set veil image
-//    veil_image = GTK_WIDGET(gtk_builder_get_object(builder, "veil-image"));
-//    gtk_image_set_from_resource((GtkImage *)veil_image,
-//            VIRT_VIEWER_RESOURCE_PREFIX"/icons/content/img/veil-32x32.png");
 
     // password entry
     ci.password_entry = GTK_WIDGET(gtk_builder_get_object(builder, "password-entry"));
