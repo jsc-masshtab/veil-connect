@@ -302,7 +302,7 @@ remote_viewer_start(VirtViewerApp *app, GError **err G_GNUC_UNUSED, RemoteViewer
     g_return_val_if_fail(REMOTE_VIEWER_IS(app), FALSE);
     GError *error = NULL;
     ConnectSettingsData con_data = {};
-    setup_css(); // CSS setup
+    GtkCssProvider *css_provider = setup_css(); // CSS setup
 
     // remote connect dialog
 retry_auth:
@@ -416,5 +416,6 @@ retry_connect_to_vm:
 to_exit:
     connect_settings_data_free(&con_data);
     g_clear_error(&error);
+    g_object_unref(css_provider);
     return FALSE;
 }

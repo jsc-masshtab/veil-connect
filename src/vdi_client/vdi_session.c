@@ -173,7 +173,7 @@ void vdi_session_create()
     memset(&vdiSession, 0, sizeof(VdiSession));
 
     // creae session
-    gboolean ssl_strict = FALSE; // todo: maybe read from ini file
+    gboolean ssl_strict = FALSE; // maybe read from ini file
     vdiSession.soup_session = soup_session_new_with_options("timeout", HTTP_RESPONSE_TIOMEOUT,
     "ssl-strict", ssl_strict, NULL);
     vdiSession.current_remote_protocol = VDI_SPICE_PROTOCOL; // by default

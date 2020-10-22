@@ -108,7 +108,7 @@ gboolean virt_viewer_app_is_quitting(VirtViewerApp *self);
 void virt_viewer_app_hide_all_windows_forced(VirtViewerApp *app);
 
 void virt_viewer_app_set_window_name(VirtViewerApp *app, const gchar *vm_verbose_name);
-// Вынесено из внутренних // todo: вернуть взад
+// Вынесено из внутренних
 void virt_viewer_app_deactivate(VirtViewerApp *self, gboolean connect_error);
 
 G_END_DECLS

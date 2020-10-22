@@ -450,7 +450,7 @@ static void fill_shortcuts_menu(GtkMenu *sub_menu_send, ExtendedRdpContext* ex_r
 {
     int num_of_shortcuts = G_N_ELEMENTS(keyCombos);
     for (int i = 0; i < num_of_shortcuts; ++i) {
-        GtkWidget *menu_item = gtk_menu_item_new_with_mnemonic(keyCombos[i].label); // todo: when will it get deleted?
+        GtkWidget *menu_item = gtk_menu_item_new_with_mnemonic(keyCombos[i].label);
         gtk_container_add(GTK_CONTAINER(sub_menu_send), menu_item);
 
         int *key_shortcut_index = malloc(sizeof(int));

@@ -14,7 +14,7 @@
 #include "rdp_data.h"
 #include "rdp_rail.h"
 
-static double scale_f = 1; // todo: make local
+// static double scale_f = 1;
 
 static gboolean fuzzy_compare(double number_1, double number_2)
 {
@@ -139,8 +139,8 @@ static void rdp_display_translate_mouse_pos(UINT16 *rdp_x_p, UINT16 *rdp_y_p,
                                             gdouble gtk_x, gdouble gtk_y, RdpWindowData *rdp_window_data) {
     ExtendedRdpContext *ex_rdp_context = rdp_window_data->ex_rdp_context;
 
-    *rdp_x_p = (UINT16) ((gtk_x - ex_rdp_context->im_origin_x + rdp_window_data->monitor_geometry.x) * scale_f);
-    *rdp_y_p = (UINT16) ((gtk_y - ex_rdp_context->im_origin_y + rdp_window_data->monitor_geometry.y) * scale_f);
+    *rdp_x_p = (UINT16) (gtk_x - ex_rdp_context->im_origin_x + rdp_window_data->monitor_geometry.x); // * scale_f
+    *rdp_y_p = (UINT16) (gtk_y - ex_rdp_context->im_origin_y + rdp_window_data->monitor_geometry.y); // * scale_f
 }
 
 static void rdp_viewer_handle_key_event(GdkEventKey *event, ExtendedRdpContext* tf, gboolean down)
@@ -356,8 +356,8 @@ static gboolean rdp_display_event_on_draw(GtkWidget* widget, cairo_t* context, g
 
                 cairo_set_source_surface(context, ex_rdp_contect->surface, -rdp_window_data->monitor_geometry.x,
                                          -rdp_window_data->monitor_geometry.y);
-                if (!fuzzy_compare(scale_f, 1))
-                    cairo_surface_set_device_scale(ex_rdp_contect->surface, scale_f, scale_f);
+                //if (!fuzzy_compare(scale_f, 1))
+                //    cairo_surface_set_device_scale(ex_rdp_contect->surface, scale_f, scale_f);
 
                 cairo_set_operator(context, CAIRO_OPERATOR_OVER);     // Ignore alpha channel from FreeRDP
                 cairo_set_antialias(context, CAIRO_ANTIALIAS_FAST);

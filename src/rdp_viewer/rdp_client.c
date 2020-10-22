@@ -311,7 +311,7 @@ static BOOL rdp_end_paint(rdpContext* context)
 /* This function is called to output a System BEEP */
 static BOOL rdp_play_sound(rdpContext* context G_GNUC_UNUSED, const PLAY_SOUND_UPDATE* play_sound G_GNUC_UNUSED)
 {
-    /* TODO: Implement */
+    // beep here
     return TRUE;
 }
 
@@ -449,7 +449,7 @@ static BOOL rdp_post_connect(freerdp* instance)
     instance->update->SetKeyboardImeStatus = rdp_keyboard_set_ime_status;
     //instance->update->Synchronize = update_send_synchronize;
 
-    // create image surface. TODO: must be recreated on resize
+    // create image surface. Must be recreated on resize (but its not required to this date 22.10.2020)
     ExtendedRdpContext* ex = (ExtendedRdpContext*)instance->context;
     rdpGdi* gdi = ex->context.gdi;
 
@@ -635,7 +635,6 @@ static void rdp_client_free(freerdp* instance G_GNUC_UNUSED, rdpContext* context
 
 static int rdp_client_start(rdpContext* context)
 {
-    /* TODO: Start client related stuff */
     ExtendedRdpContext* ex = (ExtendedRdpContext*)context;
     g_info("%s: %i", (const char *)__func__, ex->test_int);
 
@@ -644,7 +643,6 @@ static int rdp_client_start(rdpContext* context)
 
 static int rdp_client_stop(rdpContext* context)
 {
-    /* TODO: Stop client related stuff */
     ExtendedRdpContext* ex = (ExtendedRdpContext*)context;
     g_info("%s: %i", (const char *)__func__, ex->test_int);
 
