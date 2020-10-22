@@ -62,22 +62,17 @@
      color: #867373;
      border: 1px solid #c1bfbf;
      border-radius: 2px;
-     padding: 10px 40px;
-     margin: 2px 140px;
      margin-bottom: 0;
      transition: all 200ms;
-     margin-top: 40px;
+     min-height: 40px;
 }
 
 #btn_settings {
+     color: white;
      background: transparent;
-     padding: 10px;
      font-size: 12px;
      font-family: sans-serif;
-     color: white;
      text-decoration: underline;
-     border: 0;
-     outline: 0;
      transition: all 200ms;
 }
 
@@ -85,6 +80,7 @@
      color: #97c6dc;
      transition: all 200ms;
 }
+
 
 #start-setting {
      font-family: Arial, Helvetica, sans-serif;
