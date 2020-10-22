@@ -254,35 +254,8 @@ static void rdp_viewer_item_details_activated(GtkWidget *menu G_GNUC_UNUSED, gpo
 static void rdp_viewer_item_about_activated(GtkWidget *menu G_GNUC_UNUSED, gpointer userdata)
 {
     g_info("%s", (const char *)__func__);
-    // todo: code repeat with virt viewer
-    GtkBuilder *about;
-    GtkWidget *dialog;
-    GdkPixbuf *icon;
-
-    about = remote_viewer_util_load_ui("virt-viewer-about.ui");
-
-    dialog = GTK_WIDGET(gtk_builder_get_object(about, "about"));
-    gtk_about_dialog_set_version ((GtkAboutDialog *)dialog, VERSION);
-    gtk_about_dialog_set_license ((GtkAboutDialog *)dialog, "");
-
-    //gtk_about_dialog_set_version(GTK_ABOUT_DIALOG(dialog), VERSION BUILDID);
-
-    icon = gdk_pixbuf_new_from_resource(VIRT_VIEWER_RESOURCE_PREFIX"/icons/content/img/veil-32x32.png", NULL);
-    if (icon != NULL) {
-        gtk_about_dialog_set_logo(GTK_ABOUT_DIALOG(dialog), icon);
-        g_object_unref(icon);
-    } else {
-        gtk_about_dialog_set_logo_icon_name(GTK_ABOUT_DIALOG(dialog), "virt-viewer_veil");
-    }
-
     GtkWindow *rdp_viewer_window = (GtkWindow *)userdata;
-    gtk_window_set_transient_for(GTK_WINDOW(dialog), rdp_viewer_window);
-
-    gtk_builder_connect_signals(about, rdp_viewer_window);
-
-    gtk_widget_show_all(dialog);
-
-    g_object_unref(G_OBJECT(about));
+    show_about_dialog(rdp_viewer_window, NULL);
 }
 
 static void rdp_viewer_item_menu_usb_activated(GtkWidget *menu G_GNUC_UNUSED, gpointer userdata)

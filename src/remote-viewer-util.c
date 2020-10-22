@@ -867,6 +867,36 @@ gchar *get_windows_app_data_location(void)
     return app_data_dir;
 }
 
+void show_about_dialog(GtkWindow *parent_window, gpointer data_for_builder_connect_signal)
+{
+    GtkBuilder *about;
+    GtkWidget *dialog;
+    GdkPixbuf *icon;
+
+    about = remote_viewer_util_load_ui("virt-viewer-about.ui");
+
+    dialog = GTK_WIDGET(gtk_builder_get_object(about, "about"));
+    gtk_about_dialog_set_version ((GtkAboutDialog *)dialog, VERSION);
+    gtk_about_dialog_set_license ((GtkAboutDialog *)dialog, "");
+
+    icon = gdk_pixbuf_new_from_resource(VIRT_VIEWER_RESOURCE_PREFIX"/icons/content/img/veil-32x32.png", NULL);
+    if (icon != NULL) {
+        gtk_about_dialog_set_logo(GTK_ABOUT_DIALOG(dialog), icon);
+        g_object_unref(icon);
+    } else {
+        gtk_about_dialog_set_logo_icon_name(GTK_ABOUT_DIALOG(dialog), "virt-viewer_veil");
+    }
+
+    gtk_window_set_transient_for(GTK_WINDOW(dialog), parent_window);
+
+    if (data_for_builder_connect_signal)
+        gtk_builder_connect_signals(about, data_for_builder_connect_signal);
+
+    gtk_widget_show_all(dialog);
+
+    g_object_unref(G_OBJECT(about));
+}
+
 /*
  * Local variables:
  *  c-indent-level: 4

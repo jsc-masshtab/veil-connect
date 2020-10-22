@@ -112,6 +112,8 @@ void convert_string_from_utf8_to_locale(gchar **utf8_str);
 
 gchar *get_windows_app_data_location(void);
 
+void show_about_dialog(GtkWindow *parent_window, gpointer data_for_builder_connect_signal);
+
 #endif
 
 /*

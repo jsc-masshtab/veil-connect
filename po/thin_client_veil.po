@@ -86,7 +86,7 @@ msgid "Change CD"
 msgstr "_Поменять CD"
 
 #: ../src/remote-viewer-main.c:42
-msgid "Veil VDI Тонкий клиент"
+msgid "Veil Connect"
 msgstr ""
 
 #: ../src/remote-viewer.c:142
