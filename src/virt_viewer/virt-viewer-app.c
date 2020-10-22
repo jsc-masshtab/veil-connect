@@ -1535,6 +1535,8 @@ static void virt_viewer_app_auth_unsupported(VirtViewerSession *session G_GNUC_U
     virt_viewer_app_simple_message_dialog(self,
                                           _("Unable to authenticate with remote desktop server: %s"),
                                           msg);
+
+    virt_viewer_stop_reconnect_poll(self);
 }
 
 static void virt_viewer_app_usb_failed(VirtViewerSession *session G_GNUC_UNUSED,
