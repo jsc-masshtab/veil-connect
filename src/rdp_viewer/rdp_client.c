@@ -558,13 +558,10 @@ static DWORD WINAPI rdp_client_thread_proc(ExtendedRdpContext* ex)
 }
 
 
-/* Optional global initializer.
- * Here we just register a signal handler to print out stack traces
- * if available. */
 static BOOL rdp_client_global_init(void)
 {
-    if (freerdp_handle_signals() != 0)
-        return FALSE;
+    //if (freerdp_handle_signals() != 0)
+    //    return FALSE;
 
     return TRUE;
 }

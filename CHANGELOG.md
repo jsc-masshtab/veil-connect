@@ -1,6 +1,90 @@
 
-n.n.n / 2020-08-28
+n.n.n / 2020-10-22
 ==================
+
+  * FIX TG-10250 Removed  freerdp_handle_signals
+  * FIX TG-10250 Small gui update
+  * FIX TG-10250 Some TODOs resolved
+  * FIX TG-10250 Refactoring
+  * FIX TG-10250 Кнопка настройки
+  * Revert "Merge branch 'feature_tg_10124' into master"
+  * Merge branch 'feature_tg_10124' into master
+  * FEATURE TG-10124 смена пользователя для WORKSPACE
+
+1.3.3 / 2020-10-15
+==================
+
+  * Merge feature_tg_10051 into master
+  * Merge branch 'feature_tg_10154' into 'master'
+  * FEATURE TG-10154 Builds for ubuntu20, debian9, astra
+  * Merge feature_tg_10050 into master
+  * Update README.MD
+
+1.3.2 / 2020-10-02
+==================
+
+  * FEATURE_TG_9923 patch version incremented
+  * FEATURE_TG_9923 Cross compilation fix
+  * FEATURE_TG_9923 fix warnings
+  * FEATURE_TG_9923 Grab keyboard only in focus. Stable for 1 monitor on Linux
+  * FEATURE_TG_9923 Grab keyboard only in focus. Prototype
+  * FEATURE_TG_9923 Start implementing adaptive keyboard grab
+  * FEATURE_TG_9923  RDP shared clipboard. Vm -> Client. Windows version prototype. Fix
+  * FEATURE_TG_9923  RDP shared clipboard. Vm -> Client. Windows version prototype
+  * FEATURE_TG_9923 RDP shared clipboard. Client -> Vm. Logic fix
+  * FEATURE_TG_9923 RDP shared clipboard. Client -> Vm. Additional checks
+  * FEATURE_TG_9923 RDP shared clipboard. Client -> Vm. Prototype
+  * FEATURE_TG_9923 RDP shared clipboard. Client -> Vm implementation works. But Vm -> Client broken
+  * FEATURE_TG_9923 RDP shared clipboard. Client -> Vm implementation 3
+  * FEATURE_TG_9923 RDP shared clipboard. Client -> Vm implementation 2
+  * FEATURE_TG_9923 RDP shared clipboard. Client -> Vm implementation
+  * FEATURE_TG_9923 RDP shared clipboard. Works from vm to client
+  * FEATURE_TG_9923 RDP shared clipboard Prototype
+  * FEATURE_TG_9923 RDP shared clipboard
+  * clipboard Наброски 2
+  * clipboard Наброски
+  * FEATURE TG-9803 Added missing headers
+  * FEATURE TG-9803 Refactor vdi_ws_client
+  * Merge branch 'master' of http://gitlab.bazalt.team/vdi/veil-connect
+  * FEATURE TG-9803 Fix libusb_set_option
+  * Add libusb-devel and usbredir-devel deps
+  * FEATURE TG-9803  rdp arg fix
+  * FEATURE TG-9803 Supposed bad rdp arg fix
+  * Merge feature_tg_9858 into master
+
+1.3.1 / 2020-09-21
+==================
+
+  * Merge branch 'feature_tg_9803
+  * FEATURE TG-9803 patch version++
+  * FEATURE TG-9803 Попытка поддержки remoteapp на freerdp 2.0.0
+  * FEATURE TG-9803 Отображаем ошибку запуска приложения на гуи
+  * FEATURE TG-9803 В gui можно указать название и опции запускаемого приложения
+  * Update README.MD
+  * Add gspawn-helper
+  * FEATURE TG-9803 fix
+  * FEATURE TG-9803 Завершаем RDP сессию если закрыты все окна в режиме одного приложения
+  * FEATURE TG-9803 Start RDp rail implementing 2
+  * FEATURE TG-9803 Start RDp rail implementing
+  * FEATURE TG-9803 Наброски кода для запуска сессии rdp в режиме доступа только одного приложения
+  * FEATURE TG-9803 Рефактор
+
+1.3.0 / 2020-09-17
+==================
+
+  * FEATURE TG-9801 Small refactor
+  *  FEATURE TG-9801 Linking fix
+  * FEATURE TG-9801 Автоопределение адреса тк Fix
+  * FEATURE TG-9801 Автоопределение адреса тк
+  * FEATURE TG-9801 Платформозависимы код в __linux__
+  * FEATURE TG-9801 Определение ip тк на линуксе (для usb tcp)
+  * FEATURE TG-9801 gui improvement
+  * Merge branch 'feature_tg_9641' into 'master'
+  * Feature tg 9641
+  * FEATURE TG-9662 Change Microsoft Visual C++ version in message box
+
+1.2.19 / 2020-08-28
+===================
 
   * FIX TG-9620 Фикс задания высоты картинки при подключении по RDP
   * Merge branch 'master' of http://gitlab.bazalt.team/vdi/veil-connect

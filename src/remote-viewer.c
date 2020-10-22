@@ -297,7 +297,7 @@ static GtkCssProvider * setup_css()
 }
 
 static gboolean
-remote_viewer_start(VirtViewerApp *app, GError **err G_GNUC_UNUSED, RemoteViewerState remoteViewerState)
+remote_viewer_start(VirtViewerApp *app, GError **err G_GNUC_UNUSED, RemoteViewerState remoteViewerState G_GNUC_UNUSED)
 {
     g_return_val_if_fail(REMOTE_VIEWER_IS(app), FALSE);
     GError *error = NULL;

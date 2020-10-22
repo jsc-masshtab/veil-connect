@@ -214,7 +214,8 @@ static void rdp_viewer_window_event_on_mapped(GtkWidget *widget G_GNUC_UNUSED, G
 }
 
 // it seems focus-in-event and focus-out-event don’t work when keyboard is grabbed
-gboolean rdp_viewer_window_on_state_event(GtkWidget *widget, GdkEventWindowState  *event, gpointer user_data)
+gboolean rdp_viewer_window_on_state_event(GtkWidget *widget G_GNUC_UNUSED, GdkEventWindowState  *event,
+        gpointer user_data)
 {
     //g_info("%s %p event->type: %i", (const char *)__func__, widget, event->type);
 
