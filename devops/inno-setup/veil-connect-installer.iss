@@ -21,7 +21,7 @@ AppPublisherURL={#MyAppURL}
 AppSupportURL={#MyAppURL}
 AppUpdatesURL={#MyAppURL}
 VersionInfoVersion={#MyBuildVersion}
-DefaultDirName={autopf}\{#MyAppName}
+DefaultDirName={code:GetProgramFiles}\{#MyAppName}
 DefaultGroupName={#MyAppName}
 AllowNoIcons=yes
 ; The [Icons] "quicklaunchicon" entry uses {userappdata} but its [Tasks] entry has a proper IsAdminInstallMode Check.
@@ -84,3 +84,8 @@ begin
   Result := True;
 end;
 
+function GetProgramFiles(Param: string): string;
+begin
+  if IsWin64 then Result := ExpandConstant('{pf64}')
+    else Result := ExpandConstant('{pf32}')
+end;
