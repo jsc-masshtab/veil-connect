@@ -35,7 +35,7 @@ typedef struct{
     GtkWidget *rdp_fps_spin_btn;
 
     GtkWidget *is_h264_used_check_btn;
-    GtkWidget *rdp_h264_codec_entry;
+    GtkWidget *rdp_h264_codec_combobox;
     GtkWidget *rdp_shared_folders_entry;
 
     GtkWidget *btn_add_remote_folder;
@@ -160,7 +160,7 @@ on_h264_used_check_btn_toggled(GtkToggleButton *h264_used_check_btn, gpointer us
 {
     ConnectSettingsDialogData *dialog_data = (ConnectSettingsDialogData *)user_data;
     gboolean is_h264_used_check_btn_toggled = gtk_toggle_button_get_active(h264_used_check_btn);
-    gtk_widget_set_sensitive(dialog_data->rdp_h264_codec_entry, is_h264_used_check_btn_toggled);
+    gtk_widget_set_sensitive(dialog_data->rdp_h264_codec_combobox, is_h264_used_check_btn_toggled);
 }
 
 static void
@@ -352,14 +352,22 @@ fill_connect_settings_gui(ConnectSettingsDialogData *dialog_data, ConnectSetting
     UINT32 rdp_fps = CLAMP(read_int_from_ini_file("RDPSettings", "rdp_fps", 30), 1, 60);
     gtk_spin_button_set_value((GtkSpinButton*) dialog_data->rdp_fps_spin_btn, (gdouble)rdp_fps);
 
-    gboolean is_rdp_h264_used = read_int_from_ini_file("RDPSettings", "is_rdp_h264_used", FALSE);
+    gboolean is_rdp_h264_used = read_int_from_ini_file("RDPSettings", "is_rdp_h264_used", TRUE);
     gtk_toggle_button_set_active((GtkToggleButton *)dialog_data->is_h264_used_check_btn, is_rdp_h264_used);
-    gtk_widget_set_sensitive(dialog_data->rdp_h264_codec_entry, is_rdp_h264_used);
+    gtk_widget_set_sensitive(dialog_data->rdp_h264_codec_combobox, is_rdp_h264_used);
 
-    gchar *rdp_h264_codec = read_str_from_ini_file("RDPSettings", "rdp_h264_codec");
-    if (rdp_h264_codec)
-        gtk_entry_set_text(GTK_ENTRY(dialog_data->rdp_h264_codec_entry), rdp_h264_codec);
-    free_memory_safely(&rdp_h264_codec);
+    if (is_rdp_h264_used) {
+        gchar *rdp_h264_codec = read_str_from_ini_file("RDPSettings", "rdp_h264_codec");
+        if (rdp_h264_codec) {
+            g_strstrip(rdp_h264_codec);
+            gtk_combo_box_set_active(GTK_COMBO_BOX(dialog_data->rdp_h264_codec_combobox),
+                    string_to_h264_codec(rdp_h264_codec));
+            free_memory_safely(&rdp_h264_codec);
+        } else {
+            gtk_combo_box_set_active(GTK_COMBO_BOX(dialog_data->rdp_h264_codec_combobox),
+                    (gint)get_default_h264_codec());
+        }
+    }
 
     gchar *shared_folders_str = read_str_from_ini_file("RDPSettings", "rdp_shared_folders");
     if (shared_folders_str)
@@ -435,8 +443,10 @@ save_data_to_ini_file(ConnectSettingsDialogData *dialog_data)
     gboolean is_rdp_h264_used = gtk_toggle_button_get_active((GtkToggleButton *)dialog_data->is_h264_used_check_btn);
     write_int_to_ini_file("RDPSettings", "is_rdp_h264_used", is_rdp_h264_used);
 
-    const gchar *rdp_h264_codec_str = gtk_entry_get_text(GTK_ENTRY(dialog_data->rdp_h264_codec_entry));
+    gchar *rdp_h264_codec_str =
+            gtk_combo_box_text_get_active_text(GTK_COMBO_BOX_TEXT(dialog_data->rdp_h264_codec_combobox));
     write_str_to_ini_file("RDPSettings", "rdp_h264_codec", rdp_h264_codec_str);
+    free_memory_safely(&rdp_h264_codec_str);
 
     const gchar *shared_folders_str = gtk_entry_get_text(GTK_ENTRY(dialog_data->rdp_shared_folders_entry));
     // Пользовать мог ввести путь с виндусятскими разделителями, поэтому на всякий случай заменяем
@@ -501,7 +511,7 @@ GtkResponseType remote_viewer_start_settings_dialog(ConnectSettingsData *p_conn_
     dialog_data.rdp_fps_spin_btn = get_widget_from_builder(dialog_data.builder, "rdp_fps_spin_btn");
 
     dialog_data.is_h264_used_check_btn = get_widget_from_builder(dialog_data.builder, "is_h264_used_check_btn");
-    dialog_data.rdp_h264_codec_entry = get_widget_from_builder(dialog_data.builder, "rdp_h264_codec_entry");
+    dialog_data.rdp_h264_codec_combobox = get_widget_from_builder(dialog_data.builder, "rdp_h264_codec_combobox");
 
     dialog_data.rdp_shared_folders_entry = get_widget_from_builder(dialog_data.builder, "rdp_shared_folders_entry");
 

@@ -57,9 +57,9 @@ static void virt_viewer_display_spice_send_keys(VirtViewerDisplay *display,
 static GdkPixbuf *virt_viewer_display_spice_get_pixbuf(VirtViewerDisplay *display);
 static void virt_viewer_display_spice_release_cursor(VirtViewerDisplay *display);
 static void virt_viewer_display_spice_close(VirtViewerDisplay *display G_GNUC_UNUSED);
-static gboolean virt_viewer_display_spice_selectable(VirtViewerDisplay *display);
-static void virt_viewer_display_spice_enable(VirtViewerDisplay *display);
-static void virt_viewer_display_spice_disable(VirtViewerDisplay *display);
+static gboolean virt_viewer_display_spice_selectable(VirtViewerDisplay *self);
+static void virt_viewer_display_spice_enable(VirtViewerDisplay *self);
+static void virt_viewer_display_spice_disable(VirtViewerDisplay *self);
 
 static void
 virt_viewer_display_spice_class_init(VirtViewerDisplaySpiceClass *klass)

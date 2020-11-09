@@ -904,6 +904,55 @@ const gchar *get_cur_ini_param_group()
     return opt_manual_mode ? "RemoteViewerConnectManual" : "RemoteViewerConnect";
 }
 
+//void gtk_combo_box_text_set_active_text(GtkComboBoxText *combo_box, const gchar *text)
+//{
+//    //GtkTreeModel *list_store = gtk_combo_box_get_model(GTK_COMBO_BOX(combo_box));
+//    //GtkTreeIter iter;
+//    //gboolean valid = gtk_tree_model_get_iter_first (list_store, &iter);
+//    //
+//    //while (valid) {
+//    //
+//    //    valid = gtk_tree_model_iter_next(list_store, &iter);
+//    //}
+//    GtkTreeIter iter;
+//    GtkTreeModel *model;
+//    gint text_column;
+//    gint column_type;
+//    model = gtk_combo_box_get_model (GTK_COMBO_BOX (combo_box));
+//    if(!model)
+//        return;
+//    text_column = gtk_combo_box_get_entry_text_column(GTK_COMBO_BOX(combo_box));
+//    //g_return_val_if_fail (text_column >= 0, NULL);
+//    column_type = gtk_tree_model_get_column_type (model, text_column);
+//    //g_return_val_if_fail (column_type == G_TYPE_STRING, NULL);
+//    gtk_tree_model_get(model, &iter, text_column, &text, -1);
+//}
+
+const gchar *h264_codec_to_string(H264_CODEC_TYPE codec)
+{
+    if (codec == H264_CODEC_AVC444)
+        return "AVC444";
+    else
+        return "AVC420";
+}
+
+H264_CODEC_TYPE string_to_h264_codec(const gchar *str)
+{
+    if (g_strcmp0(str, "AVC444") == 0)
+        return H264_CODEC_AVC444;
+    else
+        return H264_CODEC_AVC420;
+}
+
+H264_CODEC_TYPE get_default_h264_codec()
+{
+#ifdef __linux__
+    return H264_CODEC_AVC444;
+#elif _WIN32
+    return H264_CODEC_AVC420;
+#endif
+}
+
 /*
  * Local variables:
  *  c-indent-level: 4

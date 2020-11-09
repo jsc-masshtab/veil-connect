@@ -84,7 +84,7 @@ void usbredir_controller_stop_all_cur_tasks(gboolean with_sleep)
     if (with_sleep)
         g_usleep(1500000);
 }
-
+// We suppose this port will be free. Ofc there is a very small chance that another process took it.
 int usbredir_controller_get_free_port(void)
 {
     return (usbredir_controller.port + (int)usbredir_controller.tasks_array->len);

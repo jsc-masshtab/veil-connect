@@ -20,7 +20,6 @@
 #include <freerdp/utils/signal.h>
 
 #include <freerdp/client/cmdline.h>
-
 #include <freerdp/locale/keyboard.h>
 #include <freerdp/error.h>
 
@@ -50,25 +49,46 @@
 static DWORD WINAPI rdp_client_thread_proc(ExtendedRdpContext *ex);
 static int rdp_client_entry(RDP_CLIENT_ENTRY_POINTS* pEntryPoints);
 
+//// Проверка поддерживается ли параметр. По другому никак
+//static gboolean check_if_param_supported(rdpSettings* settings, const gchar *param_name)
+//{
+//    const int arg_number = 3;
+//    gchar** argv = malloc(arg_number * sizeof(gchar*));
+//    argv[0] = g_strdup(PROGRAMM_NAME);
+//    argv[1] = g_strdup(param_name);
+//    argv[2] = NULL;
+//
+//    int status = freerdp_client_settings_parse_command_line(settings, arg_number - 1, argv, FALSE);
+//    g_info("!!!status1: %i ", status);
+//    g_free(argv[0]);
+//    g_free(argv[1]);
+//    free(argv);
+//
+//    return (status == 0) ? TRUE : FALSE;
+//}
+
 static void add_rdp_param(GArray *rdp_params_dyn_array, gchar *rdp_param)
 {
     g_array_append_val(rdp_params_dyn_array, rdp_param);
 }
 
 static void rdp_client_read_str_rdp_param_from_ini_and_add(GArray *rdp_params_dyn_array,
-        const gchar *ini_key, const gchar *rdp_param_name)
+        const gchar *ini_key, const gchar *rdp_param_name, const gchar *default_rdp_param_value)
 {
     gchar *ini_param = read_str_from_ini_file("RDPSettings", ini_key);
     if (ini_param) {
         g_strstrip(ini_param);
         add_rdp_param(rdp_params_dyn_array, g_strdup_printf("%s:%s", rdp_param_name, ini_param));
         g_free(ini_param);
+    } else if (default_rdp_param_value) {
+        add_rdp_param(rdp_params_dyn_array, g_strdup_printf("%s:%s", rdp_param_name, default_rdp_param_value));
     }
 }
 
 static GArray * rdp_client_create_params_array(ExtendedRdpContext* ex)
 {
     g_info("%s W: %i x H:%i", (const char*)__func__, ex->whole_image_width, ex->whole_image_height);
+    rdpContext *context = (rdpContext *)ex;
 
     GArray *rdp_params_dyn_array = g_array_new(FALSE, FALSE, sizeof(gchar *));
 
@@ -81,20 +101,22 @@ static GArray * rdp_client_create_params_array(ExtendedRdpContext* ex)
     add_rdp_param(rdp_params_dyn_array, g_strdup_printf("/p:%s", ex->password));
     add_rdp_param(rdp_params_dyn_array, g_strdup_printf("/w:%i", ex->whole_image_width));
     add_rdp_param(rdp_params_dyn_array, g_strdup_printf("/h:%i", ex->whole_image_height));
-    //add_rdp_param(rdp_params_dyn_array, g_strdup("-clipboard"));
     add_rdp_param(rdp_params_dyn_array, g_strdup("/cert-ignore"));
     add_rdp_param(rdp_params_dyn_array, g_strdup("/sound:rate:44100,channel:2"));
     add_rdp_param(rdp_params_dyn_array, g_strdup("/smartcard"));
     add_rdp_param(rdp_params_dyn_array, g_strdup("+fonts"));
     add_rdp_param(rdp_params_dyn_array, g_strdup("/relax-order-checks"));
+    add_rdp_param(rdp_params_dyn_array, g_strdup("/huy_tobi"));
 #ifdef __linux__
 #elif _WIN32
     add_rdp_param(rdp_params_dyn_array, g_strdup("+glyph-cache"));
 #endif
+
     // /gfx-h264:AVC444
-    gboolean is_rdp_h264_used = read_int_from_ini_file("RDPSettings", "is_rdp_h264_used", FALSE);
+    gboolean is_rdp_h264_used = read_int_from_ini_file("RDPSettings", "is_rdp_h264_used", TRUE);
     if (is_rdp_h264_used)
-        rdp_client_read_str_rdp_param_from_ini_and_add(rdp_params_dyn_array, "rdp_h264_codec", "/gfx-h264");
+        rdp_client_read_str_rdp_param_from_ini_and_add(rdp_params_dyn_array, "rdp_h264_codec", "/gfx-h264",
+                                                       h264_codec_to_string(get_default_h264_codec()));
     // drives (folders)
     gchar *shared_folders_str = read_str_from_ini_file("RDPSettings", "rdp_shared_folders");
 
@@ -126,8 +148,8 @@ static GArray * rdp_client_create_params_array(ExtendedRdpContext* ex)
     // remote app
     gboolean is_remote_app = read_int_from_ini_file("RDPSettings", "is_remote_app", 0);
     if (is_remote_app) {
-        rdp_client_read_str_rdp_param_from_ini_and_add(rdp_params_dyn_array, "remote_app_name", "/app");
-        rdp_client_read_str_rdp_param_from_ini_and_add(rdp_params_dyn_array, "remote_app_options", "/app-cmd");
+        rdp_client_read_str_rdp_param_from_ini_and_add(rdp_params_dyn_array, "remote_app_name", "/app", NULL);
+        rdp_client_read_str_rdp_param_from_ini_and_add(rdp_params_dyn_array, "remote_app_options", "/app-cmd", NULL);
     }
 
     // rdp_args     custom from ini file
@@ -203,14 +225,16 @@ void* rdp_client_routine(ExtendedRdpContext *ex_contect)
     // /v:192.168.20.104 /u:solomin /p:5555 -clipboard /sound:rate:44100,channel:2 /cert-ignore
 
     gchar** argv = malloc(rdp_params_dyn_array->len * sizeof(gchar*));
-    for (guint i = 0; i < rdp_params_dyn_array->len; ++i)
+    for (guint i = 0; i < rdp_params_dyn_array->len; ++i) {
         argv[i] = g_array_index(rdp_params_dyn_array, gchar*, i);
+        g_info("%i RDP arg: %s", i, argv[i]);
+    }
 
     int argc = rdp_params_dyn_array->len - 1;
-    //g_info("sizeof(argv): %lu, argc: %i\n", sizeof(argv), argc);
 
     // set rdp params
-    status = freerdp_client_settings_parse_command_line(context->settings, argc, argv, FALSE);
+    status = freerdp_client_settings_parse_command_line(context->settings, argc, argv, TRUE);
+    g_info("!!!status2: %i ", status);
     if (status)
         ex_contect->last_rdp_error = WRONG_FREERDP_ARGUMENTS;
 
@@ -239,20 +263,6 @@ stop:
     ex_contect->is_running = FALSE;
     return NULL;
 }
-
-//void rdp_client_adjust_im_origin_point(ExtendedRdpContext* ex_rdp_context)
-//{
-//    if (ex_rdp_context->surface && ex_rdp_context->rdp_display) {
-
-//        int delta_x = gtk_widget_get_allocated_width(ex_rdp_context->rdp_display) -
-//                cairo_image_surface_get_width(ex_rdp_context->surface);
-//        int delta_y = gtk_widget_get_allocated_height(ex_rdp_context->rdp_display) -
-//                cairo_image_surface_get_height(ex_rdp_context->surface);
-
-//        ex_rdp_context->im_origin_x = delta_x <= 0 ? 0.0 : (int)(delta_x * 0.5);
-//        ex_rdp_context->im_origin_y = delta_y <= 0 ? 0.0 : (int)(delta_y * 0.5);
-//    }
-//}
 
 //static BOOL update_send_synchronize(rdpContext* context)
 //{
@@ -346,7 +356,6 @@ static BOOL rdp_pre_connect(freerdp* instance)
     /* Optional OS identifier sent to server */
     settings->OsMajorType = OSMAJORTYPE_UNSPECIFIED;
     settings->OsMinorType = OSMINORTYPE_UNSPECIFIED;
-
 
     settings->BitmapCacheEnabled = false;
     settings->OffscreenSupportLevel = false;
@@ -560,9 +569,6 @@ static DWORD WINAPI rdp_client_thread_proc(ExtendedRdpContext* ex)
 
 static BOOL rdp_client_global_init(void)
 {
-    //if (freerdp_handle_signals() != 0)
-    //    return FALSE;
-
     return TRUE;
 }
 
@@ -580,7 +586,6 @@ static int rdp_logon_error_info(freerdp* instance, UINT32 data, UINT32 type)
     if (!instance || !instance->context)
         return -1;
 
-    //ex = (ExtendedRdpContext*)instance->context;
     WLog_INFO(TAG, "Logon Error Info %s [%s]", str_data, str_type);
 
     return 1;

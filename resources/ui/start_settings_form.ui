@@ -477,6 +477,7 @@
                                 <property name="visible">True</property>
                                 <property name="can_focus">True</property>
                                 <property name="receives_default">False</property>
+                                <property name="tooltip_text" translatable="yes">Перенаправление сетевых сканеров и принтеров</property>
                                 <property name="halign">start</property>
                                 <property name="hexpand">True</property>
                                 <property name="draw_indicator">True</property>
@@ -493,6 +494,7 @@
                                 <property name="visible">True</property>
                                 <property name="can_focus">True</property>
                                 <property name="receives_default">False</property>
+                                <property name="tooltip_text" translatable="yes">Режим, в котором доступно только одно заданное приложение</property>
                                 <property name="halign">start</property>
                                 <property name="hexpand">False</property>
                                 <property name="draw_indicator">True</property>
@@ -546,24 +548,12 @@
                                 <property name="visible">True</property>
                                 <property name="can_focus">True</property>
                                 <property name="receives_default">False</property>
+                                <property name="tooltip_text" translatable="yes">Cтандарт сжатия видео, предназначенный для достижения высокой степени сжатия видеопотока при сохранении высокого качества</property>
                                 <property name="halign">start</property>
                                 <property name="draw_indicator">True</property>
                               </object>
                               <packing>
                                 <property name="left_attach">0</property>
-                                <property name="top_attach">9</property>
-                              </packing>
-                            </child>
-                            <child>
-                              <object class="GtkEntry" id="rdp_h264_codec_entry">
-                                <property name="name">rdp_h264_codec_entry</property>
-                                <property name="visible">True</property>
-                                <property name="sensitive">False</property>
-                                <property name="can_focus">True</property>
-                                <property name="text" translatable="yes">AVC444</property>
-                              </object>
-                              <packing>
-                                <property name="left_attach">1</property>
                                 <property name="top_attach">9</property>
                               </packing>
                             </child>
@@ -624,6 +614,21 @@
                               <packing>
                                 <property name="left_attach">1</property>
                                 <property name="top_attach">1</property>
+                              </packing>
+                            </child>
+                            <child>
+                              <object class="GtkComboBoxText" id="rdp_h264_codec_combobox">
+                                <property name="visible">True</property>
+                                <property name="can_focus">False</property>
+                                <property name="active">0</property>
+                                <items>
+                                  <item id="0" translatable="yes">AVC420</item>
+                                  <item id="1" translatable="yes">AVC444</item>
+                                </items>
+                              </object>
+                              <packing>
+                                <property name="left_attach">1</property>
+                                <property name="top_attach">9</property>
                               </packing>
                             </child>
                             <child>

@@ -100,7 +100,7 @@ void virt_viewer_app_show_preferences(VirtViewerApp *app, GtkWidget *parent);
 void virt_viewer_app_set_menus_sensitive(VirtViewerApp *self, gboolean sensitive);
 
 void virt_viewer_start_reconnect_poll(VirtViewerApp *self);
-
+void virt_viewer_stop_reconnect_poll(VirtViewerApp *self);
 
 gboolean virt_viewer_app_get_session_cancelled(VirtViewerApp *self);
 gboolean virt_viewer_app_is_quitting(VirtViewerApp *self);

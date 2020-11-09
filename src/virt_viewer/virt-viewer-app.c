@@ -1766,7 +1766,7 @@ gboolean virt_viewer_app_start(VirtViewerApp *self, GError **error, RemoteViewer
     return self->priv->started;
 }
 
-gboolean opt_manual_mode = FALSE; //TEMP
+gboolean opt_manual_mode = FALSE;
 
 static int opt_zoom = NORMAL_ZOOM_LEVEL;
 static gchar *opt_hotkeys = NULL;

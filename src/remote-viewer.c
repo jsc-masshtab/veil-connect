@@ -288,7 +288,7 @@ static void set_spice_session_data(VirtViewerApp *app, gchar *ip, int port, gcha
 
 static GtkCssProvider * setup_css()
 {
-    GtkCssProvider *cssProvider = gtk_css_provider_new(); // todo: free
+    GtkCssProvider *cssProvider = gtk_css_provider_new();
     gtk_css_provider_load_from_path(cssProvider, "css_style.css", NULL);
     gtk_style_context_add_provider_for_screen(gdk_screen_get_default(),
                                               GTK_STYLE_PROVIDER(cssProvider),
