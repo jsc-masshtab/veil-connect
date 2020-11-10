@@ -50,6 +50,7 @@ typedef struct{
 
     // Service
     GtkWidget *btn_archive_logs;
+    GtkWidget *log_location_label;
 
     // control buttons
     GtkWidget *bt_cancel;
@@ -250,21 +251,28 @@ btn_remove_remote_folder_clicked_cb(GtkButton *button G_GNUC_UNUSED, ConnectSett
 }
 
 static void
-btn_archive_logs_clicked_cb(GtkButton *button G_GNUC_UNUSED, ConnectSettingsDialogData *dialog_data G_GNUC_UNUSED)
+btn_archive_logs_clicked_cb(GtkButton *button G_GNUC_UNUSED, ConnectSettingsDialogData *dialog_data)
 {
     gchar *log_dir = get_log_dir_path();
     g_info("%s", __func__);
 
 #ifdef __linux__
     gchar *tar_cmd = g_strdup_printf("tar -czvf log.tar.gz %s", log_dir);
+
     int res = system(tar_cmd);
+
+    // show log dir on gui
+    gchar *cur_dir = g_get_current_dir();
+    gtk_label_set_text(GTK_LABEL(dialog_data->log_location_label), cur_dir);
+    free_memory_safely(&cur_dir);
 #elif _WIN32
     gchar *app_data_dir = get_windows_app_data_location();
-
-    gchar *tar_cmd = g_strdup_printf("tar.exe -czvf log.tar.gz %s -C %s", log_dir, app_data_dir);
-    g_free(app_data_dir);
-
+    gchar *tar_cmd = g_strdup_printf("cd \"%s\" && tar.exe -czvf log.tar.gz \"%s\"", app_data_dir, log_dir);
+    //
     int res = system(tar_cmd);
+
+    gtk_label_set_text(GTK_LABEL(dialog_data->log_location_label), app_data_dir);
+    g_free(app_data_dir);
 #endif
     (void)res;
 
@@ -528,6 +536,8 @@ GtkResponseType remote_viewer_start_settings_dialog(ConnectSettingsData *p_conn_
 
     // Service functions
     dialog_data.btn_archive_logs = get_widget_from_builder(dialog_data.builder, "btn_archive_logs");
+    dialog_data.log_location_label = get_widget_from_builder(dialog_data.builder, "log_location_label");
+    gtk_label_set_selectable (GTK_LABEL(dialog_data.log_location_label), TRUE);
 
     // Signals
     g_signal_connect_swapped(dialog_data.window, "delete-event", G_CALLBACK(window_deleted_cb), &dialog_data);

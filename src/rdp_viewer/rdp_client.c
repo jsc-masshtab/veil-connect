@@ -106,7 +106,6 @@ static GArray * rdp_client_create_params_array(ExtendedRdpContext* ex)
     add_rdp_param(rdp_params_dyn_array, g_strdup("/smartcard"));
     add_rdp_param(rdp_params_dyn_array, g_strdup("+fonts"));
     add_rdp_param(rdp_params_dyn_array, g_strdup("/relax-order-checks"));
-    add_rdp_param(rdp_params_dyn_array, g_strdup("/huy_tobi"));
 #ifdef __linux__
 #elif _WIN32
     add_rdp_param(rdp_params_dyn_array, g_strdup("+glyph-cache"));
