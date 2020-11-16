@@ -106,6 +106,8 @@ static GArray * rdp_client_create_params_array(ExtendedRdpContext* ex)
     add_rdp_param(rdp_params_dyn_array, g_strdup("/smartcard"));
     add_rdp_param(rdp_params_dyn_array, g_strdup("+fonts"));
     add_rdp_param(rdp_params_dyn_array, g_strdup("/relax-order-checks"));
+    add_rdp_param(rdp_params_dyn_array, g_strdup("+auto-reconnect"));
+    add_rdp_param(rdp_params_dyn_array, g_strdup("/auto-reconnect-max-retries:3"));
 #ifdef __linux__
 #elif _WIN32
     add_rdp_param(rdp_params_dyn_array, g_strdup("+glyph-cache"));
@@ -263,6 +265,13 @@ stop:
     return NULL;
 }
 
+BOOL rdp_client_abort_connection(freerdp* instance)
+{
+    ExtendedRdpContext *ex_context = (ExtendedRdpContext*)instance->context;
+    ex_context->is_stopped_by_user = TRUE;
+    return freerdp_abort_connect(instance);
+}
+
 //static BOOL update_send_synchronize(rdpContext* context)
 //{
 //    //g_info("%s\n", (const char *)__func__);
@@ -356,36 +365,11 @@ static BOOL rdp_pre_connect(freerdp* instance)
     settings->OsMajorType = OSMAJORTYPE_UNSPECIFIED;
     settings->OsMinorType = OSMINORTYPE_UNSPECIFIED;
 
-    settings->BitmapCacheEnabled = false;
-    settings->OffscreenSupportLevel = false;
+//    settings->BitmapCacheEnabled = false;
+//    settings->OffscreenSupportLevel = false;
 //    settings->OffscreenCacheSize;    /* 2817 */
 //    settings->OffscreenCacheEntries; /* 2818 */
-    settings->CompressionEnabled = false;
-
-//    settings->OrderSupport[NEG_DSTBLT_INDEX] = TRUE;
-//    settings->OrderSupport[NEG_PATBLT_INDEX] = TRUE;
-//    settings->OrderSupport[NEG_SCRBLT_INDEX] = TRUE;
-//    settings->OrderSupport[NEG_OPAQUE_RECT_INDEX] = TRUE;
-//    settings->OrderSupport[NEG_DRAWNINEGRID_INDEX] = TRUE;
-
-//    settings->OrderSupport[NEG_MULTIDSTBLT_INDEX] = TRUE;
-//    settings->OrderSupport[NEG_MULTIPATBLT_INDEX] = TRUE;
-//    settings->OrderSupport[NEG_MULTISCRBLT_INDEX] = TRUE;
-//    settings->OrderSupport[NEG_MULTIOPAQUERECT_INDEX] = TRUE;
-//    settings->OrderSupport[NEG_MULTI_DRAWNINEGRID_INDEX] = TRUE;
-//    settings->OrderSupport[NEG_LINETO_INDEX] = TRUE;
-//    settings->OrderSupport[NEG_POLYLINE_INDEX] = TRUE;
-////    settings->OrderSupport[NEG_MEMBLT_INDEX] = TRUE;
-//    settings->OrderSupport[NEG_MEM3BLT_INDEX] = TRUE;
-//    settings->OrderSupport[NEG_SAVEBITMAP_INDEX] = TRUE;
-
-//    settings->OrderSupport[NEG_GLYPH_INDEX_INDEX] = TRUE;
-//    settings->OrderSupport[NEG_FAST_INDEX_INDEX] = TRUE;
-//    settings->OrderSupport[NEG_FAST_GLYPH_INDEX] = TRUE;
-//    settings->OrderSupport[NEG_POLYGON_SC_INDEX] = TRUE;
-//    settings->OrderSupport[NEG_POLYGON_CB_INDEX] = TRUE;
-//    settings->OrderSupport[NEG_ELLIPSE_SC_INDEX] = TRUE;
-//    settings->OrderSupport[NEG_ELLIPSE_CB_INDEX] = TRUE;
+//    settings->CompressionEnabled = false;
 
     /* settings->OrderSupport is initialized at this point.
      * Only override it if you plan to implement custom order
@@ -510,6 +494,27 @@ static void rdp_post_disconnect(freerdp* instance)
     }
 }
 
+static BOOL handle_window_events(freerdp* instance)
+{
+    rdpSettings* settings;
+
+    if (!instance || !instance->settings)
+        return FALSE;
+
+    settings = instance->settings;
+
+    if (!settings->AsyncInput) {
+         ExtendedRdpContext *ex_context = (ExtendedRdpContext*)instance->context;
+
+        if (ex_context->is_stopped_by_user) {
+            WLog_INFO(TAG, "Stopped");
+            return FALSE;
+        }
+    }
+
+    return TRUE;
+}
+
 /* RDP main loop.
  * Connects RDP, loops while running and handles event and dispatch, cleans up
  * after the connection ends. */
@@ -519,6 +524,7 @@ static DWORD WINAPI rdp_client_thread_proc(ExtendedRdpContext* ex)
     DWORD nCount;
     DWORD status;
     HANDLE handles[64];
+    DWORD exit_code = 0;
 
     if (!freerdp_connect(instance))
     {
@@ -533,7 +539,7 @@ static DWORD WINAPI rdp_client_thread_proc(ExtendedRdpContext* ex)
             g_info(" if (freerdp_focus_required(instance))");
             rdp_keyboard_focus_in(ex);
         }
-        //g_info("In RDP while\n");
+
         nCount = freerdp_get_event_handles(instance->context, &handles[0], 64);
 
         if (nCount == 0)
@@ -553,6 +559,14 @@ static DWORD WINAPI rdp_client_thread_proc(ExtendedRdpContext* ex)
 
         if (!freerdp_check_event_handles(instance->context))
         {
+            UINT32 last_error = freerdp_get_last_error(instance->context);
+            if (last_error == FREERDP_ERROR_SUCCESS)
+                break;
+
+            //// try to reconnect
+            if (client_auto_reconnect_ex(instance, handle_window_events))
+                continue;
+
             if (freerdp_get_last_error(instance->context) == FREERDP_ERROR_SUCCESS)
                 WLog_ERR(TAG, "Failed to check FreeRDP event handles");
 
@@ -562,7 +576,7 @@ static DWORD WINAPI rdp_client_thread_proc(ExtendedRdpContext* ex)
 
     BOOL res = freerdp_disconnect(instance);
     g_info("diss conn res: %i", res);
-    return 0;
+    return exit_code;
 }
 
 

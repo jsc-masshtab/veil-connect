@@ -54,6 +54,7 @@ typedef struct {
     int test_int;
 
     gboolean is_running; // is rdp routine running
+    gboolean is_stopped_by_user; // required to leave auto reconnect
 
     // credentials
     gchar *usename;
@@ -86,6 +87,8 @@ void rdp_client_set_rdp_image_size(ExtendedRdpContext *ex_rdp_context,
                                          int whole_image_width, int whole_image_height);
 
 void* rdp_client_routine(ExtendedRdpContext *ex_contect);
+
+BOOL rdp_client_abort_connection(freerdp* instance);
 
 void rdp_client_adjust_im_origin_point(ExtendedRdpContext* ex_rdp_context);
 

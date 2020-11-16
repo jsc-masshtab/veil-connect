@@ -110,7 +110,7 @@ static UINT rdp_rail_server_execute_result(RailClientContext* context,
                rail_error_to_string(execResult->execResult), execResult->rawResult);
         ex_context->rail_rdp_error = execResult->execResult;
 
-        freerdp_abort_connect(ex_context->context.instance);
+        rdp_client_abort_connection(ex_context->context.instance);
 
     } else {
         g_info("%s RAIL_EXEC_S_OK", (const char *)__func__);

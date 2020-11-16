@@ -70,8 +70,7 @@ static void destroy_rdp_context(ExtendedRdpContext* ex_rdp_context, GThread *rdp
         // stopping RDP routine
 
         g_info("%s: abort now: %i", (const char *)__func__, ex_rdp_context->test_int);
-
-        freerdp_abort_connect(ex_rdp_context->context.instance);
+        rdp_client_abort_connection(ex_rdp_context->context.instance);
         // wait until rdp thread finishes (it should happen after abort)
         g_thread_join(rdp_client_routine_thread);
 
