@@ -355,7 +355,6 @@ usbredir_dialog_on_usb_tcp_reset_finished(GObject *source_object G_GNUC_UNUSED,
 
     gboolean is_success = g_task_propagate_boolean(G_TASK(res), NULL);
     if (is_success) {
-        gtk_label_set_text(GTK_LABEL(priv->status_label), "");
         gtk_widget_set_sensitive((GtkWidget*)priv->usb_devices_list_view, TRUE);
     } else {
         gtk_label_set_markup(GTK_LABEL(priv->status_label),
@@ -363,13 +362,23 @@ usbredir_dialog_on_usb_tcp_reset_finished(GObject *source_object G_GNUC_UNUSED,
     }
 }
 
-static void take_tk_address_from_ini(GtkEntry* tk_address_entry)
+static void take_tk_address_from_ini(UsbredirMainDialogData *priv, GtkEntry* tk_address_entry)
 {
     gchar *current_tk_address = read_str_from_ini_file("General", "current_tk_address");
+    gboolean is_address_correct = TRUE;
     if (current_tk_address) {
-        gtk_entry_set_text(tk_address_entry, current_tk_address);
+        if(strlen_safely(current_tk_address) == 0)
+            is_address_correct = FALSE;
+        else
+            gtk_entry_set_text(tk_address_entry, current_tk_address);
         g_free(current_tk_address);
+    } else {
+        is_address_correct = FALSE;
     }
+
+    if (!is_address_correct)
+        gtk_label_set_markup(GTK_LABEL(priv->status_label),
+                             "<span color=\"red\">Не удалось определить ip адрес ТК. Задайте его вручную</span>");
 }
 
 //Return address In case of success. Must be freed if its not NULL
@@ -450,7 +459,7 @@ static void usbredir_dialog_determine_tk_address(GTask    *task,
 
     // 4
     if ((dwRetVal = GetAdaptersInfo( pAdapterInfo, &ulOutBufLen)) != ERROR_SUCCESS) {
-        g_info("GetAdaptersInfo call failed with %d", dwRetVal);
+        g_info("GetAdaptersInfo call failed with %i", (int)dwRetVal);
     }
 
     // 5
@@ -459,6 +468,7 @@ static void usbredir_dialog_determine_tk_address(GTask    *task,
         g_info("IP Address: %s", pAdapter->IpAddressList.IpAddress.String);
         g_info("Gateway: %s   %s", pAdapter->GatewayList.IpAddress.String, standard_output);
         // != NULL means standard_output contains  pAdapter->GatewayList.IpAddress.String
+        // strstr checks if gateway is in standard_output. If it is, than takr the address
         if (strstr(standard_output, pAdapter->GatewayList.IpAddress.String) != NULL) {
             address = g_strdup(pAdapter->IpAddressList.IpAddress.String);
             break;
@@ -499,7 +509,7 @@ usbredir_dialog_on_determine_tk_address_finished(GObject *source_object G_GNUC_U
 
         free_memory_safely(&tk_address);
     } else { // get from ini if we didnt determine it
-        take_tk_address_from_ini(GTK_ENTRY(priv->tk_address_entry));
+        take_tk_address_from_ini(priv, GTK_ENTRY(priv->tk_address_entry));
     }
 }
 
@@ -510,7 +520,6 @@ usbredir_dialog_check_if_reset_required_and_reset(UsbredirMainDialogData *priv)
         // set GUI
         gtk_widget_set_sensitive((GtkWidget*)priv->usb_devices_list_view, FALSE);
         gtk_spinner_start(GTK_SPINNER(priv->status_spinner));
-        gtk_label_set_text(GTK_LABEL(priv->status_label), "Сбрасываем USB TCP устройства на ВМ");
 
         // send request to vdi (veil)
         DetachUsbData *detach_usb_data = calloc(1, sizeof(DetachUsbData));
@@ -522,7 +531,7 @@ usbredir_dialog_check_if_reset_required_and_reset(UsbredirMainDialogData *priv)
         execute_async_task(usbredir_dialog_determine_tk_address, usbredir_dialog_on_determine_tk_address_finished,
                            NULL, priv);
     } else {
-        take_tk_address_from_ini(GTK_ENTRY(priv->tk_address_entry));
+        take_tk_address_from_ini(priv, GTK_ENTRY(priv->tk_address_entry));
     }
 
     usbredir_controller_reset_tcp_usb_devices_on_next_gui_opening(FALSE);
@@ -543,7 +552,6 @@ usbredir_dialog_start(GtkWindow *parent)
     gtk_entry_set_text(GTK_ENTRY(priv.tk_address_entry), "");
 
     priv.status_label = get_widget_from_builder(builder, "status_label");
-    //gtk_label_set_selectable (GTK_LABEL(priv.status_label), TRUE);
 
     priv.status_spinner = get_widget_from_builder(builder, "status_spinner");
     GtkTreeSelection *selection = gtk_tree_view_get_selection(GTK_TREE_VIEW(priv.usb_devices_list_view));
