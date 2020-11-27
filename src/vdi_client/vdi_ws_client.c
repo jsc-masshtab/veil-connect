@@ -20,14 +20,15 @@ static gboolean vdi_ws_client_ws_connect(VdiWsClient *vdi_ws_client);
 static void vdi_ws_client_ws_reconnect(VdiWsClient *vdi_ws_client);
 
 // implementations
-static void vdi_ws_client_on_pong(SoupWebsocketConnection *self,
-               GBytes                  *message,
-               gpointer                 user_data) {
+//static void vdi_ws_client_on_pong(SoupWebsocketConnection *self,
+//               GBytes                  *message,
+//               gpointer                 user_data) {
+//
+//    g_info("!!!!!on_pong");
+//}
 
-    g_info("!!!!!on_pong");
-}
-
-static void vdi_ws_client_on_message(SoupWebsocketConnection *ws_conn, gint type, GBytes *message, gpointer data)
+static void vdi_ws_client_on_message(SoupWebsocketConnection *ws_conn G_GNUC_UNUSED, gint type, GBytes *message,
+        gpointer data G_GNUC_UNUSED)
 {
     g_info("!!!!!on_message");
     if (type == SOUP_WEBSOCKET_DATA_TEXT) {
@@ -45,7 +46,7 @@ static void vdi_ws_client_on_message(SoupWebsocketConnection *ws_conn, gint type
     }
 }
 
-static void vdi_ws_client_on_close(SoupWebsocketConnection *ws_conn, VdiWsClient *vdi_ws_client)
+static void vdi_ws_client_on_close(SoupWebsocketConnection *ws_conn G_GNUC_UNUSED, VdiWsClient *vdi_ws_client)
 {
     g_info("WebSocket connection closed\n");
     vdi_ws_client_ws_reconnect(vdi_ws_client);
@@ -65,11 +66,11 @@ static void vdi_ws_client_on_connection(SoupSession *session, GAsyncResult *res,
         vdi_ws_client_ws_reconnect(vdi_ws_client);
 
     } else {
-        g_object_set(vdi_ws_client->ws_conn, "keepalive-interval", 30, NULL);
+        g_object_set(vdi_ws_client->ws_conn, "keepalive-interval", 60, NULL);
 
         g_signal_connect(vdi_ws_client->ws_conn, "message", G_CALLBACK(vdi_ws_client_on_message), NULL);
         g_signal_connect(vdi_ws_client->ws_conn, "closed", G_CALLBACK(vdi_ws_client_on_close), vdi_ws_client);
-        g_signal_connect(vdi_ws_client->ws_conn, "pong", G_CALLBACK(vdi_ws_client_on_pong), NULL);
+        //g_signal_connect(vdi_ws_client->ws_conn, "pong", G_CALLBACK(vdi_ws_client_on_pong), NULL);
 
         // Authentication on server. Needs wss or everybody will see the token
         // Вместе с auth заодно пошлем информацию о тк
@@ -77,7 +78,7 @@ static void vdi_ws_client_on_connection(SoupSession *session, GAsyncResult *res,
         // не подключены
         // tk_os - os машины, где запущен тк
         gchar *vm_id_json = string_to_json_value(vdi_session_get_current_vm_id());
-        gchar *tk_os = string_to_json_value(NULL); // someday...
+        gchar *tk_os = string_to_json_value(util_get_os_name());
         gchar *auth_data = g_strdup_printf("{"
                                            "\"msg_type\": \"AUTH\", "
                                            "\"token\": \"%s\", "

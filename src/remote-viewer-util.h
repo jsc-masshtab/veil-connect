@@ -130,6 +130,8 @@ H264_CODEC_TYPE get_default_h264_codec(void);
 
 gchar *string_to_json_value(const gchar *string);
 
+const gchar *util_get_os_name(void);
+
 #endif
 
 /*
