@@ -832,15 +832,16 @@ pipeline {
                     scp ${WORKSPACE}/devops/veil-connect-linux-installer.sh uploader@192.168.10.144:/local_storage/veil-connect/${VERSION}/linux
                     ssh uploader@192.168.10.144 chmod +x /local_storage/veil-connect/${VERSION}/linux/veil-connect-linux-installer.sh
                     
-                    # freerdp 2.2 debs for astra linux:
-                    ssh uploader@192.168.10.144 "cp -r /local_storage/freerdp2-astra /local_storage/veil-connect/${VERSION}/linux"
+                    # debs for astra linux:
+                    ssh uploader@192.168.10.144 "cp -r /local_storage/freerdp2-astra-orel /local_storage/veil-connect/${VERSION}/linux"
+                    ssh uploader@192.168.10.144 "cp -r /local_storage/debs-astra-smolensk /local_storage/veil-connect/${VERSION}/linux"
                     
                     # archivation
                     ssh uploader@192.168.10.144 "cd /local_storage/veil-connect/${VERSION}/linux && tar cvf veil-connect-${VERSION}-linux.tar --exclude=*.txt ./*"
 
                     # remove files
                     ssh uploader@192.168.10.144 rm -f /local_storage/veil-connect/${VERSION}/linux/*.deb /local_storage/veil-connect/${VERSION}/linux/*.rpm /local_storage/veil-connect/${VERSION}/linux/*.sh
-                    ssh uploader@192.168.10.144 rm -rf /local_storage/veil-connect/${VERSION}/linux/freerdp2-astra
+                    ssh uploader@192.168.10.144 rm -rf /local_storage/veil-connect/${VERSION}/linux/*-astra-*
                     
                     # create symlink to latest version
                     ssh uploader@192.168.10.144 ln -sfT /local_storage/veil-connect/${VERSION} /local_storage/veil-connect/latest
