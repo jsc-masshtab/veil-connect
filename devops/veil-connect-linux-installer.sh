@@ -10,7 +10,8 @@ echo "
     4. Ubuntu 20.04
     5. Centos 7
     6. Centos 8
-    7. Astra Linux
+    7. Astra Linux Orel
+    8. Astra Linux Smolensk
 "
 
 echo "My OS is:"
@@ -62,8 +63,11 @@ case $OS in
         ;;
     7)
         apt-get update
-        apt-get install libssl-dev -y
-        dpkg -i freerdp2-astra/*.deb
+        dpkg -i freerdp2-astra-orel/*.deb
+        apt-get install ./veil-connect_*-bionic_amd64.deb -y
+        ;;
+    8)
+        dpkg -i debs-astra-smolensk/*.deb
         apt-get install ./veil-connect_*-bionic_amd64.deb -y
         ;;
     *)
