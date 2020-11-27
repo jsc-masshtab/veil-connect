@@ -126,7 +126,9 @@ const gchar *h264_codec_to_string(H264_CODEC_TYPE codec);
 H264_CODEC_TYPE string_to_h264_codec(const gchar *str);
 H264_CODEC_TYPE get_default_h264_codec(void);
 
-void gtk_combo_box_text_set_active_text(GtkComboBoxText *combo_box, const gchar *text);
+//void gtk_combo_box_text_set_active_text(GtkComboBoxText *combo_box, const gchar *text);
+
+gchar *string_to_json_value(const gchar *string);
 
 #endif
 

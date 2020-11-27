@@ -13,8 +13,9 @@
 #include "vdi_redis_client.h"
 #include "vdi_ws_client.h"
 #include "async.h"
+#include "jsonhandler.h"
 
-#define HTTP_RESPONSE_TIOMEOUT 15
+#define HTTP_RESPONSE_TIOMEOUT 20
 
 // remote protocol type
 typedef enum{
@@ -45,6 +46,7 @@ typedef struct{
     gchar *message;
 
     gint test_data;
+    ServerReplyType server_reply_type;
 
 } VdiVmData;
 
@@ -70,6 +72,8 @@ typedef struct{
     gchar *current_controller_address;
 
     RedisClient redis_client;
+
+    VdiWsClient vdi_ws_client;
 
 } VdiSession;
 
@@ -104,6 +108,9 @@ int vdi_session_get_vdi_port(void);
 const gchar *vdi_session_get_vdi_username(void);
 // get password
 const gchar *vdi_session_get_vdi_password(void);
+//get current token
+const gchar *vdi_session_get_token(void);
+
 // cancell pending requests
 void vdi_session_cancell_pending_requests(void);
 // set vdi session credentials
@@ -114,6 +121,8 @@ void vdi_session_set_current_pool_id(const gchar *current_pool_id);
 // get current vm id
 const gchar *vdi_session_get_current_pool_id(void);
 
+const gchar *vdi_session_get_current_vm_id(void);
+
 // set current remote protocol
 void vdi_session_set_current_remote_protocol(VdiVmRemoteProtocol remote_protocol);
 // get current remote protocol
@@ -121,6 +130,8 @@ VdiVmRemoteProtocol vdi_session_get_current_remote_protocol(void);
 
 VdiVmRemoteProtocol vdi_session_str_to_remote_protocol(const gchar *protocol_str);
 const gchar *vdi_session_remote_protocol_str(VdiVmRemoteProtocol protocol);
+
+VdiWsClient *vdi_session_get_ws_client(void);
 
 // get current vm name
 const gchar *vdi_session_get_current_vm_name(void);

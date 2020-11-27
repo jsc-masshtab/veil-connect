@@ -47,7 +47,6 @@ typedef struct{
 // todo: Когда-нибудь в будущем избавлюсь от этих переменных уровня единицы трансляции.
 // Но пока это никак не мешает, а лишь облегчает работу. Иначе надо жонглировать указателем между потоками.
 static VdiManager vdi_manager;
-static VdiWsClient vdi_ws_client;
 
 // functions declarations
 static void set_init_values(void);
@@ -69,24 +68,6 @@ static void on_vm_start_button_clicked(GtkButton *button , gpointer data);
 
 
 /////////////////////////////////// work functions//////////////////////////////////////
-//  set init values for  VdiManager structure
-static void set_init_values()
-{
-    vdi_manager.builder = NULL;
-
-    vdi_manager.window = NULL;
-    vdi_manager.button_quit = NULL;
-    vdi_manager.vm_main_box = NULL;
-    vdi_manager.button_renew = NULL;
-    vdi_manager.gtk_flow_box = NULL;
-    vdi_manager.status_label = NULL;
-    vdi_manager.main_vm_spinner = NULL;
-    vdi_manager.label_is_vdi_online = NULL;
-
-    vdi_manager.pool_widgets_array = NULL;
-
-    vdi_manager.p_conn_data = NULL;
-}
 
 // Set GUI state
 static void set_vdi_client_state(VdiClientState vdi_client_state, const gchar *message, gboolean error_message)
@@ -285,10 +266,11 @@ static void on_vdi_session_get_vm_from_pool_finished(GObject *source_object G_GN
 
     VdiVmData *vdi_vm_data = (VdiVmData *)ptr_res;
 
-    // if port == 0 it means VDI server can not provide a vm. Should implement proper errors field on VDI server!
-    if (vdi_vm_data->vm_port == 0) {
-        const gchar *user_message = vdi_vm_data->message ? vdi_vm_data->message : "Не удалось получить вм из пула";
+    if (vdi_vm_data->server_reply_type != SERVER_REPLY_TYPE_DATA) {
+        const gchar *user_message = (vdi_vm_data->message && strlen_safely(vdi_vm_data->message) != 0) ?
+                vdi_vm_data->message : "Не удалось получить вм из пула";
         set_vdi_client_state(VDI_RECEIVED_RESPONSE, user_message, TRUE);
+
     } else {
         // save to settings file the last pool we connected to
         write_str_to_ini_file("RemoteViewerConnect", "last_pool_id", vdi_session_get_current_pool_id());
@@ -401,7 +383,7 @@ save_data_to_ini_file()
 /////////////////////////////////// main function
 GtkResponseType vdi_manager_dialog(GtkWindow *main_window G_GNUC_UNUSED, ConnectSettingsData *con_data)
 {
-    set_init_values();
+    memset(&vdi_manager, 0, sizeof(VdiManager));
     vdi_manager.ci.response = FALSE;
     vdi_manager.ci.loop = NULL;
     vdi_manager.ci.dialog_window_response = GTK_RESPONSE_CANCEL;
@@ -440,9 +422,12 @@ GtkResponseType vdi_manager_dialog(GtkWindow *main_window G_GNUC_UNUSED, Connect
     gtk_window_set_default_size(GTK_WINDOW(vdi_manager.window), 650, 500);
     gtk_widget_show_all(vdi_manager.window);
 
-    // start polling if vdi is online
-    start_vdi_ws_polling(&vdi_ws_client, vdi_session_get_vdi_ip(), vdi_session_get_vdi_port(),
-            on_ws_data_from_vdi_received);
+    // set callback to call when ws connection changes
+    vdi_ws_client_set_is_connected_callback(vdi_session_get_ws_client(), on_ws_data_from_vdi_received);
+    SoupWebsocketState state = vdi_ws_client_get_conn_state(vdi_session_get_ws_client());
+    g_info("%s ws state %i", (const char *)__func__, state);
+    on_ws_data_from_vdi_received(state == SOUP_WEBSOCKET_STATE_OPEN);
+
     // Пытаемся соединиться с vdi и получить список пулов. Получив список пулов нужно сгенерить
     // соответствующие кнопки  в скрол области.
     // get pool data
@@ -452,7 +437,7 @@ GtkResponseType vdi_manager_dialog(GtkWindow *main_window G_GNUC_UNUSED, Connect
 
     // clear
     vdi_session_cancell_pending_requests();
-    stop_vdi_ws_polling(&vdi_ws_client);
+    vdi_ws_client_set_is_connected_callback(vdi_session_get_ws_client(), NULL);
 
     // save data to ini file
     save_data_to_ini_file();
@@ -460,7 +445,8 @@ GtkResponseType vdi_manager_dialog(GtkWindow *main_window G_GNUC_UNUSED, Connect
     unregister_all_pools();
     g_object_unref(vdi_manager.builder);
     gtk_widget_destroy(vdi_manager.window);
-    set_init_values();
 
-    return vdi_manager.ci.dialog_window_response;
+    ConnectionInfo ci = vdi_manager.ci;
+    memset(&vdi_manager, 0, sizeof(VdiManager));
+    return ci.dialog_window_response;
 }

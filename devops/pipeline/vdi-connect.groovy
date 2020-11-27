@@ -35,7 +35,7 @@ pipeline {
 
     parameters {
         string(      name: 'BRANCH',               defaultValue: 'master',          description: 'branch')
-        string(      name: 'VERSION',              defaultValue: '1.3.4',           description: 'version')
+        string(      name: 'VERSION',              defaultValue: '1.3.5',           description: 'version')
         booleanParam(name: 'DEBIAN_9',             defaultValue: true,              description: 'create DEB?')
         booleanParam(name: 'DEBIAN_10',            defaultValue: true,              description: 'create DEB?')
         booleanParam(name: 'UBUNTU_18',            defaultValue: true,              description: 'create DEB?')

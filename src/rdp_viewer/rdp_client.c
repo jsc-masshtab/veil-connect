@@ -564,8 +564,8 @@ static DWORD WINAPI rdp_client_thread_proc(ExtendedRdpContext* ex)
                 break;
 
             //// try to reconnect
-            if (client_auto_reconnect_ex(instance, handle_window_events))
-                continue;
+            //if (client_auto_reconnect(instance, handle_window_events))
+            //    continue;
 
             if (freerdp_get_last_error(instance->context) == FREERDP_ERROR_SUCCESS)
                 WLog_ERR(TAG, "Failed to check FreeRDP event handles");

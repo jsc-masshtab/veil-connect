@@ -51,12 +51,16 @@ typedef struct
     // pointers to data
     gchar *current_pool_id;
 
+    AuthDialogState auth_dialog_state;
+
 } RemoteViewerData;
 
 // set gui state
 static void
 set_auth_dialog_state(AuthDialogState auth_dialog_state, RemoteViewerData *ci)
 {
+    ci->auth_dialog_state = auth_dialog_state;
+
     switch (auth_dialog_state) {
     case AUTH_GUI_DEFAULT_STATE: {
         // stop connect spinner
@@ -146,8 +150,8 @@ on_vdi_session_get_vm_from_pool_finished(GObject *source_object G_GNUC_UNUSED,
     }
 
     VdiVmData *vdi_vm_data = ptr_res;
-    // if port == 0 it means VDI server can not provide a vm
-    if (vdi_vm_data->vm_port == 0) {
+
+    if (vdi_vm_data->server_reply_type != SERVER_REPLY_TYPE_DATA) {
         const gchar *user_message = vdi_vm_data->message ? vdi_vm_data->message : "Не удалось получить вм из пула";
         set_message_to_info_label(GTK_LABEL(ci->message_display_label), user_message);
 
@@ -193,6 +197,9 @@ on_vdi_session_log_in_finished(GObject *source_object G_GNUC_UNUSED,
 // connect to VDI server
 void connect_to_vdi_server(RemoteViewerData *ci)
 {
+    if (ci->auth_dialog_state == AUTH_GUI_CONNECT_TRY_STATE)
+        return;
+
     // set credential for connection to VDI server
     set_data_from_gui_in_outer_pointers(ci);
     vdi_session_set_credentials(ci->p_conn_data->user, ci->p_conn_data->password,

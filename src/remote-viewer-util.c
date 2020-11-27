@@ -791,7 +791,7 @@ size_t strlen_safely(const gchar * str)
 void update_string_safely(gchar **string_ptr, const gchar *new_string)
 {
     free_memory_safely(string_ptr);
-    if (string_ptr)
+    if (string_ptr && new_string)
         *string_ptr = g_strdup(new_string);
 }
 
@@ -951,6 +951,16 @@ H264_CODEC_TYPE get_default_h264_codec()
 #elif _WIN32
     return H264_CODEC_AVC420;
 #endif
+}
+
+gchar *string_to_json_value(const gchar *string)
+{
+    gchar *json_str_rep;
+    if (string)
+        json_str_rep = g_strdup_printf("\"%s\"", string);
+    else
+        json_str_rep = g_strdup("null");
+    return json_str_rep;
 }
 
 /*

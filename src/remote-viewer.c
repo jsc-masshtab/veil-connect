@@ -380,6 +380,7 @@ retry_connect_to_vm:
         }
         // set virt viewer window_name
         virt_viewer_app_set_window_name(app, con_data.vm_verbose_name);
+        vdi_ws_client_notify_vm_changed(vdi_session_get_ws_client(), vdi_session_get_current_vm_id());
 
         // connect to vm depending on remote protocol
         if (vdi_session_get_current_remote_protocol() == VDI_RDP_PROTOCOL) {
@@ -407,6 +408,7 @@ retry_connect_to_vm:
                 goto to_exit;
         }
 
+        vdi_ws_client_notify_vm_changed(vdi_session_get_ws_client(), NULL);
         if (con_data.is_connect_to_prev_pool)
             goto retry_auth;
         else

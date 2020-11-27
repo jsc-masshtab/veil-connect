@@ -64,6 +64,13 @@ static guint send_message(SoupMessage *msg)
     return status;
 }
 
+// Вызывается в главном потоке  при смене jwt
+static gboolean on_jwt_updated(gpointer data G_GNUC_UNUSED)
+{
+    vdi_ws_client_start(&vdiSession.vdi_ws_client, vdi_session_get_vdi_ip(), vdi_session_get_vdi_port());
+    return G_SOURCE_REMOVE;
+}
+
 // Получаем токен
 static gboolean vdi_api_session_get_token()
 {
@@ -115,6 +122,8 @@ static gboolean vdi_api_session_get_token()
         case SERVER_REPLY_TYPE_DATA: {
             free_memory_safely(&vdiSession.jwt);
             vdiSession.jwt = g_strdup(json_object_get_string_member_safely(reply_json_object, "access_token"));
+            // В основном потоке вызывается калбэк на смену токена
+            g_timeout_add(50, (GSourceFunc)on_jwt_updated, NULL);
 
             g_object_unref(msg);
             g_object_unref(parser);
@@ -172,7 +181,7 @@ void vdi_session_create()
 {
     memset(&vdiSession, 0, sizeof(VdiSession));
 
-    // creae session
+    // create session
     gboolean ssl_strict = FALSE; // maybe read from ini file
     vdiSession.soup_session = soup_session_new_with_options("timeout", HTTP_RESPONSE_TIOMEOUT,
     "ssl-strict", ssl_strict, NULL);
@@ -185,8 +194,9 @@ void vdi_session_destroy()
     vdi_session_logout();
 
     vdi_session_cancell_pending_requests();
-    g_object_unref(vdiSession.soup_session);
 
+    // free memory
+    g_object_unref(vdiSession.soup_session);
     free_session_memory();
 }
 
@@ -208,6 +218,11 @@ const gchar *vdi_session_get_vdi_username(void)
 const gchar *vdi_session_get_vdi_password(void)
 {
     return vdiSession.vdi_password;
+}
+
+const gchar *vdi_session_get_token(void)
+{
+    return vdiSession.jwt;
 }
 
 void vdi_session_cancell_pending_requests()
@@ -238,7 +253,6 @@ void vdi_session_set_credentials(const gchar *username, const gchar *password, c
     vdiSession.auth_url = g_strdup_printf("%s/auth/", vdiSession.api_url);
 
     vdiSession.is_ldap = is_ldap;
-    vdiSession.jwt = NULL;
 }
 
 void vdi_session_set_current_pool_id(const gchar *current_pool_id)
@@ -250,6 +264,11 @@ void vdi_session_set_current_pool_id(const gchar *current_pool_id)
 const gchar *vdi_session_get_current_pool_id()
 {
     return vdiSession.current_pool_id;
+}
+
+const gchar *vdi_session_get_current_vm_id()
+{
+    return vdiSession.current_vm_id;
 }
 
 void vdi_session_set_current_remote_protocol(VdiVmRemoteProtocol remote_protocol)
@@ -310,6 +329,11 @@ static const gchar *vdi_session_remote_protocol_to_str_old(VdiVmRemoteProtocol v
         default:
             return "unknown_protocol";
     }
+}
+
+VdiWsClient *vdi_session_get_ws_client()
+{
+    return &vdiSession.vdi_ws_client;
 }
 
 const gchar *vdi_session_get_current_vm_name()
@@ -434,6 +458,7 @@ void vdi_session_get_vm_from_pool(GTask       *task,
     g_info("%s: server_reply_type %i", (const char *)__func__, server_reply_type);
 
     VdiVmData *vdi_vm_data = calloc(1, sizeof(VdiVmData));
+    vdi_vm_data->server_reply_type = server_reply_type;
 
     if (server_reply_type == SERVER_REPLY_TYPE_DATA) {
         vdi_vm_data->vm_host = g_strdup(json_object_get_string_member_safely(reply_json_object, "host"));
@@ -443,13 +468,13 @@ void vdi_session_get_vm_from_pool(GTask       *task,
                 reply_json_object, "vm_verbose_name"));
 
         // save some data in vdiSession
-        free_memory_safely(&vdiSession.current_vm_verbose_name);
-        vdiSession.current_vm_verbose_name = g_strdup(vdi_vm_data->vm_verbose_name);
-        free_memory_safely(&vdiSession.current_controller_address);
+        update_string_safely(&vdiSession.current_vm_verbose_name, vdi_vm_data->vm_verbose_name);
         const gchar *vm_controller_address =
                 json_object_get_string_member_safely(reply_json_object, "vm_controller_address");
-        if (vm_controller_address)
-            vdiSession.current_controller_address = g_strdup(vm_controller_address);
+        update_string_safely(&vdiSession.current_controller_address, vm_controller_address);
+        const gchar *vm_id = json_object_get_string_member_safely(reply_json_object, "vm_id");
+        update_string_safely(&vdiSession.current_vm_id, vm_id);
+        g_info("!!!vm_id: %s  %s", vm_id, vdiSession.current_vm_id);
 
         g_info("vm_host %s", vdi_vm_data->vm_host);
         g_info("vm_port %i", vdi_vm_data->vm_port);
@@ -506,6 +531,9 @@ gboolean vdi_session_logout(void)
 {
     // disconnect from license server(redis)
     vdi_redis_client_deinit(&vdiSession.redis_client);
+
+    // stop websocket connection
+    vdi_ws_client_stop(&vdiSession.vdi_ws_client);
 
     g_info("%s", (const char *)__func__);
     if (vdiSession.jwt) {

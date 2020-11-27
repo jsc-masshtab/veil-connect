@@ -109,26 +109,26 @@ static const gchar *error_to_str(UINT32 rdp_error)
             return "ERRCONNECT_CLIENT_REVOKED";
         case ERRCONNECT_KDC_UNREACHABLE:
             return "ERRCONNECT_KDC_UNREACHABLE";
-        case ERRCONNECT_ACCOUNT_DISABLED:
-            return "ERRCONNECT_ACCOUNT_DISABLED";
-        case ERRCONNECT_PASSWORD_MUST_CHANGE:
-            return "ERRCONNECT_PASSWORD_MUST_CHANGE";
-        case ERRCONNECT_LOGON_FAILURE:
-            return "ERRCONNECT_LOGON_FAILURE";
-        case ERRCONNECT_WRONG_PASSWORD:
-            return "ERRCONNECT_WRONG_PASSWORD";
-        case ERRCONNECT_ACCESS_DENIED:
-            return "ERRCONNECT_ACCESS_DENIED";
-        case ERRCONNECT_ACCOUNT_RESTRICTION:
-            return "ERRCONNECT_ACCOUNT_RESTRICTION";
-        case ERRCONNECT_ACCOUNT_LOCKED_OUT:
-            return "ERRCONNECT_ACCOUNT_LOCKED_OUT";
-        case ERRCONNECT_ACCOUNT_EXPIRED:
-            return "ERRCONNECT_ACCOUNT_EXPIRED";
-        case ERRCONNECT_LOGON_TYPE_NOT_GRANTED:
-            return "ERRCONNECT_LOGON_TYPE_NOT_GRANTED";
-        case ERRCONNECT_NO_OR_MISSING_CREDENTIALS:
-            return "ERRCONNECT_NO_OR_MISSING_CREDENTIALS";
+        //case ERRCONNECT_ACCOUNT_DISABLED:
+        //    return "ERRCONNECT_ACCOUNT_DISABLED";
+        //case ERRCONNECT_PASSWORD_MUST_CHANGE:
+        //    return "ERRCONNECT_PASSWORD_MUST_CHANGE";
+        //case ERRCONNECT_LOGON_FAILURE:
+        //    return "ERRCONNECT_LOGON_FAILURE";
+        //case ERRCONNECT_WRONG_PASSWORD:
+        //    return "ERRCONNECT_WRONG_PASSWORD";
+        //case ERRCONNECT_ACCESS_DENIED:
+        //    return "ERRCONNECT_ACCESS_DENIED";
+        //case ERRCONNECT_ACCOUNT_RESTRICTION:
+        //    return "ERRCONNECT_ACCOUNT_RESTRICTION";
+        //case ERRCONNECT_ACCOUNT_LOCKED_OUT:
+        //    return "ERRCONNECT_ACCOUNT_LOCKED_OUT";
+        //case ERRCONNECT_ACCOUNT_EXPIRED:
+        //    return "ERRCONNECT_ACCOUNT_EXPIRED";
+        //case ERRCONNECT_LOGON_TYPE_NOT_GRANTED:
+        //    return "ERRCONNECT_LOGON_TYPE_NOT_GRANTED";
+        //case ERRCONNECT_NO_OR_MISSING_CREDENTIALS:
+        //    return "ERRCONNECT_NO_OR_MISSING_CREDENTIALS";
         default:
             return "";
         }
