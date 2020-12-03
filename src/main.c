@@ -101,10 +101,10 @@ main(int argc, char **argv)
     int ret = g_application_run(app, argc, argv);
 
     // free resources
+    usbredir_controller_deinit();
     vdi_session_destroy();
     g_object_unref(app);
     free_ini_file_name();
-    usbredir_controller_deinit();
 
     return ret;
 }

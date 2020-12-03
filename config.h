@@ -150,3 +150,7 @@
 
 /*Endpoint lka thin client in nginx*/
 #define NGINX_VDI_API_PREFIX "api"
+
+/*Product links*/
+#define VEIL_PRODUCT_SITE "https://mashtab.org/files/vdi/index.html"
+#define VEIL_CONNECT_DOC_SITE "https://veil.mashtab.org/products/veil_connect/"

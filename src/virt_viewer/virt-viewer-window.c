@@ -63,6 +63,7 @@ void virt_viewer_window_menu_file_quit(GtkWidget *src, VirtViewerWindow *self);
 void virt_viewer_window_guest_details_response(GtkDialog *dialog, gint response_id, gpointer user_data);
 void virt_viewer_window_menu_help_about(GtkWidget *menu, VirtViewerWindow *self);
 void virt_viewer_window_menu_help_guest_details(GtkWidget *menu, VirtViewerWindow *self);
+void virt_viewer_window_menu_help_tk_doc(GtkWidget *menu, VirtViewerWindow *self);
 void virt_viewer_window_menu_view_fullscreen(GtkWidget *menu, VirtViewerWindow *self);
 void virt_viewer_window_menu_send(GtkWidget *menu, VirtViewerWindow *self);
 void virt_viewer_window_menu_file_screenshot(GtkWidget *menu, VirtViewerWindow *self);
@@ -1064,8 +1065,14 @@ G_MODULE_EXPORT void
 virt_viewer_window_menu_help_guest_details(GtkWidget *menu G_GNUC_UNUSED,
                                            VirtViewerWindow *self G_GNUC_UNUSED)
 {
-    GError *error = NULL;
-    gtk_show_uri_on_window(NULL, "http://mashtab.org/files/veil/index.html", GDK_CURRENT_TIME, &error);
+    gtk_show_uri_on_window(NULL, VEIL_PRODUCT_SITE, GDK_CURRENT_TIME, NULL);
+}
+
+G_MODULE_EXPORT void
+virt_viewer_window_menu_help_tk_doc(GtkWidget *menu G_GNUC_UNUSED,
+                                    VirtViewerWindow *self G_GNUC_UNUSED)
+{
+    gtk_show_uri_on_window(NULL, VEIL_CONNECT_DOC_SITE, GDK_CURRENT_TIME, NULL);
 }
 
 G_MODULE_EXPORT void

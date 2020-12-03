@@ -245,11 +245,14 @@ static gboolean gtk_update(gpointer user_data)
     return TRUE;
 }
 
-static void rdp_viewer_item_details_activated(GtkWidget *menu G_GNUC_UNUSED, gpointer userdata G_GNUC_UNUSED)
+static void rdp_viewer_item_product_site_activated(GtkWidget *menu G_GNUC_UNUSED, gpointer userdata G_GNUC_UNUSED)
 {
-    g_info("%s", (const char *)__func__);
-    GError *error = NULL;
-    gtk_show_uri_on_window(NULL, "http://mashtab.org/files/veil/index.html", GDK_CURRENT_TIME, &error);
+    gtk_show_uri_on_window(NULL, VEIL_PRODUCT_SITE, GDK_CURRENT_TIME, NULL);
+}
+
+static void rdp_viewer_item_tk_doc_activated(GtkWidget *menu G_GNUC_UNUSED, gpointer userdata G_GNUC_UNUSED)
+{
+    gtk_show_uri_on_window(NULL, VEIL_CONNECT_DOC_SITE, GDK_CURRENT_TIME, NULL);
 }
 
 static void rdp_viewer_item_about_activated(GtkWidget *menu G_GNUC_UNUSED, gpointer userdata)
@@ -520,10 +523,13 @@ RdpWindowData *rdp_viewer_window_create(ExtendedRdpContext *ex_rdp_context)
     fill_shortcuts_menu(sub_menu_send, ex_rdp_context);
 
     // help menu
-    GtkWidget *item_external_link = GTK_WIDGET(gtk_builder_get_object(builder, "imagemenuitem10"));
-    GtkWidget *item_about = GTK_WIDGET(gtk_builder_get_object(builder, "menu-help-guest-details"));
-    g_signal_connect(item_external_link, "activate", G_CALLBACK(rdp_viewer_item_about_activated), rdp_viewer_window);
-    g_signal_connect(item_about, "activate", G_CALLBACK(rdp_viewer_item_details_activated), NULL);
+    GtkWidget *item_product_site = GTK_WIDGET(gtk_builder_get_object(builder, "menu-help-guest-details"));
+    GtkWidget *item_about = GTK_WIDGET(gtk_builder_get_object(builder, "imagemenuitem10"));
+    GtkWidget *item_tk_doc = GTK_WIDGET(gtk_builder_get_object(builder, "menu-tk-doc"));
+    g_signal_connect(item_product_site, "activate",
+                     G_CALLBACK(rdp_viewer_item_product_site_activated), rdp_viewer_window);
+    g_signal_connect(item_about, "activate", G_CALLBACK(rdp_viewer_item_about_activated), NULL);
+    g_signal_connect(item_tk_doc, "activate", G_CALLBACK(rdp_viewer_item_tk_doc_activated), NULL);
 
     // create RDP display
     rdp_window_data->rdp_display = rdp_display_create(rdp_window_data, ex_rdp_context);

@@ -1,7 +1,28 @@
 
-n.n.n / 2020-10-22
+n.n.n / 2020-12-03
 ==================
 
+  * Merge branch 'feature_tg_10815' into 'master'
+  * FEATURE TG-10815 Remove postrm scripts
+  * FEATURE TG-10868 Сообщаем vdi серверу тип ОС где запущен ТК
+  * FEATURE TG-10868 Вывод ошибок полключения для старых версий freerdp
+
+1.3.5 / 2020-11-27
+==================
+
+  * Merge feature_tg_10868 into master
+  * Merge branch 'feature_tg_10923' into 'master'
+  * FEATURE TG-10923 Fix build for astra linux
+  * Update vdi-connect.groovy
+  * Merge branch 'master' of http://gitlab.bazalt.team/vdi/veil-connect
+  * FEATURE TG-10745
+  * Merge master into master
+  * FEATURE TG-10550 Сообщение что нужно ввести ip тк, если не удалось определить автоматом
+  * Merge feature_tg_10550 into master
+  * Merge feature_tg_10301 into master
+  * Merge branch 'feature_tg_10498' into 'master'
+  * FEATURE TG-10498 Fix install folder (for win)
+  * FIX TG-10285 Added save password check button
   * FIX TG-10250 Removed  freerdp_handle_signals
   * FIX TG-10250 Small gui update
   * FIX TG-10250 Some TODOs resolved
