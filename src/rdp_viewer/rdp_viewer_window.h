@@ -42,6 +42,10 @@ typedef struct{
     HHOOK keyboard_hook;
 #endif
 
+    // signal handles
+    gulong vm_changed_handle;
+    gulong ws_cmd_received_handle;
+
 } RdpWindowData;
 
 

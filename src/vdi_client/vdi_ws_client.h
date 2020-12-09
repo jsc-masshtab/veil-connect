@@ -10,11 +10,9 @@
 #include <libsoup/soup-message.h>
 #include <glib.h>
 
-typedef gboolean (*WsDataReceivedCallback) (gboolean is_vdi_online);
 
 typedef struct{
     SoupSession *ws_soup_session;
-    WsDataReceivedCallback ws_is_connected_callback;
 
     gchar* vdi_url;
 
@@ -32,13 +30,15 @@ typedef struct{
 
 void vdi_ws_client_start(VdiWsClient *ws_vdi_client, const gchar *vdi_ip, int vdi_port);
 void vdi_ws_client_stop(VdiWsClient *ws_vdi_client);
-void vdi_ws_client_set_is_connected_callback(VdiWsClient *vdi_ws_client,
-        WsDataReceivedCallback ws_is_connected_callback);
 
 SoupWebsocketState vdi_ws_client_get_conn_state(VdiWsClient *ws_vdi_client);
 
 // Сообщить  vdi серверу что произошло подключение кв вм/либо отключение от вм
 // vm_id == NULL отключение от вм
-void vdi_ws_client_notify_vm_changed(VdiWsClient *ws_vdi_client, const gchar *vm_id);
+void vdi_ws_client_send_vm_changed(VdiWsClient *ws_vdi_client, const gchar *vm_id);
+// Сообщить  vdi серверу что юзер взаимодействовал с gui
+// В Qt очень просто можно установить фильтр ивентов сразу на все приложение, в gtk такого не нашел.
+// Поэтому вызываем этот метод везде, где хотим оповестить сервер об активности клиета
+void vdi_ws_client_send_user_gui(VdiWsClient *ws_vdi_client);
 
 #endif // WS_VDI_CLIENT_H

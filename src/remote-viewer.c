@@ -80,6 +80,7 @@ static GMainLoop *virt_viewer_loop = NULL;
 static void
 remote_viewer_dispose(GObject *object)
 {
+    g_info("remote_viewer_dispose");
     G_OBJECT_CLASS(remote_viewer_parent_class)->dispose (object);
 }
 
@@ -219,8 +220,13 @@ remote_viewer_init(RemoteViewer *self)
 RemoteViewer *
 remote_viewer_new(void)
 {
+    g_info("remote_viewer_new");
+
+    // start session
+    vdi_session_static_create();
+
     return g_object_new(REMOTE_VIEWER_TYPE,
-                        "application-id", "org.virt-manager.remote-viewer",
+                        "application-id", "mashtab.veil-connect",
                         "flags", G_APPLICATION_NON_UNIQUE,
                         NULL);
 }
@@ -380,7 +386,7 @@ retry_connect_to_vm:
         }
         // set virt viewer window_name
         virt_viewer_app_set_window_name(app, con_data.vm_verbose_name);
-        vdi_ws_client_notify_vm_changed(vdi_session_get_ws_client(), vdi_session_get_current_vm_id());
+        vdi_ws_client_send_vm_changed(vdi_session_get_ws_client(), vdi_session_get_current_vm_id());
 
         // connect to vm depending on remote protocol
         if (vdi_session_get_current_remote_protocol() == VDI_RDP_PROTOCOL) {
@@ -408,7 +414,7 @@ retry_connect_to_vm:
                 goto to_exit;
         }
 
-        vdi_ws_client_notify_vm_changed(vdi_session_get_ws_client(), NULL);
+        vdi_ws_client_send_vm_changed(vdi_session_get_ws_client(), NULL);
         if (con_data.is_connect_to_prev_pool)
             goto retry_auth;
         else

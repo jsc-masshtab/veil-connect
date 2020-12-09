@@ -59,7 +59,7 @@ static VdiPoolWidget get_vdi_pool_widget_by_id(const gchar *searched_id);
 
 static void on_vdi_session_get_vdi_pool_data_finished(GObject *source_object, GAsyncResult *res, gpointer user_data);
 static void on_vdi_session_get_vm_from_pool_finished(GObject *source_object, GAsyncResult *res, gpointer user_data);
-static gboolean on_ws_data_from_vdi_received(gboolean is_vdi_online);
+static gboolean set_ws_conn_state(gboolean is_vdi_online);
 
 static gboolean on_window_deleted_cb(ConnectionInfo *ci);
 static void on_button_renew_clicked(GtkButton *button, gpointer data);
@@ -292,7 +292,7 @@ static void on_vdi_session_get_vm_from_pool_finished(GObject *source_object G_GN
 }
 
 // ws data callback    "<span color=\"red\">%s</span>"
-static gboolean on_ws_data_from_vdi_received(gboolean is_vdi_online)
+static gboolean set_ws_conn_state(gboolean is_vdi_online)
 {
     if (vdi_manager.label_is_vdi_online) {
 
@@ -320,6 +320,8 @@ static gboolean on_ws_data_from_vdi_received(gboolean is_vdi_online)
 static gboolean on_window_deleted_cb(ConnectionInfo *ci)
 {
     g_info("%s", (const char *)__func__);
+    vdi_ws_client_send_user_gui(vdi_session_get_ws_client()); // notify server
+
     ci->response = FALSE;
     ci->dialog_window_response = GTK_RESPONSE_CLOSE;
     shutdown_loop(ci->loop);
@@ -329,6 +331,8 @@ static gboolean on_window_deleted_cb(ConnectionInfo *ci)
 static void on_button_renew_clicked(GtkButton *button G_GNUC_UNUSED, gpointer data G_GNUC_UNUSED) {
 
     g_info("%s", (const char *)__func__);
+    vdi_ws_client_send_user_gui(vdi_session_get_ws_client()); // notify server
+
     vdi_session_cancell_pending_requests();
     unregister_all_pools();
     refresh_vdi_pool_data_async();
@@ -337,6 +341,7 @@ static void on_button_renew_clicked(GtkButton *button G_GNUC_UNUSED, gpointer da
 static void on_button_quit_clicked(GtkButton *button G_GNUC_UNUSED, gpointer data)
 {
     g_info("%s", (const char *)__func__);
+    vdi_ws_client_send_user_gui(vdi_session_get_ws_client()); // notify server
 
     // logout
     vdi_session_logout();
@@ -346,9 +351,21 @@ static void on_button_quit_clicked(GtkButton *button G_GNUC_UNUSED, gpointer dat
     ci->dialog_window_response = GTK_RESPONSE_CANCEL;
     shutdown_loop(ci->loop);
 }
+
+// ws conn state calback
+static void
+on_ws_conn_changed (GtkWidget *widget G_GNUC_UNUSED,
+                      int ws_connected,
+                      gpointer data G_GNUC_UNUSED)
+{
+    set_ws_conn_state(ws_connected);
+}
+
 // vm start button pressed callback
 static void on_vm_start_button_clicked(GtkButton *button G_GNUC_UNUSED, gpointer data)
 {
+    vdi_ws_client_send_user_gui(vdi_session_get_ws_client()); // notify server
+
     const gchar *pool_id = (const gchar *)data;
     vdi_session_set_current_pool_id(pool_id);
     g_info("%s  %s", (const char *)__func__, pool_id);
@@ -414,6 +431,8 @@ GtkResponseType vdi_manager_dialog(GtkWindow *main_window G_GNUC_UNUSED, Connect
     g_signal_connect_swapped(vdi_manager.window, "delete-event", G_CALLBACK(on_window_deleted_cb), &vdi_manager.ci);
     g_signal_connect(vdi_manager.button_renew, "clicked", G_CALLBACK(on_button_renew_clicked), &vdi_manager.ci);
     g_signal_connect(vdi_manager.button_quit, "clicked", G_CALLBACK(on_button_quit_clicked), &vdi_manager.ci);
+    gulong ws_conn_changed_handle =  g_signal_connect(get_vdi_session_static(),
+            "ws-conn-changed", G_CALLBACK(on_ws_conn_changed), NULL);
 
     read_data_from_ini_file();
 
@@ -422,11 +441,9 @@ GtkResponseType vdi_manager_dialog(GtkWindow *main_window G_GNUC_UNUSED, Connect
     gtk_window_set_default_size(GTK_WINDOW(vdi_manager.window), 650, 500);
     gtk_widget_show_all(vdi_manager.window);
 
-    // set callback to call when ws connection changes
-    vdi_ws_client_set_is_connected_callback(vdi_session_get_ws_client(), on_ws_data_from_vdi_received);
     SoupWebsocketState state = vdi_ws_client_get_conn_state(vdi_session_get_ws_client());
     g_info("%s ws state %i", (const char *)__func__, state);
-    on_ws_data_from_vdi_received(state == SOUP_WEBSOCKET_STATE_OPEN);
+    set_ws_conn_state(state == SOUP_WEBSOCKET_STATE_OPEN);
 
     // Пытаемся соединиться с vdi и получить список пулов. Получив список пулов нужно сгенерить
     // соответствующие кнопки  в скрол области.
@@ -437,8 +454,7 @@ GtkResponseType vdi_manager_dialog(GtkWindow *main_window G_GNUC_UNUSED, Connect
 
     // clear
     vdi_session_cancell_pending_requests();
-    vdi_ws_client_set_is_connected_callback(vdi_session_get_ws_client(), NULL);
-
+    g_signal_handler_disconnect(get_vdi_session_static(), ws_conn_changed_handle);
     // save data to ini file
     save_data_to_ini_file();
 

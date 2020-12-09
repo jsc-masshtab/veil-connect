@@ -288,15 +288,8 @@ static void
 settings_button_clicked_cb(GtkButton *button G_GNUC_UNUSED, gpointer data)
 {
     RemoteViewerData *ci = data;
-
     GtkResponseType res = remote_viewer_start_settings_dialog(ci->p_conn_data, GTK_WINDOW(ci->window));
     (void)res;
-}
-
-static gboolean
-settings_button_link_clicked_cb(GtkLinkButton *button G_GNUC_UNUSED, gpointer user_data G_GNUC_UNUSED)
-{
-    return TRUE;
 }
 
 static void
@@ -382,7 +375,6 @@ remote_viewer_connect_dialog(ConnectSettingsData *connect_settings_data)
     g_signal_connect(ci.window, "key-press-event", G_CALLBACK(key_pressed_cb), &ci);
     g_signal_connect_swapped(ci.window, "delete-event", G_CALLBACK(window_deleted_cb), &ci);
     g_signal_connect(ci.settings_button, "clicked", G_CALLBACK(settings_button_clicked_cb), &ci);
-    //g_signal_connect(ci.settings_button, "activate-link", G_CALLBACK(settings_button_link_clicked_cb), &ci);
     g_signal_connect(ci.connect_button, "clicked", G_CALLBACK(connect_button_clicked_cb), &ci);
 
     // read ini file

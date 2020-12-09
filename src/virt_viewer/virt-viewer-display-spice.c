@@ -33,6 +33,8 @@
 #include "virt-viewer-display-spice.h"
 #include "virt-viewer-auth.h"
 
+#include "vdi_session.h"
+
 G_DEFINE_TYPE (VirtViewerDisplaySpice, virt_viewer_display_spice, VIRT_VIEWER_TYPE_DISPLAY)
 
 typedef enum {
@@ -273,6 +275,20 @@ fullscreen_changed(VirtViewerDisplaySpice *self,
         self->priv->auto_resize = AUTO_RESIZE_ALWAYS;
 }
 
+static gboolean virt_viewer_display_on_btn_pressed(GtkWidget *widget G_GNUC_UNUSED,
+        GdkEventButton *event G_GNUC_UNUSED, gpointer user_data G_GNUC_UNUSED)
+{
+    vdi_ws_client_send_user_gui(vdi_session_get_ws_client());
+    return FALSE;
+}
+
+static gboolean virt_viewer_display_on_key_pressed(GtkWidget *widget G_GNUC_UNUSED,
+        GdkEventKey *event G_GNUC_UNUSED, gpointer user_data G_GNUC_UNUSED)
+{
+    vdi_ws_client_send_user_gui(vdi_session_get_ws_client());
+    return FALSE;
+}
+
 GtkWidget *
 virt_viewer_display_spice_new(VirtViewerSessionSpice *session,
                               SpiceChannel *channel,
@@ -318,6 +334,11 @@ virt_viewer_display_spice_new(VirtViewerSessionSpice *session,
                  "resize-guest", FALSE,
                  "scaling", TRUE,
                  NULL);
+
+    g_signal_connect(GTK_WIDGET(self->priv->display), "button-press-event",
+            G_CALLBACK(virt_viewer_display_on_btn_pressed), NULL);
+    g_signal_connect(GTK_WIDGET(self->priv->display), "key-press-event",
+            G_CALLBACK(virt_viewer_display_on_key_pressed), NULL);
 
     virt_viewer_signal_connect_object(self->priv->display, "keyboard-grab",
                                       G_CALLBACK(virt_viewer_display_spice_keyboard_grab), self, 0);

@@ -87,22 +87,18 @@ main(int argc, char **argv)
     // init usb redir
     usbredir_controller_init();
 
-    // start session
-    vdi_session_create();
-
     // start app
-    GApplication *app = NULL;
     virt_viewer_util_init("Veil Connect");
     g_info("APP VERSION %s FREERDP_VERSION %s", VERSION, FREERDP_VERSION_FULL);
     g_info("Build data time: %s %s", __DATE__, __TIME__);
 
-    app = G_APPLICATION(remote_viewer_new());
+    GApplication *app = G_APPLICATION(remote_viewer_new());
 
     int ret = g_application_run(app, argc, argv);
 
     // free resources
     usbredir_controller_deinit();
-    vdi_session_destroy();
+    vdi_session_static_destroy();
     g_object_unref(app);
     free_ini_file_name();
 

@@ -953,16 +953,6 @@ H264_CODEC_TYPE get_default_h264_codec()
 #endif
 }
 
-gchar *string_to_json_value(const gchar *string)
-{
-    gchar *json_str_rep;
-    if (string)
-        json_str_rep = g_strdup_printf("\"%s\"", string);
-    else
-        json_str_rep = g_strdup("null");
-    return json_str_rep;
-}
-
 const gchar *util_get_os_name()
 {
 #ifdef _WIN32
@@ -980,6 +970,41 @@ const gchar *util_get_os_name()
     #else
     return "Unknown";
 #endif
+}
+
+const gchar *bool_to_str(gboolean flag)
+{
+    return (flag ? "true" : "false");
+}
+
+const gchar *vm_power_state_to_str(int power_state)
+{
+    VM_POWER_STATE state = (VM_POWER_STATE)power_state;
+    if (state == VM_POWER_STATE_OFF)
+        return "Выклечена";
+    else if (state == VM_POWER_STATE_PAUSED)
+        return "На паузе";
+    else if (state == VM_POWER_STATE_ON)
+        return "Включена";
+    else
+        return "Неизвестно";
+}
+
+void set_vm_power_state_on_label(GtkLabel *label, int power_state)
+{
+    if (!label)
+        return;
+
+    if ((VM_POWER_STATE)power_state == VM_POWER_STATE_ON) {
+        gtk_label_set_text(label, "");
+
+    } else {
+        const gchar *vm_power_str = vm_power_state_to_str(power_state);
+        gchar *final_message = g_strdup_printf(
+                "<span background=\"#0022ff\"  color=\"white\">%s</span>", vm_power_str);
+        gtk_label_set_markup(label, final_message);
+        g_free(final_message);
+    }
 }
 
 /*

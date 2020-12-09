@@ -5,9 +5,11 @@
 #include <stdlib.h>
 
 #include <libsoup/soup-session.h>
-#include "remote-viewer-util.h"
-#include <json-glib/json-glib.h>
 
+#include <json-glib/json-glib.h>
+#include <glib/gmacros.h>
+
+#include "remote-viewer-util.h"
 #include "config.h"
 #include "vdi_session.h"
 #include "jsonhandler.h"
@@ -19,33 +21,123 @@
 #define BAD_REQUEST 400
 #define AUTH_FAIL_RESPONSE 401
 
-static VdiSession vdiSession;
+static VdiSession *vdi_session_static;
 
-static const gchar *bool_to_str(gboolean flag)
+//#define VDI_SESSION_GET_PRIVATE( obj )  ( G_TYPE_INSTANCE_GET_PRIVATE( (obj), TYPE_VDI_SESSION, VdiSessionPrivate ) )
+
+G_DEFINE_TYPE( VdiSession, vdi_session, G_TYPE_OBJECT )
+
+struct _VdiSessionPrivate
 {
-    return (flag ? "true" : "false");
+    gchar *name;
+};
+
+static void vdi_session_finalize( GObject *self );
+
+static void vdi_session_class_init( VdiSessionClass *klass )
+{
+    g_info("vdi_session_class_init");
+    GObjectClass *gobject_class = G_OBJECT_CLASS( klass );
+
+    gobject_class->finalize = vdi_session_finalize;
+
+    // signals
+    g_signal_new("vm-changed",
+                 G_OBJECT_CLASS_TYPE(gobject_class),
+                 G_SIGNAL_RUN_FIRST,
+                 G_STRUCT_OFFSET(VdiSessionClass, vm_changed),
+                 NULL, NULL,
+                 g_cclosure_marshal_VOID__INT,
+                 G_TYPE_NONE,
+                 1,
+                 G_TYPE_INT);
+
+    g_signal_new("ws-conn-changed",
+                 G_OBJECT_CLASS_TYPE(gobject_class),
+                 G_SIGNAL_RUN_FIRST,
+                 G_STRUCT_OFFSET(VdiSessionClass, ws_conn_changed),
+                 NULL, NULL,
+                 g_cclosure_marshal_VOID__INT,
+                 G_TYPE_NONE,
+                 1,
+                 G_TYPE_INT);
+
+    g_signal_new("ws-cmd-received",
+                 G_OBJECT_CLASS_TYPE(gobject_class),
+                 G_SIGNAL_RUN_FIRST,
+                 G_STRUCT_OFFSET(VdiSessionClass, ws_cmd_received),
+                 NULL, NULL,
+                 g_cclosure_marshal_VOID__STRING,
+                 G_TYPE_NONE,
+                 1,
+                 G_TYPE_STRING);
+}
+
+static void vdi_session_init( VdiSession *self G_GNUC_UNUSED)
+{
+    g_info("vdi_session_init");
+}
+
+static void vdi_session_finalize( GObject *self )
+{
+    g_info("vdi_session_finalize");
+
+    GObjectClass *parent_class = G_OBJECT_CLASS( vdi_session_parent_class );
+    ( *parent_class->finalize )( self );
+}
+
+VdiSession *vdi_session_new()
+{
+    g_info("vdi_session_new");
+    VdiSession *vdi_session = VDI_SESSION( g_object_new( TYPE_VDI_SESSION, NULL ) );
+
+    // create http session
+    gboolean ssl_strict = FALSE; // maybe read from ini file
+    vdi_session->soup_session = soup_session_new_with_options("timeout", HTTP_RESPONSE_TIOMEOUT,
+                                                             "ssl-strict", ssl_strict, NULL);
+
+    // init
+    vdi_session->current_remote_protocol = VDI_SPICE_PROTOCOL; // by default
+
+    vdi_session->vdi_username = NULL;
+    vdi_session->vdi_password = NULL;
+    vdi_session->vdi_ip = NULL;
+
+    vdi_session->api_url = NULL;
+    vdi_session->auth_url = NULL;
+    vdi_session->jwt = NULL;
+
+    vdi_session->current_pool_id = NULL;
+    vdi_session->current_vm_id = NULL;
+    vdi_session->current_vm_verbose_name = NULL;
+    vdi_session->current_controller_address = NULL;
+
+    memset(&vdi_session->redis_client, 0, sizeof(RedisClient));
+    memset(&vdi_session->vdi_ws_client, 0, sizeof(VdiWsClient));
+
+    return vdi_session;
 }
 
 static void free_session_memory()
 {
-    free_memory_safely(&vdiSession.vdi_username);
-    free_memory_safely(&vdiSession.vdi_password);
-    free_memory_safely(&vdiSession.vdi_ip);
+    free_memory_safely(&vdi_session_static->vdi_username);
+    free_memory_safely(&vdi_session_static->vdi_password);
+    free_memory_safely(&vdi_session_static->vdi_ip);
 
-    free_memory_safely(&vdiSession.api_url);
-    free_memory_safely(&vdiSession.auth_url);
-    free_memory_safely(&vdiSession.jwt);
+    free_memory_safely(&vdi_session_static->api_url);
+    free_memory_safely(&vdi_session_static->auth_url);
+    free_memory_safely(&vdi_session_static->jwt);
 
-    free_memory_safely(&vdiSession.current_pool_id);
-    free_memory_safely(&vdiSession.current_vm_id);
-    free_memory_safely(&vdiSession.current_vm_verbose_name);
-    free_memory_safely(&vdiSession.current_controller_address);
+    free_memory_safely(&vdi_session_static->current_pool_id);
+    free_memory_safely(&vdi_session_static->current_vm_id);
+    free_memory_safely(&vdi_session_static->current_vm_verbose_name);
+    free_memory_safely(&vdi_session_static->current_controller_address);
 }
 
 static void setup_header_for_vdi_session_api_call(SoupMessage *msg)
 {
     soup_message_headers_clear(msg->request_headers);
-    gchar *authHeader = g_strdup_printf("jwt %s", vdiSession.jwt);
+    gchar *authHeader = g_strdup_printf("jwt %s", vdi_session_static->jwt);
     //g_info("%s %s\n", (const char *)__func__, authHeader);
     soup_message_headers_append(msg->request_headers, "Authorization", authHeader);
     g_free(authHeader);
@@ -58,7 +150,7 @@ static guint send_message(SoupMessage *msg)
     static int count = 0;
     g_info("Send_count: %i", ++count);
 
-    guint status = soup_session_send_message(vdiSession.soup_session, msg);
+    guint status = soup_session_send_message(vdi_session_static->soup_session, msg);
     g_info("%s: Successfully sent. Response code: %i reason_phrase: %s",
             (const char *)__func__, status, msg->reason_phrase);
     return status;
@@ -67,7 +159,9 @@ static guint send_message(SoupMessage *msg)
 // Вызывается в главном потоке  при смене jwt
 static gboolean on_jwt_updated(gpointer data G_GNUC_UNUSED)
 {
-    vdi_ws_client_start(&vdiSession.vdi_ws_client, vdi_session_get_vdi_ip(), vdi_session_get_vdi_port());
+    g_info("on_jwt_updated");
+    vdi_ws_client_stop(&vdi_session_static->vdi_ws_client);
+    vdi_ws_client_start(&vdi_session_static->vdi_ws_client, vdi_session_get_vdi_ip(), vdi_session_get_vdi_port());
     return G_SOURCE_REMOVE;
 }
 
@@ -76,11 +170,11 @@ static gboolean vdi_api_session_get_token()
 {
     g_info("%s", (const char *)__func__);
 
-    if(vdiSession.auth_url == NULL)
+    if(vdi_session_static->auth_url == NULL)
         return FALSE;
 
     // create request message
-    SoupMessage *msg = soup_message_new("POST", vdiSession.auth_url);
+    SoupMessage *msg = soup_message_new("POST", vdi_session_static->auth_url);
     if(msg == NULL) {
         g_info("%s Не удалось сформировать SoupMessage. Некорректный url?", (const char*)__func__);
         return FALSE;
@@ -92,7 +186,8 @@ static gboolean vdi_api_session_get_token()
 
     // set body
     gchar *message_body_str = g_strdup_printf("{\"username\": \"%s\", \"password\": \"%s\", \"ldap\": %s}",
-                                   vdiSession.vdi_username, vdiSession.vdi_password, bool_to_str(vdiSession.is_ldap));
+                                   vdi_session_static->vdi_username, vdi_session_static->vdi_password,
+                                   bool_to_str(vdi_session_static->is_ldap));
     //g_info("%s  messageBodyStr %s", (const char *)__func__, messageBodyStr);
     soup_message_set_request(msg, "application/json",
                              SOUP_MEMORY_COPY, message_body_str, strlen_safely(message_body_str));
@@ -120,8 +215,8 @@ static gboolean vdi_api_session_get_token()
 
     switch (server_reply_type) {
         case SERVER_REPLY_TYPE_DATA: {
-            free_memory_safely(&vdiSession.jwt);
-            vdiSession.jwt = g_strdup(json_object_get_string_member_safely(reply_json_object, "access_token"));
+            free_memory_safely(&vdi_session_static->jwt);
+            vdi_session_static->jwt = g_strdup(json_object_get_string_member_safely(reply_json_object, "access_token"));
             // В основном потоке вызывается калбэк на смену токена
             g_timeout_add(50, (GSourceFunc)on_jwt_updated, NULL);
 
@@ -143,11 +238,11 @@ static gboolean vdi_api_session_get_token()
 
 // connect to reddis and subscribe for licence handling
 static void vdi_api_session_register_for_license() {
-    if (vdiSession.redis_client.is_subscribed)
+    if (vdi_session_static->redis_client.is_subscribed)
         return;
 
     // do request to vdi server in order to get data fot Redis connection
-    gchar *url_str = g_strdup_printf("%s/client/message_broker/", vdiSession.api_url);
+    gchar *url_str = g_strdup_printf("%s/client/message_broker/", vdi_session_static->api_url);
     gchar *response_body_str = vdi_session_api_call("GET", url_str, NULL, NULL);
     // g_info("%s: response_body_str %s", (const char *) __func__, response_body_str);
     g_free(url_str);
@@ -161,34 +256,28 @@ static void vdi_api_session_register_for_license() {
 
     if (server_reply_type == SERVER_REPLY_TYPE_DATA) {
 
-        vdi_redis_client_clear_connection_data(&vdiSession.redis_client);
-        vdiSession.redis_client.adress = g_strdup(vdiSession.vdi_ip);
-        vdiSession.redis_client.port = json_object_get_int_member_safely(data_member_object, "port");
-        vdiSession.redis_client.password = g_strdup(
+        vdi_redis_client_clear_connection_data(&vdi_session_static->redis_client);
+        vdi_session_static->redis_client.adress = g_strdup(vdi_session_static->vdi_ip);
+        vdi_session_static->redis_client.port = json_object_get_int_member_safely(data_member_object, "port");
+        vdi_session_static->redis_client.password = g_strdup(
             g_strdup(json_object_get_string_member_safely(data_member_object, "password")));
-        vdiSession.redis_client.channel = g_strdup(
+        vdi_session_static->redis_client.channel = g_strdup(
             g_strdup(json_object_get_string_member_safely(data_member_object, "channel")));
-        vdiSession.redis_client.db = json_object_get_int_member_safely(data_member_object, "db");
+        vdi_session_static->redis_client.db = json_object_get_int_member_safely(data_member_object, "db");
 
         // connect to Redis and subscribe to channel
-        vdi_redis_client_init(&vdiSession.redis_client);
+        vdi_redis_client_init(&vdi_session_static->redis_client);
     }
 
     g_object_unref(parser);
 }
 
-void vdi_session_create()
+void vdi_session_static_create()
 {
-    memset(&vdiSession, 0, sizeof(VdiSession));
-
-    // create session
-    gboolean ssl_strict = FALSE; // maybe read from ini file
-    vdiSession.soup_session = soup_session_new_with_options("timeout", HTTP_RESPONSE_TIOMEOUT,
-    "ssl-strict", ssl_strict, NULL);
-    vdiSession.current_remote_protocol = VDI_SPICE_PROTOCOL; // by default
+    vdi_session_static = vdi_session_new();
 }
 
-void vdi_session_destroy()
+void vdi_session_static_destroy()
 {
     // logout
     vdi_session_logout();
@@ -196,38 +285,59 @@ void vdi_session_destroy()
     vdi_session_cancell_pending_requests();
 
     // free memory
-    g_object_unref(vdiSession.soup_session);
+    g_object_unref(vdi_session_static->soup_session);
     free_session_memory();
+    g_object_unref(vdi_session_static);
+}
+
+VdiSession *get_vdi_session_static()
+{
+    return vdi_session_static;
+}
+
+void vdi_session_vm_state_change_notify(int power_state)
+{
+    g_signal_emit_by_name(vdi_session_static, "vm-changed", power_state);
+}
+
+void vdi_session_ws_conn_change_notify(int ws_connected)
+{
+    g_signal_emit_by_name(vdi_session_static, "ws-conn-changed", ws_connected);
+}
+
+void vdi_session_ws_cmd_received_notify(const gchar *cmd)
+{
+    g_signal_emit_by_name(vdi_session_static, "ws-cmd-received", cmd);
 }
 
 const gchar *vdi_session_get_vdi_ip()
 {
-    return vdiSession.vdi_ip;
+    return vdi_session_static->vdi_ip;
 }
 
 int vdi_session_get_vdi_port(void)
 {
-    return vdiSession.vdi_port;
+    return vdi_session_static->vdi_port;
 }
 
 const gchar *vdi_session_get_vdi_username(void)
 {
-    return vdiSession.vdi_username;
+    return vdi_session_static->vdi_username;
 }
 
 const gchar *vdi_session_get_vdi_password(void)
 {
-    return vdiSession.vdi_password;
+    return vdi_session_static->vdi_password;
 }
 
 const gchar *vdi_session_get_token(void)
 {
-    return vdiSession.jwt;
+    return vdi_session_static->jwt;
 }
 
 void vdi_session_cancell_pending_requests()
 {
-    soup_session_abort(vdiSession.soup_session);
+    soup_session_abort(vdi_session_static->soup_session);
 }
 
 void vdi_session_set_credentials(const gchar *username, const gchar *password, const gchar *ip,
@@ -235,50 +345,51 @@ void vdi_session_set_credentials(const gchar *username, const gchar *password, c
 {
     free_session_memory();
 
-    vdiSession.vdi_username = g_strdup(username);
-    vdiSession.vdi_password = g_strdup(password);
-    vdiSession.vdi_ip = g_strdup(ip);
-    vdiSession.vdi_port = port;
+    vdi_session_static->vdi_username = g_strdup(username);
+    vdi_session_static->vdi_password = g_strdup(password);
+    vdi_session_static->vdi_ip = g_strdup(ip);
+    vdi_session_static->vdi_port = port;
 
     const gchar *http_protocol = determine_http_protocol_by_port(port);
 
     gboolean is_nginx_vdi_prefix_disabled = read_int_from_ini_file("General", "is_nginx_vdi_prefix_disabled", 0);
     if (is_nginx_vdi_prefix_disabled)
-        vdiSession.api_url = g_strdup_printf("%s://%s:%i", http_protocol, vdiSession.vdi_ip, vdiSession.vdi_port);
+        vdi_session_static->api_url = g_strdup_printf("%s://%s:%i", http_protocol, 
+                vdi_session_static->vdi_ip, vdi_session_static->vdi_port);
     else
-        vdiSession.api_url = g_strdup_printf("%s://%s:%i/%s", http_protocol,
-            vdiSession.vdi_ip, vdiSession.vdi_port, NGINX_VDI_API_PREFIX);
+        vdi_session_static->api_url = g_strdup_printf("%s://%s:%i/%s", http_protocol,
+            vdi_session_static->vdi_ip, vdi_session_static->vdi_port, NGINX_VDI_API_PREFIX);
 
 
-    vdiSession.auth_url = g_strdup_printf("%s/auth/", vdiSession.api_url);
+    vdi_session_static->auth_url = g_strdup_printf("%s/auth/", vdi_session_static->api_url);
 
-    vdiSession.is_ldap = is_ldap;
+    vdi_session_static->is_ldap = is_ldap;
 }
 
 void vdi_session_set_current_pool_id(const gchar *current_pool_id)
 {
-    free_memory_safely(&vdiSession.current_pool_id);
-    vdiSession.current_pool_id = g_strdup(current_pool_id);
+    free_memory_safely(&vdi_session_static->current_pool_id);
+    vdi_session_static->current_pool_id = g_strdup(current_pool_id);
 }
 
 const gchar *vdi_session_get_current_pool_id()
 {
-    return vdiSession.current_pool_id;
+    return vdi_session_static->current_pool_id;
 }
 
 const gchar *vdi_session_get_current_vm_id()
 {
-    return vdiSession.current_vm_id;
+    return vdi_session_static->current_vm_id;
 }
 
 void vdi_session_set_current_remote_protocol(VdiVmRemoteProtocol remote_protocol)
 {
-    vdiSession.current_remote_protocol = remote_protocol;
+    vdi_session_static->current_remote_protocol = remote_protocol;
 }
 
 VdiVmRemoteProtocol vdi_session_get_current_remote_protocol()
 {
-    return vdiSession.current_remote_protocol;
+    return vdi_session_static->current_remote_protocol;
 }
 
 VdiVmRemoteProtocol vdi_session_str_to_remote_protocol(const gchar *protocol_str)
@@ -333,17 +444,17 @@ static const gchar *vdi_session_remote_protocol_to_str_old(VdiVmRemoteProtocol v
 
 VdiWsClient *vdi_session_get_ws_client()
 {
-    return &vdiSession.vdi_ws_client;
+    return &vdi_session_static->vdi_ws_client;
 }
 
 const gchar *vdi_session_get_current_vm_name()
 {
-    return vdiSession.current_vm_verbose_name;
+    return vdi_session_static->current_vm_verbose_name;
 }
 
 const gchar *vdi_session_get_current_controller_address()
 {
-    return vdiSession.current_controller_address;
+    return vdi_session_static->current_controller_address;
 }
 
 gchar *vdi_session_api_call(const char *method, const char *uri_string, const gchar *body_str, int *resp_code)
@@ -354,7 +465,7 @@ gchar *vdi_session_api_call(const char *method, const char *uri_string, const gc
         return response_body_str;
 
     // get the token if we dont have it
-    if (vdiSession.jwt == NULL)
+    if (vdi_session_static->jwt == NULL)
         vdi_api_session_get_token();
 
     SoupMessage *msg = soup_message_new(method, uri_string);
@@ -379,7 +490,7 @@ gchar *vdi_session_api_call(const char *method, const char *uri_string, const gc
         // При первой попытке если AUTH_FAIL_RESPONSE, то пробуем обновить токен и повторить
         if (msg->status_code == AUTH_FAIL_RESPONSE && attempt_count == 0) {
             vdi_api_session_get_token();
-            gchar *auth_header = g_strdup_printf("jwt %s", vdiSession.jwt);
+            gchar *auth_header = g_strdup_printf("jwt %s", vdi_session_static->jwt);
             soup_message_headers_replace(msg->request_headers, "Authorization", auth_header);
             g_free(auth_header);
             continue;
@@ -402,7 +513,7 @@ void vdi_session_log_in(GTask       *task,
                    GCancellable  *cancellable G_GNUC_UNUSED)
 {
     // get token
-    free_memory_safely(&vdiSession.jwt);
+    free_memory_safely(&vdi_session_static->jwt);
     gboolean token_received = vdi_api_session_get_token();
 
     // register for licensing
@@ -418,7 +529,7 @@ void vdi_session_get_vdi_pool_data(GTask   *task,
                  GCancellable  *cancellable G_GNUC_UNUSED)
 {
     //g_info("In %s :thread id = %lu\n", (const char *)__func__, pthread_self());
-    gchar *url_str = g_strdup_printf("%s/client/pools", vdiSession.api_url);
+    gchar *url_str = g_strdup_printf("%s/client/pools", vdi_session_static->api_url);
     gchar *response_body_str = vdi_session_api_call("GET", url_str, NULL, NULL);
     g_free(url_str);
 
@@ -434,10 +545,10 @@ void vdi_session_get_vm_from_pool(GTask       *task,
     vdi_api_session_register_for_license();
 
     // get vm from pool
-    gchar *url_str = g_strdup_printf("%s/client/pools/%s", vdiSession.api_url, vdiSession.current_pool_id);
+    gchar *url_str = g_strdup_printf("%s/client/pools/%s", vdi_session_static->api_url, vdi_session_static->current_pool_id);
     // todo: use vdi_session_remote_protocol_str in future. Cant replace now cause some people use old vdi server
     gchar *bodyStr = g_strdup_printf("{\"remote_protocol\":\"%s\"}",
-                                     vdi_session_remote_protocol_to_str_old(vdiSession.current_remote_protocol));
+                                     vdi_session_remote_protocol_to_str_old(vdi_session_static->current_remote_protocol));
 
     gchar *response_body_str = vdi_session_api_call("POST", url_str, bodyStr, NULL);
     g_free(url_str);
@@ -467,20 +578,20 @@ void vdi_session_get_vm_from_pool(GTask       *task,
         vdi_vm_data->vm_verbose_name = g_strdup(json_object_get_string_member_safely(
                 reply_json_object, "vm_verbose_name"));
 
-        // save some data in vdiSession
-        update_string_safely(&vdiSession.current_vm_verbose_name, vdi_vm_data->vm_verbose_name);
+        // save some data in vdi_session_static
+        update_string_safely(&vdi_session_static->current_vm_verbose_name, vdi_vm_data->vm_verbose_name);
         const gchar *vm_controller_address =
                 json_object_get_string_member_safely(reply_json_object, "vm_controller_address");
-        update_string_safely(&vdiSession.current_controller_address, vm_controller_address);
+        update_string_safely(&vdi_session_static->current_controller_address, vm_controller_address);
         const gchar *vm_id = json_object_get_string_member_safely(reply_json_object, "vm_id");
-        update_string_safely(&vdiSession.current_vm_id, vm_id);
-        g_info("!!!vm_id: %s  %s", vm_id, vdiSession.current_vm_id);
+        update_string_safely(&vdi_session_static->current_vm_id, vm_id);
+        g_info("!!!vm_id: %s  %s", vm_id, vdi_session_static->current_vm_id);
 
         g_info("vm_host %s", vdi_vm_data->vm_host);
         g_info("vm_port %i", vdi_vm_data->vm_port);
         //g_info("vm_password %s", vdi_vm_data->vm_password);
         g_info("vm_verbose_name %s", vdi_vm_data->vm_verbose_name);
-        g_info("current_controller_address %s", vdiSession.current_controller_address);
+        g_info("current_controller_address %s", vdi_session_static->current_controller_address);
     }
 
     vdi_vm_data->message = g_strdup(json_object_get_string_member_safely(reply_json_object, "message"));
@@ -501,7 +612,7 @@ void vdi_session_do_action_on_vm(GTask      *task,
     g_info("%s: %s", (const char *)__func__, action_on_vm_data->action_on_vm_str);
 
     // url
-    gchar *url_str = g_strdup_printf("%s/client/pools/%s/%s", vdiSession.api_url,
+    gchar *url_str = g_strdup_printf("%s/client/pools/%s/%s", vdi_session_static->api_url,
                                     vdi_session_get_current_pool_id(), action_on_vm_data->action_on_vm_str);
     // body
     gchar *bodyStr;
@@ -530,14 +641,14 @@ void vdi_session_do_action_on_vm(GTask      *task,
 gboolean vdi_session_logout(void)
 {
     // disconnect from license server(redis)
-    vdi_redis_client_deinit(&vdiSession.redis_client);
+    vdi_redis_client_deinit(&vdi_session_static->redis_client);
 
     // stop websocket connection
-    vdi_ws_client_stop(&vdiSession.vdi_ws_client);
+    vdi_ws_client_stop(&vdi_session_static->vdi_ws_client);
 
     g_info("%s", (const char *)__func__);
-    if (vdiSession.jwt) {
-        gchar *url_str = g_strdup_printf("%s/logout", vdiSession.api_url);
+    if (vdi_session_static->jwt) {
+        gchar *url_str = g_strdup_printf("%s/logout", vdi_session_static->api_url);
 
         SoupMessage *msg = soup_message_new("POST", url_str);
         g_free(url_str);
@@ -550,16 +661,16 @@ gboolean vdi_session_logout(void)
             // set header
             setup_header_for_vdi_session_api_call(msg);
             // send
-            g_object_set(vdiSession.soup_session, "timeout", 1, NULL);
+            g_object_set(vdi_session_static->soup_session, "timeout", 1, NULL);
             send_message(msg);
-            g_object_set(vdiSession.soup_session, "timeout", HTTP_RESPONSE_TIOMEOUT, NULL);
+            g_object_set(vdi_session_static->soup_session, "timeout", HTTP_RESPONSE_TIOMEOUT, NULL);
 
             guint res_code = msg->status_code;
             g_object_unref(msg);
 
             if (res_code == OK_RESPONSE) {
                 // logout was succesfull so we can foget the token
-                free_memory_safely(&vdiSession.jwt);
+                free_memory_safely(&vdi_session_static->jwt);
                 return TRUE;
             }
             else
@@ -580,7 +691,7 @@ gchar *vdi_session_attach_usb(AttachUsbData *attach_usb_data)
     gchar *usb_uuid = NULL;
 
     // url
-    gchar *url_str = g_strdup_printf("%s/client/pools/%s/attach-usb", vdiSession.api_url,
+    gchar *url_str = g_strdup_printf("%s/client/pools/%s/attach-usb", vdi_session_static->api_url,
                                      vdi_session_get_current_pool_id());
 
     // body
@@ -645,7 +756,7 @@ gboolean vdi_session_detach_usb(DetachUsbData *detach_usb_data)
     gboolean status = FALSE;
 
     // url
-    gchar *url_str = g_strdup_printf("%s/client/pools/%s/detach-usb", vdiSession.api_url,
+    gchar *url_str = g_strdup_printf("%s/client/pools/%s/detach-usb", vdi_session_static->api_url,
                                      vdi_session_get_current_pool_id());
 
     // body

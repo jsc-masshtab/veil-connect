@@ -255,6 +255,23 @@ static void rdp_viewer_item_tk_doc_activated(GtkWidget *menu G_GNUC_UNUSED, gpoi
     gtk_show_uri_on_window(NULL, VEIL_CONNECT_DOC_SITE, GDK_CURRENT_TIME, NULL);
 }
 
+static void on_vm_status_changed (gpointer data G_GNUC_UNUSED,
+                                  int power_state,
+                                  RdpWindowData *rdp_window_data)
+{
+    set_vm_power_state_on_label(
+            GTK_LABEL(gtk_builder_get_object(rdp_window_data->builder, "vm_status_display")), power_state);
+}
+
+static void on_ws_cmd_received (gpointer data  G_GNUC_UNUSED,
+                                const gchar *cmd,
+                                RdpWindowData *rdp_window_data)
+{
+    g_info("rdp on_ws_cmd_received");
+    if (g_strcmp0(cmd, "DISCONNECT") == 0)
+        rdp_viewer_window_cancel(rdp_window_data);
+}
+
 static void rdp_viewer_item_about_activated(GtkWidget *menu G_GNUC_UNUSED, gpointer userdata)
 {
     g_info("%s", (const char *)__func__);
@@ -471,7 +488,7 @@ RdpWindowData *rdp_viewer_window_create(ExtendedRdpContext *ex_rdp_context)
 
     rdp_window_data->ex_rdp_context = ex_rdp_context;
 
-    // gui  TODO: make a separate .ui form. Dont use virt-viewer_veil.ui
+    // gui
     GtkBuilder *builder = rdp_window_data->builder = remote_viewer_util_load_ui("virt-viewer_veil.ui");
 
     GtkWidget *rdp_viewer_window = rdp_window_data->rdp_viewer_window =
@@ -531,6 +548,12 @@ RdpWindowData *rdp_viewer_window_create(ExtendedRdpContext *ex_rdp_context)
     g_signal_connect(item_about, "activate", G_CALLBACK(rdp_viewer_item_about_activated), NULL);
     g_signal_connect(item_tk_doc, "activate", G_CALLBACK(rdp_viewer_item_tk_doc_activated), NULL);
 
+    // other signals
+    rdp_window_data->vm_changed_handle = g_signal_connect(get_vdi_session_static(), "vm-changed",
+            G_CALLBACK(on_vm_status_changed), rdp_window_data);
+    rdp_window_data->ws_cmd_received_handle = g_signal_connect(get_vdi_session_static(), "ws-cmd-received",
+            G_CALLBACK(on_ws_cmd_received), rdp_window_data);
+
     // create RDP display
     rdp_window_data->rdp_display = rdp_display_create(rdp_window_data, ex_rdp_context);
     GtkWidget *vbox = GTK_WIDGET(gtk_builder_get_object(builder, "viewer-box"));
@@ -552,6 +575,8 @@ RdpWindowData *rdp_viewer_window_create(ExtendedRdpContext *ex_rdp_context)
 
 void rdp_viewer_window_destroy(RdpWindowData *rdp_window_data)
 {
+    g_signal_handler_disconnect(get_vdi_session_static(), rdp_window_data->vm_changed_handle);
+    g_signal_handler_disconnect(get_vdi_session_static(), rdp_window_data->ws_cmd_received_handle);
     g_source_remove(rdp_window_data->g_timeout_id);
     g_object_unref(rdp_window_data->builder);
     gtk_widget_destroy(rdp_window_data->overlay_toolbar);

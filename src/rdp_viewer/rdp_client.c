@@ -268,7 +268,7 @@ stop:
 BOOL rdp_client_abort_connection(freerdp* instance)
 {
     ExtendedRdpContext *ex_context = (ExtendedRdpContext*)instance->context;
-    ex_context->is_stopped_by_user = TRUE;
+    ex_context->is_stop_intentional = TRUE;
     return freerdp_abort_connect(instance);
 }
 
@@ -506,7 +506,7 @@ static BOOL handle_window_events(freerdp* instance)
     if (!settings->AsyncInput) {
          ExtendedRdpContext *ex_context = (ExtendedRdpContext*)instance->context;
 
-        if (ex_context->is_stopped_by_user) {
+        if (ex_context->is_stop_intentional) {
             WLog_INFO(TAG, "Stopped");
             return FALSE;
         }

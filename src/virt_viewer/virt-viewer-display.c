@@ -83,6 +83,7 @@ enum {
 static void
 virt_viewer_display_class_init(VirtViewerDisplayClass *class)
 {
+    g_info("virt_viewer_display_class_init");
     GObjectClass *object_class = G_OBJECT_CLASS(class);
     GtkWidgetClass *widget_class = GTK_WIDGET_CLASS(class);
 

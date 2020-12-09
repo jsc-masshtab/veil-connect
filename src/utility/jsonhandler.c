@@ -108,3 +108,13 @@ total_fail:
     *server_reply_type = SERVER_REPLY_TYPE_UNKNOWN;
     return NULL;
 }
+
+gchar *string_to_json_value(const gchar *string)
+{
+    gchar *json_str_rep;
+    if (string)
+        json_str_rep = g_strdup_printf("\"%s\"", string);
+    else
+        json_str_rep = g_strdup("null");
+    return json_str_rep;
+}

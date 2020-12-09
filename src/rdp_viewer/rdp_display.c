@@ -14,6 +14,8 @@
 #include "rdp_data.h"
 #include "rdp_rail.h"
 
+#include "vdi_session.h"
+
 
 #ifndef ERRCONNECT_ACCOUNT_DISABLED
 #define ERRCONNECT_ACCOUNT_DISABLED 0x00000012
@@ -252,6 +254,8 @@ static void rdp_viewer_handle_key_event(GdkEventKey *event, ExtendedRdpContext* 
 
 static gboolean rdp_display_key_pressed(GtkWidget *widget G_GNUC_UNUSED, GdkEventKey *event, gpointer user_data)
 {
+    vdi_ws_client_send_user_gui(vdi_session_get_ws_client()); // notify server
+
     ExtendedRdpContext* tf = (ExtendedRdpContext*)user_data;
     rdp_viewer_handle_key_event(event, tf, TRUE);
 
@@ -325,9 +329,10 @@ static void rdp_viewer_handle_mouse_btn_event(GtkWidget *widget G_GNUC_UNUSED, G
 // PTR_FLAGS_DOWN
 static gboolean rdp_display_mouse_btn_pressed(GtkWidget *widget, GdkEventButton *event, gpointer user_data)
 {
-    if (event->type == GDK_BUTTON_PRESS)
+    if (event->type == GDK_BUTTON_PRESS) {
+        vdi_ws_client_send_user_gui(vdi_session_get_ws_client()); // notify server
         rdp_viewer_handle_mouse_btn_event(widget, event, user_data, PTR_FLAGS_DOWN);
-
+    }
     return TRUE;
 }
 
@@ -420,6 +425,7 @@ static gboolean rdp_display_event_on_draw(GtkWidget* widget, cairo_t* context, g
     return TRUE;
 }
 
+// todo: выглядит как реликт прошлого. мб удалить.
 static gboolean rdp_display_event_on_configure(GtkWidget *widget G_GNUC_UNUSED,
                                                GdkEvent *event G_GNUC_UNUSED, gpointer user_data)
 {

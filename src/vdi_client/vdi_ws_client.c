@@ -15,7 +15,6 @@
 #define WS_RECONNECT_TIMEOUT 5000
 
 // static functions declarations
-//static void protocol_switching_callback(SoupMessage *ws_msg, gpointer user_data);
 static gboolean vdi_ws_client_ws_connect(VdiWsClient *vdi_ws_client);
 static void vdi_ws_client_ws_reconnect(VdiWsClient *vdi_ws_client);
 
@@ -27,21 +26,47 @@ static void vdi_ws_client_ws_reconnect(VdiWsClient *vdi_ws_client);
 //    g_info("!!!!!on_pong");
 //}
 
+// ws сообщения от брокера. Ожидаем json
 static void vdi_ws_client_on_message(SoupWebsocketConnection *ws_conn G_GNUC_UNUSED, gint type, GBytes *message,
         gpointer data G_GNUC_UNUSED)
 {
     g_info("!!!!!on_message");
-    if (type == SOUP_WEBSOCKET_DATA_TEXT) {
+    if (type == SOUP_WEBSOCKET_DATA_TEXT) { // we are expecting json
         gsize sz;
-        const gchar *ptr;
+        const gchar *string_msg = g_bytes_get_data(message, &sz);
+        g_info("Received text data: %s\n", string_msg);
 
-        ptr = g_bytes_get_data(message, &sz);
-        g_info("Received text data: %s\n", ptr);
-    }
-    else if (type == SOUP_WEBSOCKET_DATA_BINARY) {
+        if (!string_msg)
+            return;
+
+        // parse msg
+        JsonParser *parser = json_parser_new();
+        JsonObject *root_object = get_root_json_object(parser, string_msg);
+        if (!root_object) {
+            g_object_unref(parser);
+            return;
+        }
+        // type
+        // data - в данный момент присылается полученоое от вейла сообщение
+        const gchar *msg_type = json_object_get_string_member_safely(root_object, "msg_type");
+        if (g_strcmp0(msg_type, "data") == 0) {
+            // object
+            JsonObject *vm_member_object = json_object_get_object_member_safely(root_object, "object");
+            int power_state = json_object_get_int_member_safely(vm_member_object, "user_power_state");
+            vdi_session_vm_state_change_notify(power_state);
+
+        } else if (g_strcmp0(msg_type, "control") == 0) {
+            const gchar *cmd = json_object_get_string_member_safely(root_object, "cmd");
+            vdi_session_ws_cmd_received_notify(cmd);
+        }
+
+        g_object_unref(parser);
+
+    } else if (type == SOUP_WEBSOCKET_DATA_BINARY) {
+
         g_info("Received binary data (not shown)\n");
-    }
-    else {
+
+    } else {
         g_info("Invalid data type: %d\n", type);
     }
 }
@@ -49,6 +74,7 @@ static void vdi_ws_client_on_message(SoupWebsocketConnection *ws_conn G_GNUC_UNU
 static void vdi_ws_client_on_close(SoupWebsocketConnection *ws_conn G_GNUC_UNUSED, VdiWsClient *vdi_ws_client)
 {
     g_info("WebSocket connection closed\n");
+    vdi_session_ws_conn_change_notify(FALSE);
     vdi_ws_client_ws_reconnect(vdi_ws_client);
 }
 
@@ -96,10 +122,7 @@ static void vdi_ws_client_on_connection(SoupSession *session, GAsyncResult *res,
         g_free(tk_os);
     }
     // notify gui
-    if (vdi_ws_client->ws_is_connected_callback)
-        vdi_ws_client->ws_is_connected_callback(error == NULL);
-
-    // soup_websocket_connection_send_text(vdi_ws_client->ws_conn, "Hello Websocket !");
+    vdi_session_ws_conn_change_notify(error == NULL);
 }
 
 static gboolean vdi_ws_client_ws_connect(VdiWsClient *vdi_ws_client)
@@ -162,6 +185,7 @@ void vdi_ws_client_start(VdiWsClient *vdi_ws_client, const gchar *vdi_ip, int vd
 
 void vdi_ws_client_stop(VdiWsClient *vdi_ws_client)
 {
+    g_info("vdi_ws_client_stop is_running %i", vdi_ws_client->is_running);
     if (!vdi_ws_client->is_running)
         return;
 
@@ -194,12 +218,6 @@ void vdi_ws_client_stop(VdiWsClient *vdi_ws_client)
     g_info("%s", (const char *)__func__);
 }
 
-void vdi_ws_client_set_is_connected_callback(VdiWsClient *vdi_ws_client,
-        WsDataReceivedCallback ws_is_connected_callback)
-{
-    vdi_ws_client->ws_is_connected_callback = ws_is_connected_callback;
-}
-
 SoupWebsocketState vdi_ws_client_get_conn_state(VdiWsClient *ws_vdi_client)
 {
     if (ws_vdi_client->ws_conn)
@@ -208,18 +226,32 @@ SoupWebsocketState vdi_ws_client_get_conn_state(VdiWsClient *ws_vdi_client)
         return SOUP_WEBSOCKET_STATE_CLOSED;
 }
 
-void vdi_ws_client_notify_vm_changed(VdiWsClient *ws_vdi_client, const gchar *vm_id)
+void vdi_ws_client_send_vm_changed(VdiWsClient *ws_vdi_client, const gchar *vm_id)
 {
     if (!ws_vdi_client->ws_conn)
         return;
     //g_info("vm_id: %s", vm_id);
     gchar *vm_id_json = string_to_json_value(vm_id);
     gchar *tk_data = g_strdup_printf("{"
-                                       "\"msg_type\": \"UPDATED\", "
-                                       "\"vm_id\": %s"
-                                       "}",
-                                       vm_id_json);
+                                     "\"msg_type\": \"UPDATED\", "
+                                     "\"event\": \"vm_changed\", "
+                                     "\"vm_id\": %s"
+                                     "}",
+                                     vm_id_json);
     soup_websocket_connection_send_text(ws_vdi_client->ws_conn, tk_data);
     g_free(tk_data);
     g_free(vm_id_json);
+}
+
+void vdi_ws_client_send_user_gui(VdiWsClient *ws_vdi_client)
+{
+    g_info((const char *)__func__);
+    if (!ws_vdi_client->ws_conn)
+        return;
+
+    const gchar *tk_data = ("{"
+                            "\"msg_type\": \"UPDATED\", "
+                            "\"event\": \"user_gui\""
+                            "}");
+    soup_websocket_connection_send_text(ws_vdi_client->ws_conn, tk_data);
 }

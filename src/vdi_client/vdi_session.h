@@ -50,33 +50,6 @@ typedef struct{
 
 } VdiVmData;
 
-typedef struct{
-
-    SoupSession *soup_session;
-
-    gchar *vdi_username;
-    gchar *vdi_password;
-    gchar *vdi_ip;
-    int vdi_port;
-
-    gchar *api_url;
-    gchar *auth_url;
-    gchar *jwt;
-    gboolean is_ldap;
-
-    // data aboyr current pool and vm
-    gchar *current_pool_id;
-    VdiVmRemoteProtocol current_remote_protocol;
-    gchar *current_vm_id;
-    gchar *current_vm_verbose_name;
-    gchar *current_controller_address;
-
-    RedisClient redis_client;
-
-    VdiWsClient vdi_ws_client;
-
-} VdiSession;
-
 // Data which passed to vdi_session_api_call
 typedef struct{
     gchar *action_on_vm_str;
@@ -95,11 +68,73 @@ typedef struct {
     gboolean remove_all;
 } DetachUsbData;
 
+//VdiSession class
+
+#define TYPE_VDI_SESSION         ( vdi_session_get_type( ) )
+#define VDI_SESSION( obj )       ( G_TYPE_CHECK_INSTANCE_CAST( (obj), TYPE_VDI_SESSION, VdiSession ) )
+#define IS_VDI_SESSION( obj )        ( G_TYPE_CHECK_INSTANCE_TYPE( (obj), TYPE_VDI_SESSION ) )
+#define VDI_SESSION_CLASS( klass )   ( G_TYPE_CHECK_CLASS_CAST( (klass), TYPE_VDI_SESSION, VdiSessionClass ) )
+#define IS_VDI_SESSION_CLASS( klass )    ( G_TYPE_CHECK_CLASS_TYPE( (klass), TYPE_VDI_SESSION ) )
+#define VDI_SESSION_GET_CLASS( obj ) ( G_TYPE_INSTANCE_GET_CLASS( (obj), TYPE_VDI_SESSION, VdiSessionClass ) )
+
+typedef struct _VdiSession      VdiSession;
+typedef struct _VdiSessionClass VdiSessionClass;
+
+struct _VdiSession
+{
+    GObject parent;
+
+    SoupSession *soup_session;
+
+    gchar *vdi_username;
+    gchar *vdi_password;
+    gchar *vdi_ip;
+    int vdi_port;
+
+    gchar *api_url;
+    gchar *auth_url;
+    gchar *jwt;
+    gboolean is_ldap;
+
+    // data about current pool and vm
+    gchar *current_pool_id;
+    VdiVmRemoteProtocol current_remote_protocol;
+    gchar *current_vm_id;
+    gchar *current_vm_verbose_name;
+    gchar *current_controller_address;
+
+    RedisClient redis_client;
+
+    VdiWsClient vdi_ws_client;
+};
+
+struct _VdiSessionClass
+{
+    GObjectClass parent_class;
+
+    /* signals */
+    void (*vm_changed)(VdiSession *self, int power_state);
+    void (*ws_conn_changed)(VdiSession *self, int ws_connected);
+    void (*ws_cmd_received)(VdiSession *self, const gchar *cmd);
+};
+
+GType vdi_session_get_type( void ) G_GNUC_CONST;
+
+VdiSession *vdi_session_new(void);
+
 // Functions
 // init session
-void vdi_session_create(void);
+void vdi_session_static_create(void);
 // deinit session
-void vdi_session_destroy(void);
+void vdi_session_static_destroy(void);
+
+VdiSession *get_vdi_session_static(void);
+
+// vm params change notification
+void vdi_session_vm_state_change_notify(int power_state);
+void vdi_session_ws_conn_change_notify(int ws_connected);
+void vdi_session_ws_cmd_received_notify(const gchar *cmd);
+
 // get vid server ip
 const gchar *vdi_session_get_vdi_ip(void);
 // get port

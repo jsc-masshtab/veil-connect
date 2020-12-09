@@ -70,10 +70,8 @@ virt_viewer_notebook_class_init (VirtViewerNotebookClass *klass)
 static void
 virt_viewer_notebook_init (VirtViewerNotebook *self)
 {
-    VirtViewerNotebookPrivate *priv;
-
     self->priv = GET_PRIVATE(self);
-    priv = self->priv;
+    VirtViewerNotebookPrivate *priv = self->priv;
 
     priv->status = gtk_label_new("");
     gtk_notebook_set_show_tabs(GTK_NOTEBOOK(self), FALSE);

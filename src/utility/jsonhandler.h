@@ -26,4 +26,6 @@ JsonObject *json_object_get_object_member_safely(JsonObject  *object, const gcha
 JsonObject *jsonhandler_get_data_or_errors_object(JsonParser *parser, const gchar *json_str,
         ServerReplyType *server_reply_type);
 
+gchar *string_to_json_value(const gchar *string);
+
 #endif //THIN_CLIENT_VEIL_JSONHANDLER_H

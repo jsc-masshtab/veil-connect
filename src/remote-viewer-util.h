@@ -45,6 +45,12 @@ typedef enum{
 } H264_CODEC_TYPE;
 
 
+typedef enum{
+    VM_POWER_STATE_OFF = 1,
+    VM_POWER_STATE_PAUSED = 2,
+    VM_POWER_STATE_ON = 3
+} VM_POWER_STATE;
+
 // Инфо для соеднинения сигнала и каллбэка
 typedef struct
 {
@@ -128,10 +134,12 @@ H264_CODEC_TYPE get_default_h264_codec(void);
 
 //void gtk_combo_box_text_set_active_text(GtkComboBoxText *combo_box, const gchar *text);
 
-gchar *string_to_json_value(const gchar *string);
-
 const gchar *util_get_os_name(void);
 
+const gchar *bool_to_str(gboolean flag);
+
+const gchar *vm_power_state_to_str(int power_state);
+void set_vm_power_state_on_label(GtkLabel *label, int power_state);
 #endif
 
 /*

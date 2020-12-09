@@ -54,7 +54,7 @@ typedef struct {
     int test_int;
 
     gboolean is_running; // is rdp routine running
-    gboolean is_stopped_by_user; // required to leave auto reconnect
+    gboolean is_stop_intentional; // required to leave auto reconnect
 
     // credentials
     gchar *usename;

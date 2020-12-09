@@ -311,6 +311,24 @@ can_activate_cb (GtkWidget *widget G_GNUC_UNUSED,
 }
 
 static void
+on_vm_status_changed (gpointer data G_GNUC_UNUSED,
+                      int power_state,
+                      VirtViewerWindow *self)
+{
+    set_vm_power_state_on_label(
+            GTK_LABEL(gtk_builder_get_object(self->priv->builder, "vm_status_display")), power_state);
+}
+
+static void
+on_ws_cmd_received (gpointer data G_GNUC_UNUSED,
+                    const gchar *cmd,
+                    VirtViewerWindow *self)
+{
+    if (g_strcmp0(cmd, "DISCONNECT") == 0)
+        virt_viewer_window_menu_switch_off(NULL, self);
+}
+
+static void
 virt_viewer_window_init (VirtViewerWindow *self)
 {
     VirtViewerWindowPrivate *priv;
@@ -358,6 +376,11 @@ virt_viewer_window_init (VirtViewerWindow *self)
                      "can-activate-accel", G_CALLBACK(can_activate_cb), self);
     g_signal_connect(gtk_builder_get_object(priv->builder, "menu-view-zoom-out"),
                      "can-activate-accel", G_CALLBACK(can_activate_cb), self);
+
+    // vdi signals
+    g_signal_connect(get_vdi_session_static(), "vm-changed", G_CALLBACK(on_vm_status_changed), self);
+    g_signal_connect(get_vdi_session_static(), "ws-cmd-received",
+            G_CALLBACK(on_ws_cmd_received), self);
 
     vbox = GTK_WIDGET(gtk_builder_get_object(priv->builder, "viewer-box"));
     virt_viewer_window_toolbar_setup(self);
@@ -1134,6 +1157,9 @@ G_MODULE_EXPORT void
 virt_viewer_window_menu_switch_off(GtkWidget *menu G_GNUC_UNUSED, VirtViewerWindow *self)
 {
     g_info("%s\n", (const char *)__func__);
+    if (!virt_viewer_app_is_active(self->priv->app))
+        return;
+
     // turn off polling if its in process
     virt_viewer_stop_reconnect_poll(self->priv->app);
     // hide monitor windows
