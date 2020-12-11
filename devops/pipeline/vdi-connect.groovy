@@ -45,6 +45,7 @@ pipeline {
         booleanParam(name: 'WIN32',                defaultValue: true,              description: 'create EXE?')
         booleanParam(name: 'WIN64',                defaultValue: true,              description: 'create EXE?')
         booleanParam(name: 'UNIVERSAL',            defaultValue: true,              description: 'create TAR?')
+        booleanParam(name: 'EMBEDDED',             defaultValue: true,              description: 'create DEB?')
     }
 
     stages {
@@ -93,7 +94,7 @@ pipeline {
                 stage ('ubuntu 18. create environment') {
                     when {
                         beforeAgent true
-                        expression { params.UBUNTU_18 == true || params.UNIVERSAL == true }
+                        expression { params.UBUNTU_18 == true || params.UNIVERSAL == true || params.EMBEDDED == true }
                     }
                     agent {
                         label 'ubuntu18'
@@ -255,7 +256,7 @@ pipeline {
                 stage ('ubuntu 18. build') {
                     when {
                         beforeAgent true
-                        expression { params.UBUNTU_18 == true }
+                        expression { params.UBUNTU_18 == true || params.EMBEDDED == true }
                     }
                     agent {
                         label 'ubuntu18'
@@ -683,6 +684,30 @@ pipeline {
                 }
             }
         }
+
+        stage ('embedded. make installer') {
+            when {
+                beforeAgent true
+                expression { params.EMBEDDED == true }
+            }
+            agent {
+                label 'ubuntu18'
+            }
+            steps {
+                sh script: '''
+                    mkdir -p ${WORKSPACE}/devops/deb_embedded/root/opt/veil-connect
+                    mkdir -p ${WORKSPACE}/devops/deb_embedded/root/usr/share/applications
+                    cp -r ${WORKSPACE}/build/* ${WORKSPACE}/doc/veil-connect.ico ${WORKSPACE}/devops/deb_embedded/root/opt/veil-connect
+                    cp ${WORKSPACE}/doc/veil-connect.desktop ${WORKSPACE}/devops/deb_embedded/root/usr/share/applications
+                    sed -i -e "s:%%VER%%:${VERSION}:g" ${WORKSPACE}/devops/deb_embedded/root/DEBIAN/control
+                    chmod -R 777 ${WORKSPACE}/devops/deb_embedded/root
+                    chmod -R 755 ${WORKSPACE}/devops/deb_embedded/root/DEBIAN
+                    sudo chown -R root:root ${WORKSPACE}/devops/deb_embedded/root
+                    cd ${WORKSPACE}/devops/deb_embedded
+                    dpkg-deb -b root .
+                '''
+            }
+        }
         
         stage ('deploy to repo') {
             parallel {
@@ -814,6 +839,25 @@ pipeline {
                         '''
                     }
                 }
+            }
+        }
+
+        stage ('embedded. deploy to repo') {
+            when {
+                beforeAgent true
+                expression { params.EMBEDDED == true }
+            }
+            agent {
+                label 'ubuntu18'
+            }
+            steps {
+                sh script: '''
+                    scp -r uploader@192.168.10.144:/local_storage/debs-astra-orel ${WORKSPACE}/devops/deb_embedded/
+                    cd ${WORKSPACE}/devops/deb_embedded && tar czvf veil-connect-embedded-${VERSION}.tar.gz debs-astra-orel/ veil-connect-embedded*.deb veil-connect-embedded-installer.sh
+                    
+                    ssh uploader@192.168.10.144 mkdir -p /local_storage/veil-connect-embedded/${VERSION}/
+                    scp ${WORKSPACE}/devops/deb_embedded/veil-connect-embedded-${VERSION}.tar.gz uploader@192.168.10.144:/local_storage/veil-connect-embedded/${VERSION}/
+                '''
             }
         }
 
