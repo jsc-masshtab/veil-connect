@@ -1,0 +1,102 @@
+#!/bin/bash
+
+set -e
+
+KIOSK_USER="veil-connect"
+
+configure_other()
+{
+    echo "Configure other..."
+    ln -s /opt/veil-connect/start_vdi_client.sh /usr/bin/
+    perl -pi -e 's/crosshair/default\0\0/g' /usr/lib/x86_64-linux-gnu/libspice-client-gtk-3.0.so.5
+}
+
+configure_users()
+{
+    echo "Configure users..."
+    useradd -m $KIOSK_USER
+    passwd -d $KIOSK_USER 1>/dev/null
+}
+
+configure_kiosk()
+{
+echo "Configure kiosk..."
+mkdir -p /etc/fly-kiosk/$KIOSK_USER/single
+tee /etc/fly-kiosk/$KIOSK_USER/single/veil-connect.desktop 1>/dev/null <<EOF
+[Desktop Entry]
+Name=Veil Connect
+GenericName=Thin Client
+Type=Application
+Comment=Veil Connect Thin Client
+Exec=/opt/veil-connect/start_vdi_client.sh
+Icon=/opt/veil-connect/veil-connect.ico
+EOF
+
+mkdir -p /etc/fly-kiosk/$KIOSK_USER/toolbar
+tee /etc/fly-kiosk/$KIOSK_USER/toolbar/start.desktop 1>/dev/null <<EOF
+[Desktop Entry]
+Name=Fly start menu-panel
+Name[ru]=Стартовая меню-панель Fly
+Type=Application
+Exec=FLYWM_POPUP_START_MENU
+Icon=astra
+EOF
+
+tee /etc/fly-kiosk/$KIOSK_USER/exit.desktop 1>/dev/null <<EOF
+[Desktop Entry]
+Name=Exit...
+Name[ru]=Завершение работы...
+Type=Application
+Exec=fly-shutdown.sh
+Icon=system-log-out
+EOF
+
+tee /etc/fly-kiosk/$KIOSK_USER/fly-kiosk.conf 1>/dev/null <<EOF
+[%General]
+EditableDesktop=false
+EditableTheme=false
+IsGroup=false
+EOF
+}
+
+configure_autologin()
+{
+    echo "Configure autologin..."
+    sed -i -e "s:AutoLoginEnable=false:AutoLoginEnable=true:g" /etc/X11/fly-dm/fly-dmrc
+    sed -i -e "s:#AutoLoginUser=alex:AutoLoginUser=$KIOSK_USER:g" /etc/X11/fly-dm/fly-dmrc
+}
+
+finish()
+{
+    echo "#########################################################"
+    echo "   Установка VeiL Connect Embedded успешно завершена!"
+    echo "#########################################################"
+    echo "   Пользователь для входа в ОС: $KIOSK_USER"
+    echo "#########################################################"
+    echo "   Для применения изменений требуется перезагрузка!"
+    echo "#########################################################"
+}
+
+case "$1" in
+	configure)
+        # действия только при установке
+		if [ ! -n "$2" ] ; then
+            configure_other
+		    configure_users
+			configure_kiosk
+            configure_autologin
+		fi
+
+		# действия и при установке и при обновлении
+		finish
+
+		exit 0
+		;;
+	abort-upgrade|abort-remove|abort-deconfigure)
+		exit 0
+		;;
+	*)
+		echo "postinst called with unknown argument: $*" >&2
+		exit 1
+		;;
+esac

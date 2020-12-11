@@ -1,0 +1,12 @@
+Package: veil-connect-embedded
+Version: %%VER%%
+Architecture: amd64
+Maintainer: bazalt team <bazalt_dev@mashtab.org>
+Depends: spice-client-gtk, libjson-glib-1.0-0, libxml2, libsoup2.4-1, libfreerdp2-2, libfreerdp-client2-2, libwinpr2-2, libhiredis-dev, libusb-1.0-0, libusbredirparser1, fly-admin-dm, fly-admin-local
+Conflicts: veil-connect
+Replaces: veil-connect
+Section: devel
+Priority: extra
+Homepage: http://veil.mashtab.org
+Description: VeiL Connect Embedded.
+  (c) 2020 Mashtab
