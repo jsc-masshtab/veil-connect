@@ -579,7 +579,6 @@ static DWORD WINAPI rdp_client_thread_proc(ExtendedRdpContext* ex)
     return exit_code;
 }
 
-
 static BOOL rdp_client_global_init(void)
 {
     return TRUE;

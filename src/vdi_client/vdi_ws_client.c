@@ -92,7 +92,7 @@ static void vdi_ws_client_on_connection(SoupSession *session, GAsyncResult *res,
         vdi_ws_client_ws_reconnect(vdi_ws_client);
 
     } else {
-        g_object_set(vdi_ws_client->ws_conn, "keepalive-interval", 60, NULL);
+        g_object_set(vdi_ws_client->ws_conn, "keepalive-interval", 10, NULL);
 
         g_signal_connect(vdi_ws_client->ws_conn, "message", G_CALLBACK(vdi_ws_client_on_message), NULL);
         g_signal_connect(vdi_ws_client->ws_conn, "closed", G_CALLBACK(vdi_ws_client_on_close), vdi_ws_client);
@@ -156,7 +156,7 @@ void vdi_ws_client_start(VdiWsClient *vdi_ws_client, const gchar *vdi_ip, int vd
         return;
 
     gboolean ssl_strict = FALSE;
-    vdi_ws_client->ws_soup_session = soup_session_new_with_options("idle-timeout", 0, "timeout", 0,
+    vdi_ws_client->ws_soup_session = soup_session_new_with_options("idle-timeout", 25, "timeout", 25,
                                                                    "ssl-strict", ssl_strict, NULL);
 
     const gchar *protocol = (vdi_port == 443) ? "wss" : "ws";
