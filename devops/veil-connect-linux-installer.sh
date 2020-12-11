@@ -58,7 +58,6 @@ case $OS in
         ;;
     6)
         yum install epel-release -y
-        dnf --enablerepo=PowerTools install freerdp-devel -y
         yum install veil-connect-*.el8.x86_64.rpm -y
         ;;
     7)
