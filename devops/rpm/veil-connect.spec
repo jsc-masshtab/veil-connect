@@ -9,17 +9,15 @@ License: GPL
 URL: https://mashtab.org/
 
 Requires: epel-release
-Requires: spice-gtk3-devel
+Requires: spice-gtk3
 Requires: freerdp-libs
-Requires: freerdp-devel
-Requires: json-glib-devel
-Requires: libsoup-devel
+Requires: json-glib
+Requires: libsoup
 Requires: libwinpr
-Requires: libxml2-devel
-Requires: gtk3-devel
-Requires: hiredis-devel
-Requires: libusb-devel
-Requires: usbredir-devel
+Requires: libxml2
+Requires: hiredis
+Requires: libusb
+Requires: usbredir
 
 %description
 Veil Connect Thin Client
