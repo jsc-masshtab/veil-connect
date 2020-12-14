@@ -324,7 +324,7 @@ on_ws_cmd_received (gpointer data G_GNUC_UNUSED,
                     const gchar *cmd,
                     VirtViewerWindow *self)
 {
-    if (g_strcmp0(cmd, "DISCONNECT") == 0)
+    if (g_strcmp0(cmd, "DISCONNECT") == 0 && virt_viewer_app_is_active(self->priv->app))
         virt_viewer_window_menu_switch_off(NULL, self);
 }
 
@@ -1157,15 +1157,7 @@ G_MODULE_EXPORT void
 virt_viewer_window_menu_switch_off(GtkWidget *menu G_GNUC_UNUSED, VirtViewerWindow *self)
 {
     g_info("%s\n", (const char *)__func__);
-    if (!virt_viewer_app_is_active(self->priv->app))
-        return;
-
-    // turn off polling if its in process
-    virt_viewer_stop_reconnect_poll(self->priv->app);
-    // hide monitor windows
-    virt_viewer_app_hide_all_windows_forced(self->priv->app);
-    //deactivare app
-    virt_viewer_app_deactivate(self->priv->app, TRUE);
+    virt_viewer_app_hide_and_deactivate(self->priv->app);
 }
 
 G_MODULE_EXPORT void

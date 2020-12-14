@@ -73,9 +73,17 @@ static void vdi_ws_client_on_message(SoupWebsocketConnection *ws_conn G_GNUC_UNU
 
 static void vdi_ws_client_on_close(SoupWebsocketConnection *ws_conn G_GNUC_UNUSED, VdiWsClient *vdi_ws_client)
 {
-    g_info("WebSocket connection closed\n");
+    gushort close_code = soup_websocket_connection_get_close_code(ws_conn);
+    g_info("WebSocket connection closed: close_code: %i\n", close_code);
     vdi_session_ws_conn_change_notify(FALSE);
     vdi_ws_client_ws_reconnect(vdi_ws_client);
+}
+
+static void vdi_ws_client_send_text(VdiWsClient *ws_vdi_client, const char *text)
+{
+    SoupWebsocketState ws_state = vdi_ws_client_get_conn_state(ws_vdi_client);
+    if (ws_state == SOUP_WEBSOCKET_STATE_OPEN)
+        soup_websocket_connection_send_text(ws_vdi_client->ws_conn, text);
 }
 
 static void vdi_ws_client_on_connection(SoupSession *session, GAsyncResult *res, VdiWsClient *vdi_ws_client)
@@ -85,7 +93,10 @@ static void vdi_ws_client_on_connection(SoupSession *session, GAsyncResult *res,
 
     vdi_ws_client->ws_conn = soup_session_websocket_connect_finish(session, res, &error);
     if (error) {
-        vdi_ws_client->ws_conn = NULL;
+        if (vdi_ws_client->ws_conn) {
+            g_object_unref(vdi_ws_client->ws_conn);
+            vdi_ws_client->ws_conn = NULL;
+        }
         g_info("Error: %s\n", error->message);
         g_error_free(error);
 
@@ -116,7 +127,7 @@ static void vdi_ws_client_on_connection(SoupSession *session, GAsyncResult *res,
                                            VERSION,
                                            vm_id_json,
                                            tk_os);
-        soup_websocket_connection_send_text(vdi_ws_client->ws_conn, auth_data);
+        vdi_ws_client_send_text(vdi_ws_client, auth_data);
         g_free(auth_data);
         g_free(vm_id_json);
         g_free(tk_os);
@@ -238,7 +249,7 @@ void vdi_ws_client_send_vm_changed(VdiWsClient *ws_vdi_client, const gchar *vm_i
                                      "\"vm_id\": %s"
                                      "}",
                                      vm_id_json);
-    soup_websocket_connection_send_text(ws_vdi_client->ws_conn, tk_data);
+    vdi_ws_client_send_text(ws_vdi_client, tk_data);
     g_free(tk_data);
     g_free(vm_id_json);
 }
@@ -253,5 +264,5 @@ void vdi_ws_client_send_user_gui(VdiWsClient *ws_vdi_client)
                             "\"msg_type\": \"UPDATED\", "
                             "\"event\": \"user_gui\""
                             "}");
-    soup_websocket_connection_send_text(ws_vdi_client->ws_conn, tk_data);
+    vdi_ws_client_send_text(ws_vdi_client, tk_data);
 }

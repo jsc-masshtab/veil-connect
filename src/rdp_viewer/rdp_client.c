@@ -532,6 +532,9 @@ static DWORD WINAPI rdp_client_thread_proc(ExtendedRdpContext* ex)
         return 0;
     }
 
+    if ( *(ex->p_loop) == NULL )
+        return 0;
+
     while (!freerdp_shall_disconnect(instance))
     {
         if (freerdp_focus_required(instance))

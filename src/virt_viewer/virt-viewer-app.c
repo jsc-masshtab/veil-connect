@@ -291,11 +291,12 @@ virt_viewer_app_quit(VirtViewerApp *self)
     VirtViewerAppPrivate *priv = self->priv;
 
     virt_viewer_app_save_config(self);
+    virt_viewer_app_hide_and_deactivate(self);
+    priv->quitting = TRUE;
 
     if (priv->session) {
         virt_viewer_session_close(VIRT_VIEWER_SESSION(priv->session));
         if (priv->connected) {
-            priv->quitting = TRUE;
             return;
         }
     }
@@ -1413,6 +1414,16 @@ virt_viewer_app_deactivated(VirtViewerApp *self, gboolean connect_error)
     klass->deactivated(self, connect_error);
 }
 
+void virt_viewer_app_hide_and_deactivate(VirtViewerApp *self)
+{
+    // turn off polling if its in process
+    virt_viewer_stop_reconnect_poll(self);
+    // hide monitor windows
+    virt_viewer_app_hide_all_windows_forced(self);
+    //deactivare app
+    virt_viewer_app_deactivate(self, TRUE);
+}
+
 /*static */void
 virt_viewer_app_deactivate(VirtViewerApp *self, gboolean connect_error)
 {
@@ -1798,7 +1809,7 @@ virt_viewer_app_init(VirtViewerApp *self)
     self->priv->displays = g_hash_table_new_full(g_direct_hash, g_direct_equal, NULL, g_object_unref);
     self->priv->config = g_key_file_new();
     self->priv->config_file = g_build_filename(g_get_user_config_dir(),
-                                               "virt-viewer", "settings", NULL);
+                                               "veil_connect", "settings", NULL);
     g_key_file_load_from_file(self->priv->config, self->priv->config_file,
                     G_KEY_FILE_KEEP_COMMENTS|G_KEY_FILE_KEEP_TRANSLATIONS, &error);
 

@@ -326,6 +326,15 @@ static void rdp_viewer_window_menu_send(GtkWidget *menu, gpointer userdata)
 }
 
 static void
+rdp_viewer_window_menu_close_window(GtkWidget *menu G_GNUC_UNUSED, gpointer userdata)
+{
+    g_info("%s", (const char *)__func__);
+    RdpWindowData *rdp_window_data = (RdpWindowData *)userdata;
+    *rdp_window_data->dialog_window_response_p = GTK_RESPONSE_CLOSE;
+    shutdown_loop(*rdp_window_data->loop_p);
+}
+
+static void
 rdp_viewer_window_menu_switch_off(GtkWidget *menu G_GNUC_UNUSED, gpointer userdata)
 {
     g_info("%s", (const char *)__func__);
@@ -518,6 +527,9 @@ RdpWindowData *rdp_viewer_window_create(ExtendedRdpContext *ex_rdp_context)
     gtk_widget_destroy(GTK_WIDGET(gtk_builder_get_object(builder, "menu-file-smartcard-remove")));
     gtk_widget_destroy(GTK_WIDGET(gtk_builder_get_object(builder, "menu-change-cd")));
     gtk_widget_destroy(GTK_WIDGET(gtk_builder_get_object(builder, "menu-preferences")));
+
+    GtkMenuItem *menu_close_window = GTK_MENU_ITEM(gtk_builder_get_object(builder, "imagemenuitem5"));
+    g_signal_connect(menu_close_window, "activate", G_CALLBACK(rdp_viewer_window_menu_close_window), rdp_window_data);
 
     // control menu
     rdp_viewer_control_menu_setup(builder, rdp_window_data);
