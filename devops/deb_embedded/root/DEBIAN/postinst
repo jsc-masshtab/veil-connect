@@ -62,8 +62,19 @@ EOF
 configure_autologin()
 {
     echo "Configure autologin..."
-    sed -i -e "s:AutoLoginEnable=false:AutoLoginEnable=true:g" /etc/X11/fly-dm/fly-dmrc
-    sed -i -e "s:#AutoLoginUser=alex:AutoLoginUser=$KIOSK_USER:g" /etc/X11/fly-dm/fly-dmrc
+    sed -i -e "s/.*AutoLoginEnable=.*/AutoLoginEnable=true/" /etc/X11/fly-dm/fly-dmrc
+    sed -i -e "s/.*AutoLoginUser=.*/AutoLoginUser=$KIOSK_USER/" /etc/X11/fly-dm/fly-dmrc
+}
+
+configure_screenlocker()
+{
+    echo "Configure screenlocker..."
+    sed -i -e 's/.*ScreenSaverDelay=.*/ScreenSaverDelay=0/' /usr/share/fly-wm/theme/default.themerc.fly-kiosk
+    sed -i -e 's/.*LockerDpmsOffTimeout=.*/LockerDpmsOffTimeout=0/' /usr/share/fly-wm/theme/default.themerc.fly-kiosk
+    sed -i -e 's/.*LockerOnSleep=.*/LockerOnSleep=false/' /usr/share/fly-wm/theme/default.themerc.fly-kiosk
+    sed -i -e 's/.*LockerOnDPMS=.*/LockerOnDPMS=false/' /usr/share/fly-wm/theme/default.themerc.fly-kiosk
+    sed -i -e 's/.*LockerOnLid=.*/LockerOnLid=false/' /usr/share/fly-wm/theme/default.themerc.fly-kiosk
+    sed -i -e 's/.*LockerOnSwitch=.*/LockerOnSwitch=false/' /usr/share/fly-wm/theme/default.themerc.fly-kiosk
 }
 
 finish()
@@ -85,6 +96,7 @@ case "$1" in
 		    configure_users
 			configure_kiosk
             configure_autologin
+            configure_screenlocker
 		fi
 
 		# действия и при установке и при обновлении
