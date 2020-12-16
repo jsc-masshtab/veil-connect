@@ -77,6 +77,13 @@ configure_screenlocker()
     sed -i -e 's/.*LockerOnSwitch=.*/LockerOnSwitch=false/' /usr/share/fly-wm/theme/default.themerc.fly-kiosk
 }
 
+configure_usb()
+{
+    echo "Configure usb..."
+    echo 'SUBSYSTEM=="usb", ATTR{idVendor}=="*", ATTR{idProduct}=="*", MODE="0660", GROUP="'$KIOSK_USER'"' > /etc/udev/rules.d/00-usb-permissions.rules
+    udevadm control --reload-rules && udevadm trigger
+}
+
 finish()
 {
     echo "#########################################################"
@@ -97,6 +104,7 @@ case "$1" in
 			configure_kiosk
             configure_autologin
             configure_screenlocker
+            configure_usb
 		fi
 
 		# действия и при установке и при обновлении
