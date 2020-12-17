@@ -256,7 +256,7 @@ void vdi_ws_client_send_vm_changed(VdiWsClient *ws_vdi_client, const gchar *vm_i
 
 void vdi_ws_client_send_user_gui(VdiWsClient *ws_vdi_client)
 {
-    g_info((const char *)__func__);
+    //g_info((const char *)__func__);
     if (!ws_vdi_client->ws_conn)
         return;
 

@@ -346,6 +346,15 @@
                           </object>
                         </child>
                         <child>
+                          <object class="GtkMenuItem" id="menu-tk-doc">
+                            <property name="visible">True</property>
+                            <property name="can_focus">False</property>
+                            <property name="label" translatable="yes">_Документация</property>
+                            <property name="use_underline">True</property>
+                            <signal name="activate" handler="virt_viewer_window_menu_help_tk_doc" swapped="no"/>
+                          </object>
+                        </child>
+                        <child>
                           <object class="GtkMenuItem" id="imagemenuitem10">
                             <property name="use_action_appearance">False</property>
                             <property name="visible">True</property>
@@ -353,15 +362,6 @@
                             <property name="label" translatable="yes">_О программе</property>
                             <property name="use_underline">True</property>
                             <signal name="activate" handler="virt_viewer_window_menu_help_about" swapped="no"/>
-                          </object>
-                        </child>
-                        <child>
-                          <object class="GtkMenuItem" id="menu-tk-doc">
-                            <property name="visible">True</property>
-                            <property name="can_focus">False</property>
-                            <property name="label" translatable="yes">_Документация</property>
-                            <property name="use_underline">True</property>
-                            <signal name="activate" handler="virt_viewer_window_menu_help_tk_doc" swapped="no"/>
                           </object>
                         </child>
                       </object>

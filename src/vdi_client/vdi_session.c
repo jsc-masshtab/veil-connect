@@ -545,10 +545,11 @@ void vdi_session_get_vm_from_pool(GTask       *task,
     vdi_api_session_register_for_license();
 
     // get vm from pool
-    gchar *url_str = g_strdup_printf("%s/client/pools/%s", vdi_session_static->api_url, vdi_session_static->current_pool_id);
+    gchar *url_str = g_strdup_printf("%s/client/pools/%s", vdi_session_static->api_url,
+            vdi_session_static->current_pool_id);
     // todo: use vdi_session_remote_protocol_str in future. Cant replace now cause some people use old vdi server
-    gchar *bodyStr = g_strdup_printf("{\"remote_protocol\":\"%s\"}",
-                                     vdi_session_remote_protocol_to_str_old(vdi_session_static->current_remote_protocol));
+    gchar *bodyStr = g_strdup_printf("{\"remote_protocol\":\"%s\"}", vdi_session_remote_protocol_to_str_old(
+            vdi_session_static->current_remote_protocol));
 
     gchar *response_body_str = vdi_session_api_call("POST", url_str, bodyStr, NULL);
     g_free(url_str);
