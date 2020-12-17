@@ -826,7 +826,7 @@ gchar *get_log_dir_path()
     gchar *log_dir = g_strdup("log");
 #elif _WIN32
     const gchar *locap_app_data_path = g_getenv("LOCALAPPDATA");
-    gchar *log_dir = g_strdup_printf("%s/%s/log", locap_app_data_path, PACKAGE);
+    gchar *log_dir = g_strdup_printf("%s\\%s\\log", locap_app_data_path, PACKAGE);
 #endif
     return log_dir;
 }
@@ -865,7 +865,7 @@ void convert_string_from_utf8_to_locale(gchar **utf8_str)
 gchar *get_windows_app_data_location(void)
 {
     const gchar *locap_app_data_path = g_getenv("LOCALAPPDATA");
-    gchar *app_data_dir = g_strdup_printf("%s/%s", locap_app_data_path, PACKAGE);
+    gchar *app_data_dir = g_strdup_printf("%s\\%s", locap_app_data_path, PACKAGE);
     return app_data_dir;
 }
 
