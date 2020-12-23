@@ -67,7 +67,7 @@ launch_windows_rdp_client(const gchar *usename, const gchar *password G_GNUC_UNU
     gchar *full_address = g_strdup_printf("full address:s:%s\n", ip);
     fputs(full_address, destFile);
     g_free(full_address);
-    gchar *full_username = g_strdup_printf("username:s:%s", usename);
+    gchar *full_username = g_strdup_printf("username:s:%s\n", usename);
     fputs(full_username, destFile);
     g_free(full_username);
     gchar *full_domain = g_strdup_printf("domain:s:%s", domain);
