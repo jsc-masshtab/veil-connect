@@ -86,7 +86,7 @@ static void destroy_rdp_context(ExtendedRdpContext* ex_rdp_context, GThread *rdp
 
 // set_monitor_data_and_create_rdp_viewer_window. Returns monitor geometry
 static GdkRectangle set_monitor_data_and_create_rdp_viewer_window(GdkMonitor *monitor, int index,
-        ExtendedRdpContext *ex_rdp_context, GMainLoop **loop_p, GtkResponseType *dialog_window_response_p)
+        ExtendedRdpContext *ex_rdp_context, GMainLoop **loop_p)
 {
     gboolean is_mon_primary = gdk_monitor_is_primary(monitor);
 
@@ -111,7 +111,6 @@ static GdkRectangle set_monitor_data_and_create_rdp_viewer_window(GdkMonitor *mo
     rdp_viewer_window_set_monitor_data(rdp_window_data, geometry, index);
 
     // set references
-    rdp_window_data->dialog_window_response_p = dialog_window_response_p;
     rdp_window_data->loop_p = loop_p;
 
     return geometry;
@@ -126,6 +125,7 @@ GtkResponseType rdp_viewer_start(const gchar *usename, const gchar *password, gc
     // create RDP context
     ExtendedRdpContext *ex_rdp_context = create_rdp_context();
     ex_rdp_context->p_loop = &loop;
+    ex_rdp_context->dialog_window_response_p = &dialog_window_response;
     rdp_client_set_credentials(ex_rdp_context, usename, password, domain, ip, port);
 
     // Set some presettings
@@ -161,7 +161,7 @@ GtkResponseType rdp_viewer_start(const gchar *usename, const gchar *password, gc
             // get monitor data
             GdkMonitor *monitor = gdk_display_get_monitor(display, i);
             GdkRectangle geometry = set_monitor_data_and_create_rdp_viewer_window(monitor, i, ex_rdp_context,
-                                                        &loop, &dialog_window_response);
+                                                        &loop);
             total_monitor_width += geometry.width;
             monitor_height = geometry.height;
         }
@@ -173,7 +173,7 @@ GtkResponseType rdp_viewer_start(const gchar *usename, const gchar *password, gc
 
         GdkMonitor *primary_monitor = gdk_display_get_primary_monitor(display);
         GdkRectangle geometry = set_monitor_data_and_create_rdp_viewer_window(primary_monitor, 0, ex_rdp_context,
-                                                          &loop, &dialog_window_response);
+                                                          &loop);
         total_monitor_width = geometry.width;
         monitor_height = geometry.height;
         RdpWindowData *rdp_window_data = g_array_index(rdp_windows_array, RdpWindowData *, 0);

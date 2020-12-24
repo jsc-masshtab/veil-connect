@@ -8,7 +8,6 @@
 #include "remote-viewer-timed-revealer.h"
 
 typedef struct{
-    GtkResponseType *dialog_window_response_p;
     GMainLoop **loop_p;
 
     // gui

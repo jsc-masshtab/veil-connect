@@ -75,6 +75,7 @@ typedef struct {
     UINT32 rail_rdp_error; // remote app related error
 
     GMainLoop **p_loop;
+    GtkResponseType *dialog_window_response_p;
 
 } ExtendedRdpContext;
 

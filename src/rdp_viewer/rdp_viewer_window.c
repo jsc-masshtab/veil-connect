@@ -200,7 +200,7 @@ static gboolean rdp_viewer_window_deleted_cb(gpointer userdata)
 {
     g_info("%s", (const char *)__func__);
     RdpWindowData *rdp_window_data = (RdpWindowData *)userdata;
-    *rdp_window_data->dialog_window_response_p = GTK_RESPONSE_CLOSE;
+    *rdp_window_data->ex_rdp_context->dialog_window_response_p = GTK_RESPONSE_CLOSE;
     shutdown_loop(*rdp_window_data->loop_p);
 
     return TRUE;
@@ -330,7 +330,7 @@ rdp_viewer_window_menu_close_window(GtkWidget *menu G_GNUC_UNUSED, gpointer user
 {
     g_info("%s", (const char *)__func__);
     RdpWindowData *rdp_window_data = (RdpWindowData *)userdata;
-    *rdp_window_data->dialog_window_response_p = GTK_RESPONSE_CLOSE;
+    *rdp_window_data->ex_rdp_context->dialog_window_response_p = GTK_RESPONSE_CLOSE;
     shutdown_loop(*rdp_window_data->loop_p);
 }
 
@@ -610,6 +610,6 @@ void rdp_viewer_window_set_monitor_data(RdpWindowData *rdp_window_data, GdkRecta
 
 void rdp_viewer_window_cancel(RdpWindowData *rdp_window_data)
 {
-    *rdp_window_data->dialog_window_response_p = GTK_RESPONSE_CANCEL;
+    *rdp_window_data->ex_rdp_context->dialog_window_response_p = GTK_RESPONSE_CANCEL;
     shutdown_loop(*rdp_window_data->loop_p);
 }

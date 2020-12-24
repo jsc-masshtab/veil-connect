@@ -489,7 +489,9 @@ static void rdp_post_disconnect(freerdp* instance)
 
     // Close rdp windows if LOGOFF_BY_USER received or there are no errors
     if (((last_error & 0xFFFF) == ERRINFO_LOGOFF_BY_USER) ||
-    (last_error == 0 && ex_rdp_context->rail_rdp_error == 0)) {
+        ((last_error & 0xFFFF) == ERRINFO_RPC_INITIATED_DISCONNECT_BY_USER) ||
+        (last_error == 0 && ex_rdp_context->rail_rdp_error == 0)) {
+        *ex_rdp_context->dialog_window_response_p = GTK_RESPONSE_CANCEL;
         shutdown_loop(*(ex_rdp_context->p_loop));
     }
 }
