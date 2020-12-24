@@ -131,7 +131,7 @@ static void rdp_viewer_window_toggle_keyboard_grab(RdpWindowData *rdp_window_dat
             return;
 
         // Если сделать захват клавы прямо в обработчике ивента focus in, то проявляется необъяснимое поведение gtk
-        // Поэтому делаем это чуть позже
+        // Поэтому делаем это чуть позже guint
         rdp_window_data->grab_try_event_source_id =
                 g_timeout_add(50, (GSourceFunc)rdp_viewer_window_grab_try, rdp_window_data);
 
@@ -587,6 +587,9 @@ RdpWindowData *rdp_viewer_window_create(ExtendedRdpContext *ex_rdp_context)
 
 void rdp_viewer_window_destroy(RdpWindowData *rdp_window_data)
 {
+    // ungrab keybaord if its grabbed
+    rdp_viewer_window_toggle_keyboard_grab(rdp_window_data, FALSE);
+
     g_signal_handler_disconnect(get_vdi_session_static(), rdp_window_data->vm_changed_handle);
     g_signal_handler_disconnect(get_vdi_session_static(), rdp_window_data->ws_cmd_received_handle);
     g_source_remove(rdp_window_data->g_timeout_id);
