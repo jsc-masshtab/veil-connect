@@ -399,7 +399,7 @@ retry_connect_to_vm:
 #ifdef _WIN32
         }else if (vdi_session_get_current_remote_protocol() == VDI_RDP_WINDOWS_NATIVE_PROTOCOL) {
                 launch_windows_rdp_client(vdi_session_get_vdi_username(), vdi_session_get_vdi_password(),
-                        con_data.ip, 0);
+                        con_data.ip, 0, con_data.domain);
 #endif
         } else { // spice by default
             set_spice_session_data(app, con_data.ip, con_data.port, con_data.user, con_data.password);

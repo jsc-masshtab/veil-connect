@@ -14,7 +14,7 @@
 
 void
 launch_windows_rdp_client(const gchar *usename, const gchar *password G_GNUC_UNUSED,
-                          const gchar *ip, int port G_GNUC_UNUSED)
+                          const gchar *ip, int port G_GNUC_UNUSED, const gchar *domain)
 {
 #ifdef __linux__
     (void)usename;
@@ -70,6 +70,9 @@ launch_windows_rdp_client(const gchar *usename, const gchar *password G_GNUC_UNU
     gchar *full_username = g_strdup_printf("username:s:%s", usename);
     fputs(full_username, destFile);
     g_free(full_username);
+    gchar *full_domain = g_strdup_printf("domain:s:%s", domain);
+    fputs(full_domain, destFile);
+    g_free(full_domain);
 
     /* Close files to release resources */
     fclose(sourceFile);
