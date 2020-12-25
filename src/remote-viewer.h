@@ -9,6 +9,7 @@
 
 #include <glib-object.h>
 #include "virt-viewer-app.h"
+#include "app_updater.h"
 
 G_BEGIN_DECLS
 
@@ -24,6 +25,8 @@ typedef struct _RemoteViewerPrivate RemoteViewerPrivate;
 typedef struct {
     VirtViewerApp parent;
     RemoteViewerPrivate *priv;
+    AppUpdater *app_updater;
+
 } RemoteViewer;
 
 typedef struct {
@@ -33,6 +36,7 @@ typedef struct {
 GType remote_viewer_get_type (void);
 
 RemoteViewer *remote_viewer_new (void);
+void remote_viewer_free_resources(RemoteViewer *self);
 
 G_END_DECLS
 

@@ -27,10 +27,6 @@ static VdiSession *vdi_session_static;
 
 G_DEFINE_TYPE( VdiSession, vdi_session, G_TYPE_OBJECT )
 
-struct _VdiSessionPrivate
-{
-    gchar *name;
-};
 
 static void vdi_session_finalize( GObject *self );
 
@@ -682,6 +678,78 @@ gboolean vdi_session_logout(void)
         g_info("%s : No token info", (const char *)__func__);
         return FALSE;
     }
+}
+
+gchar *vdi_session_check_for_tk_updates(const gchar *veil_connect_url, gchar **p_last_version)
+{
+    // init
+    gchar *string_pattern = NULL;
+    gchar *bitness = NULL;
+    GMatchInfo *match_info = NULL;
+    GRegex *regex = NULL;
+    gchar *found_match = NULL;
+    gchar *download_link = NULL;
+    //
+    SoupMessage *msg = soup_message_new("GET", veil_connect_url);
+    if (msg == NULL)
+        goto clear_mark;
+
+    guint status = send_message(msg);
+    if (status != OK_RESPONSE)
+        goto clear_mark;
+
+    // parse
+    // find veil-connect_*.*.*-x**-installer
+#if _WIN64
+    bitness = g_strdup("64");
+#elif _WIN32
+    bitness = g_strdup("32");
+#endif
+    if (bitness == NULL)
+        goto clear_mark;
+
+    // str we need to find
+    string_pattern = g_strdup_printf("((\\d{1,3}).(\\d{1,3}).(\\d{1,3})-x%s)", bitness);
+    regex = g_regex_new(string_pattern, 0, 0, NULL);
+
+    g_regex_match(regex, msg->response_body->data, 0, &match_info);
+    g_info("msg->response_body->data %s ", msg->response_body->data);
+
+    gboolean is_success = g_match_info_matches(match_info);
+    g_info("!!!is_success: %i", is_success);
+
+    if (!is_success) {
+        goto clear_mark;
+    }
+
+    found_match = g_match_info_fetch(match_info, 0);
+    g_info("!!!found_match: %s", found_match);
+    // extract version
+    (*p_last_version) = g_strndup(found_match, strlen_safely(found_match) - 4); // 4 letters -x**
+    g_info("!!!last_version: %s", (*p_last_version));
+
+    // compare versions
+    gint version_cmp_res = virt_viewer_compare_version((*p_last_version), PACKAGE_VERSION); // PACKAGE_VERSION
+    g_info("!!!version_cmp_res: %i", version_cmp_res);
+    // 1 means we have a fresher version and can update
+    if (version_cmp_res == 1) {
+        download_link = g_strdup_printf("%s\\veil-connect_%s-installer.exe",
+                veil_connect_url, found_match);
+        g_info("download_link: %s", download_link);
+    }
+
+clear_mark:
+    if (msg)
+        g_object_unref(msg);
+    free_memory_safely(&string_pattern);
+    free_memory_safely(&bitness);
+    if(match_info)
+        g_match_info_free(match_info);
+    if (regex)
+        g_regex_unref(regex);
+    free_memory_safely(&found_match);
+
+    return download_link;
 }
 
 // Добавляет USB TCP и в случае успеха возвращает usb_uuid. NULL при неудаче

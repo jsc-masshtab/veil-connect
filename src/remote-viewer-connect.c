@@ -31,6 +31,8 @@ typedef enum
 
 typedef struct
 {
+    RemoteViewer *p_remote_viewer;
+
     GMainLoop *loop;
     GtkResponseType dialog_window_response;
 
@@ -53,11 +55,11 @@ typedef struct
 
     AuthDialogState auth_dialog_state;
 
-} RemoteViewerData;
+} RemoteViewerConnData;
 
 // set gui state
 static void
-set_auth_dialog_state(AuthDialogState auth_dialog_state, RemoteViewerData *ci)
+set_auth_dialog_state(AuthDialogState auth_dialog_state, RemoteViewerConnData *ci)
 {
     ci->auth_dialog_state = auth_dialog_state;
 
@@ -90,7 +92,7 @@ set_auth_dialog_state(AuthDialogState auth_dialog_state, RemoteViewerData *ci)
 }
 // header-label
 static void
-set_data_from_gui_in_outer_pointers(RemoteViewerData *ci)
+set_data_from_gui_in_outer_pointers(RemoteViewerConnData *ci)
 {
     update_string_safely(&ci->p_conn_data->user, gtk_entry_get_text(GTK_ENTRY(ci->login_entry)));
     update_string_safely(&ci->p_conn_data->password, gtk_entry_get_text(GTK_ENTRY(ci->password_entry)));
@@ -99,7 +101,7 @@ set_data_from_gui_in_outer_pointers(RemoteViewerData *ci)
 
 // save data to ini file
 static void
-save_data_to_ini_file(RemoteViewerData *ci)
+save_data_to_ini_file(RemoteViewerConnData *ci)
 {
     const gchar *paramToFileGrpoup = get_cur_ini_param_group();
     write_str_to_ini_file(paramToFileGrpoup, "username", gtk_entry_get_text(GTK_ENTRY(ci->login_entry)));
@@ -138,7 +140,7 @@ on_vdi_session_get_vm_from_pool_finished(GObject *source_object G_GNUC_UNUSED,
                                          GAsyncResult *res,
                                          gpointer user_data G_GNUC_UNUSED)
 {
-    RemoteViewerData *ci = user_data;
+    RemoteViewerConnData *ci = user_data;
 
     set_auth_dialog_state(AUTH_GUI_DEFAULT_STATE, ci);
 
@@ -176,7 +178,7 @@ on_vdi_session_log_in_finished(GObject *source_object G_GNUC_UNUSED,
                                       GAsyncResult *res,
                                       gpointer user_data)
 {
-    RemoteViewerData *ci = user_data;
+    RemoteViewerConnData *ci = user_data;
 
     //GError *error = NULL;
     gboolean token_refreshed = g_task_propagate_boolean(G_TASK(res), NULL); // &error
@@ -195,7 +197,7 @@ on_vdi_session_log_in_finished(GObject *source_object G_GNUC_UNUSED,
 }
 
 // connect to VDI server
-void connect_to_vdi_server(RemoteViewerData *ci)
+void connect_to_vdi_server(RemoteViewerConnData *ci)
 {
     if (ci->auth_dialog_state == AUTH_GUI_CONNECT_TRY_STATE)
         return;
@@ -235,7 +237,7 @@ void connect_to_vdi_server(RemoteViewerData *ci)
 }
 
 static void
-handle_connect_event(RemoteViewerData *ci)
+handle_connect_event(RemoteViewerConnData *ci)
 {
     if (strlen_safely(ci->p_conn_data->ip) > 0) {
         // In manual mode we shudown the loop.
@@ -253,7 +255,7 @@ handle_connect_event(RemoteViewerData *ci)
 }
 
 static gboolean
-window_deleted_cb(RemoteViewerData *ci)
+window_deleted_cb(RemoteViewerConnData *ci)
 {
     ci->dialog_window_response = GTK_RESPONSE_CLOSE;
     shutdown_loop(ci->loop);
@@ -263,7 +265,7 @@ window_deleted_cb(RemoteViewerData *ci)
 static gboolean
 key_pressed_cb(GtkWidget *widget G_GNUC_UNUSED, GdkEvent *event, gpointer data)
 {
-    RemoteViewerData *ci = data;
+    RemoteViewerConnData *ci = data;
     GtkWidget *window = ci->window;
     gboolean retval;
     if (event->type == GDK_KEY_PRESS) {
@@ -287,20 +289,21 @@ key_pressed_cb(GtkWidget *widget G_GNUC_UNUSED, GdkEvent *event, gpointer data)
 static void
 settings_button_clicked_cb(GtkButton *button G_GNUC_UNUSED, gpointer data)
 {
-    RemoteViewerData *ci = data;
-    GtkResponseType res = remote_viewer_start_settings_dialog(ci->p_conn_data, GTK_WINDOW(ci->window));
+    RemoteViewerConnData *ci = data;
+    GtkResponseType res = remote_viewer_start_settings_dialog(ci->p_remote_viewer, ci->p_conn_data,
+                                                              GTK_WINDOW(ci->window));
     (void)res;
 }
 
 static void
 connect_button_clicked_cb(GtkButton *button G_GNUC_UNUSED, gpointer data)
 {
-    RemoteViewerData *ci = data;
+    RemoteViewerConnData *ci = data;
     handle_connect_event(ci);
 }
 
 static void
-read_data_from_ini_file(RemoteViewerData *ci)
+read_data_from_ini_file(RemoteViewerConnData *ci)
 {
     // set params save group
     const gchar *paramToFileGrpoup = get_cur_ini_param_group();
@@ -324,7 +327,7 @@ read_data_from_ini_file(RemoteViewerData *ci)
 // В этом ёба режиме сразу автоматом пытаемся подрубиться к предыдущему пулу не дожидаясь действий пользователя.
 // Поступаем так только один раз при старте приложения, чтоб у пользователя была возможносмть сменить
 // логин пароль
-static void fast_forward_connect_to_prev_pool_if_enabled(RemoteViewerData *ci)
+static void fast_forward_connect_to_prev_pool_if_enabled(RemoteViewerConnData *ci)
 {
     gboolean is_fastforward_conn_to_prev_pool =
             read_int_from_ini_file("RemoteViewerConnect", "is_conn_to_prev_pool_btn_checked", 0);
@@ -342,15 +345,16 @@ static void fast_forward_connect_to_prev_pool_if_enabled(RemoteViewerData *ci)
 * @brief Opens connect dialog for remote viewer
 */
 GtkResponseType
-remote_viewer_connect_dialog(ConnectSettingsData *connect_settings_data)
+remote_viewer_connect_dialog(RemoteViewer *remote_viewer, ConnectSettingsData *connect_settings_data)
 {
     GtkBuilder *builder;
 
-    RemoteViewerData ci;
-    memset(&ci, 0, sizeof(RemoteViewerData));
+    RemoteViewerConnData ci;
+    memset(&ci, 0, sizeof(RemoteViewerConnData));
     ci.dialog_window_response = GTK_RESPONSE_CLOSE;
 
-    // save pointer
+    // save pointers
+    ci.p_remote_viewer = remote_viewer;
     ci.p_conn_data = connect_settings_data;
 
     /* Create the widgets */

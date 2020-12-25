@@ -5,12 +5,14 @@
 #ifndef VIRT_VIEWER_VEIL_VDI_API_SESSION_H
 #define VIRT_VIEWER_VEIL_VDI_API_SESSION_H
 
+#include "vdi_redis_client.h"
+
 #include <gtk/gtk.h>
 #include <json-glib/json-glib.h>
 #include <libsoup/soup-session.h>
 #include <libsoup/soup-message.h>
 
-#include "vdi_redis_client.h"
+
 #include "vdi_ws_client.h"
 #include "async.h"
 #include "jsonhandler.h"
@@ -204,6 +206,14 @@ void vdi_session_do_action_on_vm(GTask *task,
 
 // Log out sync
 gboolean vdi_session_logout(void);
+
+// Check for veil connect updates
+// Return link to dowmload new version or NULL
+gchar *vdi_session_check_for_tk_updates(const gchar *veil_connect_url, gchar **p_last_version);
+
+// Download installer
+// Return path to installer
+gchar *vdi_session_download_tk_installer(const gchar *download_link);
 
 // Attach USB
 gchar *vdi_session_attach_usb(AttachUsbData *attach_usb_data);

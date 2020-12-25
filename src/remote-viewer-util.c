@@ -478,7 +478,8 @@ static gboolean str_is_empty(const gchar *str)
   return ((str == NULL) || (str[0] == '\0'));
 }
 
-static gint
+// Вернет 1, если первая больша. -1 если первая меньше, 0 - если равны
+gint
 virt_viewer_compare_version(const gchar *s1, const gchar *s2)
 {
     gint i, retval = 0;

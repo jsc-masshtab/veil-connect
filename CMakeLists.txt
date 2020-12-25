@@ -17,6 +17,7 @@ INCLUDE_DIRECTORIES(
         src/vdi_client
         src/rdp_viewer
         src/usb_redirection
+        src/app_updater
 )
 
 #############################APP FILES#################################
@@ -108,6 +109,10 @@ list(APPEND SRC_CODE
         src/vdi_client/vdi_ws_client.c
         src/vdi_client/vdi_redis_client.h
         src/vdi_client/vdi_redis_client.c
+
+# app_updater
+        src/app_updater/app_updater.h
+        src/app_updater/app_updater.c
 )
 
 ## usb_redirection
@@ -208,6 +213,7 @@ if (WIN32)
             -lws2_32
             -liphlpapi
             -lssp
+            -lUrlmon
     )
 
     SET(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)

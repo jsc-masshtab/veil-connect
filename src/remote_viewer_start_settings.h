@@ -7,8 +7,10 @@
 
 #include "connect_settings_data.h"
 
+#include "remote-viewer.h"
 
-GtkResponseType remote_viewer_start_settings_dialog(ConnectSettingsData *p_conn_data, GtkWindow *parent);
+GtkResponseType remote_viewer_start_settings_dialog(RemoteViewer *p_remote_viewer,
+                                                    ConnectSettingsData *p_conn_data, GtkWindow *parent);
 void fill_p_conn_data_from_ini_file(ConnectSettingsData *p_conn_data);
 
 

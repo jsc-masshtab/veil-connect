@@ -1,7 +1,36 @@
 
-n.n.n / 2020-12-03
+n.n.n / 2020-12-25
 ==================
 
+  * FIX TG-11392 фикс. перенос в файле rdp
+
+1.3.7 / 2020-12-24
+==================
+
+  * FIX TG-11932 Ungrab keyboard when closing rdp viewer
+  * FIX TG-11932 Fix
+  * FIX TG-11932 rdp клиенту майкрософт передается домен
+  * FIX TG-11932 Переход к окн пулу если намерено отключились
+  * FIX TG-11245 Убрана ничего неделающая кнопка Licence
+  * FIX TG-11259 Одинаковые слеши в путях на Win
+  * Merge branch 'feature_tg_11195' into 'master'
+  * FEATURE TG-11195 Veil connect embedded-2
+  * Merge branch 'feature_tg_11254' into 'master'
+  * FEATURE TG-11254 veil-connect-embedded-build.md
+  * Merge branch 'feature_tg_11195' into 'master'
+  * FEATURE TG-11195 Veil connect embedded
+
+1.3.6 / 2020-12-14
+==================
+
+  * Merge feature_tg_11233 into master
+  * Merge branch 'feature_tg_11203' into 'master'
+  * FEATURE TG-11203 Fix centos installation
+  * Merge feature_tg_11137 into master
+  * Merge branch 'feature_tg_11195' into 'master'
+  * FEATURE TG-11195 Veil connect embedded
+  * Merge feature_tg_6050 into master
+  * Merge feature_tg_11086 into master
   * Merge branch 'feature_tg_10815' into 'master'
   * FEATURE TG-10815 Remove postrm scripts
   * FEATURE TG-10868 Сообщаем vdi серверу тип ОС где запущен ТК

@@ -52,11 +52,16 @@ typedef struct{
     GtkWidget *btn_archive_logs;
     GtkWidget *log_location_label;
 
+    GtkWidget *btn_get_app_updates;
+    GtkWidget *check_updates_spinner;
+    GtkWidget *check_updates_label;
+
     // control buttons
     GtkWidget *bt_cancel;
     GtkWidget *bt_ok;
 
     ConnectSettingsData *p_conn_data;
+    RemoteViewer *p_remote_viewer;
 
 } ConnectSettingsDialogData;
 
@@ -254,7 +259,6 @@ static void
 btn_archive_logs_clicked_cb(GtkButton *button G_GNUC_UNUSED, ConnectSettingsDialogData *dialog_data)
 {
     gchar *log_dir = get_log_dir_path();
-    g_info("%s", __func__);
 
 #ifdef __linux__
     gchar *tar_cmd = g_strdup_printf("tar -czvf log.tar.gz %s", log_dir);
@@ -278,6 +282,43 @@ btn_archive_logs_clicked_cb(GtkButton *button G_GNUC_UNUSED, ConnectSettingsDial
 
     g_free(tar_cmd);
     g_free(log_dir);
+}
+
+static void
+on_app_updater_status_msg_changed(gpointer data G_GNUC_UNUSED, const gchar *msg,
+                                  ConnectSettingsDialogData *dialog_data)
+{
+    g_info("%s", (const char *)__func__);
+    gtk_label_set_text(GTK_LABEL(dialog_data->check_updates_label), msg);
+}
+
+static void
+on_app_updater_status_changed(gpointer data G_GNUC_UNUSED,
+                              int isworking,
+                              ConnectSettingsDialogData *dialog_data)
+{
+    g_info("%s isworking: %i", (const char *)__func__, isworking);
+    if (isworking) {
+        gtk_spinner_start((GtkSpinner *) dialog_data->check_updates_spinner);
+    }
+    else {
+        gtk_spinner_stop((GtkSpinner *) dialog_data->check_updates_spinner);
+    }
+    gtk_widget_set_sensitive(dialog_data->btn_get_app_updates, !isworking);
+}
+
+static void
+btn_get_app_updates_clicked_cb(GtkButton *button G_GNUC_UNUSED, ConnectSettingsDialogData *dialog_data)
+{
+    g_info("%s", (const char *)__func__);
+
+    AppUpdater *app_updater = dialog_data->p_remote_viewer->app_updater;
+
+#ifdef _WIN32
+    app_updater_execute_task_get_windows_updates(app_updater);
+#else
+    gtk_label_set_text(GTK_LABEL(dialog_data->check_updates_label), "На данный момент реализовано только для Windows");
+#endif
 }
 
 static void
@@ -478,11 +519,13 @@ save_data_to_ini_file(ConnectSettingsDialogData *dialog_data)
 
 } // remote_app_name_entry      remote_app_options_entry
 
-GtkResponseType remote_viewer_start_settings_dialog(ConnectSettingsData *p_conn_data, GtkWindow *parent)
+GtkResponseType remote_viewer_start_settings_dialog(RemoteViewer *p_remote_viewer,
+                                                    ConnectSettingsData *p_conn_data, GtkWindow *parent)
 {
     ConnectSettingsDialogData dialog_data;
     memset(&dialog_data, 0, sizeof(ConnectSettingsDialogData));
 
+    dialog_data.p_remote_viewer = p_remote_viewer;
     dialog_data.p_conn_data = p_conn_data;
     dialog_data.dialog_window_response = GTK_RESPONSE_OK;
 
@@ -539,6 +582,17 @@ GtkResponseType remote_viewer_start_settings_dialog(ConnectSettingsData *p_conn_
     dialog_data.log_location_label = get_widget_from_builder(dialog_data.builder, "log_location_label");
     gtk_label_set_selectable (GTK_LABEL(dialog_data.log_location_label), TRUE);
 
+    dialog_data.btn_get_app_updates = get_widget_from_builder(dialog_data.builder, "btn_get_app_updates");
+    dialog_data.check_updates_spinner = get_widget_from_builder(dialog_data.builder, "check_updates_spinner");
+    dialog_data.check_updates_label = get_widget_from_builder(dialog_data.builder, "check_updates_label");
+    // В этот момент может происходить процесс обновления софта.  Setup gui
+    AppUpdater *app_updater = dialog_data.p_remote_viewer->app_updater;
+    if (app_updater_is_working(app_updater)) {
+        gtk_label_set_text(GTK_LABEL(dialog_data.check_updates_label), app_updater_get_cur_status_msg(app_updater));
+        gtk_spinner_start((GtkSpinner *) dialog_data.check_updates_spinner);
+        gtk_widget_set_sensitive(dialog_data.btn_get_app_updates, FALSE);
+    }
+
     // Signals
     g_signal_connect_swapped(dialog_data.window, "delete-event", G_CALLBACK(window_deleted_cb), &dialog_data);
     g_signal_connect(dialog_data.bt_cancel, "clicked", G_CALLBACK(cancel_button_clicked_cb), &dialog_data);
@@ -554,6 +608,13 @@ GtkResponseType remote_viewer_start_settings_dialog(ConnectSettingsData *p_conn_
                      G_CALLBACK(btn_archive_logs_clicked_cb), &dialog_data);
     g_signal_connect(dialog_data.remote_app_check_btn, "toggled", G_CALLBACK(on_remote_app_check_btn_toggled),
                      &dialog_data);
+    g_signal_connect(dialog_data.btn_get_app_updates, "clicked", G_CALLBACK(btn_get_app_updates_clicked_cb),
+                     &dialog_data);
+
+    gulong st_msg_hdle = g_signal_connect(p_remote_viewer->app_updater, "status-msg-changed",
+                     G_CALLBACK(on_app_updater_status_msg_changed),&dialog_data);
+    gulong state_hdle = g_signal_connect(p_remote_viewer->app_updater, "state-changed",
+                     G_CALLBACK(on_app_updater_status_changed),&dialog_data);
 
     // read from file
     fill_p_conn_data_from_ini_file(p_conn_data);
@@ -570,6 +631,10 @@ GtkResponseType remote_viewer_start_settings_dialog(ConnectSettingsData *p_conn_
 
     // write to file if response is GTK_RESPONSE_OK
     save_data_to_ini_file(&dialog_data);
+
+    // disconnect signals from external sources
+    g_signal_handler_disconnect(p_remote_viewer->app_updater, st_msg_hdle);
+    g_signal_handler_disconnect(p_remote_viewer->app_updater, state_hdle);
 
     // clear
     g_object_unref(dialog_data.builder);

@@ -35,15 +35,19 @@
 #include "vdi_manager.h"
 #include "connect_settings_data.h"
 
+#include "usbredir_controller.h"
+
 #include "rdp_viewer.h"
 #ifdef _WIN32
 #include "windows_rdp_launcher.h"
 #endif
 
+
 extern gboolean opt_manual_mode;
 
 struct _RemoteViewerPrivate {
     gboolean open_recent_dialog;
+    GMainLoop *virt_viewer_loop;
 };
 
 G_DEFINE_TYPE (RemoteViewer, remote_viewer, VIRT_VIEWER_TYPE_APP)
@@ -75,13 +79,22 @@ static void foreign_menu_title_changed(SpiceCtrlForeignMenu *menu, GParamSpec *p
 static gchar **opt_args = NULL;
 static char *opt_title = NULL;
 static gboolean opt_controller = FALSE;
-static GMainLoop *virt_viewer_loop = NULL;
 
 static void
 remote_viewer_dispose(GObject *object)
 {
-    g_info("remote_viewer_dispose");
-    G_OBJECT_CLASS(remote_viewer_parent_class)->dispose (object);
+    g_info("%s", (const char*)__func__);
+    G_OBJECT_CLASS(remote_viewer_parent_class)->dispose(object);
+}
+
+static void
+remote_viewer_finalize(GObject *object)
+{
+    g_info("%s", (const char*)__func__);
+    RemoteViewer *self = REMOTE_VIEWER(object);
+    g_object_unref(self->app_updater);
+
+    G_OBJECT_CLASS(remote_viewer_parent_class)->finalize(object);
 }
 
 static void
@@ -89,7 +102,7 @@ remote_viewer_deactivated(VirtViewerApp *app, gboolean connect_error)
 {
     VIRT_VIEWER_APP_CLASS(remote_viewer_parent_class)->deactivated(app, connect_error);
     virt_viewer_app_hide_all_windows_forced(app);
-    shutdown_loop(virt_viewer_loop);
+    shutdown_loop(REMOTE_VIEWER(app)->priv->virt_viewer_loop);
 }
 
 static void
@@ -176,7 +189,7 @@ remote_viewer_get_property(GObject *object, guint property_id,
 }
 
 static void
-remote_viewer_class_init (RemoteViewerClass *klass)
+remote_viewer_class_init(RemoteViewerClass *klass)
 {
     GObjectClass *object_class = G_OBJECT_CLASS (klass);
     GtkApplicationClass *gtk_app_class = GTK_APPLICATION_CLASS(klass);
@@ -187,6 +200,7 @@ remote_viewer_class_init (RemoteViewerClass *klass)
 
     object_class->get_property = remote_viewer_get_property;
     object_class->dispose = remote_viewer_dispose;
+    object_class->finalize = remote_viewer_finalize;
 
     g_app_class->local_command_line = remote_viewer_local_command_line;
 
@@ -214,21 +228,35 @@ remote_viewer_class_init (RemoteViewerClass *klass)
 static void
 remote_viewer_init(RemoteViewer *self)
 {
+    g_info("%s", (const char*)__func__);
     self->priv = GET_PRIVATE(self);
+
+    // app updater entity
+    self->app_updater = app_updater_new();
+
+    // init usb redir
+    usbredir_controller_init();
+
+    // create vdi session
+    vdi_session_static_create();
 }
 
 RemoteViewer *
 remote_viewer_new(void)
 {
     g_info("remote_viewer_new");
-
-    // start session
-    vdi_session_static_create();
-
     return g_object_new(REMOTE_VIEWER_TYPE,
                         "application-id", "mashtab.veil-connect",
                         "flags", G_APPLICATION_NON_UNIQUE,
                         NULL);
+}
+
+void remote_viewer_free_resources(RemoteViewer *self)
+{
+    usbredir_controller_deinit();
+    vdi_session_static_destroy();
+
+    g_object_unref(self->app_updater);
 }
 
 static gboolean
@@ -314,7 +342,7 @@ remote_viewer_start(VirtViewerApp *app, GError **err G_GNUC_UNUSED, RemoteViewer
 retry_auth:
     {
         // Забираем из ui адрес и порт
-        GtkResponseType dialog_window_response = remote_viewer_connect_dialog(&con_data);
+        GtkResponseType dialog_window_response = remote_viewer_connect_dialog(REMOTE_VIEWER(app), &con_data);
         if (dialog_window_response == GTK_RESPONSE_CLOSE)
             goto to_exit;
     }
@@ -357,7 +385,7 @@ retry_connect_to_vm:
         }
 
         VIRT_VIEWER_APP_CLASS(remote_viewer_parent_class)->start(app, NULL, AUTH_DIALOG);
-        create_loop_and_launch(&virt_viewer_loop);
+        create_loop_and_launch(&REMOTE_VIEWER(app)->priv->virt_viewer_loop);
 
         // go back to auth or quit
         if (virt_viewer_app_is_quitting(app))
@@ -407,7 +435,7 @@ retry_connect_to_vm:
             virt_viewer_start_reconnect_poll(app);
             // Показывается окно virt viewer // virt_viewer_app_default_start
             VIRT_VIEWER_APP_CLASS(remote_viewer_parent_class)->start(app, NULL, AUTH_DIALOG);
-            create_loop_and_launch(&virt_viewer_loop);
+            create_loop_and_launch(&REMOTE_VIEWER(app)->priv->virt_viewer_loop);
 
             // quit if required
             if (virt_viewer_app_is_quitting(app))
