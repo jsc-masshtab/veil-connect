@@ -488,9 +488,15 @@ static void rdp_post_disconnect(freerdp* instance)
     gdi_free(instance);
 
     // Close rdp windows if LOGOFF_BY_USER received or there are no errors
-    if (((last_error & 0xFFFF) == ERRINFO_LOGOFF_BY_USER) ||
-        ((last_error & 0xFFFF) == ERRINFO_RPC_INITIATED_DISCONNECT_BY_USER) ||
-        (last_error == 0 && ex_rdp_context->rail_rdp_error == 0)) {
+    // For situation where user intentionally closed connection
+    gboolean is_closed_intentionally = FALSE;
+    if (last_error >= 0x10000 && last_error < 0x00020000) {
+        if ((last_error & 0xFFFF) == ERRINFO_LOGOFF_BY_USER ||
+        (last_error & 0xFFFF) == ERRINFO_RPC_INITIATED_DISCONNECT_BY_USER)
+            is_closed_intentionally = TRUE;
+    }
+
+    if (is_closed_intentionally || (last_error == 0 && ex_rdp_context->rail_rdp_error == 0)) {
         *ex_rdp_context->dialog_window_response_p = GTK_RESPONSE_CANCEL;
         shutdown_loop(*(ex_rdp_context->p_loop));
     }

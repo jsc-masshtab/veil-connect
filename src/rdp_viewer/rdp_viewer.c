@@ -126,7 +126,19 @@ GtkResponseType rdp_viewer_start(const gchar *usename, const gchar *password, gc
     ExtendedRdpContext *ex_rdp_context = create_rdp_context();
     ex_rdp_context->p_loop = &loop;
     ex_rdp_context->dialog_window_response_p = &dialog_window_response;
-    rdp_client_set_credentials(ex_rdp_context, usename, password, domain, ip, port);
+
+    // Логин в формате name@domain не нравится freerdp, поэтому отбрасываем @domain
+    gchar *corrected_usename = NULL;
+    char *sub_string = strchr(usename, '@');
+    if (sub_string) {
+        int index = (int) (sub_string - usename);
+        corrected_usename = g_strndup(usename, index);
+    } else {
+        corrected_usename = g_strdup(usename);
+    }
+
+    rdp_client_set_credentials(ex_rdp_context, corrected_usename, password, domain, ip, port);
+    free_memory_safely(&corrected_usename);
 
     // Set some presettings
     usbredir_controller_reset_tcp_usb_devices_on_next_gui_opening(TRUE);

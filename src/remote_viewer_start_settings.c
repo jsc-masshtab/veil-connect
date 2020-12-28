@@ -312,9 +312,8 @@ btn_get_app_updates_clicked_cb(GtkButton *button G_GNUC_UNUSED, ConnectSettingsD
 {
     g_info("%s", (const char *)__func__);
 
-    AppUpdater *app_updater = dialog_data->p_remote_viewer->app_updater;
-
 #ifdef _WIN32
+    AppUpdater *app_updater = dialog_data->p_remote_viewer->app_updater;
     app_updater_execute_task_get_windows_updates(app_updater);
 #else
     gtk_label_set_text(GTK_LABEL(dialog_data->check_updates_label), "На данный момент реализовано только для Windows");
