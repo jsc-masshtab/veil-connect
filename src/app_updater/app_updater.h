@@ -22,7 +22,10 @@ struct _AppUpdater
     GObject parent;
 
     gchar *_cur_status_msg;
+    gchar *_admin_password;
     int _is_working;
+
+    GMutex priv_members_mutex;
 };
 
 struct _AppUpdaterClass
@@ -38,19 +41,15 @@ GType app_updater_get_type( void ) G_GNUC_CONST;
 
 AppUpdater *app_updater_new(void);
 
-const gchar *app_updater_get_cur_status_msg(AppUpdater *self);
+gchar *app_updater_get_cur_status_msg(AppUpdater *self);
 int app_updater_is_working(AppUpdater *self);
-#ifdef _WIN32
+void app_updater_set_admin_password(AppUpdater *self, const gchar *admin_password);
+gchar *app_updater_get_admin_password(AppUpdater *self);
+#ifdef __linux__
+void app_updater_execute_task_get_linux_updates(AppUpdater *self);
+#elif _WIN32
 void app_updater_execute_task_get_windows_updates(AppUpdater *self);
 #endif
-
-
-
-
-
-
-
-
 
 
 #endif //VEIL_CONNECT_APP_UPDATER_H

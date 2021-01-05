@@ -311,12 +311,46 @@ static void
 btn_get_app_updates_clicked_cb(GtkButton *button G_GNUC_UNUSED, ConnectSettingsDialogData *dialog_data)
 {
     g_info("%s", (const char *)__func__);
-
-#ifdef _WIN32
     AppUpdater *app_updater = dialog_data->p_remote_viewer->app_updater;
+    if (app_updater_is_working(app_updater))
+        return;
+
+#ifdef __linux__
+    // get sudo pass (Нужно показать виджет для ввода пароля sudo)
+    GtkBuilder *builder = remote_viewer_util_load_ui("ask_pass_form.ui");
+    GtkWidget *ask_pass_dialog = get_widget_from_builder(builder, "ask_pass_dialog");
+    gtk_dialog_add_button(GTK_DIALOG(ask_pass_dialog), "Ок", GTK_RESPONSE_OK);
+    gtk_dialog_add_button(GTK_DIALOG(ask_pass_dialog), "Отмена", GTK_RESPONSE_CANCEL);
+    gtk_window_set_transient_for(GTK_WINDOW(ask_pass_dialog), GTK_WINDOW(dialog_data->window));
+
+    int result = gtk_dialog_run(GTK_DIALOG(ask_pass_dialog));
+    switch(result) {
+        case GTK_RESPONSE_OK:
+            g_info("GTK_RESPONSE_OK");
+            GtkWidget *password_entry = get_widget_from_builder(builder, "password_entry");
+            const gchar *password = gtk_entry_get_text(GTK_ENTRY(password_entry));
+            app_updater_set_admin_password(app_updater, password);
+            break;
+        default:
+            break;
+    }
+    g_object_unref(builder);
+    gtk_widget_destroy(ask_pass_dialog);
+
+    // check if password provided
+    gchar *app_updater_admin_password = app_updater_get_admin_password(app_updater);
+    if( app_updater_admin_password == NULL) {
+        gtk_label_set_text(GTK_LABEL(dialog_data->check_updates_label), "Необходимо ввести пароль");
+        return;
+    }
+    free_memory_safely(&app_updater_admin_password);
+
+    // start updating routine
+    app_updater_execute_task_get_linux_updates(app_updater);
+#elif _WIN32
     app_updater_execute_task_get_windows_updates(app_updater);
 #else
-    gtk_label_set_text(GTK_LABEL(dialog_data->check_updates_label), "На данный момент реализовано только для Windows");
+    gtk_label_set_text(GTK_LABEL(dialog_data->check_updates_label), "Не реализовано для текущей ОС");
 #endif
 }
 
@@ -579,15 +613,19 @@ GtkResponseType remote_viewer_start_settings_dialog(RemoteViewer *p_remote_viewe
     // Service functions
     dialog_data.btn_archive_logs = get_widget_from_builder(dialog_data.builder, "btn_archive_logs");
     dialog_data.log_location_label = get_widget_from_builder(dialog_data.builder, "log_location_label");
-    gtk_label_set_selectable (GTK_LABEL(dialog_data.log_location_label), TRUE);
+    gtk_label_set_selectable(GTK_LABEL(dialog_data.log_location_label), TRUE);
 
     dialog_data.btn_get_app_updates = get_widget_from_builder(dialog_data.builder, "btn_get_app_updates");
     dialog_data.check_updates_spinner = get_widget_from_builder(dialog_data.builder, "check_updates_spinner");
     dialog_data.check_updates_label = get_widget_from_builder(dialog_data.builder, "check_updates_label");
     // В этот момент может происходить процесс обновления софта.  Setup gui
+
     AppUpdater *app_updater = dialog_data.p_remote_viewer->app_updater;
     if (app_updater_is_working(app_updater)) {
-        gtk_label_set_text(GTK_LABEL(dialog_data.check_updates_label), app_updater_get_cur_status_msg(app_updater));
+
+        gchar *app_updater_cur_status_msg = app_updater_get_cur_status_msg(app_updater);
+        gtk_label_set_text(GTK_LABEL(dialog_data.check_updates_label), app_updater_cur_status_msg);
+        free_memory_safely(&app_updater_cur_status_msg);
         gtk_spinner_start((GtkSpinner *) dialog_data.check_updates_spinner);
         gtk_widget_set_sensitive(dialog_data.btn_get_app_updates, FALSE);
     }
