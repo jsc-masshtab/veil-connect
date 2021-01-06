@@ -51,7 +51,7 @@ static void app_updater_class_init( AppUpdaterClass *klass )
                  G_TYPE_INT);
 }
 
-static void app_updater_init( AppUpdater *self G_GNUC_UNUSED)
+static void app_updater_init( AppUpdater *self )
 {
     g_info("%s", (const char *)__func__);
     g_mutex_init(&self->priv_members_mutex);
@@ -114,10 +114,10 @@ app_updater_get_linux_updates(GTask    *task G_GNUC_UNUSED,
     gchar *last_version = NULL;
     gchar *standard_output = NULL;
     gchar *standard_error = NULL;
+    gchar *found_match = NULL;
     gint exit_status = 0;
     GMatchInfo *match_info = NULL;
     GRegex *regex = NULL;
-    gchar *found_match = NULL;
 
     const gchar *package_name = "veil-connect"; // veil-connect
 
@@ -323,7 +323,6 @@ app_updater_get_windows_updates(GTask    *task G_GNUC_UNUSED,
 AppUpdater *app_updater_new()
 {
     AppUpdater *app_updater = APP_UPDATER( g_object_new( TYPE_APP_UPDATER, NULL ) );
-
     return app_updater;
 }
 

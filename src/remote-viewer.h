@@ -10,6 +10,7 @@
 #include <glib-object.h>
 #include "virt-viewer-app.h"
 #include "app_updater.h"
+#include "vdi_manager.h"
 
 G_BEGIN_DECLS
 
@@ -26,6 +27,7 @@ typedef struct {
     VirtViewerApp parent;
     RemoteViewerPrivate *priv;
     AppUpdater *app_updater;
+    VdiManager *vdi_manager;
 
 } RemoteViewer;
 

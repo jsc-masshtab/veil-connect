@@ -27,12 +27,10 @@ VdiPoolWidget build_pool_widget(const gchar *pool_id, const gchar *pool_name,
                                 const gchar *os_type, const gchar *status, JsonArray *conn_types_json_array,
                                 GtkWidget *gtk_flow_box)
 {
-    VdiPoolWidget vdi_pool_widget  = {};
+    VdiPoolWidget vdi_pool_widget = {};
 
     if (gtk_flow_box == NULL)
         return vdi_pool_widget;
-
-    vdi_pool_widget.pool_id = g_strdup(pool_id);
 
     //GtkFrame
     vdi_pool_widget.main_widget = gtk_frame_new(NULL); // status
@@ -94,6 +92,11 @@ VdiPoolWidget build_pool_widget(const gchar *pool_id, const gchar *pool_name,
 
     gtk_box_pack_start((GtkBox *)vdi_pool_widget.gtk_box, vdi_pool_widget.vm_start_button, TRUE, TRUE, 0);
 
+    g_object_set_data_full(G_OBJECT(vdi_pool_widget.vm_start_button),
+            "pool_id",
+            g_strdup(pool_id),
+            (GDestroyNotify) g_free);
+
     // main_widget setup
     gtk_widget_set_size_request(vdi_pool_widget.main_widget, 100, 120);
     gtk_flow_box_insert((GtkFlowBox *)gtk_flow_box, vdi_pool_widget.main_widget, 0);
@@ -133,7 +136,8 @@ void enable_spinner_visible(VdiPoolWidget *vdi_pool_widget, gboolean enable)
 
 void destroy_vdi_pool_widget(VdiPoolWidget *vdi_pool_widget)
 {
-    free_memory_safely(&vdi_pool_widget->pool_id);
+    if (vdi_pool_widget->btn_click_sig_hadle)
+        g_signal_handler_disconnect(vdi_pool_widget->vm_start_button, vdi_pool_widget->btn_click_sig_hadle);
 
     gtk_widget_destroy(vdi_pool_widget->vm_spinner);
     gtk_widget_destroy(vdi_pool_widget->image_widget);

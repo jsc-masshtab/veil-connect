@@ -29,7 +29,7 @@ typedef struct{
     GtkWidget *vm_start_button;
     GtkWidget *combobox_remote_protocol;
 
-    gchar *pool_id;
+    gulong btn_click_sig_hadle;
 
 } VdiPoolWidget;
 

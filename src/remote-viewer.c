@@ -253,10 +253,12 @@ remote_viewer_new(void)
 
 void remote_viewer_free_resources(RemoteViewer *self)
 {
+    g_object_unref(self->app_updater);
+    if (self->vdi_manager)
+        g_object_unref(self->vdi_manager);
+
     usbredir_controller_deinit();
     vdi_session_static_destroy();
-
-    g_object_unref(self->app_updater);
 }
 
 static gboolean
@@ -399,17 +401,16 @@ retry_connect_to_vm:
         if (con_data.user)
             g_object_set(app, "username", con_data.user, NULL);
 
-        VirtViewerWindow *main_window = virt_viewer_app_get_main_window(app);
-
         //Если is_connect_to_prev_pool true, то подключение к пред. запомненому пулу,
         // минуя vdi manager window
         if (!con_data.is_connect_to_prev_pool) {
             // show VDI manager window
-            GtkResponseType vdi_dialog_window_response = vdi_manager_dialog(virt_viewer_window_get_window(main_window),
-                    &con_data);
-            if (vdi_dialog_window_response == GTK_RESPONSE_CANCEL)
+            if (REMOTE_VIEWER(app)->vdi_manager == NULL)
+                REMOTE_VIEWER(app)->vdi_manager = vdi_manager_new();
+            GtkResponseType vdi_dialog_response = vdi_manager_dialog(REMOTE_VIEWER(app)->vdi_manager, &con_data);
+            if (vdi_dialog_response == GTK_RESPONSE_CANCEL)
                 goto retry_auth;
-            else if (vdi_dialog_window_response == GTK_RESPONSE_CLOSE)
+            else if (vdi_dialog_response == GTK_RESPONSE_CLOSE)
                 goto to_exit;
         }
         // set virt viewer window_name
