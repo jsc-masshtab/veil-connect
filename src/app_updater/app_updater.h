@@ -23,7 +23,10 @@ struct _AppUpdater
 
     gchar *_cur_status_msg;
     gchar *_admin_password;
+    gchar *_last_standard_output;
+
     int _is_working;
+    gint _last_exit_status;
 
     GMutex priv_members_mutex;
 };

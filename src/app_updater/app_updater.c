@@ -57,8 +57,10 @@ static void app_updater_init( AppUpdater *self )
     g_mutex_init(&self->priv_members_mutex);
 
     self->_is_working = 0;
+    self->_last_exit_status = 0;
     self->_cur_status_msg = NULL;
     self->_admin_password = NULL;
+    self->_last_standard_output = NULL;
 }
 
 static void app_updater_finalize( GObject *object )
@@ -69,6 +71,7 @@ static void app_updater_finalize( GObject *object )
     g_mutex_lock(&self->priv_members_mutex);
     free_memory_safely(&self->_cur_status_msg);
     free_memory_safely(&self->_admin_password);
+    free_memory_safely(&self->_last_standard_output);
     g_mutex_unlock(&self->priv_members_mutex);
 
     wair_for_mutex_and_clear(&self->priv_members_mutex);
@@ -115,9 +118,12 @@ app_updater_get_linux_updates(GTask    *task G_GNUC_UNUSED,
     gchar *standard_output = NULL;
     gchar *standard_error = NULL;
     gchar *found_match = NULL;
-    gint exit_status = 0;
     GMatchInfo *match_info = NULL;
     GRegex *regex = NULL;
+
+    g_mutex_lock(&self->priv_members_mutex);
+    free_memory_safely(&self->_last_standard_output);
+    g_mutex_unlock(&self->priv_members_mutex);
 
     const gchar *package_name = "veil-connect"; // veil-connect
 
@@ -127,8 +133,8 @@ app_updater_get_linux_updates(GTask    *task G_GNUC_UNUSED,
 
     // Проверка наличия обновлении в linux репозитории пакетов
     gchar *command_line = g_strdup_printf("apt list --upgradable | grep %s", package_name);
-    gboolean cmd_success = g_spawn_command_line_sync(command_line, &standard_output, &standard_error, &exit_status,
-                                                 NULL);
+    gboolean cmd_success = g_spawn_command_line_sync(command_line, &standard_output, &standard_error,
+            &self->_last_exit_status, NULL);
     if (!cmd_success) {
         set_status_msg(self, "Не удалось проверить наличие обновлений.");
         goto clear_mark;
@@ -182,37 +188,42 @@ app_updater_get_linux_updates(GTask    *task G_GNUC_UNUSED,
     command_line = g_strdup_printf("./start_client_update.sh %s %s", self->_admin_password, package_name);
     g_mutex_unlock(&self->priv_members_mutex);
 
-    cmd_success = g_spawn_command_line_sync(command_line, &standard_output, &standard_error, &exit_status,
-                                                     NULL);
+    cmd_success = g_spawn_command_line_sync(command_line, &standard_output, &standard_error,
+            &self->_last_exit_status, NULL);
     if (!cmd_success) {
         set_status_msg(self, "Не удалось запустить процесс установки новой версии ПО.");
         goto clear_mark;
     }
     g_info("App update standard_output: %s", standard_output);
     g_info("App update standard_error: %s", standard_error);
-    g_info("App update exit_status: %i", exit_status);
+    g_info("App update exit_status: %i", self->_last_exit_status);
 
-    if (exit_status == 0)
+    if (self->_last_exit_status == 0)
         msg = g_strdup_printf("Процесс установки версии %s завершился.\nПерезапустите приложение.", last_version);
     else
-        msg = g_strdup_printf("Процесс установки версии %s завершился\nс ошибками. См. лог файл.", last_version);
+        msg = g_strdup_printf("Процесс установки версии %s завершился\nс ошибками.", last_version);
     set_status_msg(self, msg);
     g_free(msg);
 
     // clear
     clear_mark:
-    free_memory_safely(&last_version);
+
     if (regex)
         g_regex_unref(regex);
     if(match_info)
         g_match_info_free(match_info);
-    free_memory_safely(&command_line);
-    free_memory_safely(&standard_output);
-    free_memory_safely(&standard_error);
-    free_memory_safely(&found_match);
+
     g_mutex_lock(&self->priv_members_mutex);
     free_memory_safely(&self->_admin_password);
+    free_memory_safely(&self->_last_standard_output);
+    self->_last_standard_output = g_strdup(standard_output);
     g_mutex_unlock(&self->priv_members_mutex);
+
+    free_memory_safely(&standard_output);
+    free_memory_safely(&command_line);
+    free_memory_safely(&last_version);
+    free_memory_safely(&standard_error);
+    free_memory_safely(&found_match);
 
     // notify about stop
     self->_is_working = 0;
