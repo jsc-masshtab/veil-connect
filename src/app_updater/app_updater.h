@@ -7,6 +7,8 @@
 
 #include <gtk/gtk.h>
 
+#include "remote-viewer-util.h"
+
 #define TYPE_APP_UPDATER         ( app_updater_get_type( ) )
 #define APP_UPDATER( obj )       ( G_TYPE_CHECK_INSTANCE_CAST( (obj), TYPE_APP_UPDATER, AppUpdater ) )
 #define IS_APP_UPDATER( obj )        ( G_TYPE_CHECK_INSTANCE_TYPE( (obj), TYPE_APP_UPDATER ) )
@@ -24,9 +26,12 @@ struct _AppUpdater
     gchar *_cur_status_msg;
     gchar *_admin_password;
     gchar *_last_standard_output;
+    gchar *_last_standard_error;
 
     int _is_working;
     gint _last_exit_status;
+
+    LINUX_DISTRO _linux_distro;
 
     GMutex priv_members_mutex;
 };
@@ -53,6 +58,8 @@ void app_updater_execute_task_get_linux_updates(AppUpdater *self);
 #elif _WIN32
 void app_updater_execute_task_get_windows_updates(AppUpdater *self);
 #endif
+gchar *app_updater_get_last_process_output(AppUpdater *self);
+
 
 
 #endif //VEIL_CONNECT_APP_UPDATER_H

@@ -7,7 +7,9 @@
 
 #include <stdlib.h>
 
-#ifdef _WIN32
+#ifdef __linux__
+#include <sys/utsname.h>
+#elif _WIN32
 #include <Urlmon.h>
 #endif
 
@@ -61,6 +63,9 @@ static void app_updater_init( AppUpdater *self )
     self->_cur_status_msg = NULL;
     self->_admin_password = NULL;
     self->_last_standard_output = NULL;
+    self->_last_standard_error = NULL;
+
+    self->_linux_distro = LINUX_DISTRO_UNKNOWN;
 }
 
 static void app_updater_finalize( GObject *object )
@@ -72,6 +77,7 @@ static void app_updater_finalize( GObject *object )
     free_memory_safely(&self->_cur_status_msg);
     free_memory_safely(&self->_admin_password);
     free_memory_safely(&self->_last_standard_output);
+    free_memory_safely(&self->_last_standard_error);
     g_mutex_unlock(&self->priv_members_mutex);
 
     wair_for_mutex_and_clear(&self->priv_members_mutex);
@@ -102,7 +108,6 @@ static void set_status_msg(AppUpdater *self, const gchar *status_msg)
     gdk_threads_add_idle((GSourceFunc)status_msg_changed, self);
     g_mutex_unlock(&self->priv_members_mutex);
 }
-
 #ifdef __linux__
 static void
 app_updater_get_linux_updates(GTask    *task G_GNUC_UNUSED,
@@ -110,8 +115,10 @@ app_updater_get_linux_updates(GTask    *task G_GNUC_UNUSED,
                                 gpointer     task_data,
                                 GCancellable *cancellable G_GNUC_UNUSED)
 {
+    g_info("%s", (const char *)__func__);
+
     AppUpdater *self = (AppUpdater *)task_data;
-    if (self->_is_working)
+    if (self->_is_working || self->_linux_distro == LINUX_DISTRO_UNKNOWN)
         return;
 
     gchar *last_version = NULL;
@@ -123,6 +130,7 @@ app_updater_get_linux_updates(GTask    *task G_GNUC_UNUSED,
 
     g_mutex_lock(&self->priv_members_mutex);
     free_memory_safely(&self->_last_standard_output);
+    free_memory_safely(&self->_last_standard_error);
     g_mutex_unlock(&self->priv_members_mutex);
 
     const gchar *package_name = "veil-connect"; // veil-connect
@@ -132,7 +140,15 @@ app_updater_get_linux_updates(GTask    *task G_GNUC_UNUSED,
     gdk_threads_add_idle((GSourceFunc)state_changed, self);
 
     // Проверка наличия обновлении в linux репозитории пакетов
-    gchar *command_line = g_strdup_printf("apt list --upgradable | grep %s", package_name);
+    gchar *command_line = NULL;
+
+    if (self->_linux_distro == LINUX_DISTRO_DEBIAN_LIKE)
+        command_line = g_strdup_printf("apt list --upgradable | grep %s", package_name);
+    else if (self->_linux_distro == LINUX_DISTRO_CENTOS_LIKE)
+        command_line = g_strdup_printf("yum check-update | grep %s", package_name);
+    else
+        goto clear_mark;
+
     gboolean cmd_success = g_spawn_command_line_sync(command_line, &standard_output, &standard_error,
             &self->_last_exit_status, NULL);
     if (!cmd_success) {
@@ -156,15 +172,16 @@ app_updater_get_linux_updates(GTask    *task G_GNUC_UNUSED,
 
     found_match = g_match_info_fetch(match_info, 0);
     // вычленить версию
-    gint max_tokens = 3;
-    gchar **package_str_array = g_strsplit(found_match, " ", max_tokens);
+    gint requied_tokens = 3;
+    //gchar **package_str_array = g_strsplit(found_match, " ", max_tokens);
+    gchar **package_str_array = g_regex_split_simple("\\s+", found_match, 0,0);
     if (package_str_array == NULL) {
         set_status_msg(self, "Нет доступных обновлений [код: 2].");
         goto clear_mark;
     }
 
     guint array_len = g_strv_length(package_str_array);
-    if (array_len == max_tokens) {
+    if (array_len >= requied_tokens) {
         last_version = g_strdup(package_str_array[1]);
     }
     g_strfreev(package_str_array);
@@ -185,7 +202,10 @@ app_updater_get_linux_updates(GTask    *task G_GNUC_UNUSED,
     g_free(msg);
 
     g_mutex_lock(&self->priv_members_mutex);
-    command_line = g_strdup_printf("./start_client_update.sh %s %s", self->_admin_password, package_name);
+    if (self->_linux_distro == LINUX_DISTRO_DEBIAN_LIKE)
+        command_line = g_strdup_printf("./start_client_update_debian.sh %s %s", self->_admin_password, package_name);
+    else if (self->_linux_distro == LINUX_DISTRO_CENTOS_LIKE)
+        command_line = g_strdup_printf("./start_client_update_centos.sh %s %s", self->_admin_password, package_name);
     g_mutex_unlock(&self->priv_members_mutex);
 
     cmd_success = g_spawn_command_line_sync(command_line, &standard_output, &standard_error,
@@ -215,13 +235,17 @@ app_updater_get_linux_updates(GTask    *task G_GNUC_UNUSED,
 
     g_mutex_lock(&self->priv_members_mutex);
     free_memory_safely(&self->_admin_password);
+
     free_memory_safely(&self->_last_standard_output);
     self->_last_standard_output = g_strdup(standard_output);
+
+    free_memory_safely(&self->_last_standard_error);
+    self->_last_standard_error = g_strdup(standard_error);
     g_mutex_unlock(&self->priv_members_mutex);
 
-    free_memory_safely(&standard_output);
     free_memory_safely(&command_line);
     free_memory_safely(&last_version);
+    free_memory_safely(&standard_output);
     free_memory_safely(&standard_error);
     free_memory_safely(&found_match);
 
@@ -370,6 +394,13 @@ gchar *app_updater_get_admin_password(AppUpdater *self)
 #ifdef __linux__
 void app_updater_execute_task_get_linux_updates(AppUpdater *self)
 {
+    // detect CentOS (if release contains .el)
+    struct utsname name;
+    if (uname(&name) == 0 && strstr(name.release, ".el"))
+        self->_linux_distro = LINUX_DISTRO_CENTOS_LIKE;
+    else
+        self->_linux_distro = LINUX_DISTRO_DEBIAN_LIKE;
+
     execute_async_task(app_updater_get_linux_updates, NULL, self, NULL);
 }
 
@@ -379,3 +410,17 @@ void app_updater_execute_task_get_windows_updates(AppUpdater *self)
     execute_async_task(app_updater_get_windows_updates, NULL, self, NULL);
 }
 #endif
+
+// Вовзращает вывод последнего выполненного процесса. Необходимо освободить память.
+gchar *app_updater_get_last_process_output(AppUpdater *self)
+{
+    g_mutex_lock(&self->priv_members_mutex);
+    gchar *process_output = NULL;
+
+    if (self->_last_standard_output || self->_last_standard_error)
+        process_output = g_strdup_printf("%s\n%s", self->_last_standard_error, self->_last_standard_output);
+
+    g_mutex_unlock(&self->priv_members_mutex);
+
+    return process_output;
+}

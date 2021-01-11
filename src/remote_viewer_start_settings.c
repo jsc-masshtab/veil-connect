@@ -306,7 +306,9 @@ on_app_updater_status_changed(gpointer data G_GNUC_UNUSED,
 
         // show the last output if there was an error
         AppUpdater *app_updater = dialog_data->p_remote_viewer->app_updater;
-        if (app_updater->_last_exit_status != 0 && app_updater->_last_standard_output) {
+        gchar *last_process_output = app_updater_get_last_process_output(app_updater);
+
+        if (app_updater->_last_exit_status != 0 && last_process_output ) {
 
             GtkBuilder *builder = remote_viewer_util_load_ui("text_msg_form.ui");
             GtkWidget *text_msg_dialog = get_widget_from_builder(builder, "text_msg_dialog");
@@ -318,7 +320,8 @@ on_app_updater_status_changed(gpointer data G_GNUC_UNUSED,
             GtkWidget *main_text_view = get_widget_from_builder(builder, "main_text_view");
 
             GtkTextBuffer *main_text_view_buffer = gtk_text_view_get_buffer(GTK_TEXT_VIEW(main_text_view));
-            gtk_text_buffer_set_text(main_text_view_buffer, app_updater->_last_standard_output, -1);
+            // output of the last process
+            gtk_text_buffer_set_text(main_text_view_buffer, last_process_output, -1);
 
             gtk_window_set_transient_for(GTK_WINDOW(text_msg_dialog), GTK_WINDOW(dialog_data->window));
             gtk_window_set_default_size(GTK_WINDOW(text_msg_dialog), 500, 500);
@@ -328,6 +331,8 @@ on_app_updater_status_changed(gpointer data G_GNUC_UNUSED,
             g_object_unref(builder);
             gtk_widget_destroy(text_msg_dialog);
         }
+
+        free_memory_safely(&last_process_output);
     }
     gtk_widget_set_sensitive(dialog_data->btn_get_app_updates, !isworking);
 }

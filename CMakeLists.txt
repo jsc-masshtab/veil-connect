@@ -273,6 +273,8 @@ if (UNIX)
 file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/doc/start_vdi_client.sh
      DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 # update script
-file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/doc/start_client_update.sh
+file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/doc/start_client_update_debian.sh
+        DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
+file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/doc/start_client_update_centos.sh
         DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 endif (UNIX)
