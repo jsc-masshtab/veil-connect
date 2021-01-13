@@ -478,7 +478,7 @@ static gboolean str_is_empty(const gchar *str)
   return ((str == NULL) || (str[0] == '\0'));
 }
 
-// Вернет 1, если первая больша. -1 если первая меньше, 0 - если равны
+// Вернет больше нуля, если первая больша. Меньше нуля, если первая меньше. 0 - если равны
 gint
 virt_viewer_compare_version(const gchar *s1, const gchar *s2)
 {
@@ -827,7 +827,7 @@ gchar *get_log_dir_path()
     gchar *log_dir = g_strdup("log");
 #elif _WIN32
     const gchar *locap_app_data_path = g_getenv("LOCALAPPDATA");
-    gchar *log_dir = g_strdup_printf("%s\\%s\\log", locap_app_data_path, PACKAGE);
+    gchar *log_dir = g_strdup_printf("%s\\%s\\log", locap_app_data_path, APPLICATION_NAME);
 #endif
     return log_dir;
 }
@@ -866,7 +866,7 @@ void convert_string_from_utf8_to_locale(gchar **utf8_str)
 gchar *get_windows_app_data_location(void)
 {
     const gchar *locap_app_data_path = g_getenv("LOCALAPPDATA");
-    gchar *app_data_dir = g_strdup_printf("%s\\%s", locap_app_data_path, PACKAGE);
+    gchar *app_data_dir = g_strdup_printf("%s\\%s", locap_app_data_path, APPLICATION_NAME);
     return app_data_dir;
 }
 

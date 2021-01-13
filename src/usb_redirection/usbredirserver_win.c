@@ -367,7 +367,7 @@ static void usbredirserver_wait_until_handling_thread_stops(UsbRedirServerData *
 //    return 0;
 //}
 
-void usbredirserver_launch(GTask           *task,
+void usbredirserver_launch_task(GTask           *task,
                           gpointer         source_object G_GNUC_UNUSED,
                           gpointer         task_data,
                           GCancellable    *cancellable G_GNUC_UNUSED)

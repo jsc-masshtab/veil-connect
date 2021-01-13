@@ -4,6 +4,7 @@
 
 #include "vdi_session.h"
 #include "app_updater.h"
+#include "config.h"
 
 #include <stdlib.h>
 
@@ -18,6 +19,7 @@
 
 #include "remote-viewer-util.h"
 
+#define VEIL_CONNECT_WINDOWS_RELEASES_URL "https://veil-update.mashtab.org/files/veil-connect/latest/windows/"
 
 G_DEFINE_TYPE( AppUpdater, app_updater, G_TYPE_OBJECT )
 
@@ -51,6 +53,16 @@ static void app_updater_class_init( AppUpdaterClass *klass )
                  G_TYPE_NONE,
                  1,
                  G_TYPE_INT);
+
+    g_signal_new("updates-checked",
+                 G_OBJECT_CLASS_TYPE(gobject_class),
+                 G_SIGNAL_RUN_FIRST,
+                 G_STRUCT_OFFSET(AppUpdaterClass, updates_checked),
+                 NULL, NULL,
+                 g_cclosure_marshal_VOID__INT,
+                 G_TYPE_NONE,
+                 1,
+                 G_TYPE_INT);
 }
 
 static void app_updater_init( AppUpdater *self )
@@ -58,14 +70,22 @@ static void app_updater_init( AppUpdater *self )
     g_info("%s", (const char *)__func__);
     g_mutex_init(&self->priv_members_mutex);
 
-    self->_is_working = 0;
+    self->_is_checking_updates = FALSE;
+    self->_is_getting_updates = FALSE;
     self->_last_exit_status = 0;
     self->_cur_status_msg = NULL;
     self->_admin_password = NULL;
     self->_last_standard_output = NULL;
     self->_last_standard_error = NULL;
 
-    self->_linux_distro = LINUX_DISTRO_UNKNOWN;
+#ifdef __linux__
+    // detect CentOS (if release contains .el)
+    struct utsname name;
+    if (uname(&name) == 0 && strstr(name.release, ".el"))
+        self->_linux_distro = LINUX_DISTRO_CENTOS_LIKE;
+    else
+        self->_linux_distro = LINUX_DISTRO_DEBIAN_LIKE;
+#endif
 }
 
 static void app_updater_finalize( GObject *object )
@@ -96,7 +116,7 @@ static gboolean status_msg_changed(AppUpdater *self)
 
 static gboolean state_changed(AppUpdater *self)
 {
-    g_signal_emit_by_name(self, "state-changed", self->_is_working);
+    g_signal_emit_by_name(self, "state-changed", self->_is_getting_updates);
     return FALSE;
 }
 
@@ -108,9 +128,120 @@ static void set_status_msg(AppUpdater *self, const gchar *status_msg)
     gdk_threads_add_idle((GSourceFunc)status_msg_changed, self);
     g_mutex_unlock(&self->priv_members_mutex);
 }
-#ifdef __linux__
+
+// callback for app_updater_check_updates_task
 static void
-app_updater_get_linux_updates(GTask    *task G_GNUC_UNUSED,
+app_updater_on_check_updates_task_finished(GObject *source_object G_GNUC_UNUSED,
+                                           GAsyncResult *res,
+                                           gpointer user_data)
+{
+    AppUpdater *self = (AppUpdater *)user_data;
+    gboolean is_available = g_task_propagate_boolean(G_TASK(res), NULL);
+    g_signal_emit_by_name(self, "updates-checked", is_available);
+}
+
+#ifdef __linux__
+
+// Проверяет наличие новой версии. Возвращает TRUE если есть новая версия
+static gboolean app_updater_check_linux_updates(AppUpdater *self,
+        gchar **command_line, gchar **standard_output, gchar **standard_error, gchar **last_version,
+                                            GRegex **regex, GMatchInfo **match_info)
+{
+    if (self->_linux_distro == LINUX_DISTRO_DEBIAN_LIKE)
+        *command_line = g_strdup_printf("apt list --upgradable | grep %s", PACKAGE);
+    else if (self->_linux_distro == LINUX_DISTRO_CENTOS_LIKE)
+        *command_line = g_strdup_printf("yum check-update | grep %s", PACKAGE);
+    else
+        return FALSE;
+
+    gboolean cmd_success = g_spawn_command_line_sync(*command_line, standard_output, standard_error,
+                                                     &self->_last_exit_status, NULL);
+    if (!cmd_success) {
+        set_status_msg(self, "Не удалось проверить наличие обновлений.");
+        return FALSE;
+    }
+
+    // Найти строку содержащую veil-connect. Разделить по пробелам. Второй элемент - новая версия
+    // ^(veil-connect.+)\n
+    gchar *string_pattern = g_strdup_printf("^(%s.+)\\n", PACKAGE);
+    *regex = g_regex_new(string_pattern, G_REGEX_MULTILINE, 0, NULL);
+    g_regex_match(*regex, *standard_output, 0, match_info);
+    g_free(string_pattern);
+
+    gboolean is_matched = g_match_info_matches(*match_info);
+
+    if (!is_matched) {
+        set_status_msg(self, "Нет доступных обновлений [код: 1].");
+        return FALSE;
+    }
+
+    gchar *found_match = g_match_info_fetch(*match_info, 0);
+    // вычленить версию
+    gint requied_tokens = 3;
+    //gchar **package_str_array = g_strsplit(found_match, " ", max_tokens);
+    gchar **package_str_array = g_regex_split_simple("\\s+", found_match, 0, 0);
+    free_memory_safely(&found_match);
+    if (package_str_array == NULL) {
+        set_status_msg(self, "Нет доступных обновлений [код: 2].");
+        return FALSE;
+    }
+
+    guint array_len = g_strv_length(package_str_array);
+    if (array_len >= requied_tokens) {
+        *last_version = g_strdup(package_str_array[1]);
+    }
+    g_strfreev(package_str_array);
+
+    if (*last_version == NULL) {
+        set_status_msg(self, "Нет доступных обновлений [код: 3].");
+        return FALSE;
+    }
+
+    return TRUE;
+}
+
+// Проверяет обновления
+static void
+app_updater_check_linux_updates_task(GTask    *task G_GNUC_UNUSED,
+                                   gpointer     source_object G_GNUC_UNUSED,
+                                   gpointer     task_data,
+                                   GCancellable *cancellable G_GNUC_UNUSED)
+{
+    g_info("%s", (const char *)__func__);
+
+    AppUpdater *self = (AppUpdater *)task_data;
+    if (self->_is_checking_updates)
+        return;
+    self->_is_checking_updates = TRUE;
+
+    gchar *last_version = NULL;
+    gchar *standard_output = NULL;
+    gchar *standard_error = NULL;
+    gchar *command_line = NULL;
+    GMatchInfo *match_info = NULL;
+    GRegex *regex = NULL;
+
+    gboolean is_updates_available = app_updater_check_linux_updates(self,
+                                    &command_line, &standard_output, &standard_error, &last_version,
+                                    &regex, &match_info);
+
+    if (regex)
+        g_regex_unref(regex);
+    if(match_info)
+        g_match_info_free(match_info);
+    free_memory_safely(&command_line);
+    free_memory_safely(&last_version);
+    free_memory_safely(&standard_output);
+    free_memory_safely(&standard_error);
+
+    g_task_return_boolean(task, is_updates_available);
+
+    self->_is_checking_updates = FALSE;
+}
+
+// Проверяет и ставит обновления
+static void
+app_updater_get_linux_updates_task(GTask    *task G_GNUC_UNUSED,
                                 gpointer     source_object G_GNUC_UNUSED,
                                 gpointer     task_data,
                                 GCancellable *cancellable G_GNUC_UNUSED)
@@ -118,13 +249,13 @@ app_updater_get_linux_updates(GTask    *task G_GNUC_UNUSED,
     g_info("%s", (const char *)__func__);
 
     AppUpdater *self = (AppUpdater *)task_data;
-    if (self->_is_working || self->_linux_distro == LINUX_DISTRO_UNKNOWN)
+    if (self->_is_getting_updates || self->_linux_distro == LINUX_DISTRO_UNKNOWN)
         return;
 
     gchar *last_version = NULL;
     gchar *standard_output = NULL;
     gchar *standard_error = NULL;
-    gchar *found_match = NULL;
+    gchar *command_line = NULL;
     GMatchInfo *match_info = NULL;
     GRegex *regex = NULL;
 
@@ -133,63 +264,15 @@ app_updater_get_linux_updates(GTask    *task G_GNUC_UNUSED,
     free_memory_safely(&self->_last_standard_error);
     g_mutex_unlock(&self->priv_members_mutex);
 
-    const gchar *package_name = "veil-connect"; // veil-connect
-
-    set_status_msg(self, "Проверка наличия обновлений."); // code repeat
-    self->_is_working = 1;
+    set_status_msg(self, "Проверка наличия обновлений.");
+    self->_is_getting_updates = 1;
     gdk_threads_add_idle((GSourceFunc)state_changed, self);
 
     // Проверка наличия обновлении в linux репозитории пакетов
-    gchar *command_line = NULL;
-
-    if (self->_linux_distro == LINUX_DISTRO_DEBIAN_LIKE)
-        command_line = g_strdup_printf("apt list --upgradable | grep %s", package_name);
-    else if (self->_linux_distro == LINUX_DISTRO_CENTOS_LIKE)
-        command_line = g_strdup_printf("yum check-update | grep %s", package_name);
-    else
+    if (!app_updater_check_linux_updates(self,
+            &command_line, &standard_output, &standard_error, &last_version,
+            &regex, &match_info))
         goto clear_mark;
-
-    gboolean cmd_success = g_spawn_command_line_sync(command_line, &standard_output, &standard_error,
-            &self->_last_exit_status, NULL);
-    if (!cmd_success) {
-        set_status_msg(self, "Не удалось проверить наличие обновлений.");
-        goto clear_mark;
-    }
-
-    // Найти строку содержащую veil-connect. Разделить по пробелам. Второй элемент - новая версия
-    // ^(veil-connect.+)\n
-    gchar *string_pattern = g_strdup_printf("^(%s.+)\\n", package_name);
-    regex = g_regex_new(string_pattern, G_REGEX_MULTILINE, 0, NULL);
-    g_regex_match(regex, standard_output, 0, &match_info);
-    g_free(string_pattern);
-
-    gboolean is_matched = g_match_info_matches(match_info);
-
-    if (!is_matched) {
-        set_status_msg(self, "Нет доступных обновлений [код: 1].");
-        goto clear_mark;
-    }
-
-    found_match = g_match_info_fetch(match_info, 0);
-    // вычленить версию
-    gint requied_tokens = 3;
-    //gchar **package_str_array = g_strsplit(found_match, " ", max_tokens);
-    gchar **package_str_array = g_regex_split_simple("\\s+", found_match, 0,0);
-    if (package_str_array == NULL) {
-        set_status_msg(self, "Нет доступных обновлений [код: 2].");
-        goto clear_mark;
-    }
-
-    guint array_len = g_strv_length(package_str_array);
-    if (array_len >= requied_tokens) {
-        last_version = g_strdup(package_str_array[1]);
-    }
-    g_strfreev(package_str_array);
-
-    if (last_version == NULL) {
-        set_status_msg(self, "Нет доступных обновлений [код: 3].");
-        goto clear_mark;
-    }
 
     // clear
     free_memory_safely(&command_line);
@@ -203,12 +286,12 @@ app_updater_get_linux_updates(GTask    *task G_GNUC_UNUSED,
 
     g_mutex_lock(&self->priv_members_mutex);
     if (self->_linux_distro == LINUX_DISTRO_DEBIAN_LIKE)
-        command_line = g_strdup_printf("./start_client_update_debian.sh %s %s", self->_admin_password, package_name);
+        command_line = g_strdup_printf("./start_client_update_debian.sh %s %s", self->_admin_password, PACKAGE);
     else if (self->_linux_distro == LINUX_DISTRO_CENTOS_LIKE)
-        command_line = g_strdup_printf("./start_client_update_centos.sh %s %s", self->_admin_password, package_name);
+        command_line = g_strdup_printf("./start_client_update_centos.sh %s %s", self->_admin_password, PACKAGE);
     g_mutex_unlock(&self->priv_members_mutex);
 
-    cmd_success = g_spawn_command_line_sync(command_line, &standard_output, &standard_error,
+    gboolean cmd_success = g_spawn_command_line_sync(command_line, &standard_output, &standard_error,
             &self->_last_exit_status, NULL);
     if (!cmd_success) {
         set_status_msg(self, "Не удалось запустить процесс установки новой версии ПО.");
@@ -247,28 +330,52 @@ app_updater_get_linux_updates(GTask    *task G_GNUC_UNUSED,
     free_memory_safely(&last_version);
     free_memory_safely(&standard_output);
     free_memory_safely(&standard_error);
-    free_memory_safely(&found_match);
 
     // notify about stop
-    self->_is_working = 0;
+    self->_is_getting_updates = 0;
     gdk_threads_add_idle((GSourceFunc)state_changed, self);
 }
 #elif _WIN32
+// Проверяет обновления
 static void
-app_updater_get_windows_updates(GTask    *task G_GNUC_UNUSED,
+app_updater_check_windows_updates_task(GTask    *task G_GNUC_UNUSED,
+                                     gpointer     source_object G_GNUC_UNUSED,
+                                     gpointer     task_data,
+                                     GCancellable *cancellable G_GNUC_UNUSED)
+{
+    g_info("%s", (const char *)__func__);
+
+    AppUpdater *self = (AppUpdater *)task_data;
+    if (self->_is_checking_updates)
+        return;
+    self->_is_checking_updates = TRUE;
+
+    gchar *last_version = NULL;
+    gchar *download_link = vdi_session_check_for_tk_updates(VEIL_CONNECT_WINDOWS_RELEASES_URL, &last_version);
+
+    gboolean is_updates_available = (download_link != NULL);
+    free_memory_safely(&download_link);
+
+    g_task_return_boolean(task, is_updates_available);
+
+    self->_is_checking_updates = FALSE;
+}
+
+static void
+app_updater_get_windows_updates_task(GTask    *task G_GNUC_UNUSED,
                             gpointer     source_object G_GNUC_UNUSED,
                             gpointer     task_data,
                             GCancellable *cancellable G_GNUC_UNUSED)
 {
     AppUpdater *self = (AppUpdater *)task_data;
-    if (self->_is_working)
+    if (self->_is_getting_updates)
         return;
 
     gchar *last_version = NULL;
 
     // start
     set_status_msg(self, "Проверка наличия обновлений.");
-    self->_is_working = 1;
+    self->_is_getting_updates = 1;
     gdk_threads_add_idle((GSourceFunc)state_changed, self);
 
     gchar *full_file_name = NULL;
@@ -277,14 +384,13 @@ app_updater_get_windows_updates(GTask    *task G_GNUC_UNUSED,
     g_mkdir_with_parents(temp_dir, 0755);
 
     // Check for updates
-    const gchar *veil_connect_url = "https://veil-update.mashtab.org/files/veil-connect/latest/windows/";
-    gchar *download_link = vdi_session_check_for_tk_updates(veil_connect_url, &last_version);
+    gchar *download_link = vdi_session_check_for_tk_updates(VEIL_CONNECT_WINDOWS_RELEASES_URL, &last_version);
     if (download_link == NULL) { // download_link == NULL
         set_status_msg(self, "Нет доступных обновлений.");
         goto clear_mark;
     }
 
-    // Download the latest version if required
+    // Download the latest version
     set_status_msg(self, "Скачивание новой версии ПО.");
 
     full_file_name = g_strdup_printf("%s/installer.exe", temp_dir);
@@ -349,7 +455,7 @@ app_updater_get_windows_updates(GTask    *task G_GNUC_UNUSED,
     free_memory_safely(&last_version);
 
     //
-    self->_is_working = 0;
+    self->_is_getting_updates = 0;
     gdk_threads_add_idle((GSourceFunc)state_changed, self);
 }
 #endif
@@ -370,9 +476,9 @@ gchar *app_updater_get_cur_status_msg(AppUpdater *self)
     return temp_cur_status_msg;
 }
 
-int app_updater_is_working(AppUpdater *self)
+int app_updater_is_getting_updates(AppUpdater *self)
 {
-    return self->_is_working;
+    return self->_is_getting_updates;
 }
 
 void app_updater_set_admin_password(AppUpdater *self, const gchar *admin_password)
@@ -391,25 +497,25 @@ gchar *app_updater_get_admin_password(AppUpdater *self)
     return temp_admin_password;
 }
 
+void app_updater_execute_task_check_updates(AppUpdater *self)
+{
 #ifdef __linux__
-void app_updater_execute_task_get_linux_updates(AppUpdater *self)
-{
-    // detect CentOS (if release contains .el)
-    struct utsname name;
-    if (uname(&name) == 0 && strstr(name.release, ".el"))
-        self->_linux_distro = LINUX_DISTRO_CENTOS_LIKE;
-    else
-        self->_linux_distro = LINUX_DISTRO_DEBIAN_LIKE;
-
-    execute_async_task(app_updater_get_linux_updates, NULL, self, NULL);
-}
-
+    execute_async_task(app_updater_check_linux_updates_task,
+                       app_updater_on_check_updates_task_finished, self, self);
 #elif _WIN32
-void app_updater_execute_task_get_windows_updates(AppUpdater *self)
-{
-    execute_async_task(app_updater_get_windows_updates, NULL, self, NULL);
-}
+    execute_async_task(app_updater_check_windows_updates_task,
+                       app_updater_on_check_updates_task_finished, self, self);
 #endif
+}
+
+void app_updater_execute_task_get_updates(AppUpdater *self)
+{
+#ifdef __linux__
+    execute_async_task(app_updater_get_linux_updates_task, NULL, self, NULL);
+#elif _WIN32
+    execute_async_task(app_updater_get_windows_updates_task, NULL, self, NULL);
+#endif
+}
 
 // Вовзращает вывод последнего выполненного процесса. Необходимо освободить память.
 gchar *app_updater_get_last_process_output(AppUpdater *self)

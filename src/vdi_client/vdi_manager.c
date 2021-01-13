@@ -104,7 +104,7 @@ static void set_vdi_client_state(VdiManager *self, VdiClientState vdi_client_sta
 static void refresh_vdi_pool_data_async(VdiManager *self)
 {
     set_vdi_client_state(self, VDI_WAITING_FOR_POOL_DATA, "Отправлен запрос на список пулов", FALSE);
-    execute_async_task(vdi_session_get_vdi_pool_data, (GAsyncReadyCallback)on_vdi_session_get_vdi_pool_data_finished,
+    execute_async_task(vdi_session_get_vdi_pool_data_task, (GAsyncReadyCallback)on_vdi_session_get_vdi_pool_data_finished,
             NULL, self);
 }
 // clear array of virtual machine widgets
@@ -359,7 +359,7 @@ static void on_vm_start_button_clicked(GtkButton *button, VdiManager *self)
     g_info("%s remote_protocol %s", (const char *)__func__, vdi_session_remote_protocol_str(remote_protocol));
     vdi_session_set_current_remote_protocol(remote_protocol);
     // execute task
-    execute_async_task(vdi_session_get_vm_from_pool, (GAsyncReadyCallback)on_vdi_session_get_vm_from_pool_finished,
+    execute_async_task(vdi_session_get_vm_from_pool_task, (GAsyncReadyCallback)on_vdi_session_get_vm_from_pool_finished,
             NULL, self);
 }
 

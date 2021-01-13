@@ -357,7 +357,7 @@ libusb_device_handle *usbredirserver_find_usb_device_and_open(UsbRedirServerData
     return handle;
 }
 
-void usbredirserver_launch(GTask           *task,
+void usbredirserver_launch_task(GTask           *task,
                            gpointer         source_object G_GNUC_UNUSED,
                            gpointer         task_data,
                            GCancellable    *cancellable G_GNUC_UNUSED)

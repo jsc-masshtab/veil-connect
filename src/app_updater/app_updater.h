@@ -28,7 +28,8 @@ struct _AppUpdater
     gchar *_last_standard_output;
     gchar *_last_standard_error;
 
-    int _is_working;
+    int _is_checking_updates;
+    int _is_getting_updates;
     gint _last_exit_status;
 
     LINUX_DISTRO _linux_distro;
@@ -43,6 +44,7 @@ struct _AppUpdaterClass
     /* signals */
     void (*status_msg_changed)(AppUpdater *self, const gchar *msg);
     void (*state_changed)(AppUpdater *self, int is_working);
+    void (*updates_checked)(AppUpdater *self, int is_available);
 };
 
 GType app_updater_get_type( void ) G_GNUC_CONST;
@@ -50,14 +52,13 @@ GType app_updater_get_type( void ) G_GNUC_CONST;
 AppUpdater *app_updater_new(void);
 
 gchar *app_updater_get_cur_status_msg(AppUpdater *self);
-int app_updater_is_working(AppUpdater *self);
+int app_updater_is_getting_updates(AppUpdater *self);
 void app_updater_set_admin_password(AppUpdater *self, const gchar *admin_password);
 gchar *app_updater_get_admin_password(AppUpdater *self);
-#ifdef __linux__
-void app_updater_execute_task_get_linux_updates(AppUpdater *self);
-#elif _WIN32
-void app_updater_execute_task_get_windows_updates(AppUpdater *self);
-#endif
+
+void app_updater_execute_task_check_updates(AppUpdater *self);
+void app_updater_execute_task_get_updates(AppUpdater *self);
+
 gchar *app_updater_get_last_process_output(AppUpdater *self);
 
 

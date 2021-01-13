@@ -342,7 +342,7 @@ btn_get_app_updates_clicked_cb(GtkButton *button G_GNUC_UNUSED, ConnectSettingsD
 {
     g_info("%s", (const char *)__func__);
     AppUpdater *app_updater = dialog_data->p_remote_viewer->app_updater;
-    if (app_updater_is_working(app_updater))
+    if (app_updater_is_getting_updates(app_updater))
         return;
 
 #ifdef __linux__
@@ -376,9 +376,9 @@ btn_get_app_updates_clicked_cb(GtkButton *button G_GNUC_UNUSED, ConnectSettingsD
     free_memory_safely(&app_updater_admin_password);
 
     // start updating routine
-    app_updater_execute_task_get_linux_updates(app_updater);
+    app_updater_execute_task_get_updates(app_updater);
 #elif _WIN32
-    app_updater_execute_task_get_windows_updates(app_updater);
+    app_updater_execute_task_get_updates(app_updater);
 #else
     gtk_label_set_text(GTK_LABEL(dialog_data->check_updates_label), "Не реализовано для текущей ОС");
 #endif
@@ -651,7 +651,7 @@ GtkResponseType remote_viewer_start_settings_dialog(RemoteViewer *p_remote_viewe
     // В этот момент может происходить процесс обновления софта.  Setup gui
 
     AppUpdater *app_updater = dialog_data.p_remote_viewer->app_updater;
-    if (app_updater_is_working(app_updater)) {
+    if (app_updater_is_getting_updates(app_updater)) {
 
         gchar *app_updater_cur_status_msg = app_updater_get_cur_status_msg(app_updater);
         gtk_label_set_text(GTK_LABEL(dialog_data.check_updates_label), app_updater_cur_status_msg);

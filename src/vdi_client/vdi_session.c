@@ -503,7 +503,7 @@ gchar *vdi_session_api_call(const char *method, const char *uri_string, const gc
     return response_body_str;
 }
 
-void vdi_session_log_in(GTask       *task,
+void vdi_session_log_in_task(GTask       *task,
                    gpointer       source_object G_GNUC_UNUSED,
                    gpointer       task_data G_GNUC_UNUSED,
                    GCancellable  *cancellable G_GNUC_UNUSED)
@@ -519,7 +519,7 @@ void vdi_session_log_in(GTask       *task,
     g_task_return_boolean(task, token_received);
 }
 
-void vdi_session_get_vdi_pool_data(GTask   *task,
+void vdi_session_get_vdi_pool_data_task(GTask   *task,
                  gpointer       source_object G_GNUC_UNUSED,
                  gpointer       task_data G_GNUC_UNUSED,
                  GCancellable  *cancellable G_GNUC_UNUSED)
@@ -532,7 +532,7 @@ void vdi_session_get_vdi_pool_data(GTask   *task,
     g_task_return_pointer(task, response_body_str, NULL); // return pointer must be freed
 }
 
-void vdi_session_get_vm_from_pool(GTask       *task,
+void vdi_session_get_vm_from_pool_task(GTask       *task,
                     gpointer       source_object G_GNUC_UNUSED,
                     gpointer       task_data G_GNUC_UNUSED,
                     GCancellable  *cancellable G_GNUC_UNUSED)
@@ -600,7 +600,7 @@ void vdi_session_get_vm_from_pool(GTask       *task,
     g_task_return_pointer(task, vdi_vm_data, NULL);
 }
 
-void vdi_session_do_action_on_vm(GTask      *task,
+void vdi_session_do_action_on_vm_task(GTask      *task,
                   gpointer       source_object G_GNUC_UNUSED,
                   gpointer       task_data G_GNUC_UNUSED,
                   GCancellable  *cancellable G_GNUC_UNUSED)
@@ -732,7 +732,7 @@ gchar *vdi_session_check_for_tk_updates(const gchar *veil_connect_url, gchar **p
     gint version_cmp_res = virt_viewer_compare_version((*p_last_version), PACKAGE_VERSION); // PACKAGE_VERSION
     g_info("!!!version_cmp_res: %i", version_cmp_res);
     // 1 means we have a fresher version and can update
-    if (version_cmp_res == 1) {
+    if (version_cmp_res > 0) {
         download_link = g_strdup_printf("%s\\veil-connect_%s-installer.exe",
                 veil_connect_url, found_match);
         g_info("download_link: %s", download_link);
@@ -874,7 +874,7 @@ void vdi_api_session_execute_task_do_action_on_vm(const gchar *actionStr, gboole
     action_on_vm_data->action_on_vm_str = g_strdup(actionStr);
     action_on_vm_data->is_action_forced = isForced;
 
-    execute_async_task(vdi_session_do_action_on_vm, NULL, action_on_vm_data, NULL);
+    execute_async_task(vdi_session_do_action_on_vm_task, NULL, action_on_vm_data, NULL);
 }
 
 void vdi_api_session_free_action_on_vm_data(ActionOnVmData *action_on_vm_data)

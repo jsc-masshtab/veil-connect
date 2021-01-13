@@ -54,7 +54,7 @@ void usbredir_controller_start_task(UsbServerStartData start_data)
     g_array_append_val(usbredir_controller.tasks_array, task);
 
     // launch task
-    execute_async_task(usbredirserver_launch, usbredir_controller_task_finished, task, NULL);
+    execute_async_task(usbredirserver_launch_task, usbredir_controller_task_finished, task, NULL);
 }
 
 // Определяю нужную  таску по параметрам USB. Считаем, что эта пара уникальна и достаточна для идентификации usb/таски

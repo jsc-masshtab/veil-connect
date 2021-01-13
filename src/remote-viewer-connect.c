@@ -46,6 +46,7 @@ typedef struct
     GtkWidget *connect_spinner;
     GtkWidget *message_display_label;
     GtkWidget *header_label;
+    GtkWidget *new_version_available_image;
 
     // remote viewer settings
     ConnectSettingsData *p_conn_data;
@@ -228,11 +229,11 @@ void connect_to_vdi_server(RemoteViewerConnData *ci)
                 "cur_remote_protocol_index", VDI_SPICE_PROTOCOL);
         vdi_session_set_current_remote_protocol(remote_protocol);
 
-        // start async task  vdi_session_get_vm_from_pool
-        execute_async_task(vdi_session_get_vm_from_pool, on_vdi_session_get_vm_from_pool_finished, NULL, ci);
+        // start async task  vdi_session_get_vm_from_pool_task
+        execute_async_task(vdi_session_get_vm_from_pool_task, on_vdi_session_get_vm_from_pool_finished, NULL, ci);
     } else {
         // fetch token task starting
-        execute_async_task(vdi_session_log_in, on_vdi_session_log_in_finished, NULL, ci);
+        execute_async_task(vdi_session_log_in_task, on_vdi_session_log_in_finished, NULL, ci);
     }
 }
 
@@ -339,6 +340,19 @@ static void fast_forward_connect_to_prev_pool_if_enabled(RemoteViewerConnData *c
     }
 }
 
+static void remote_viewer_on_updates_checked(gpointer data G_GNUC_UNUSED, int is_available,
+                                             RemoteViewerConnData *ci)
+{
+    g_info("%s  is_available %i", (const char *)__func__, is_available);
+
+    if (is_available) {
+        gtk_image_set_from_icon_name(GTK_IMAGE(ci->new_version_available_image),
+                                     "gtk-dialog-warning", GTK_ICON_SIZE_SMALL_TOOLBAR);
+        gtk_widget_set_tooltip_text(ci->new_version_available_image,
+            "Доступна новая версия. Чтобы обновиться нажмите Настройки->Служебные->Получить обновления.");
+    }
+}
+
 /**
 * remote_viewer_connect_dialog
 *
@@ -369,6 +383,7 @@ remote_viewer_connect_dialog(RemoteViewer *remote_viewer, ConnectSettingsData *c
     ci.message_display_label = GTK_WIDGET(gtk_builder_get_object(builder, "message-display-label"));
     ci.header_label = GTK_WIDGET(gtk_builder_get_object(builder, "header-label"));
     gtk_label_set_text(GTK_LABEL(ci.header_label), VERSION);
+    ci.new_version_available_image = GTK_WIDGET(gtk_builder_get_object(builder, "new-version-available-image"));
 
     // password entry
     ci.password_entry = GTK_WIDGET(gtk_builder_get_object(builder, "password-entry"));
@@ -380,6 +395,8 @@ remote_viewer_connect_dialog(RemoteViewer *remote_viewer, ConnectSettingsData *c
     g_signal_connect_swapped(ci.window, "delete-event", G_CALLBACK(window_deleted_cb), &ci);
     g_signal_connect(ci.settings_button, "clicked", G_CALLBACK(settings_button_clicked_cb), &ci);
     g_signal_connect(ci.connect_button, "clicked", G_CALLBACK(connect_button_clicked_cb), &ci);
+    gulong updates_checked_handle = g_signal_connect(remote_viewer->app_updater, "updates-checked",
+                                          G_CALLBACK(remote_viewer_on_updates_checked), &ci);
 
     // read ini file
     read_data_from_ini_file(&ci);
@@ -391,6 +408,9 @@ remote_viewer_connect_dialog(RemoteViewer *remote_viewer, ConnectSettingsData *c
     gtk_widget_show_all(ci.window);
     gtk_window_set_resizable(GTK_WINDOW(ci.window), FALSE);
 
+    // check if there is a new version
+    app_updater_execute_task_check_updates(remote_viewer->app_updater);
+
     // connect to the prev pool if requred
     fast_forward_connect_to_prev_pool_if_enabled(&ci);
 
@@ -398,6 +418,9 @@ remote_viewer_connect_dialog(RemoteViewer *remote_viewer, ConnectSettingsData *c
 
     // save data to ini file if required
     save_data_to_ini_file(&ci);
+
+    // disconnect signals
+    g_signal_handler_disconnect(remote_viewer->app_updater, updates_checked_handle);
 
     g_object_unref(builder);
     gtk_widget_destroy(ci.window);

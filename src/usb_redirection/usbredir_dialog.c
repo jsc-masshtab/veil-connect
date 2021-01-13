@@ -382,7 +382,7 @@ static void take_tk_address_from_ini(UsbredirMainDialogData *priv, GtkEntry* tk_
 }
 
 //Return address In case of success. Must be freed if its not NULL
-static void usbredir_dialog_determine_tk_address(GTask    *task,
+static void usbredir_dialog_determine_tk_address_task(GTask    *task,
                                                  gpointer       source_object G_GNUC_UNUSED,
                                                  gpointer       task_data G_GNUC_UNUSED,
                                                  GCancellable  *cancellable G_GNUC_UNUSED)
@@ -528,7 +528,7 @@ usbredir_dialog_check_if_reset_required_and_reset(UsbredirMainDialogData *priv)
                 detach_usb_data, priv);
 
         // try to get address on which the server will be created
-        execute_async_task(usbredir_dialog_determine_tk_address, usbredir_dialog_on_determine_tk_address_finished,
+        execute_async_task(usbredir_dialog_determine_tk_address_task, usbredir_dialog_on_determine_tk_address_finished,
                            NULL, priv);
     } else {
         take_tk_address_from_ini(priv, GTK_ENTRY(priv->tk_address_entry));

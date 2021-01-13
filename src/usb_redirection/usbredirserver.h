@@ -9,11 +9,11 @@
 
 #include "usbredirserver_data.h"
 
-void usbredirserver_launch(GTask           *task,
+void usbredirserver_launch_task(GTask           *task,
                            gpointer         source_object,
                            gpointer         task_data,
                            GCancellable    *cancellable);
 
-//DWORD WINAPI usbredirserver_launch(UsbServerStartData *server_start_data);
+//DWORD WINAPI usbredirserver_launch_task(UsbServerStartData *server_start_data);
 
 #endif //VEIL_CONNECT_USBREDIRSERVER_H

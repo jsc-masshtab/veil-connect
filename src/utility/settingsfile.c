@@ -15,7 +15,7 @@ get_ini_file_name()
 #elif _WIN32
         const gchar *locap_app_data_path = g_getenv("LOCALAPPDATA");
         // create app dir in local
-        gchar *app_data_dir = g_strdup_printf("%s/%s/", locap_app_data_path, PACKAGE);
+        gchar *app_data_dir = g_strdup_printf("%s/%s/", locap_app_data_path, APPLICATION_NAME);
         g_mkdir_with_parents(app_data_dir, 0755);
         // ini file full path
         ini_file_path = g_strdup_printf("%s/veil_client_settings.ini", app_data_dir);

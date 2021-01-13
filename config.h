@@ -112,8 +112,11 @@
 /* Define to the sub-directory where libtool stores uninstalled libraries. */
 #define LT_OBJDIR ".libs/"
 
+/* Name of application */
+#define APPLICATION_NAME "VeilConnect"
+
 /* Name of package */
-#define PACKAGE "VeilConnect"
+#define PACKAGE "veil-connect"
 
 /* Define to the address where bug reports for this package should be sent. */
 #define PACKAGE_BUGREPORT ""
