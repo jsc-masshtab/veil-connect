@@ -121,7 +121,7 @@ GtkResponseType rdp_viewer_start(const gchar *usename, const gchar *password, gc
 {
     g_info("%s domain %s", (const char *)__func__, domain);
 
-    GtkResponseType dialog_window_response = GTK_RESPONSE_CLOSE;
+    GtkResponseType dialog_window_response = GTK_RESPONSE_NONE;
     GMainLoop *loop = NULL;
     // create RDP context
     ExtendedRdpContext *ex_rdp_context = create_rdp_context();
@@ -228,5 +228,7 @@ GtkResponseType rdp_viewer_start(const gchar *usename, const gchar *password, gc
     }
     g_array_free(rdp_windows_array, TRUE);
 
+    if (dialog_window_response == GTK_RESPONSE_NONE)
+        dialog_window_response = GTK_RESPONSE_CLOSE;
     return dialog_window_response;
 }
