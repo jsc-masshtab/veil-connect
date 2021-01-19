@@ -1073,6 +1073,11 @@ G_MODULE_EXPORT void
 virt_viewer_window_menu_preferences_cb(GtkWidget *menu G_GNUC_UNUSED,
                                        VirtViewerWindow *self)
 {
+    if (!vdi_session_is_folders_redir_permitted()) {
+        show_msg_box_dialog(GTK_WINDOW(self->priv->window), "Проброс папок запрещен администратором");
+        return;
+    }
+
     virt_viewer_app_show_preferences(self->priv->app, self->priv->window);
 }
 

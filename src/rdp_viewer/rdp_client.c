@@ -41,6 +41,7 @@
 #include "settingsfile.h"
 
 #include "async.h"
+#include "vdi_session.h"
 
 #define PROGRAMM_NAME "rdp_gtk_client"
 #define TAG CLIENT_TAG(PROGRAMM_NAME)
@@ -121,7 +122,7 @@ static GArray * rdp_client_create_params_array(ExtendedRdpContext* ex)
     // drives (folders)
     gchar *shared_folders_str = read_str_from_ini_file("RDPSettings", "rdp_shared_folders");
 
-    if (shared_folders_str) {
+    if (shared_folders_str && vdi_session_is_folders_redir_permitted()) {
         gchar **shared_folders_array = g_strsplit(shared_folders_str, ";", 10);
 
         gchar **shared_folder;
@@ -145,6 +146,7 @@ static GArray * rdp_client_create_params_array(ExtendedRdpContext* ex)
 
         g_strfreev(shared_folders_array);
     }
+    free_memory_safely(&shared_folders_str);
 
     // remote app
     gboolean is_remote_app = read_int_from_ini_file("RDPSettings", "is_remote_app", 0);

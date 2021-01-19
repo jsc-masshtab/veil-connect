@@ -289,6 +289,11 @@ static void rdp_viewer_item_menu_usb_activated(GtkWidget *menu G_GNUC_UNUSED, gp
         return;
 
     RdpWindowData *rdp_window_data = (RdpWindowData *)userdata;
+    // Не показывать если запрещено в админке
+    if (!vdi_session_is_usb_redir_permitted()) {
+        show_msg_box_dialog(GTK_WINDOW(rdp_window_data->rdp_viewer_window), "Проброс USB запрещен администратором");
+        return;
+    }
 
 #ifdef _WIN32
     if ( !usbredir_util_check_if_usbdk_installed(GTK_WINDOW(rdp_window_data->rdp_viewer_window)) )

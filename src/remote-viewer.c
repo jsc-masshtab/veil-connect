@@ -238,7 +238,7 @@ remote_viewer_init(RemoteViewer *self)
     usbredir_controller_init();
 
     // create vdi session
-    vdi_session_static_create();
+    get_vdi_session_static();
 }
 
 RemoteViewer *

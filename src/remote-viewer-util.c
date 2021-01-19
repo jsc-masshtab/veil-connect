@@ -1007,6 +1007,20 @@ void set_vm_power_state_on_label(GtkLabel *label, int power_state)
     }
 }
 
+void show_msg_box_dialog(GtkWindow *parent, const gchar *message)
+{
+    GtkWidget *dialog_msg = gtk_message_dialog_new(parent,
+                                                   GTK_DIALOG_MODAL | GTK_DIALOG_DESTROY_WITH_PARENT,
+                                                   GTK_MESSAGE_WARNING,
+                                                   GTK_BUTTONS_OK,
+                                                   "%s", message);
+    gtk_dialog_set_default_response(GTK_DIALOG(dialog_msg), GTK_RESPONSE_ACCEPT);
+
+    gtk_widget_show_all(dialog_msg);
+    gtk_dialog_run(GTK_DIALOG(dialog_msg));
+    gtk_widget_destroy(dialog_msg);
+}
+
 /*
  * Local variables:
  *  c-indent-level: 4

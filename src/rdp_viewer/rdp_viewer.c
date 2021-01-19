@@ -22,6 +22,7 @@
 #include "settingsfile.h"
 #include "async.h"
 #include "usbredir_controller.h"
+#include "vdi_session.h"
 
 #define MAX_MONITOR_AMOUNT 3
 
@@ -193,6 +194,13 @@ GtkResponseType rdp_viewer_start(const gchar *usename, const gchar *password, gc
         // Это необходимо, чтобы не было отступа при рисовании картинки или получени позиции мыши
         rdp_window_data->monitor_geometry.x = rdp_window_data->monitor_geometry.y = 0;
     }
+
+    // Notify if folders redir is forbidden
+    gchar *shared_folders_str = read_str_from_ini_file("RDPSettings", "rdp_shared_folders");
+    if (strlen_safely(shared_folders_str) && !vdi_session_is_folders_redir_permitted()) {
+        show_msg_box_dialog(NULL, "Проброс папок запрещен администратором");
+    }
+    free_memory_safely(&shared_folders_str);
 
     // Set image size which we will receive from Server
     const int max_image_width = 5120;//2560; 5120

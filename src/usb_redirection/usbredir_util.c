@@ -17,6 +17,7 @@
 #endif
 
 #include "usbredir_util.h"
+#include "remote-viewer-util.h"
 
 #define VENDOR_NAME_LEN (122 - sizeof(void *))
 #define PRODUCT_NAME_LEN 126
@@ -268,20 +269,10 @@ gboolean usbredir_util_check_if_usbdk_installed(GtkWindow *parent)
     gboolean is_usbdk_installed = (g_file_test(usbdk_file, G_FILE_TEST_EXISTS));
     g_free(usbdk_file);
 
-    if (!is_usbdk_installed) {
-        GtkWidget *dialog_msg = gtk_message_dialog_new(parent,
-                                                       GTK_DIALOG_MODAL | GTK_DIALOG_DESTROY_WITH_PARENT,
-                                                       GTK_MESSAGE_WARNING,
-                                                       GTK_BUTTONS_OK,
-                                                       "Для корректной работы проброса USB-устройств требуется "
-                                                       "USB Development Kit (UsbDK). "
-                                                       "Убедитесь, что он установлен");
-        gtk_dialog_set_default_response(GTK_DIALOG(dialog_msg), GTK_RESPONSE_ACCEPT);
-
-        gtk_widget_show_all(dialog_msg);
-        gtk_dialog_run(GTK_DIALOG(dialog_msg));
-        gtk_widget_destroy(dialog_msg);
-    }
+    if (!is_usbdk_installed)
+        show_msg_box_dialog(parent, "Для корректной работы проброса USB-устройств требуется "
+                                    "USB Development Kit (UsbDK). "
+                                    "Убедитесь, что он установлен");
 
     return is_usbdk_installed;
 }

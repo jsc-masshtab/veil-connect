@@ -21,7 +21,7 @@
 #define BAD_REQUEST 400
 #define AUTH_FAIL_RESPONSE 401
 
-static VdiSession *vdi_session_static;
+static VdiSession *vdi_session_static = NULL;
 
 //#define VDI_SESSION_GET_PRIVATE( obj )  ( G_TYPE_INSTANCE_GET_PRIVATE( (obj), TYPE_VDI_SESSION, VdiSessionPrivate ) )
 
@@ -107,6 +107,8 @@ VdiSession *vdi_session_new()
     vdi_session->current_vm_id = NULL;
     vdi_session->current_vm_verbose_name = NULL;
     vdi_session->current_controller_address = NULL;
+
+    vdi_session->user_permissions = USER_PERMISSION_NO_PERMISSIONS;
 
     memset(&vdi_session->redis_client, 0, sizeof(RedisClient));
     memset(&vdi_session->vdi_ws_client, 0, sizeof(VdiWsClient));
@@ -268,11 +270,6 @@ static void vdi_api_session_register_for_license() {
     g_object_unref(parser);
 }
 
-void vdi_session_static_create()
-{
-    vdi_session_static = vdi_session_new();
-}
-
 void vdi_session_static_destroy()
 {
     // logout
@@ -286,8 +283,12 @@ void vdi_session_static_destroy()
     g_object_unref(vdi_session_static);
 }
 
+// some kind of singleton
 VdiSession *get_vdi_session_static()
 {
+    if (vdi_session_static == NULL)
+        vdi_session_static = vdi_session_new();
+
     return vdi_session_static;
 }
 
@@ -453,6 +454,36 @@ const gchar *vdi_session_get_current_controller_address()
     return vdi_session_static->current_controller_address;
 }
 
+void vdi_session_set_permissions(JsonArray *user_permissions_array)
+{
+    guint user_permissions_amount = json_array_get_length(user_permissions_array);
+    get_vdi_session_static()->user_permissions = USER_PERMISSION_NO_PERMISSIONS;
+
+    for (guint i = 0; i < user_permissions_amount; ++i) {
+        const gchar *permission = json_array_get_string_element(user_permissions_array, i);
+
+        // set permissions
+        if (g_strcmp0(permission, "USB_REDIR") == 0)
+            get_vdi_session_static()->user_permissions =
+                    (get_vdi_session_static()->user_permissions | USER_PERMISSION_USB_REDIR);
+        else if (g_strcmp0(permission, "FOLDERS_REDIR") == 0)
+            get_vdi_session_static()->user_permissions =
+                    (get_vdi_session_static()->user_permissions | USER_PERMISSION_FOLDERS_REDIR);
+    }
+
+    g_info("get_vdi_session_static()->user_permissions: %i", get_vdi_session_static()->user_permissions);
+}
+
+gboolean vdi_session_is_usb_redir_permitted(void)
+{
+    return (get_vdi_session_static()->user_permissions & USER_PERMISSION_USB_REDIR);
+}
+
+gboolean vdi_session_is_folders_redir_permitted(void)
+{
+    return (get_vdi_session_static()->user_permissions & USER_PERMISSION_FOLDERS_REDIR);
+}
+
 gchar *vdi_session_api_call(const char *method, const char *uri_string, const gchar *body_str, int *resp_code)
 {
     gchar *response_body_str = NULL;
@@ -582,6 +613,10 @@ void vdi_session_get_vm_from_pool_task(GTask       *task,
         update_string_safely(&vdi_session_static->current_controller_address, vm_controller_address);
         const gchar *vm_id = json_object_get_string_member_safely(reply_json_object, "vm_id");
         update_string_safely(&vdi_session_static->current_vm_id, vm_id);
+
+        JsonArray *user_permissions_array = json_object_get_array_member_safely(reply_json_object, "permissions");
+        vdi_session_set_permissions(user_permissions_array);
+
         g_info("!!!vm_id: %s  %s", vm_id, vdi_session_static->current_vm_id);
 
         g_info("vm_host %s", vdi_vm_data->vm_host);

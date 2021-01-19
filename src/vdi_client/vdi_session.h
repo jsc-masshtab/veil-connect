@@ -19,6 +19,12 @@
 
 #define HTTP_RESPONSE_TIOMEOUT 20
 
+typedef enum{
+    USER_PERMISSION_NO_PERMISSIONS = 0,
+    USER_PERMISSION_USB_REDIR = 1, // 0001
+    USER_PERMISSION_FOLDERS_REDIR = 2 // 0010
+} UserPermission;
+
 // remote protocol type
 typedef enum{
     VDI_SPICE_PROTOCOL,
@@ -105,8 +111,9 @@ struct _VdiSession
     gchar *current_vm_verbose_name;
     gchar *current_controller_address;
 
-    RedisClient redis_client;
+    guint user_permissions; // UserPermission flags
 
+    RedisClient redis_client;
     VdiWsClient vdi_ws_client;
 };
 
@@ -125,8 +132,6 @@ GType vdi_session_get_type( void ) G_GNUC_CONST;
 VdiSession *vdi_session_new(void);
 
 // Functions
-// init session
-void vdi_session_static_create(void);
 // deinit session
 void vdi_session_static_destroy(void);
 
@@ -174,6 +179,11 @@ VdiWsClient *vdi_session_get_ws_client(void);
 const gchar *vdi_session_get_current_vm_name(void);
 
 const gchar *vdi_session_get_current_controller_address(void);
+
+// Set user permissions
+void vdi_session_set_permissions(JsonArray *user_permissions_array);
+gboolean vdi_session_is_usb_redir_permitted(void);
+gboolean vdi_session_is_folders_redir_permitted(void);
 
 //void gInputStreamToBuffer(GInputStream *inputStream, gchar *responseBuffer);
 // Do api call. Return response body

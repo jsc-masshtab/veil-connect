@@ -104,7 +104,8 @@ static void set_vdi_client_state(VdiManager *self, VdiClientState vdi_client_sta
 static void refresh_vdi_pool_data_async(VdiManager *self)
 {
     set_vdi_client_state(self, VDI_WAITING_FOR_POOL_DATA, "Отправлен запрос на список пулов", FALSE);
-    execute_async_task(vdi_session_get_vdi_pool_data_task, (GAsyncReadyCallback)on_vdi_session_get_vdi_pool_data_finished,
+    execute_async_task(vdi_session_get_vdi_pool_data_task,
+            (GAsyncReadyCallback)on_vdi_session_get_vdi_pool_data_finished,
             NULL, self);
 }
 // clear array of virtual machine widgets
@@ -128,8 +129,6 @@ static void register_pool(VdiManager *self, const gchar *pool_id, const gchar *p
     // create array if required
     if (self->pool_widgets_array == NULL)
         self->pool_widgets_array = g_array_new (FALSE, FALSE, sizeof (VdiPoolWidget));
-
-    GArray *connection_types_array = NULL;
 
     // add element
     VdiPoolWidget vdi_pool_widget = build_pool_widget(pool_id, pool_name, os_type, status,

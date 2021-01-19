@@ -148,6 +148,8 @@ const gchar *bool_to_str(gboolean flag);
 
 const gchar *vm_power_state_to_str(int power_state);
 void set_vm_power_state_on_label(GtkLabel *label, int power_state);
+
+void show_msg_box_dialog(GtkWindow *parent, const gchar *message);
 #endif
 
 /*

@@ -27,6 +27,7 @@
 #include <glib/gi18n.h>
 #include <spice-client-gtk.h>
 
+#include "vdi_session.h"
 #include "usbredir_util.h"
 #include <usb-device-widget.h>
 #include "virt-viewer-file.h"
@@ -794,6 +795,12 @@ static void
 virt_viewer_session_spice_usb_device_selection(VirtViewerSession *session,
                                                GtkWindow *parent)
 {
+    // Не показывать если запрещено в админке
+    if (!vdi_session_is_usb_redir_permitted()) {
+        show_msg_box_dialog(GTK_WINDOW(parent), "Проброс USB запрещен администратором");
+        return;
+    }
+
 #ifdef _WIN32
     if ( !usbredir_util_check_if_usbdk_installed(parent) )
         return;
