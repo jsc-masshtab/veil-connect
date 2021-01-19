@@ -121,16 +121,19 @@ static void vdi_ws_client_on_connection(SoupSession *session, GAsyncResult *res,
                                            "\"token\": \"%s\", "
                                            "\"veil_connect_version\": \"%s\", "
                                            "\"vm_id\": %s, "
-                                           "\"tk_os\": %s"
+                                           "\"tk_os\": %s, "
+                                           "\"is_conn_init_by_user\": %s"
                                            "}",
                                            vdi_session_get_token(),
                                            VERSION,
                                            vm_id_json,
-                                           tk_os);
+                                           tk_os,
+                                           bool_to_str(vdi_ws_client->is_connect_initiated_by_user));
         vdi_ws_client_send_text(vdi_ws_client, auth_data);
         g_free(auth_data);
         g_free(vm_id_json);
         g_free(tk_os);
+        vdi_ws_client->is_connect_initiated_by_user = FALSE;
     }
     // notify gui
     vdi_session_ws_conn_change_notify(error == NULL);

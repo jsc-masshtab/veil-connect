@@ -15,6 +15,3 @@ void fill_p_conn_data_from_ini_file(ConnectSettingsData *p_conn_data);
 
 
 #endif // REMOTE_VIEWER_START_SETTINGS_H
-
-
-

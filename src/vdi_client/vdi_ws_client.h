@@ -20,6 +20,7 @@ typedef struct{
     SoupMessage *ws_msg;
 
     gboolean is_running;
+    gboolean is_connect_initiated_by_user; // Флаг необходим, чтобы различить автоконнект и ручной коннект пользователем
 
     GCancellable *cancel_job;
 

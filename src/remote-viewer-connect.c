@@ -241,6 +241,7 @@ static void
 handle_connect_event(RemoteViewerConnData *ci)
 {
     if (strlen_safely(ci->p_conn_data->ip) > 0) {
+        vdi_session_get_ws_client()->is_connect_initiated_by_user = TRUE;
         // In manual mode we shudown the loop.
         if (opt_manual_mode) {
             ci->dialog_window_response = GTK_RESPONSE_OK;
