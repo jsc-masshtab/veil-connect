@@ -111,7 +111,9 @@ VdiSession *vdi_session_new()
     vdi_session->user_permissions = USER_PERMISSION_NO_PERMISSIONS;
 
     memset(&vdi_session->redis_client, 0, sizeof(RedisClient));
+
     memset(&vdi_session->vdi_ws_client, 0, sizeof(VdiWsClient));
+    vdi_session->vdi_ws_client.reconnect_if_conn_lost = TRUE;
 
     return vdi_session;
 }

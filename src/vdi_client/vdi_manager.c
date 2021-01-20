@@ -265,7 +265,7 @@ static void on_vdi_session_get_vm_from_pool_finished(GObject *source_object G_GN
 
         //stop event loop
         self->ci.response = TRUE;
-        self->ci.dialog_window_response = GTK_RESPONSE_OK;
+        self->ci.next_app_state = APP_STATE_REMOTE_VM;
         shutdown_loop(self->ci.loop);
     }
     //
@@ -304,7 +304,7 @@ static gboolean on_window_deleted_cb(VdiManager *self)
     vdi_ws_client_send_user_gui(vdi_session_get_ws_client()); // notify server
 
     self->ci.response = FALSE;
-    self->ci.dialog_window_response = GTK_RESPONSE_CLOSE;
+    self->ci.next_app_state = APP_STATE_EXITING;
     shutdown_loop(self->ci.loop);
     return TRUE;
 }
@@ -328,7 +328,7 @@ static void on_button_quit_clicked(GtkButton *button G_GNUC_UNUSED, VdiManager *
     vdi_session_logout();
 
     self->ci.response = FALSE;
-    self->ci.dialog_window_response = GTK_RESPONSE_CANCEL;
+    self->ci.next_app_state = APP_STATE_VDI_DIALOG;
     shutdown_loop(self->ci.loop);
 }
 
@@ -337,6 +337,15 @@ static void
 on_ws_conn_changed(GtkWidget *widget G_GNUC_UNUSED, int ws_connected, VdiManager *self)
 {
     set_ws_conn_state(self, ws_connected);
+}
+
+static void
+on_ws_cmd_received(gpointer data G_GNUC_UNUSED, const gchar *cmd, VdiManager *self)
+{
+    if (g_strcmp0(cmd, "DISCONNECT") == 0) {
+        self->ci.next_app_state = APP_STATE_AUTH_DIALOG;
+        shutdown_loop(self->ci.loop);
+    }
 }
 
 // vm start button pressed callback
@@ -381,6 +390,7 @@ static void vdi_manager_finalize(GObject *object)
     g_info("%s", (const char *)__func__);
     VdiManager *self = VDI_MANAGER(object);
     g_signal_handler_disconnect(get_vdi_session_static(), self->ws_conn_changed_handle);
+    g_signal_handler_disconnect(get_vdi_session_static(), self->ws_cmd_received_handle);
 
     unregister_all_pools(self);
     g_object_unref(self->builder);
@@ -403,7 +413,7 @@ static void vdi_manager_init(VdiManager *self)
 
     self->ci.response = FALSE;
     self->ci.loop = NULL;
-    self->ci.dialog_window_response = GTK_RESPONSE_CANCEL;
+    self->ci.next_app_state = APP_STATE_AUTH_DIALOG;
 
     /* Create the widgets */
     self->builder = remote_viewer_util_load_ui("vdi_manager_form.ui");
@@ -429,6 +439,8 @@ static void vdi_manager_init(VdiManager *self)
     g_signal_connect(self->button_quit, "clicked", G_CALLBACK(on_button_quit_clicked), self);
     self->ws_conn_changed_handle = g_signal_connect(get_vdi_session_static(),
                                                       "ws-conn-changed", G_CALLBACK(on_ws_conn_changed), self);
+    self->ws_cmd_received_handle = g_signal_connect(get_vdi_session_static(), "ws-cmd-received",
+                     G_CALLBACK(on_ws_cmd_received), self);
 }
 
 /////////////////////////////////// main function
@@ -462,7 +474,7 @@ GtkResponseType vdi_manager_dialog(VdiManager *self, ConnectSettingsData *con_da
 
     gtk_widget_hide(self->window);
 
-    return self->ci.dialog_window_response;
+    return self->ci.next_app_state;
 }
 
 VdiManager *vdi_manager_new(void)

@@ -42,6 +42,7 @@ struct _VdiManager
     ConnectionInfo ci;
 
     gulong ws_conn_changed_handle;
+    gulong ws_cmd_received_handle;
 
     ConnectSettingsData *p_conn_data;
 };

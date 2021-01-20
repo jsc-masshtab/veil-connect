@@ -41,8 +41,10 @@ enum {
 
 typedef enum
 {
-    AUTH_DIALOG,
-    VDI_DIALOG
+    APP_STATE_AUTH_DIALOG, // Начальое окно авторизации
+    APP_STATE_VDI_DIALOG, // ОКно выбора пула
+    APP_STATE_REMOTE_VM, // Окно с удаленным раб сталом
+    APP_STATE_EXITING // Завершение приложение
 } RemoteViewerState;
 
 typedef enum{
@@ -62,7 +64,7 @@ typedef struct
 {
     gboolean response;
     GMainLoop *loop;
-    GtkResponseType dialog_window_response;
+    RemoteViewerState next_app_state;
 } ConnectionInfo;
 
 

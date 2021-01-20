@@ -16,7 +16,7 @@
 
 // static functions declarations
 static gboolean vdi_ws_client_ws_connect(VdiWsClient *vdi_ws_client);
-static void vdi_ws_client_ws_reconnect(VdiWsClient *vdi_ws_client);
+static void vdi_ws_client_ws_reconnect_if_allowed(VdiWsClient *vdi_ws_client);
 
 // implementations
 //static void vdi_ws_client_on_pong(SoupWebsocketConnection *self,
@@ -76,7 +76,7 @@ static void vdi_ws_client_on_close(SoupWebsocketConnection *ws_conn G_GNUC_UNUSE
     gushort close_code = soup_websocket_connection_get_close_code(ws_conn);
     g_info("WebSocket connection closed: close_code: %i\n", close_code);
     vdi_session_ws_conn_change_notify(FALSE);
-    vdi_ws_client_ws_reconnect(vdi_ws_client);
+    vdi_ws_client_ws_reconnect_if_allowed(vdi_ws_client);
 }
 
 static void vdi_ws_client_send_text(VdiWsClient *ws_vdi_client, const char *text)
@@ -100,7 +100,7 @@ static void vdi_ws_client_on_connection(SoupSession *session, GAsyncResult *res,
         g_info("Error: %s\n", error->message);
         g_error_free(error);
 
-        vdi_ws_client_ws_reconnect(vdi_ws_client);
+        vdi_ws_client_ws_reconnect_if_allowed(vdi_ws_client);
 
     } else {
         g_object_set(vdi_ws_client->ws_conn, "keepalive-interval", 10, NULL);
@@ -153,14 +153,16 @@ static gboolean vdi_ws_client_ws_connect(VdiWsClient *vdi_ws_client)
     return G_SOURCE_REMOVE;
 }
 
-static void vdi_ws_client_ws_reconnect(VdiWsClient *vdi_ws_client)
+static void vdi_ws_client_ws_reconnect_if_allowed(VdiWsClient *vdi_ws_client)
 {
     // Reconnect if its not reconnecting yet
     //g_info("di_ws_client->is_running %i vdi_ws_client->reconnect_event_source_id %i",
     //       vdi_ws_client->is_running, vdi_ws_client->reconnect_event_source_id);
-    if(vdi_ws_client->is_running && vdi_ws_client->reconnect_event_source_id == 0)
+    if(vdi_ws_client->reconnect_if_conn_lost && vdi_ws_client->is_running &&
+    vdi_ws_client->reconnect_event_source_id == 0) {
         vdi_ws_client->reconnect_event_source_id =
-            g_timeout_add(WS_RECONNECT_TIMEOUT, (GSourceFunc)vdi_ws_client_ws_connect, vdi_ws_client);
+                g_timeout_add(WS_RECONNECT_TIMEOUT, (GSourceFunc) vdi_ws_client_ws_connect, vdi_ws_client);
+    }
 }
 
 void vdi_ws_client_start(VdiWsClient *vdi_ws_client, const gchar *vdi_ip, int vdi_port)
@@ -192,6 +194,7 @@ void vdi_ws_client_start(VdiWsClient *vdi_ws_client, const gchar *vdi_ip, int vd
     }
 
     vdi_ws_client->is_running = TRUE;
+    vdi_ws_client->reconnect_if_conn_lost = TRUE;
 
     vdi_ws_client->cancel_job = g_cancellable_new();
     vdi_ws_client_ws_connect(vdi_ws_client);

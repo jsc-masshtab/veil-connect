@@ -348,7 +348,6 @@ retry_auth:
         if (dialog_window_response == GTK_RESPONSE_CLOSE)
             goto to_exit;
     }
-
     // После такого как забрали адресс с логином и паролем действуем в зависимости от opt_manual_mode
     // 1) в мануальном режиме сразу подключаемся к удаленноиу раб столу
     // 2) В дефолтном режиме вызываем vdi manager. В нем пользователь выберет машину для подключения
@@ -386,7 +385,7 @@ retry_connect_to_vm:
             goto to_exit;
         }
 
-        VIRT_VIEWER_APP_CLASS(remote_viewer_parent_class)->start(app, NULL, AUTH_DIALOG);
+        VIRT_VIEWER_APP_CLASS(remote_viewer_parent_class)->start(app, NULL, APP_STATE_AUTH_DIALOG);
         create_loop_and_launch(&REMOTE_VIEWER(app)->priv->virt_viewer_loop);
 
         // go back to auth or quit
@@ -434,10 +433,10 @@ retry_connect_to_vm:
             // start connect attempt timer
             virt_viewer_start_reconnect_poll(app);
             // Показывается окно virt viewer // virt_viewer_app_default_start
-            VIRT_VIEWER_APP_CLASS(remote_viewer_parent_class)->start(app, NULL, AUTH_DIALOG);
+            VIRT_VIEWER_APP_CLASS(remote_viewer_parent_class)->start(app, NULL, APP_STATE_AUTH_DIALOG);
             create_loop_and_launch(&REMOTE_VIEWER(app)->priv->virt_viewer_loop);
             // quit if required
-            quit_app_after_remote_conn =  (virt_viewer_app_is_quitting(app));
+            quit_app_after_remote_conn = (virt_viewer_app_is_quitting(app));
         }
 
         vdi_ws_client_send_vm_changed(vdi_session_get_ws_client(), NULL);

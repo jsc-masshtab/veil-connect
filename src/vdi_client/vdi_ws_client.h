@@ -21,6 +21,7 @@ typedef struct{
 
     gboolean is_running;
     gboolean is_connect_initiated_by_user; // Флаг необходим, чтобы различить автоконнект и ручной коннект пользователем
+    gboolean reconnect_if_conn_lost; // Флаг делать ли авторекконект, если соединение потеряно
 
     GCancellable *cancel_job;
 

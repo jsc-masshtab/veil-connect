@@ -1918,7 +1918,7 @@ virt_viewer_app_on_application_startup(GApplication *app)
     gtk_accel_map_add_entry("<virt-viewer>/view/zoom-in", GDK_KEY_plus, GDK_CONTROL_MASK);
     gtk_accel_map_add_entry("<virt-viewer>/send/secure-attention", GDK_KEY_End, GDK_CONTROL_MASK | GDK_MOD1_MASK);
 
-    if (!virt_viewer_app_start(self, &error, AUTH_DIALOG)) {
+    if (!virt_viewer_app_start(self, &error, APP_STATE_AUTH_DIALOG)) {
         if (error && !g_error_matches(error, VIRT_VIEWER_ERROR, VIRT_VIEWER_ERROR_CANCELLED))
             virt_viewer_app_simple_message_dialog(self, error->message);
 
