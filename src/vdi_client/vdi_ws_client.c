@@ -28,7 +28,7 @@ static void vdi_ws_client_ws_reconnect_if_allowed(VdiWsClient *vdi_ws_client);
 
 // ws сообщения от брокера. Ожидаем json
 static void vdi_ws_client_on_message(SoupWebsocketConnection *ws_conn G_GNUC_UNUSED, gint type, GBytes *message,
-        gpointer data G_GNUC_UNUSED)
+                                     VdiWsClient *vdi_ws_client)
 {
     g_info("!!!!!on_message");
     if (type == SOUP_WEBSOCKET_DATA_TEXT) { // we are expecting json
@@ -57,6 +57,9 @@ static void vdi_ws_client_on_message(SoupWebsocketConnection *ws_conn G_GNUC_UNU
 
         } else if (g_strcmp0(msg_type, "control") == 0) {
             const gchar *cmd = json_object_get_string_member_safely(root_object, "cmd");
+            // Если пришла команда отключиться, то не делаем попытки рекконекта
+            if (g_strcmp0(cmd, "DISCONNECT") == 0)
+                vdi_ws_client->reconnect_if_conn_lost = FALSE;
             vdi_session_ws_cmd_received_notify(cmd);
         }
 
@@ -105,7 +108,7 @@ static void vdi_ws_client_on_connection(SoupSession *session, GAsyncResult *res,
     } else {
         g_object_set(vdi_ws_client->ws_conn, "keepalive-interval", 10, NULL);
 
-        g_signal_connect(vdi_ws_client->ws_conn, "message", G_CALLBACK(vdi_ws_client_on_message), NULL);
+        g_signal_connect(vdi_ws_client->ws_conn, "message", G_CALLBACK(vdi_ws_client_on_message), vdi_ws_client);
         g_signal_connect(vdi_ws_client->ws_conn, "closed", G_CALLBACK(vdi_ws_client_on_close), vdi_ws_client);
         //g_signal_connect(vdi_ws_client->ws_conn, "pong", G_CALLBACK(vdi_ws_client_on_pong), NULL);
 

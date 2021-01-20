@@ -41,6 +41,7 @@ enum {
 
 typedef enum
 {
+    APP_STATE_UNDEFINED,
     APP_STATE_AUTH_DIALOG, // Начальое окно авторизации
     APP_STATE_VDI_DIALOG, // ОКно выбора пула
     APP_STATE_REMOTE_VM, // Окно с удаленным раб сталом

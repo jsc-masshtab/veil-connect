@@ -117,16 +117,16 @@ static GdkRectangle set_monitor_data_and_create_rdp_viewer_window(GdkMonitor *mo
     return geometry;
 }
 
-GtkResponseType rdp_viewer_start(const gchar *usename, const gchar *password, gchar *domain, gchar *ip, int port)
+RemoteViewerState rdp_viewer_start(const gchar *usename, const gchar *password, gchar *domain, gchar *ip, int port)
 {
     g_info("%s domain %s", (const char *)__func__, domain);
 
-    GtkResponseType dialog_window_response = GTK_RESPONSE_NONE;
+    RemoteViewerState next_app_state = APP_STATE_UNDEFINED;
     GMainLoop *loop = NULL;
     // create RDP context
     ExtendedRdpContext *ex_rdp_context = create_rdp_context();
     ex_rdp_context->p_loop = &loop;
-    ex_rdp_context->dialog_window_response_p = &dialog_window_response;
+    ex_rdp_context->next_app_state_p = &next_app_state;
 
     // Логин в формате name@domain не нравится freerdp, поэтому отбрасываем @domain
     gchar *corrected_usename = NULL;
@@ -228,7 +228,7 @@ GtkResponseType rdp_viewer_start(const gchar *usename, const gchar *password, gc
     }
     g_array_free(rdp_windows_array, TRUE);
 
-    if (dialog_window_response == GTK_RESPONSE_NONE)
-        dialog_window_response = GTK_RESPONSE_CLOSE;
-    return dialog_window_response;
+    if (next_app_state == APP_STATE_UNDEFINED)
+        next_app_state = APP_STATE_EXITING;
+    return next_app_state;
 }

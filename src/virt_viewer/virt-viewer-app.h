@@ -110,9 +110,10 @@ void virt_viewer_app_hide_all_windows_forced(VirtViewerApp *app);
 void virt_viewer_app_set_window_name(VirtViewerApp *app, const gchar *vm_verbose_name);
 
 void virt_viewer_app_hide_and_deactivate(VirtViewerApp *self);
-// Вынесено из внутренних
+//
 void virt_viewer_app_deactivate(VirtViewerApp *self, gboolean connect_error);
-
+void virt_viewer_set_next_app_state(VirtViewerApp *self, RemoteViewerState next_app_state);
+RemoteViewerState virt_viewer_get_next_app_state(VirtViewerApp *self);
 G_END_DECLS
 
 #endif /* VIRT_VIEWER_APP_H */

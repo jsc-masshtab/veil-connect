@@ -277,8 +277,6 @@ void vdi_session_static_destroy()
     // logout
     vdi_session_logout();
 
-    vdi_session_cancell_pending_requests();
-
     // free memory
     g_object_unref(vdi_session_static->soup_session);
     free_session_memory();
@@ -679,6 +677,8 @@ gboolean vdi_session_logout(void)
 
     // stop websocket connection
     vdi_ws_client_stop(&vdi_session_static->vdi_ws_client);
+
+    vdi_session_cancell_pending_requests();
 
     g_info("%s", (const char *)__func__);
     if (vdi_session_static->jwt) {

@@ -328,7 +328,7 @@ static void on_button_quit_clicked(GtkButton *button G_GNUC_UNUSED, VdiManager *
     vdi_session_logout();
 
     self->ci.response = FALSE;
-    self->ci.next_app_state = APP_STATE_VDI_DIALOG;
+    self->ci.next_app_state = APP_STATE_AUTH_DIALOG;
     shutdown_loop(self->ci.loop);
 }
 
@@ -444,7 +444,7 @@ static void vdi_manager_init(VdiManager *self)
 }
 
 /////////////////////////////////// main function
-GtkResponseType vdi_manager_dialog(VdiManager *self, ConnectSettingsData *con_data)
+RemoteViewerState vdi_manager_dialog(VdiManager *self, ConnectSettingsData *con_data)
 {
     read_data_from_ini_file();
     self->p_conn_data = con_data;

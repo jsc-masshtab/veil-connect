@@ -324,8 +324,10 @@ on_ws_cmd_received (gpointer data G_GNUC_UNUSED,
                     const gchar *cmd,
                     VirtViewerWindow *self)
 {
-    if (g_strcmp0(cmd, "DISCONNECT") == 0 && virt_viewer_app_is_active(self->priv->app))
+    if (g_strcmp0(cmd, "DISCONNECT") == 0 && virt_viewer_app_is_active(self->priv->app)) {
+        virt_viewer_set_next_app_state(self->priv->app, APP_STATE_AUTH_DIALOG);
         virt_viewer_window_menu_switch_off(NULL, self);
+    }
 }
 
 static void

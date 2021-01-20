@@ -21,6 +21,7 @@
 
 #include "rdp_cursor.h"
 //#include "rdp_clipboard.h"
+#include "remote-viewer-util.h"
 
 struct ExtendedRdpContext;
 
@@ -75,7 +76,7 @@ typedef struct {
     UINT32 rail_rdp_error; // remote app related error
 
     GMainLoop **p_loop;
-    GtkResponseType *dialog_window_response_p;
+    RemoteViewerState *next_app_state_p;
 
 } ExtendedRdpContext;
 

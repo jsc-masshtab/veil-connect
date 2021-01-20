@@ -200,8 +200,7 @@ static gboolean rdp_viewer_window_deleted_cb(gpointer userdata)
 {
     g_info("%s", (const char *)__func__);
     RdpWindowData *rdp_window_data = (RdpWindowData *)userdata;
-    *rdp_window_data->ex_rdp_context->dialog_window_response_p = GTK_RESPONSE_CLOSE;
-    shutdown_loop(*rdp_window_data->loop_p);
+    rdp_viewer_window_stop(rdp_window_data, APP_STATE_EXITING);
 
     return TRUE;
 }
@@ -269,7 +268,7 @@ static void on_ws_cmd_received (gpointer data  G_GNUC_UNUSED,
 {
     g_info("rdp on_ws_cmd_received");
     if (g_strcmp0(cmd, "DISCONNECT") == 0)
-        rdp_viewer_window_cancel(rdp_window_data);
+        rdp_viewer_window_stop(rdp_window_data, APP_STATE_AUTH_DIALOG);
 }
 
 static void rdp_viewer_item_about_activated(GtkWidget *menu G_GNUC_UNUSED, gpointer userdata)
@@ -335,8 +334,7 @@ rdp_viewer_window_menu_close_window(GtkWidget *menu G_GNUC_UNUSED, gpointer user
 {
     g_info("%s", (const char *)__func__);
     RdpWindowData *rdp_window_data = (RdpWindowData *)userdata;
-    *rdp_window_data->ex_rdp_context->dialog_window_response_p = GTK_RESPONSE_CLOSE;
-    shutdown_loop(*rdp_window_data->loop_p);
+    rdp_viewer_window_stop(rdp_window_data, APP_STATE_EXITING);
 }
 
 static void
@@ -344,7 +342,7 @@ rdp_viewer_window_menu_switch_off(GtkWidget *menu G_GNUC_UNUSED, gpointer userda
 {
     g_info("%s", (const char *)__func__);
     RdpWindowData *rdp_window_data = (RdpWindowData *)userdata;
-    rdp_viewer_window_cancel(rdp_window_data);
+    rdp_viewer_window_stop(rdp_window_data, APP_STATE_VDI_DIALOG);
 }
 
 static void
@@ -616,8 +614,8 @@ void rdp_viewer_window_set_monitor_data(RdpWindowData *rdp_window_data, GdkRecta
                       rdp_window_data->monitor_geometry.x, rdp_window_data->monitor_geometry.y);
 }
 
-void rdp_viewer_window_cancel(RdpWindowData *rdp_window_data)
+void rdp_viewer_window_stop(RdpWindowData *rdp_window_data, RemoteViewerState next_app_state)
 {
-    *rdp_window_data->ex_rdp_context->dialog_window_response_p = GTK_RESPONSE_CANCEL;
+    *rdp_window_data->ex_rdp_context->next_app_state_p = next_app_state;
     shutdown_loop(*rdp_window_data->loop_p);
 }

@@ -355,22 +355,20 @@ retry_connect_to_vm:
     /// instant connect attempt
     if (opt_manual_mode) {
         if (vdi_session_get_current_remote_protocol() == VDI_RDP_PROTOCOL) {
-            GtkResponseType rdp_viewer_res = rdp_viewer_start(con_data.user, con_data.password, con_data.domain,
+            RemoteViewerState app_state = rdp_viewer_start(con_data.user, con_data.password, con_data.domain,
                                                               con_data.ip, con_data.port);
-            if (rdp_viewer_res == GTK_RESPONSE_CANCEL)
+            if (app_state == APP_STATE_AUTH_DIALOG)
                 goto retry_auth;
-            else if (rdp_viewer_res == GTK_RESPONSE_CLOSE)
+            else if (app_state == APP_STATE_EXITING)
                 goto to_exit;
 
         } else { // spice by default
         set_spice_session_data(app, con_data.ip, con_data.port, con_data.user, con_data.password);
-
         // Создание сессии
         if (!virt_viewer_app_create_session(app, "spice", &error)) {
             virt_viewer_app_simple_message_dialog(app, _("Unable to connect: %s"), error->message);
             goto to_exit;
         }
-
         g_signal_connect(virt_viewer_app_get_session(app), "session-connected",
                          G_CALLBACK(remote_viewer_session_connected), app);
 
@@ -406,43 +404,41 @@ retry_connect_to_vm:
             // show VDI manager window
             if (REMOTE_VIEWER(app)->vdi_manager == NULL)
                 REMOTE_VIEWER(app)->vdi_manager = vdi_manager_new();
-            GtkResponseType vdi_dialog_response = vdi_manager_dialog(REMOTE_VIEWER(app)->vdi_manager, &con_data);
-            if (vdi_dialog_response == GTK_RESPONSE_CANCEL)
+            RemoteViewerState next_app_state = vdi_manager_dialog(REMOTE_VIEWER(app)->vdi_manager, &con_data);
+            if (next_app_state == APP_STATE_AUTH_DIALOG)
                 goto retry_auth;
-            else if (vdi_dialog_response == GTK_RESPONSE_CLOSE)
+            else if (next_app_state == APP_STATE_EXITING)
                 goto to_exit;
         }
-        // set virt viewer window_name
-        virt_viewer_app_set_window_name(app, con_data.vm_verbose_name);
+        con_data.is_connect_to_prev_pool = FALSE;
+
         vdi_ws_client_send_vm_changed(vdi_session_get_ws_client(), vdi_session_get_current_vm_id());
 
         // connect to vm depending using remote protocol
-        gboolean quit_app_after_remote_conn = FALSE; // флаг завершать ли работу
+        RemoteViewerState next_app_state = APP_STATE_VDI_DIALOG;
         if (vdi_session_get_current_remote_protocol() == VDI_RDP_PROTOCOL) {
-            GtkResponseType rdp_viewer_res = rdp_viewer_start(vdi_session_get_vdi_username(),
+            next_app_state = rdp_viewer_start(vdi_session_get_vdi_username(),
                     vdi_session_get_vdi_password(), con_data.domain, con_data.ip, 0);
-            // quit if required
-            quit_app_after_remote_conn = (rdp_viewer_res == GTK_RESPONSE_CLOSE);
 #ifdef _WIN32
         }else if (vdi_session_get_current_remote_protocol() == VDI_RDP_WINDOWS_NATIVE_PROTOCOL) {
                 launch_windows_rdp_client(vdi_session_get_vdi_username(), vdi_session_get_vdi_password(),
                         con_data.ip, 0, con_data.domain);
 #endif
         } else { // spice by default
+            virt_viewer_app_set_window_name(app, con_data.vm_verbose_name);
             set_spice_session_data(app, con_data.ip, con_data.port, con_data.user, con_data.password);
             // start connect attempt timer
             virt_viewer_start_reconnect_poll(app);
             // Показывается окно virt viewer // virt_viewer_app_default_start
             VIRT_VIEWER_APP_CLASS(remote_viewer_parent_class)->start(app, NULL, APP_STATE_AUTH_DIALOG);
             create_loop_and_launch(&REMOTE_VIEWER(app)->priv->virt_viewer_loop);
-            // quit if required
-            quit_app_after_remote_conn = (virt_viewer_app_is_quitting(app));
+            next_app_state = virt_viewer_get_next_app_state(app);
         }
 
         vdi_ws_client_send_vm_changed(vdi_session_get_ws_client(), NULL);
-        if (quit_app_after_remote_conn)
+        if (next_app_state == APP_STATE_EXITING)
             goto to_exit;
-        else if (con_data.is_connect_to_prev_pool)
+        else if (next_app_state == APP_STATE_AUTH_DIALOG)
             goto retry_auth;
         else
             goto retry_connect_to_vm;

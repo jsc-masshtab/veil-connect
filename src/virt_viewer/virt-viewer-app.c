@@ -129,6 +129,8 @@ struct _VirtViewerAppPrivate {
     gboolean quitting;
     gboolean kiosk;
 
+    RemoteViewerState next_app_state;
+
     VirtViewerSession *session;
     gboolean active;
     gboolean connected;
@@ -293,6 +295,7 @@ virt_viewer_app_quit(VirtViewerApp *self)
     virt_viewer_app_save_config(self);
     virt_viewer_app_hide_and_deactivate(self);
     priv->quitting = TRUE;
+    priv->next_app_state = APP_STATE_EXITING;
 
     if (priv->session) {
         virt_viewer_session_close(VIRT_VIEWER_SESSION(priv->session));
@@ -1414,6 +1417,16 @@ virt_viewer_app_deactivated(VirtViewerApp *self, gboolean connect_error)
     klass->deactivated(self, connect_error);
 }
 
+void virt_viewer_set_next_app_state(VirtViewerApp *self, RemoteViewerState next_app_state)
+{
+    self->priv->next_app_state = next_app_state;
+}
+
+RemoteViewerState virt_viewer_get_next_app_state(VirtViewerApp *self)
+{
+    return self->priv->next_app_state;
+}
+
 void virt_viewer_app_hide_and_deactivate(VirtViewerApp *self)
 {
     // turn off polling if its in process
@@ -1773,6 +1786,8 @@ gboolean virt_viewer_app_start(VirtViewerApp *self, GError **error, RemoteViewer
 
     g_return_val_if_fail(!self->priv->started, TRUE);
 
+    self->priv->next_app_state = APP_STATE_VDI_DIALOG;
+
     self->priv->started = klass->start(self, error, remoteViewerState);
     return self->priv->started;
 }
@@ -1800,6 +1815,7 @@ virt_viewer_app_init(VirtViewerApp *self)
     GError *error = NULL;
     GError *error2  = NULL;
     self->priv = GET_PRIVATE(self);
+    self->priv->next_app_state = APP_STATE_VDI_DIALOG;
 
     GdkPixbuf *gdkPixbuf =
             gdk_pixbuf_new_from_resource(VIRT_VIEWER_RESOURCE_PREFIX"/icons/content/img/veil-32x32.png", &error2);

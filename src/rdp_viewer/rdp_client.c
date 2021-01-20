@@ -499,8 +499,8 @@ static void rdp_post_disconnect(freerdp* instance)
     }
 
     if (is_closed_intentionally || (last_error == 0 && ex_rdp_context->rail_rdp_error == 0)) {
-        if (*ex_rdp_context->dialog_window_response_p == GTK_RESPONSE_NONE)
-            *ex_rdp_context->dialog_window_response_p = GTK_RESPONSE_CANCEL;
+        if (*ex_rdp_context->next_app_state_p == APP_STATE_UNDEFINED)
+            *ex_rdp_context->next_app_state_p = APP_STATE_VDI_DIALOG;
         shutdown_loop(*(ex_rdp_context->p_loop));
     }
 }
