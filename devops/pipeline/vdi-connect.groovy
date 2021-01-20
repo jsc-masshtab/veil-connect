@@ -6,6 +6,12 @@ notifyBuild(rocketNotify, ":bell: STARTED", "Start new build. Version: ${current
 pipeline {
     agent none
 
+    environment {
+        APT_SRV = "192.168.11.118"
+        PRJNAME = "veil-connect"
+        DATE = "$currentDate"
+    }
+
     post {
         failure {
             println "Something goes wrong"
@@ -36,12 +42,12 @@ pipeline {
     parameters {
         string(      name: 'BRANCH',               defaultValue: 'master',          description: 'branch')
         string(      name: 'VERSION',              defaultValue: '1.4.0',           description: 'version')
-        booleanParam(name: 'DEBIAN_9',             defaultValue: true,              description: 'create DEB?')
-        booleanParam(name: 'DEBIAN_10',            defaultValue: true,              description: 'create DEB?')
-        booleanParam(name: 'UBUNTU_18',            defaultValue: true,              description: 'create DEB?')
-        booleanParam(name: 'UBUNTU_20',            defaultValue: true,              description: 'create DEB?')
-        booleanParam(name: 'CENTOS7',              defaultValue: true,              description: 'create RPM?')
-        booleanParam(name: 'CENTOS8',              defaultValue: true,              description: 'create RPM?')
+        booleanParam(name: 'STRETCH',              defaultValue: true,              description: 'create DEB?')
+        booleanParam(name: 'BUSTER',               defaultValue: true,              description: 'create DEB?')
+        booleanParam(name: 'BIONIC',               defaultValue: true,              description: 'create DEB?')
+        booleanParam(name: 'FOCAL',                defaultValue: true,              description: 'create DEB?')
+        booleanParam(name: 'EL7',                  defaultValue: true,              description: 'create RPM?')
+        booleanParam(name: 'EL8',                  defaultValue: true,              description: 'create RPM?')
         booleanParam(name: 'WIN32',                defaultValue: true,              description: 'create EXE?')
         booleanParam(name: 'WIN64',                defaultValue: true,              description: 'create EXE?')
         booleanParam(name: 'UNIVERSAL',            defaultValue: true,              description: 'create TAR?')
@@ -51,10 +57,10 @@ pipeline {
     stages {
         stage ('create environment') {
             parallel {
-                stage ('debian 9. create environment') {
+                stage ('stretch. create environment') {
                     when {
                         beforeAgent true
-                        expression { params.DEBIAN_9 == true }
+                        expression { params.STRETCH == true }
                     }
                     agent {
                         label 'debian9'
@@ -71,10 +77,10 @@ pipeline {
                     }
                 }
 
-                stage ('debian 10. create environment') {
+                stage ('buster. create environment') {
                     when {
                         beforeAgent true
-                        expression { params.DEBIAN_10 == true }
+                        expression { params.BUSTER == true }
                     }
                     agent {
                         label 'bld-agent-01'
@@ -91,10 +97,10 @@ pipeline {
                     }
                 }
 
-                stage ('ubuntu 18. create environment') {
+                stage ('bionic. create environment') {
                     when {
                         beforeAgent true
-                        expression { params.UBUNTU_18 == true || params.UNIVERSAL == true || params.EMBEDDED == true }
+                        expression { params.BIONIC == true || params.UNIVERSAL == true || params.EMBEDDED == true }
                     }
                     agent {
                         label 'ubuntu18'
@@ -111,10 +117,10 @@ pipeline {
                     }
                 }
 
-                stage ('ubuntu 20. create environment') {
+                stage ('focal. create environment') {
                     when {
                         beforeAgent true
-                        expression { params.UBUNTU_20 == true || params.UNIVERSAL == true }
+                        expression { params.FOCAL == true || params.UNIVERSAL == true }
                     }
                     agent {
                         label 'ubuntu20'
@@ -131,10 +137,10 @@ pipeline {
                     }
                 }
 
-                stage ('centos 7. create environment') {
+                stage ('el7. create environment') {
                     when {
                         beforeAgent true
-                        expression { params.CENTOS7 == true }
+                        expression { params.EL7 == true }
                     }
                     agent {
                         label 'centos7-2'
@@ -151,10 +157,10 @@ pipeline {
                     }
                 }
 
-                stage ('centos 8. create environment') {
+                stage ('el8. create environment') {
                     when {
                         beforeAgent true
-                        expression { params.CENTOS8 == true }
+                        expression { params.EL8 == true }
                     }
                     agent {
                         label 'centos8'
@@ -215,10 +221,10 @@ pipeline {
 
         stage ('build') {
             parallel {
-                stage ('debian 9. build') {
+                stage ('stretch. build') {
                     when {
                         beforeAgent true
-                        expression { params.DEBIAN_9 == true }
+                        expression { params.STRETCH == true }
                     }
                     agent {
                         label 'debian9'
@@ -234,10 +240,10 @@ pipeline {
                     }
                 }
 
-                stage ('debian 10. build') {
+                stage ('buster. build') {
                     when {
                         beforeAgent true
-                        expression { params.DEBIAN_10 == true }
+                        expression { params.BUSTER == true }
                     }
                     agent {
                         label 'bld-agent-01'
@@ -253,10 +259,10 @@ pipeline {
                     }
                 }
 
-                stage ('ubuntu 18. build') {
+                stage ('bionic. build') {
                     when {
                         beforeAgent true
-                        expression { params.UBUNTU_18 == true || params.EMBEDDED == true }
+                        expression { params.BIONIC == true || params.EMBEDDED == true }
                     }
                     agent {
                         label 'ubuntu18'
@@ -272,10 +278,10 @@ pipeline {
                     }
                 }
 
-                stage ('ubuntu 20. build') {
+                stage ('focal. build') {
                     when {
                         beforeAgent true
-                        expression { params.UBUNTU_20 == true }
+                        expression { params.FOCAL == true }
                     }
                     agent {
                         label 'ubuntu20'
@@ -291,10 +297,10 @@ pipeline {
                     }
                 }
 
-                stage ('centos 7. build') {
+                stage ('el7. build') {
                     when {
                         beforeAgent true
-                        expression { params.CENTOS7 == true }
+                        expression { params.EL7 == true }
                     }
                     agent {
                         label 'centos7-2'
@@ -310,10 +316,10 @@ pipeline {
                     }
                 }
 
-                stage ('centos 8. build') {
+                stage ('el8. build') {
                     when {
                         beforeAgent true
-                        expression { params.CENTOS8 == true }
+                        expression { params.EL8 == true }
                     }
                     agent {
                         label 'centos8'
@@ -509,10 +515,10 @@ pipeline {
         
         stage ('make installer') {
             parallel {
-                stage ('debian 9. make installer') {
+                stage ('stretch. make installer') {
                     when {
                         beforeAgent true
-                        expression { params.DEBIAN_9 == true }
+                        expression { params.STRETCH == true }
                     }
                     agent {
                         label 'debian9'
@@ -523,7 +529,7 @@ pipeline {
                             mkdir -p ${WORKSPACE}/devops/deb/root/usr/share/applications
                             cp -r ${WORKSPACE}/build/* ${WORKSPACE}/doc/veil-connect.ico ${WORKSPACE}/devops/deb/root/opt/veil-connect
                             cp ${WORKSPACE}/doc/veil-connect.desktop ${WORKSPACE}/devops/deb/root/usr/share/applications
-                            sed -i -e "s:%%VER%%:${VERSION}-stretch:g" ${WORKSPACE}/devops/deb/root/DEBIAN/control
+                            sed -i -e "s:%%VER%%:${VERSION}~stretch:g" ${WORKSPACE}/devops/deb/root/DEBIAN/control
                             chmod -R 777 ${WORKSPACE}/devops/deb/root
                             chmod -R 755 ${WORKSPACE}/devops/deb/root/DEBIAN
                             sudo chown -R root:root ${WORKSPACE}/devops/deb/root
@@ -533,10 +539,10 @@ pipeline {
                     }
                 }
 
-                stage ('debian 10. make installer') {
+                stage ('buster. make installer') {
                     when {
                         beforeAgent true
-                        expression { params.DEBIAN_10 == true }
+                        expression { params.BUSTER == true }
                     }
                     agent {
                         label 'bld-agent-01'
@@ -547,7 +553,7 @@ pipeline {
                             mkdir -p ${WORKSPACE}/devops/deb/root/usr/share/applications
                             cp -r ${WORKSPACE}/build/* ${WORKSPACE}/doc/veil-connect.ico ${WORKSPACE}/devops/deb/root/opt/veil-connect
                             cp ${WORKSPACE}/doc/veil-connect.desktop ${WORKSPACE}/devops/deb/root/usr/share/applications
-                            sed -i -e "s:%%VER%%:${VERSION}-buster:g" ${WORKSPACE}/devops/deb/root/DEBIAN/control
+                            sed -i -e "s:%%VER%%:${VERSION}~buster:g" ${WORKSPACE}/devops/deb/root/DEBIAN/control
                             chmod -R 777 ${WORKSPACE}/devops/deb/root
                             chmod -R 755 ${WORKSPACE}/devops/deb/root/DEBIAN
                             sudo chown -R root:root ${WORKSPACE}/devops/deb/root
@@ -557,10 +563,10 @@ pipeline {
                     }
                 }
 
-                stage ('ubuntu 18. make installer') {
+                stage ('bionic. make installer') {
                     when {
                         beforeAgent true
-                        expression { params.UBUNTU_18 == true }
+                        expression { params.BIONIC == true }
                     }
                     agent {
                         label 'ubuntu18'
@@ -571,7 +577,7 @@ pipeline {
                             mkdir -p ${WORKSPACE}/devops/deb/root/usr/share/applications
                             cp -r ${WORKSPACE}/build/* ${WORKSPACE}/doc/veil-connect.ico ${WORKSPACE}/devops/deb/root/opt/veil-connect
                             cp ${WORKSPACE}/doc/veil-connect.desktop ${WORKSPACE}/devops/deb/root/usr/share/applications
-                            sed -i -e "s:%%VER%%:${VERSION}-bionic:g" ${WORKSPACE}/devops/deb/root/DEBIAN/control
+                            sed -i -e "s:%%VER%%:${VERSION}~bionic:g" ${WORKSPACE}/devops/deb/root/DEBIAN/control
                             chmod -R 777 ${WORKSPACE}/devops/deb/root
                             chmod -R 755 ${WORKSPACE}/devops/deb/root/DEBIAN
                             sudo chown -R root:root ${WORKSPACE}/devops/deb/root
@@ -581,10 +587,10 @@ pipeline {
                     }
                 }
 
-                stage ('ubuntu 20. make installer') {
+                stage ('focal. make installer') {
                     when {
                         beforeAgent true
-                        expression { params.UBUNTU_20 == true }
+                        expression { params.FOCAL == true }
                     }
                     agent {
                         label 'ubuntu20'
@@ -595,7 +601,7 @@ pipeline {
                             mkdir -p ${WORKSPACE}/devops/deb/root/usr/share/applications
                             cp -r ${WORKSPACE}/build/* ${WORKSPACE}/doc/veil-connect.ico ${WORKSPACE}/devops/deb/root/opt/veil-connect
                             cp ${WORKSPACE}/doc/veil-connect.desktop ${WORKSPACE}/devops/deb/root/usr/share/applications
-                            sed -i -e "s:%%VER%%:${VERSION}-focal:g" ${WORKSPACE}/devops/deb/root/DEBIAN/control
+                            sed -i -e "s:%%VER%%:${VERSION}~focal:g" ${WORKSPACE}/devops/deb/root/DEBIAN/control
                             chmod -R 777 ${WORKSPACE}/devops/deb/root
                             chmod -R 755 ${WORKSPACE}/devops/deb/root/DEBIAN
                             sudo chown -R root:root ${WORKSPACE}/devops/deb/root
@@ -605,10 +611,10 @@ pipeline {
                     }
                 }
 
-                stage ('centos 7. make installer') {
+                stage ('el7. make installer') {
                     when {
                         beforeAgent true
-                        expression { params.CENTOS7 == true }
+                        expression { params.EL7 == true }
                     }
                     agent {
                         label 'centos7-2'
@@ -628,10 +634,10 @@ pipeline {
                     }
                 }
 
-                stage ('centos 8. make installer') {
+                stage ('el8. make installer') {
                     when {
                         beforeAgent true
-                        expression { params.CENTOS8 == true }
+                        expression { params.EL8 == true }
                     }
                     agent {
                         label 'centos8'
@@ -711,10 +717,10 @@ pipeline {
         
         stage ('deploy to repo') {
             parallel {
-                stage ('debian 9. deploy to repo') {
+                stage ('stretch. deploy to repo') {
                     when {
                         beforeAgent true
-                        expression { params.DEBIAN_9 == true }
+                        expression { params.STRETCH == true }
                     }
                     agent {
                         label 'debian9'
@@ -723,14 +729,25 @@ pipeline {
                         sh script: '''
                             ssh uploader@192.168.10.144 mkdir -p /local_storage/veil-connect/${VERSION}/linux
                             scp ${WORKSPACE}/devops/deb/*.deb uploader@192.168.10.144:/local_storage/veil-connect/${VERSION}/linux
+
+                            DISTR=stretch
+                            REPO=${PRJNAME}-${DISTR}
+                            DEB=$(ls -1 ${WORKSPACE}/devops/deb/*.deb)
+
+                            curl -sS -X POST -F file=@$DEB http://$APT_SRV:8008/api/files/${REPO}; echo ""
+                            curl -sS -X POST http://$APT_SRV:8008/api/repos/${REPO}/file/${REPO}?forceReplace=1
+                            JSON1="{\\"Name\\":\\"${REPO}-${DATE}\\"}"
+                            JSON2="{\\"Snapshots\\":[{\\"Component\\":\\"main\\",\\"Name\\":\\"${REPO}-\${DATE}\\"}],\\"ForceOverwrite\\":true}"
+                            curl -sS -X POST -H 'Content-Type: application/json' -d ${JSON1} http://$APT_SRV:8008/api/repos/${REPO}/snapshots
+                            curl -sS -X PUT -H 'Content-Type: application/json' -d ${JSON2} http://$APT_SRV:8008/api/publish/${PRJNAME}/${DISTR}
                         '''
                     }
                 }
 
-                stage ('debian 10. deploy to repo') {
+                stage ('buster. deploy to repo') {
                     when {
                         beforeAgent true
-                        expression { params.DEBIAN_10 == true }
+                        expression { params.BUSTER == true }
                     }
                     agent {
                         label 'bld-agent-01'
@@ -739,14 +756,25 @@ pipeline {
                         sh script: '''
                             ssh uploader@192.168.10.144 mkdir -p /local_storage/veil-connect/${VERSION}/linux
                             scp ${WORKSPACE}/devops/deb/*.deb uploader@192.168.10.144:/local_storage/veil-connect/${VERSION}/linux
+
+                            DISTR=buster
+                            REPO=${PRJNAME}-${DISTR}
+                            DEB=$(ls -1 ${WORKSPACE}/devops/deb/*.deb)
+
+                            curl -sS -X POST -F file=@$DEB http://$APT_SRV:8008/api/files/${REPO}; echo ""
+                            curl -sS -X POST http://$APT_SRV:8008/api/repos/${REPO}/file/${REPO}?forceReplace=1
+                            JSON1="{\\"Name\\":\\"${REPO}-${DATE}\\"}"
+                            JSON2="{\\"Snapshots\\":[{\\"Component\\":\\"main\\",\\"Name\\":\\"${REPO}-\${DATE}\\"}],\\"ForceOverwrite\\":true}"
+                            curl -sS -X POST -H 'Content-Type: application/json' -d ${JSON1} http://$APT_SRV:8008/api/repos/${REPO}/snapshots
+                            curl -sS -X PUT -H 'Content-Type: application/json' -d ${JSON2} http://$APT_SRV:8008/api/publish/${PRJNAME}/${DISTR}
                         '''
                     }
                 }
 
-                stage ('ubuntu 18. deploy to repo') {
+                stage ('bionic. deploy to repo') {
                     when {
                         beforeAgent true
-                        expression { params.UBUNTU_18 == true }
+                        expression { params.BIONIC == true }
                     }
                     agent {
                         label 'ubuntu18'
@@ -755,14 +783,25 @@ pipeline {
                         sh script: '''
                             ssh uploader@192.168.10.144 mkdir -p /local_storage/veil-connect/${VERSION}/linux
                             scp ${WORKSPACE}/devops/deb/*.deb uploader@192.168.10.144:/local_storage/veil-connect/${VERSION}/linux
+
+                            DISTR=bionic
+                            REPO=${PRJNAME}-${DISTR}
+                            DEB=$(ls -1 ${WORKSPACE}/devops/deb/*.deb)
+
+                            curl -sS -X POST -F file=@$DEB http://$APT_SRV:8008/api/files/${REPO}; echo ""
+                            curl -sS -X POST http://$APT_SRV:8008/api/repos/${REPO}/file/${REPO}?forceReplace=1
+                            JSON1="{\\"Name\\":\\"${REPO}-${DATE}\\"}"
+                            JSON2="{\\"Snapshots\\":[{\\"Component\\":\\"main\\",\\"Name\\":\\"${REPO}-\${DATE}\\"}],\\"ForceOverwrite\\":true}"
+                            curl -sS -X POST -H 'Content-Type: application/json' -d ${JSON1} http://$APT_SRV:8008/api/repos/${REPO}/snapshots
+                            curl -sS -X PUT -H 'Content-Type: application/json' -d ${JSON2} http://$APT_SRV:8008/api/publish/${PRJNAME}/${DISTR}
                         '''
                     }
                 }
 
-                stage ('ubuntu 20. deploy to repo') {
+                stage ('focal. deploy to repo') {
                     when {
                         beforeAgent true
-                        expression { params.UBUNTU_20 == true }
+                        expression { params.FOCAL == true }
                     }
                     agent {
                         label 'ubuntu20'
@@ -771,14 +810,25 @@ pipeline {
                         sh script: '''
                             ssh uploader@192.168.10.144 mkdir -p /local_storage/veil-connect/${VERSION}/linux
                             scp ${WORKSPACE}/devops/deb/*.deb uploader@192.168.10.144:/local_storage/veil-connect/${VERSION}/linux
+
+                            DISTR=focal
+                            REPO=${PRJNAME}-${DISTR}
+                            DEB=$(ls -1 ${WORKSPACE}/devops/deb/*.deb)
+
+                            curl -sS -X POST -F file=@$DEB http://$APT_SRV:8008/api/files/${REPO}; echo ""
+                            curl -sS -X POST http://$APT_SRV:8008/api/repos/${REPO}/file/${REPO}?forceReplace=1
+                            JSON1="{\\"Name\\":\\"${REPO}-${DATE}\\"}"
+                            JSON2="{\\"Snapshots\\":[{\\"Component\\":\\"main\\",\\"Name\\":\\"${REPO}-\${DATE}\\"}],\\"ForceOverwrite\\":true}"
+                            curl -sS -X POST -H 'Content-Type: application/json' -d ${JSON1} http://$APT_SRV:8008/api/repos/${REPO}/snapshots
+                            curl -sS -X PUT -H 'Content-Type: application/json' -d ${JSON2} http://$APT_SRV:8008/api/publish/${PRJNAME}/${DISTR}
                         '''
                     }
                 }
 
-                stage ('centos 7. deploy to repo') {
+                stage ('el7. deploy to repo') {
                     when {
                         beforeAgent true
-                        expression { params.CENTOS7 == true }
+                        expression { params.EL7 == true }
                     }
                     agent {
                         label 'centos7-2'
@@ -791,10 +841,10 @@ pipeline {
                     }
                 }
 
-                stage ('centos 8. deploy to repo') {
+                stage ('el8. deploy to repo') {
                     when {
                         beforeAgent true
-                        expression { params.CENTOS8 == true }
+                        expression { params.EL8 == true }
                     }
                     agent {
                         label 'centos8'
