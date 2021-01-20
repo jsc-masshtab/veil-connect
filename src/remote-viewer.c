@@ -417,14 +417,13 @@ retry_connect_to_vm:
         virt_viewer_app_set_window_name(app, con_data.vm_verbose_name);
         vdi_ws_client_send_vm_changed(vdi_session_get_ws_client(), vdi_session_get_current_vm_id());
 
-        // connect to vm depending on remote protocol
+        // connect to vm depending using remote protocol
+        gboolean quit_app_after_remote_conn = FALSE; // флаг завершать ли работу
         if (vdi_session_get_current_remote_protocol() == VDI_RDP_PROTOCOL) {
             GtkResponseType rdp_viewer_res = rdp_viewer_start(vdi_session_get_vdi_username(),
                     vdi_session_get_vdi_password(), con_data.domain, con_data.ip, 0);
-            g_info("TESTIK rdp_viewer_res: %i", rdp_viewer_res);
             // quit if required
-            if (rdp_viewer_res == GTK_RESPONSE_CLOSE)
-                goto to_exit;
+            quit_app_after_remote_conn = (rdp_viewer_res == GTK_RESPONSE_CLOSE);
 #ifdef _WIN32
         }else if (vdi_session_get_current_remote_protocol() == VDI_RDP_WINDOWS_NATIVE_PROTOCOL) {
                 launch_windows_rdp_client(vdi_session_get_vdi_username(), vdi_session_get_vdi_password(),
@@ -437,14 +436,14 @@ retry_connect_to_vm:
             // Показывается окно virt viewer // virt_viewer_app_default_start
             VIRT_VIEWER_APP_CLASS(remote_viewer_parent_class)->start(app, NULL, AUTH_DIALOG);
             create_loop_and_launch(&REMOTE_VIEWER(app)->priv->virt_viewer_loop);
-
             // quit if required
-            if (virt_viewer_app_is_quitting(app))
-                goto to_exit;
+            quit_app_after_remote_conn =  (virt_viewer_app_is_quitting(app));
         }
 
         vdi_ws_client_send_vm_changed(vdi_session_get_ws_client(), NULL);
-        if (con_data.is_connect_to_prev_pool)
+        if (quit_app_after_remote_conn)
+            goto to_exit;
+        else if (con_data.is_connect_to_prev_pool)
             goto retry_auth;
         else
             goto retry_connect_to_vm;
