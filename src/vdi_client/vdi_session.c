@@ -108,7 +108,8 @@ VdiSession *vdi_session_new()
     vdi_session->current_vm_verbose_name = NULL;
     vdi_session->current_controller_address = NULL;
 
-    vdi_session->user_permissions = USER_PERMISSION_NO_PERMISSIONS;
+    vdi_session->user_permissions = (USER_PERMISSION_NO_PERMISSIONS | USER_PERMISSION_USB_REDIR |
+            USER_PERMISSION_FOLDERS_REDIR | USER_PERMISSION_SHARED_CLIPBOARD);
 
     memset(&vdi_session->redis_client, 0, sizeof(RedisClient));
 
@@ -801,7 +802,7 @@ clear_mark:
 gchar *vdi_session_attach_usb(AttachUsbData *attach_usb_data)
 {
     g_info("%s", (const char*)__func__);
-    g_usleep(1000000); // temp
+    //g_usleep(1000000); // temp
     gchar *usb_uuid = NULL;
 
     // url
@@ -815,6 +816,7 @@ gchar *vdi_session_attach_usb(AttachUsbData *attach_usb_data)
 
     // request
     gchar *response_body_str = vdi_session_api_call("POST", url_str, body_str, NULL);
+    g_info("%s response_body_str: %s", (const char *)__func__, response_body_str);
 
     // parse
     if (response_body_str) {
@@ -842,16 +844,15 @@ gchar *vdi_session_attach_usb(AttachUsbData *attach_usb_data)
             }
         }
 
-        g_info("%s response_body_str: %s", (const char *)__func__, response_body_str);
-
         g_object_unref(parser);
     }
 
     // Для  остановки основного потока текущего USB
     if (!usb_uuid) {
+        g_info("%s: TCP USB Device with host %s is NOT found in reply",
+               (const char *)__func__, attach_usb_data->host_address);
         g_info("%s Lower flag. *(attach_usb_data->p_running_flag) = 0 ", (const char*)__func__);
         *(attach_usb_data->p_running_flag) = 0;
-
     }
 
     // free

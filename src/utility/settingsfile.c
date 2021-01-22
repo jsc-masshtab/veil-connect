@@ -69,6 +69,16 @@ read_str_from_ini_file(const gchar *group_name,  const gchar *key)
     return str_value;
 }
 
+// Возвращает дефолтное значение, если не найдено искомое по ключу. Требуется осводить память возвращаемого указателя
+gchar *read_str_from_ini_file_default(const gchar *group_name,  const gchar *key, const gchar *default_str)
+{
+    gchar *str_value = read_str_from_ini_file(group_name, key);
+    if (str_value)
+        return str_value;
+
+    return g_strdup(default_str);
+}
+
 
 void
 write_str_to_ini_file(const gchar *group_name,  const gchar *key, const gchar *str_value)

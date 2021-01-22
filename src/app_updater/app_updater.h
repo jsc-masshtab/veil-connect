@@ -27,6 +27,7 @@ struct _AppUpdater
     gchar *_admin_password;
     gchar *_last_standard_output;
     gchar *_last_standard_error;
+    gchar *_windows_releases_url; // url to windows releases storage
 
     int _is_checking_updates;
     int _is_getting_updates;
@@ -56,6 +57,10 @@ int app_updater_is_getting_updates(AppUpdater *self);
 void app_updater_set_admin_password(AppUpdater *self, const gchar *admin_password);
 gchar *app_updater_get_admin_password(AppUpdater *self);
 
+void app_updater_set_windows_releases_url(AppUpdater *self, const gchar *windows_releases_url);
+gchar *app_updater_get_windows_releases_url(AppUpdater *self);
+
+// execute tasks
 void app_updater_execute_task_check_updates(AppUpdater *self);
 void app_updater_execute_task_get_updates(AppUpdater *self);
 

@@ -30,11 +30,11 @@ static void vdi_ws_client_ws_reconnect_if_allowed(VdiWsClient *vdi_ws_client);
 static void vdi_ws_client_on_message(SoupWebsocketConnection *ws_conn G_GNUC_UNUSED, gint type, GBytes *message,
                                      VdiWsClient *vdi_ws_client)
 {
-    g_info("!!!!!on_message");
+    // g_info("!!!!!on_message");
     if (type == SOUP_WEBSOCKET_DATA_TEXT) { // we are expecting json
         gsize sz;
         const gchar *string_msg = g_bytes_get_data(message, &sz);
-        g_info("Received text data: %s\n", string_msg);
+        // g_info("Received text data: %s\n", string_msg);
 
         if (!string_msg)
             return;

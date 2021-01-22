@@ -981,13 +981,13 @@ const gchar *vm_power_state_to_str(int power_state)
 {
     VM_POWER_STATE state = (VM_POWER_STATE)power_state;
     if (state == VM_POWER_STATE_OFF)
-        return "Выклечена";
+        return "Выключена";
     else if (state == VM_POWER_STATE_PAUSED)
         return "На паузе";
     else if (state == VM_POWER_STATE_ON)
         return "Включена";
     else
-        return "Неизвестно";
+        return "?";
 }
 
 void set_vm_power_state_on_label(GtkLabel *label, int power_state)

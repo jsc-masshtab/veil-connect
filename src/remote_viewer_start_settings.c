@@ -55,6 +55,7 @@ typedef struct{
     GtkWidget *btn_get_app_updates;
     GtkWidget *check_updates_spinner;
     GtkWidget *check_updates_label;
+    GtkWidget *windows_updates_url_entry;
 
     // control buttons
     GtkWidget *bt_cancel;
@@ -492,7 +493,8 @@ fill_connect_settings_gui(ConnectSettingsDialogData *dialog_data, ConnectSetting
     gboolean redirect_printers = read_int_from_ini_file("RDPSettings", "redirect_printers", FALSE);
     gtk_toggle_button_set_active((GtkToggleButton *)dialog_data->redirect_printers_check_btn, redirect_printers);
 
-    gboolean is_remote_app = read_int_from_ini_file("RDPSettings", "is_remote_app", 0);
+    gboolean is_remote_app = read_int_from_ini_file("RDPSettings", "is_remote_app",
+            0);
     gtk_toggle_button_set_active((GtkToggleButton *)dialog_data->remote_app_check_btn, is_remote_app);
     gchar *remote_app_name = read_str_from_ini_file("RDPSettings", "remote_app_name");
     if (remote_app_name) {
@@ -504,6 +506,14 @@ fill_connect_settings_gui(ConnectSettingsDialogData *dialog_data, ConnectSetting
         gtk_entry_set_text(GTK_ENTRY(dialog_data->remote_app_options_entry), remote_app_options);
         g_free(remote_app_options);
     }
+
+    // Service settings
+    gchar *cur_url = app_updater_get_windows_releases_url(dialog_data->p_remote_viewer->app_updater);
+    gchar *windows_updates_url = read_str_from_ini_file_default("ServiceSettings",
+                                                                "windows_updates_url", cur_url);
+    free_memory_safely(&cur_url);
+    gtk_entry_set_text(GTK_ENTRY(dialog_data->windows_updates_url_entry), windows_updates_url);
+    g_free(windows_updates_url);
 }
 
 static void
@@ -580,6 +590,10 @@ save_data_to_ini_file(ConnectSettingsDialogData *dialog_data)
     write_str_to_ini_file("RDPSettings", "remote_app_options",
                           gtk_entry_get_text(GTK_ENTRY(dialog_data->remote_app_options_entry)));
 
+    // Service settings
+    write_str_to_ini_file("ServiceSettings", "windows_updates_url",
+                          gtk_entry_get_text(GTK_ENTRY(dialog_data->windows_updates_url_entry)));
+
 } // remote_app_name_entry      remote_app_options_entry
 
 GtkResponseType remote_viewer_start_settings_dialog(RemoteViewer *p_remote_viewer,
@@ -648,6 +662,7 @@ GtkResponseType remote_viewer_start_settings_dialog(RemoteViewer *p_remote_viewe
     dialog_data.btn_get_app_updates = get_widget_from_builder(dialog_data.builder, "btn_get_app_updates");
     dialog_data.check_updates_spinner = get_widget_from_builder(dialog_data.builder, "check_updates_spinner");
     dialog_data.check_updates_label = get_widget_from_builder(dialog_data.builder, "check_updates_label");
+    dialog_data.windows_updates_url_entry = get_widget_from_builder(dialog_data.builder, "windows_updates_url_entry");
     // В этот момент может происходить процесс обновления софта.  Setup gui
 
     AppUpdater *app_updater = dialog_data.p_remote_viewer->app_updater;
@@ -692,6 +707,9 @@ GtkResponseType remote_viewer_start_settings_dialog(RemoteViewer *p_remote_viewe
     gtk_window_set_position(GTK_WINDOW(dialog_data.window), GTK_WIN_POS_CENTER);
     //gtk_window_resize(GTK_WINDOW(dialog_data.window),         width,          height);
     gtk_widget_show_all(dialog_data.window);
+#ifndef  _WIN32
+    gtk_widget_hide(dialog_data.windows_updates_url_entry);
+#endif
     gtk_window_set_resizable(GTK_WINDOW(dialog_data.window), FALSE);
 
     create_loop_and_launch(&dialog_data.loop);

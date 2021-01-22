@@ -5,6 +5,7 @@
 #include "vdi_session.h"
 #include "app_updater.h"
 #include "config.h"
+#include "settingsfile.h"
 
 #include <stdlib.h>
 
@@ -19,13 +20,20 @@
 
 #include "remote-viewer-util.h"
 
-#define VEIL_CONNECT_WINDOWS_RELEASES_URL "https://veil-update.mashtab.org/files/veil-connect/latest/windows/"
-
 G_DEFINE_TYPE( AppUpdater, app_updater, G_TYPE_OBJECT )
 
 //==============================Static======================================
 
 static void app_updater_finalize( GObject *object );
+
+static void app_updater_read_windows_updates_url_from_file(AppUpdater *self)
+{
+    gchar *windows_updates_url = read_str_from_ini_file("ServiceSettings", "windows_updates_url");
+    if (windows_updates_url) {
+        app_updater_set_windows_releases_url(self, windows_updates_url);
+        g_free(windows_updates_url);
+    }
+}
 
 static void app_updater_class_init( AppUpdaterClass *klass )
 {
@@ -70,6 +78,8 @@ static void app_updater_init( AppUpdater *self )
     g_info("%s", (const char *)__func__);
     g_mutex_init(&self->priv_members_mutex);
 
+    g_mutex_lock(&self->priv_members_mutex);
+
     self->_is_checking_updates = FALSE;
     self->_is_getting_updates = FALSE;
     self->_last_exit_status = 0;
@@ -77,6 +87,9 @@ static void app_updater_init( AppUpdater *self )
     self->_admin_password = NULL;
     self->_last_standard_output = NULL;
     self->_last_standard_error = NULL;
+    self->_windows_releases_url = g_strdup("https://veil-update.mashtab.org/files/veil-connect/latest/windows/");
+
+    g_mutex_unlock(&self->priv_members_mutex);
 
 #ifdef __linux__
     // detect CentOS (if release contains .el)
@@ -98,6 +111,7 @@ static void app_updater_finalize( GObject *object )
     free_memory_safely(&self->_admin_password);
     free_memory_safely(&self->_last_standard_output);
     free_memory_safely(&self->_last_standard_error);
+    free_memory_safely(&self->_windows_releases_url);
     g_mutex_unlock(&self->priv_members_mutex);
 
     wair_for_mutex_and_clear(&self->priv_members_mutex);
@@ -351,7 +365,9 @@ app_updater_check_windows_updates_task(GTask    *task G_GNUC_UNUSED,
     self->_is_checking_updates = TRUE;
 
     gchar *last_version = NULL;
-    gchar *download_link = vdi_session_check_for_tk_updates(VEIL_CONNECT_WINDOWS_RELEASES_URL, &last_version);
+    gchar *windows_releases_url = app_updater_get_windows_releases_url(self);
+    gchar *download_link = vdi_session_check_for_tk_updates(windows_releases_url, &last_version);
+    free_memory_safely(&windows_releases_url);
 
     gboolean is_updates_available = (download_link != NULL);
     free_memory_safely(&download_link);
@@ -384,7 +400,10 @@ app_updater_get_windows_updates_task(GTask    *task G_GNUC_UNUSED,
     g_mkdir_with_parents(temp_dir, 0755);
 
     // Check for updates
-    gchar *download_link = vdi_session_check_for_tk_updates(VEIL_CONNECT_WINDOWS_RELEASES_URL, &last_version);
+    gchar *windows_releases_url = app_updater_get_windows_releases_url(self);
+    gchar *download_link = vdi_session_check_for_tk_updates(windows_releases_url, &last_version);
+    free_memory_safely(&windows_releases_url);
+
     if (download_link == NULL) { // download_link == NULL
         set_status_msg(self, "Нет доступных обновлений.");
         goto clear_mark;
@@ -497,12 +516,28 @@ gchar *app_updater_get_admin_password(AppUpdater *self)
     return temp_admin_password;
 }
 
+void app_updater_set_windows_releases_url(AppUpdater *self, const gchar *windows_releases_url)
+{
+    g_mutex_lock(&self->priv_members_mutex);
+    update_string_safely(&self->_windows_releases_url, windows_releases_url);
+    g_mutex_unlock(&self->priv_members_mutex);
+}
+
+gchar *app_updater_get_windows_releases_url(AppUpdater *self)
+{
+    g_mutex_lock(&self->priv_members_mutex);
+    gchar *temp = g_strdup(self->_windows_releases_url);
+    g_mutex_unlock(&self->priv_members_mutex);
+    return temp;
+}
+
 void app_updater_execute_task_check_updates(AppUpdater *self)
 {
 #ifdef __linux__
     execute_async_task(app_updater_check_linux_updates_task,
                        app_updater_on_check_updates_task_finished, self, self);
 #elif _WIN32
+    app_updater_read_windows_updates_url_from_file(self);
     execute_async_task(app_updater_check_windows_updates_task,
                        app_updater_on_check_updates_task_finished, self, self);
 #endif
@@ -513,6 +548,7 @@ void app_updater_execute_task_get_updates(AppUpdater *self)
 #ifdef __linux__
     execute_async_task(app_updater_get_linux_updates_task, NULL, self, NULL);
 #elif _WIN32
+    app_updater_read_windows_updates_url_from_file(self);
     execute_async_task(app_updater_get_windows_updates_task, NULL, self, NULL);
 #endif
 }
