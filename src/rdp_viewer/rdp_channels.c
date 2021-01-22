@@ -21,6 +21,7 @@
 #include "rdp_client.h"
 #include "rdp_rail.h"
 #include "rdp_clipboard.h"
+#include "vdi_session.h"
 
 #include "remote-viewer-util.h"
 
@@ -80,7 +81,7 @@ void rdp_OnChannelConnectedEventHandler(void* context, ChannelConnectedEventArgs
 	else if (strcmp(e->name, CLIPRDR_SVC_CHANNEL_NAME) == 0)
 	{
 	    g_info("strcmp(e->name, CLIPRDR_SVC_CHANNEL_NAME) == 0");
-        rdp_cliprdr_init(ex_context, (CliprdrClientContext*)e->pInterface);
+	    rdp_cliprdr_init(ex_context, (CliprdrClientContext *) e->pInterface);
 	}
 	else if (strcmp(e->name, ENCOMSP_SVC_CHANNEL_NAME) == 0)
 	{

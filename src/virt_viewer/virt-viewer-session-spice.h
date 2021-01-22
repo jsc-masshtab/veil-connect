@@ -70,6 +70,9 @@ SpiceMainChannel* virt_viewer_session_spice_get_main_channel(VirtViewerSessionSp
 
 void virt_viewer_session_spice_set_credentials(gchar *username, gchar *password);
 
+void virt_viewer_session_spice_enable_auto_clipboard(VirtViewerSessionSpice *self, gboolean enabled);
+
+
 G_END_DECLS
 
 

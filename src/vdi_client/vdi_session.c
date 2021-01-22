@@ -469,6 +469,9 @@ void vdi_session_set_permissions(JsonArray *user_permissions_array)
         else if (g_strcmp0(permission, "FOLDERS_REDIR") == 0)
             get_vdi_session_static()->user_permissions =
                     (get_vdi_session_static()->user_permissions | USER_PERMISSION_FOLDERS_REDIR);
+        else if (g_strcmp0(permission, "SHARED_CLIPBOARD") == 0)
+            get_vdi_session_static()->user_permissions =
+                    (get_vdi_session_static()->user_permissions | USER_PERMISSION_SHARED_CLIPBOARD);
     }
 
     g_info("get_vdi_session_static()->user_permissions: %i", get_vdi_session_static()->user_permissions);
@@ -482,6 +485,11 @@ gboolean vdi_session_is_usb_redir_permitted(void)
 gboolean vdi_session_is_folders_redir_permitted(void)
 {
     return (get_vdi_session_static()->user_permissions & USER_PERMISSION_FOLDERS_REDIR);
+}
+
+gboolean vdi_session_is_shared_clipboard_permitted(void)
+{
+    return (get_vdi_session_static()->user_permissions & USER_PERMISSION_SHARED_CLIPBOARD);
 }
 
 gchar *vdi_session_api_call(const char *method, const char *uri_string, const gchar *body_str, int *resp_code)

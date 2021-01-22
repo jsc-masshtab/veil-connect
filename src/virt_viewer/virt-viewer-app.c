@@ -1427,6 +1427,13 @@ RemoteViewerState virt_viewer_get_next_app_state(VirtViewerApp *self)
     return self->priv->next_app_state;
 }
 
+void virt_viewer_app_enable_auto_clipboard(VirtViewerApp *self, gboolean enabled)
+{
+    VirtViewerSessionSpice *spice_session =
+            VIRT_VIEWER_SESSION_SPICE(virt_viewer_app_get_session(self));
+    virt_viewer_session_spice_enable_auto_clipboard(spice_session, enabled);
+}
+
 void virt_viewer_app_hide_and_deactivate(VirtViewerApp *self)
 {
     // turn off polling if its in process
@@ -2725,6 +2732,9 @@ virt_viewer_connect_timer(VirtViewerApp *self)
     created = virt_viewer_app_create_session(self, "spice", NULL);
     if (!created)
         return TRUE;
+
+    // session options
+    virt_viewer_app_enable_auto_clipboard(self, vdi_session_is_shared_clipboard_permitted());
 
     is_connected = virt_viewer_app_initial_connect(self, NULL);
 

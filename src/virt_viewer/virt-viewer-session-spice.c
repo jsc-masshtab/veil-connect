@@ -1177,6 +1177,11 @@ virt_viewer_session_spice_set_credentials(gchar *username, gchar *password)
     spice_session_password = g_strdup(password);
 }
 
+void virt_viewer_session_spice_enable_auto_clipboard(VirtViewerSessionSpice *self, gboolean enabled)
+{
+    g_object_set(self->priv->gtk_session, "auto-clipboard", enabled, NULL);
+}
+
 static void
 virt_viewer_session_spice_smartcard_insert(VirtViewerSession *session G_GNUC_UNUSED)
 {

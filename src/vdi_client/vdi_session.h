@@ -22,7 +22,8 @@
 typedef enum{
     USER_PERMISSION_NO_PERMISSIONS = 0,
     USER_PERMISSION_USB_REDIR = 1, // 0001
-    USER_PERMISSION_FOLDERS_REDIR = 2 // 0010
+    USER_PERMISSION_FOLDERS_REDIR = 2, // 0010
+    USER_PERMISSION_SHARED_CLIPBOARD = 4 // 0100
 } UserPermission;
 
 // remote protocol type
@@ -184,6 +185,7 @@ const gchar *vdi_session_get_current_controller_address(void);
 void vdi_session_set_permissions(JsonArray *user_permissions_array);
 gboolean vdi_session_is_usb_redir_permitted(void);
 gboolean vdi_session_is_folders_redir_permitted(void);
+gboolean vdi_session_is_shared_clipboard_permitted(void);
 
 //void gInputStreamToBuffer(GInputStream *inputStream, gchar *responseBuffer);
 // Do api call. Return response body
