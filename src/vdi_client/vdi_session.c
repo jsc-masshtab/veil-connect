@@ -350,14 +350,8 @@ void vdi_session_set_credentials(const gchar *username, const gchar *password, c
 
     const gchar *http_protocol = determine_http_protocol_by_port(port);
 
-    gboolean is_nginx_vdi_prefix_disabled = read_int_from_ini_file("General", "is_nginx_vdi_prefix_disabled", 0);
-    if (is_nginx_vdi_prefix_disabled)
-        vdi_session_static->api_url = g_strdup_printf("%s://%s:%i", http_protocol, 
-                vdi_session_static->vdi_ip, vdi_session_static->vdi_port);
-    else
-        vdi_session_static->api_url = g_strdup_printf("%s://%s:%i/%s", http_protocol,
-            vdi_session_static->vdi_ip, vdi_session_static->vdi_port, NGINX_VDI_API_PREFIX);
-
+    vdi_session_static->api_url = g_strdup_printf("%s://%s:%i/api", http_protocol,
+            vdi_session_static->vdi_ip, vdi_session_static->vdi_port);
 
     vdi_session_static->auth_url = g_strdup_printf("%s/auth/", vdi_session_static->api_url);
 

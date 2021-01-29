@@ -30,11 +30,11 @@ static void vdi_ws_client_ws_reconnect_if_allowed(VdiWsClient *vdi_ws_client);
 static void vdi_ws_client_on_message(SoupWebsocketConnection *ws_conn G_GNUC_UNUSED, gint type, GBytes *message,
                                      VdiWsClient *vdi_ws_client)
 {
-    // g_info("!!!!!on_message");
+    g_info("%s: on_message", (const char *)__func__);
     if (type == SOUP_WEBSOCKET_DATA_TEXT) { // we are expecting json
         gsize sz;
         const gchar *string_msg = g_bytes_get_data(message, &sz);
-        // g_info("Received text data: %s\n", string_msg);
+        g_info("Received text data: %s\n", string_msg);
 
         if (!string_msg)
             return;
@@ -111,32 +111,6 @@ static void vdi_ws_client_on_connection(SoupSession *session, GAsyncResult *res,
         g_signal_connect(vdi_ws_client->ws_conn, "message", G_CALLBACK(vdi_ws_client_on_message), vdi_ws_client);
         g_signal_connect(vdi_ws_client->ws_conn, "closed", G_CALLBACK(vdi_ws_client_on_close), vdi_ws_client);
         //g_signal_connect(vdi_ws_client->ws_conn, "pong", G_CALLBACK(vdi_ws_client_on_pong), NULL);
-
-        // Authentication on server. Needs wss or everybody will see the token
-        // Вместе с auth заодно пошлем информацию о тк
-        // vm_id - это id машины к которой щас подключены может быть NULL, что значит мы ни к чему
-        // не подключены
-        // tk_os - os машины, где запущен тк
-        gchar *vm_id_json = string_to_json_value(vdi_session_get_current_vm_id());
-        gchar *tk_os = string_to_json_value(util_get_os_name());
-        gchar *auth_data = g_strdup_printf("{"
-                                           "\"msg_type\": \"AUTH\", "
-                                           "\"token\": \"%s\", "
-                                           "\"veil_connect_version\": \"%s\", "
-                                           "\"vm_id\": %s, "
-                                           "\"tk_os\": %s, "
-                                           "\"is_conn_init_by_user\": %s"
-                                           "}",
-                                           vdi_session_get_token(),
-                                           VERSION,
-                                           vm_id_json,
-                                           tk_os,
-                                           bool_to_str(vdi_ws_client->is_connect_initiated_by_user));
-        vdi_ws_client_send_text(vdi_ws_client, auth_data);
-        g_free(auth_data);
-        g_free(vm_id_json);
-        g_free(tk_os);
-        vdi_ws_client->is_connect_initiated_by_user = FALSE;
     }
     // notify gui
     vdi_session_ws_conn_change_notify(error == NULL);
@@ -178,18 +152,37 @@ void vdi_ws_client_start(VdiWsClient *vdi_ws_client, const gchar *vdi_ip, int vd
     vdi_ws_client->ws_soup_session = soup_session_new_with_options("idle-timeout", 25, "timeout", 25,
                                                                    "ssl-strict", ssl_strict, NULL);
 
-    const gchar *protocol = (vdi_port == 443) ? "wss" : "ws";
+    // build URL
+    const gchar *protocol = determine_http_protocol_by_port(vdi_port);
 
-    gboolean is_nginx_vdi_prefix_disabled = read_int_from_ini_file("General", "is_nginx_vdi_prefix_disabled", 0);
-    if (is_nginx_vdi_prefix_disabled)
-        vdi_ws_client->vdi_url = g_strdup_printf("%s://%s:%i/ws/client/vdi_server_check",
-                                                 protocol, vdi_ip, vdi_port);
-    else
-        vdi_ws_client->vdi_url = g_strdup_printf("%s://%s:%i/%s/ws/client/vdi_server_check",
-                                                 protocol, vdi_ip, vdi_port, NGINX_VDI_API_PREFIX);
+    g_autofree gchar *base_url = NULL;
+    base_url = g_strdup_printf("%s://%s:%i/api/ws/client/", protocol, vdi_ip, vdi_port);
+
+    // add query parameters
+    // Token for authentication on server.
+    // Вместе с auth заодно пошлем информацию о тк
+    // vm_id - это id машины к которой щас подключены
+    // tk_os - os машины, где запущен тк
+    //GArray *query_params_dyn_array = g_array_new(FALSE, FALSE, sizeof(gchar *));
+    //g_array_append_val(query_params_dyn_array, rdp_param);
+
+    g_autofree gchar *query_pars = g_strdup_printf("?token=%s&"
+                                                   "is_conn_init_by_user=%i&"
+                                                   "veil_connect_version=%s&"
+                                                   "tk_os=%s",
+                                                   vdi_session_get_token(),
+                                                   vdi_ws_client->is_connect_initiated_by_user,
+                                                   VERSION,
+                                                   util_get_os_name());
+    vdi_ws_client->is_connect_initiated_by_user = FALSE; // reset
+
+    if (vdi_session_get_current_vm_id())
+        query_pars = g_strdup_printf("%s&%s", query_pars, vdi_session_get_current_vm_id());
+
+    vdi_ws_client->vdi_url = g_strdup_printf("%s/%s", base_url, query_pars);
 
     // msg
-    // hand shake preparation
+    // handshake preparation
     vdi_ws_client->ws_msg = soup_message_new("GET", vdi_ws_client->vdi_url);
     if (vdi_ws_client->ws_msg == NULL) {
         g_info("%s Cant parse message", (const char *)__func__);
