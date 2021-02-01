@@ -156,7 +156,7 @@ void vdi_ws_client_start(VdiWsClient *vdi_ws_client, const gchar *vdi_ip, int vd
     const gchar *protocol = determine_http_protocol_by_port(vdi_port);
 
     g_autofree gchar *base_url = NULL;
-    base_url = g_strdup_printf("%s://%s:%i/api/ws/client/", protocol, vdi_ip, vdi_port);
+    base_url = g_strdup_printf("%s://%s:%i/api/ws/client", protocol, vdi_ip, vdi_port);
 
     // add query parameters
     // Token for authentication on server.
