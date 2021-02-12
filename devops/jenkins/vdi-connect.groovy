@@ -902,7 +902,7 @@ pipeline {
             }
             steps {
                 sh script: '''
-                    scp -r uploader@192.168.10.144:/local_storage/debs-astra-orel ${WORKSPACE}/devops/deb_embedded/
+                    scp -r uploader@192.168.10.144:/local_storage/other/debs-astra-orel ${WORKSPACE}/devops/deb_embedded/
                     cd ${WORKSPACE}/devops/deb_embedded && tar czvf veil-connect-embedded-${VERSION}.tar.gz debs-astra-orel/ veil-connect-embedded*.deb veil-connect-embedded-installer.sh
                     
                     ssh uploader@192.168.10.144 mkdir -p /local_storage/veil-connect-embedded/${VERSION}/
@@ -928,7 +928,7 @@ pipeline {
                     
                     # debs for astra linux:
                     ssh uploader@192.168.10.144 "cp -r /local_storage/freerdp2-astra-orel /local_storage/veil-connect/${VERSION}/linux"
-                    ssh uploader@192.168.10.144 "cp -r /local_storage/debs-astra-smolensk /local_storage/veil-connect/${VERSION}/linux"
+                    ssh uploader@192.168.10.144 "cp -r /local_storage/other/debs-astra-smolensk /local_storage/veil-connect/${VERSION}/linux"
                     
                     # archivation
                     ssh uploader@192.168.10.144 "cd /local_storage/veil-connect/${VERSION}/linux && tar cvf veil-connect-${VERSION}-linux.tar --exclude=*.txt ./*"
