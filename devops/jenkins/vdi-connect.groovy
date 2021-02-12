@@ -927,7 +927,7 @@ pipeline {
                     ssh uploader@192.168.10.144 chmod +x /local_storage/veil-connect/${VERSION}/linux/veil-connect-linux-installer.sh
                     
                     # debs for astra linux:
-                    ssh uploader@192.168.10.144 "cp -r /local_storage/freerdp2-astra-orel /local_storage/veil-connect/${VERSION}/linux"
+                    ssh uploader@192.168.10.144 "cp -r /local_storage/other/freerdp2-astra-orel /local_storage/veil-connect/${VERSION}/linux"
                     ssh uploader@192.168.10.144 "cp -r /local_storage/other/debs-astra-smolensk /local_storage/veil-connect/${VERSION}/linux"
                     
                     # archivation
