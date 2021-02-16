@@ -1,4 +1,4 @@
-# Veil Connect
+# VeiL Connect
 ## Таблица соответствия сборок с ОС
 
 | ОС                 | Пакет   |
@@ -12,24 +12,57 @@
 | Centos 7           |  el7    |
 | Centos 8           |  el8    |
 
-## Building on Debian / Ubuntu
+
+## Building on Debian 9
 ```
-sudo apt install libhiredis-dev spice-client-gtk libspice-client-gtk-3.0-dev libjson-glib-dev libxml2-dev libsoup2.4-dev freerdp2-dev libwinpr2-dev gcc cmake pkg-config libusb-1.0-0-dev libusbredirparser-dev
+echo "deb http://deb.debian.org/debian stretch-backports main" | tee /etc/apt/sources.list.d/stretch-backports.list
+apt-get update
+apt-get install -y -q libhiredis-dev \
+libspice-client-gtk-3.0-dev libjson-glib-dev libxml2-dev libsoup2.4-dev \
+freerdp2-dev gcc cmake pkg-config libusb-1.0-0-dev libusbredirparser-dev
+
+mkdir build
+cd build
+cmake -DCMAKE_BUILD_TYPE=Release ../
+make
+```
+## Building on Debian 10 and Ubuntu 18.04 / 20.04
+```
+apt-get install libhiredis-dev libspice-client-gtk-3.0-dev libjson-glib-dev \
+libxml2-dev libsoup2.4-dev freerdp2-dev gcc cmake pkg-config libusb-1.0-0-dev \
+libusbredirparser-dev
+
 mkdir build
 cd build
 cmake -DCMAKE_BUILD_TYPE=Release ../
 make
 ```
 
-## Building on Centos
+## Building on Centos 7
 ```
-yum install curl
-yum install epel-release
-yum install spice-gtk3-devel freerdp-libs freerdp-devel json-glib-devel libsoup-devel libwinpr libxml2-devel gcc cmake3 gtk3-devel hiredis-devel usbredir-devel libusb-devel
+yum install -y epel-release
+yum install -y rpmdevtools spice-gtk3-devel freerdp-devel json-glib-devel libsoup-devel \
+libxml2-devel gcc cmake3 make gtk3-devel hiredis-devel usbredir-devel libusb-devel
+
 mkdir build
 cd build
 cmake3 -DCMAKE_BUILD_TYPE=Release ../
 make
+rm -rf CMakeCache.txt  CMakeFiles  Makefile  cmake_install.cmake
+```
+
+## Building on Centos 8
+```
+yum install -y epel-release dnf-plugins-core
+yum config-manager --set-enabled powertools
+yum install -y rpmdevtools spice-gtk3-devel freerdp-devel json-glib-devel libsoup-devel \
+libxml2-devel gcc cmake3 make gtk3-devel hiredis-devel usbredir-devel libusb-devel
+
+mkdir build
+cd build
+cmake3 -DCMAKE_BUILD_TYPE=Release ../
+make
+rm -rf CMakeCache.txt  CMakeFiles  Makefile  cmake_install.cmake
 ```
 
 ## Building on Windows
