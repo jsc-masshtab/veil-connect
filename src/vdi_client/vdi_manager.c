@@ -39,7 +39,7 @@ static VdiPoolWidget get_vdi_pool_widget_by_id(VdiManager *self, const gchar *se
 
 static void on_vdi_session_get_vdi_pool_data_finished(GObject *source_object, GAsyncResult *res, VdiManager *self);
 static void on_vdi_session_get_vm_from_pool_finished(GObject *source_object, GAsyncResult *res, VdiManager *self);
-static gboolean set_ws_conn_state(VdiManager *self, gboolean is_vdi_online);
+static void set_ws_conn_state(VdiManager *self, gboolean is_vdi_online);
 
 static gboolean on_window_deleted_cb(VdiManager *self);
 static void on_button_renew_clicked(GtkButton *button, VdiManager *self);
@@ -273,7 +273,7 @@ static void on_vdi_session_get_vm_from_pool_finished(GObject *source_object G_GN
 }
 
 // ws data callback    "<span color=\"red\">%s</span>"
-static gboolean set_ws_conn_state(VdiManager *self, gboolean is_vdi_online)
+static void set_ws_conn_state(VdiManager *self, gboolean is_vdi_online)
 {
     if (self->label_is_vdi_online) {
 
@@ -286,8 +286,6 @@ static gboolean set_ws_conn_state(VdiManager *self, gboolean is_vdi_online)
         gtk_image_set_from_resource((GtkImage *)self->label_is_vdi_online, resource_path);
         g_free(resource_path);
     }
-
-    return FALSE;
 }
 
 /////////////////////////////////// gui elements callbacks//////////////////////////////////////
@@ -332,7 +330,7 @@ static void on_button_quit_clicked(GtkButton *button G_GNUC_UNUSED, VdiManager *
     shutdown_loop(self->ci.loop);
 }
 
-// ws conn state calback
+// ws conn state callback
 static void
 on_ws_conn_changed(GtkWidget *widget G_GNUC_UNUSED, int ws_connected, VdiManager *self)
 {

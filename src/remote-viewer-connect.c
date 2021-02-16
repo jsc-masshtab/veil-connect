@@ -252,7 +252,8 @@ handle_connect_event(RemoteViewerConnData *ci)
             connect_to_vdi_server(ci);
         }
     } else {
-        set_message_to_info_label(GTK_LABEL(ci->message_display_label), "Не указан адрес (Настройки->Основные)");
+        set_message_to_info_label(GTK_LABEL(ci->message_display_label),
+                "Не указан адрес подключения (Настройки->Основные)");
     }
 }
 

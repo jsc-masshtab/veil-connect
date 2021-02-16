@@ -767,7 +767,7 @@ virt_viewer_app_set_window_subtitle(VirtViewerApp *app,
             subtitle = g_strdup_printf("%s%d%s", title, nth + 1, d + 2);
             *d = '%';
         } else
-            subtitle = g_strdup_printf("%s (%d)", title, nth + 1);
+            subtitle = g_strdup_printf("%s   Номер дисплея: %d", title, nth + 1);
     }
 
     g_object_set(window, "subtitle", subtitle, NULL);

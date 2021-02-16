@@ -737,6 +737,18 @@
                         <property name="top_attach">3</property>
                       </packing>
                     </child>
+                    <child>
+                      <object class="GtkButton" id="btn_open_doc">
+                        <property name="label" translatable="yes">Открыть документацию</property>
+                        <property name="visible">True</property>
+                        <property name="can_focus">True</property>
+                        <property name="receives_default">True</property>
+                      </object>
+                      <packing>
+                        <property name="left_attach">0</property>
+                        <property name="top_attach">6</property>
+                      </packing>
+                    </child>
                   </object>
                   <packing>
                     <property name="position">3</property>

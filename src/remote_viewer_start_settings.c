@@ -53,6 +53,7 @@ typedef struct{
     GtkWidget *log_location_label;
 
     GtkWidget *btn_get_app_updates;
+    GtkWidget *btn_open_doc;
     GtkWidget *check_updates_spinner;
     GtkWidget *check_updates_label;
     GtkWidget *windows_updates_url_entry;
@@ -338,6 +339,13 @@ on_app_updater_status_changed(gpointer data G_GNUC_UNUSED,
     gtk_widget_set_sensitive(dialog_data->btn_get_app_updates, !isworking);
 }
 
+// По нажатию квавиши enter на password_entry скрываем окно ввода пароля и луп диалога превывается
+static void
+on_password_entry_activated(GtkEntry *entry, GtkWidget *ask_pass_dialog)
+{
+    gtk_widget_hide(ask_pass_dialog);
+}
+
 static void
 btn_get_app_updates_clicked_cb(GtkButton *button G_GNUC_UNUSED, ConnectSettingsDialogData *dialog_data)
 {
@@ -352,13 +360,17 @@ btn_get_app_updates_clicked_cb(GtkButton *button G_GNUC_UNUSED, ConnectSettingsD
     GtkWidget *ask_pass_dialog = get_widget_from_builder(builder, "ask_pass_dialog");
     gtk_dialog_add_button(GTK_DIALOG(ask_pass_dialog), "Ок", GTK_RESPONSE_OK);
     gtk_dialog_add_button(GTK_DIALOG(ask_pass_dialog), "Отмена", GTK_RESPONSE_CANCEL);
+    gtk_dialog_set_default_response(GTK_DIALOG(ask_pass_dialog), GTK_RESPONSE_OK);
     gtk_window_set_transient_for(GTK_WINDOW(ask_pass_dialog), GTK_WINDOW(dialog_data->window));
+
+    GtkWidget *password_entry = get_widget_from_builder(builder, "password_entry");
+    g_signal_connect(password_entry, "activate", G_CALLBACK(on_password_entry_activated), ask_pass_dialog);
 
     int result = gtk_dialog_run(GTK_DIALOG(ask_pass_dialog));
     switch(result) {
         case GTK_RESPONSE_OK:
+        case GTK_RESPONSE_NONE: // default
             g_info("GTK_RESPONSE_OK");
-            GtkWidget *password_entry = get_widget_from_builder(builder, "password_entry");
             const gchar *password = gtk_entry_get_text(GTK_ENTRY(password_entry));
             app_updater_set_admin_password(app_updater, password);
             break;
@@ -383,6 +395,11 @@ btn_get_app_updates_clicked_cb(GtkButton *button G_GNUC_UNUSED, ConnectSettingsD
 #else
     gtk_label_set_text(GTK_LABEL(dialog_data->check_updates_label), "Не реализовано для текущей ОС");
 #endif
+}
+
+static void
+btn_open_doc_clicked_cb(){
+    gtk_show_uri_on_window(NULL, VEIL_CONNECT_DOC_SITE, GDK_CURRENT_TIME, NULL);
 }
 
 static void
@@ -663,8 +680,9 @@ GtkResponseType remote_viewer_start_settings_dialog(RemoteViewer *p_remote_viewe
     dialog_data.check_updates_spinner = get_widget_from_builder(dialog_data.builder, "check_updates_spinner");
     dialog_data.check_updates_label = get_widget_from_builder(dialog_data.builder, "check_updates_label");
     dialog_data.windows_updates_url_entry = get_widget_from_builder(dialog_data.builder, "windows_updates_url_entry");
-    // В этот момент может происходить процесс обновления софта.  Setup gui
+    dialog_data.btn_open_doc = get_widget_from_builder(dialog_data.builder, "btn_open_doc");
 
+    // В этот момент может происходить процесс обновления софта.  Setup gui
     AppUpdater *app_updater = dialog_data.p_remote_viewer->app_updater;
     if (app_updater_is_getting_updates(app_updater)) {
 
@@ -691,6 +709,8 @@ GtkResponseType remote_viewer_start_settings_dialog(RemoteViewer *p_remote_viewe
     g_signal_connect(dialog_data.remote_app_check_btn, "toggled", G_CALLBACK(on_remote_app_check_btn_toggled),
                      &dialog_data);
     g_signal_connect(dialog_data.btn_get_app_updates, "clicked", G_CALLBACK(btn_get_app_updates_clicked_cb),
+                     &dialog_data);
+    g_signal_connect(dialog_data.btn_open_doc, "clicked", G_CALLBACK(btn_open_doc_clicked_cb),
                      &dialog_data);
 
     gulong st_msg_hdle = g_signal_connect(p_remote_viewer->app_updater, "status-msg-changed",

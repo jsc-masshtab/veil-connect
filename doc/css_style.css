@@ -177,6 +177,7 @@
      background-size: 12px 14px, 12px 14px, 12px 11px;
      background-position: 0 0, 0 0, 0 20px;
 
+     border: 0px;
      margin: 0px;
      padding: 5px;
 
@@ -233,6 +234,7 @@
 }
 
 #vdi_pool_widget_button {
+     color: black;
      background: white;
      border: 0;
 }

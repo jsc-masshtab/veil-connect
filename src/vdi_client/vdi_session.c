@@ -158,9 +158,9 @@ static guint send_message(SoupMessage *msg)
 }
 
 // Вызывается в главном потоке  при смене jwt
-static gboolean on_jwt_updated(gpointer data G_GNUC_UNUSED)
+static gboolean vdi_api_session_restart_vdi_ws_client(gpointer data G_GNUC_UNUSED)
 {
-    g_info("on_jwt_updated");
+    g_info("%s", (const char *)__func__);
     vdi_ws_client_stop(&vdi_session_static->vdi_ws_client);
     vdi_ws_client_start(&vdi_session_static->vdi_ws_client, vdi_session_get_vdi_ip(), vdi_session_get_vdi_port());
     return G_SOURCE_REMOVE;
@@ -218,8 +218,8 @@ static gboolean vdi_api_session_get_token()
         case SERVER_REPLY_TYPE_DATA: {
             free_memory_safely(&vdi_session_static->jwt);
             vdi_session_static->jwt = g_strdup(json_object_get_string_member_safely(reply_json_object, "access_token"));
-            // В основном потоке вызывается калбэк на смену токена
-            g_timeout_add(50, (GSourceFunc)on_jwt_updated, NULL);
+            // В основном потоке вызывается на смену токена
+            g_timeout_add(300, (GSourceFunc)vdi_api_session_restart_vdi_ws_client, NULL);
 
             g_object_unref(msg);
             g_object_unref(parser);
