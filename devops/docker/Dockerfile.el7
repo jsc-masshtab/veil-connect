@@ -1,0 +1,7 @@
+FROM centos:7
+
+# install build-deps
+RUN yum install -y epel-release && \
+    yum install -y rpmdevtools spice-gtk3-devel freerdp-devel json-glib-devel libsoup-devel \
+    libxml2-devel gcc cmake3 make gtk3-devel hiredis-devel usbredir-devel libusb-devel && \
+    yum clean all

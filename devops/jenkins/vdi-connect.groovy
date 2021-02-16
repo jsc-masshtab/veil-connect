@@ -4,12 +4,16 @@ def rocketNotify = true
 notifyBuild(rocketNotify, ":bell: STARTED", "Start new build. Version: ${currentDate}")
 
 pipeline {
-    agent none
+    agent {
+        label "bld-agent-02"
+    }
 
     environment {
         APT_SRV = "192.168.11.118"
         PRJNAME = "veil-connect"
         DATE = "$currentDate"
+        AGENT = "bld-agent-02"
+        NFS_DIR = "/nfs/veil-connect"
     }
 
     post {
@@ -50,170 +54,85 @@ pipeline {
         booleanParam(name: 'EL8',                  defaultValue: true,              description: 'create RPM?')
         booleanParam(name: 'WIN32',                defaultValue: true,              description: 'create EXE?')
         booleanParam(name: 'WIN64',                defaultValue: true,              description: 'create EXE?')
-        booleanParam(name: 'UNIVERSAL',            defaultValue: true,              description: 'create TAR?')
+        booleanParam(name: 'UNIVERSAL',            defaultValue: false,             description: 'create TAR?')
         booleanParam(name: 'EMBEDDED',             defaultValue: true,              description: 'create DEB?')
     }
 
     stages {
-        stage ('create environment') {
+        stage ('checkout') {
+            steps {
+                cleanWs()
+                checkout([ $class: 'GitSCM',
+                    branches: [[name: '$BRANCH']],
+                    doGenerateSubmoduleConfigurations: false,
+                    extensions: [], submoduleCfg: [],
+                    userRemoteConfigs: [[credentialsId: '',
+                    url: 'http://gitlab+deploy-token-3:LD2jHQCWDYSEt-8AJQzs@gitlab.bazalt.team/vdi/veil-connect.git']]
+                ])
+
+                stash name: 'src', includes: '**', excludes: '**/.git,**/.git/**'
+            }
+        }
+
+        stage('prepare build images') {
             parallel {
-                stage ('stretch. create environment') {
+                stage ('stretch. docker build') {
                     when {
                         beforeAgent true
                         expression { params.STRETCH == true }
                     }
-                    agent {
-                        label 'debian9'
-                    }
                     steps {
-                        cleanWs()
-                        checkout([ $class: 'GitSCM',
-                            branches: [[name: '$BRANCH']],
-                            doGenerateSubmoduleConfigurations: false,
-                            extensions: [], submoduleCfg: [],
-                            userRemoteConfigs: [[credentialsId: '',
-                            url: 'http://gitlab+deploy-token-3:LD2jHQCWDYSEt-8AJQzs@gitlab.bazalt.team/vdi/veil-connect.git']]
-                        ])
+                        sh "docker build -f devops/docker/Dockerfile.stretch . -t veil-connect-builder-stretch:${VERSION}"
                     }
                 }
 
-                stage ('buster. create environment') {
+                stage ('buster. docker build') {
                     when {
                         beforeAgent true
                         expression { params.BUSTER == true }
                     }
-                    agent {
-                        label 'bld-agent-01'
-                    }
                     steps {
-                        cleanWs()
-                        checkout([ $class: 'GitSCM',
-                            branches: [[name: '$BRANCH']],
-                            doGenerateSubmoduleConfigurations: false,
-                            extensions: [], submoduleCfg: [],
-                            userRemoteConfigs: [[credentialsId: '',
-                            url: 'http://gitlab+deploy-token-3:LD2jHQCWDYSEt-8AJQzs@gitlab.bazalt.team/vdi/veil-connect.git']]
-                        ])
+                        sh "docker build -f devops/docker/Dockerfile.buster . -t veil-connect-builder-buster:${VERSION}"
                     }
                 }
 
-                stage ('bionic. create environment') {
+                stage ('bionic. docker build') {
                     when {
                         beforeAgent true
-                        expression { params.BIONIC == true || params.UNIVERSAL == true || params.EMBEDDED == true }
-                    }
-                    agent {
-                        label 'ubuntu18'
+                        expression { params.BIONIC == true }
                     }
                     steps {
-                        cleanWs()
-                        checkout([ $class: 'GitSCM',
-                            branches: [[name: '$BRANCH']],
-                            doGenerateSubmoduleConfigurations: false,
-                            extensions: [], submoduleCfg: [],
-                            userRemoteConfigs: [[credentialsId: '',
-                            url: 'http://gitlab+deploy-token-3:LD2jHQCWDYSEt-8AJQzs@gitlab.bazalt.team/vdi/veil-connect.git']]
-                        ])
+                        sh "docker build -f devops/docker/Dockerfile.bionic . -t veil-connect-builder-bionic:${VERSION}"
                     }
                 }
 
-                stage ('focal. create environment') {
+                stage ('focal. docker build') {
                     when {
                         beforeAgent true
-                        expression { params.FOCAL == true || params.UNIVERSAL == true }
-                    }
-                    agent {
-                        label 'ubuntu20'
+                        expression { params.FOCAL == true }
                     }
                     steps {
-                        cleanWs()
-                        checkout([ $class: 'GitSCM',
-                            branches: [[name: '$BRANCH']],
-                            doGenerateSubmoduleConfigurations: false,
-                            extensions: [], submoduleCfg: [],
-                            userRemoteConfigs: [[credentialsId: '',
-                            url: 'http://gitlab+deploy-token-3:LD2jHQCWDYSEt-8AJQzs@gitlab.bazalt.team/vdi/veil-connect.git']]
-                        ])
+                        sh "docker build -f devops/docker/Dockerfile.focal . -t veil-connect-builder-focal:${VERSION}"
                     }
                 }
 
-                stage ('el7. create environment') {
+                stage ('el7. docker build') {
                     when {
                         beforeAgent true
                         expression { params.EL7 == true }
                     }
-                    agent {
-                        label 'centos7-2'
-                    }
                     steps {
-                        cleanWs()
-                        checkout([ $class: 'GitSCM',
-                            branches: [[name: '$BRANCH']],
-                            doGenerateSubmoduleConfigurations: false,
-                            extensions: [], submoduleCfg: [],
-                            userRemoteConfigs: [[credentialsId: '',
-                            url: 'http://gitlab+deploy-token-3:LD2jHQCWDYSEt-8AJQzs@gitlab.bazalt.team/vdi/veil-connect.git']]
-                        ])
+                        sh "docker build -f devops/docker/Dockerfile.el7 . -t veil-connect-builder-el7:${VERSION}"
                     }
                 }
 
-                stage ('el8. create environment') {
+                stage ('el8. docker build') {
                     when {
                         beforeAgent true
                         expression { params.EL8 == true }
                     }
-                    agent {
-                        label 'centos8'
-                    }
                     steps {
-                        cleanWs()
-                        checkout([ $class: 'GitSCM',
-                            branches: [[name: '$BRANCH']],
-                            doGenerateSubmoduleConfigurations: false,
-                            extensions: [], submoduleCfg: [],
-                            userRemoteConfigs: [[credentialsId: '',
-                            url: 'http://gitlab+deploy-token-3:LD2jHQCWDYSEt-8AJQzs@gitlab.bazalt.team/vdi/veil-connect.git']]
-                        ])
-                    }
-                }
-        
-                stage ('windows-x32. create environment') {
-                    when {
-                        beforeAgent true
-                        expression { params.WIN32 == true }
-                    }
-                    agent {
-                        label 'win7_x32'
-                    }
-                    steps {
-                        cleanWs()
-                        checkout([ $class: 'GitSCM',
-                            branches: [[name: '$BRANCH']],
-                            doGenerateSubmoduleConfigurations: false,
-                            extensions: [], submoduleCfg: [],
-                            userRemoteConfigs: [[credentialsId: '',
-                            url: 'http://gitlab+deploy-token-3:LD2jHQCWDYSEt-8AJQzs@gitlab.bazalt.team/vdi/veil-connect.git']]
-                        ])
-                    }
-                }
-
-                stage ('windows-x64. create environment') {
-                    when {
-                        beforeAgent true
-                        expression { params.WIN64 == true }
-                    }
-                    agent {
-                        label 'win10_x64_veil_guest_agent'
-                    }
-                    steps {
-                        cleanWs()
-                        checkout([ $class: 'GitSCM',
-                            branches: [[name: '$BRANCH']],
-                            doGenerateSubmoduleConfigurations: false,
-                            extensions: [], submoduleCfg: [],
-                            userRemoteConfigs: [[credentialsId: '',
-                            url: 'http://gitlab+deploy-token-3:LD2jHQCWDYSEt-8AJQzs@gitlab.bazalt.team/vdi/veil-connect.git']]
-                        ])
+                        sh "docker build -f devops/docker/Dockerfile.el8 . -t veil-connect-builder-el8:${VERSION}"
                     }
                 }
             }
@@ -226,16 +145,37 @@ pipeline {
                         beforeAgent true
                         expression { params.STRETCH == true }
                     }
+                    environment {
+                        DISTR = "stretch"
+                    }
                     agent {
-                        label 'debian9'
+                        docker {
+                            image "veil-connect-builder-stretch:${VERSION}"
+                            args '-u root:root'
+                            reuseNode true
+                            label "${AGENT}"
+                        }
                     }
                     steps {
                         sh script: '''
-                            mkdir build
-                            cd build
+                            mkdir build-${DISTR}
+                            cd build-${DISTR}
                             cmake -DCMAKE_BUILD_TYPE=Release ../
                             make
                             rm -rf CMakeCache.txt  CMakeFiles  Makefile  cmake_install.cmake
+
+                            # make installer
+                            cp -r ${WORKSPACE}/devops/deb ${WORKSPACE}/devops/deb-${DISTR}
+                            mkdir -p ${WORKSPACE}/devops/deb-${DISTR}/root/opt/veil-connect
+                            mkdir -p ${WORKSPACE}/devops/deb-${DISTR}/root/usr/share/applications
+                            cp -r ${WORKSPACE}/build-${DISTR}/* ${WORKSPACE}/doc/veil-connect.ico ${WORKSPACE}/devops/deb-${DISTR}/root/opt/veil-connect
+                            cp ${WORKSPACE}/doc/veil-connect.desktop ${WORKSPACE}/devops/deb-${DISTR}/root/usr/share/applications
+                            sed -i -e "s:%%VER%%:${VERSION}~${DISTR}:g" ${WORKSPACE}/devops/deb-${DISTR}/root/DEBIAN/control
+                            chmod -R 777 ${WORKSPACE}/devops/deb-${DISTR}/root
+                            chmod -R 755 ${WORKSPACE}/devops/deb-${DISTR}/root/DEBIAN
+                            chown -R root:root ${WORKSPACE}/devops/deb-${DISTR}/root
+                            cd ${WORKSPACE}/devops/deb-${DISTR}
+                            dpkg-deb -b root .
                         '''
                     }
                 }
@@ -245,16 +185,37 @@ pipeline {
                         beforeAgent true
                         expression { params.BUSTER == true }
                     }
+                    environment { 
+                        DISTR = "buster"
+                    }
                     agent {
-                        label 'bld-agent-01'
+                        docker {
+                            image "veil-connect-builder-buster:${VERSION}"
+                            args '-u root:root'
+                            reuseNode true
+                            label "${AGENT}"
+                        }
                     }
                     steps {
                         sh script: '''
-                            mkdir build
-                            cd build
+                            mkdir build-${DISTR}
+                            cd build-${DISTR}
                             cmake -DCMAKE_BUILD_TYPE=Release ../
                             make
                             rm -rf CMakeCache.txt  CMakeFiles  Makefile  cmake_install.cmake
+
+                            # make installer
+                            cp -r ${WORKSPACE}/devops/deb ${WORKSPACE}/devops/deb-${DISTR}
+                            mkdir -p ${WORKSPACE}/devops/deb-${DISTR}/root/opt/veil-connect
+                            mkdir -p ${WORKSPACE}/devops/deb-${DISTR}/root/usr/share/applications
+                            cp -r ${WORKSPACE}/build-${DISTR}/* ${WORKSPACE}/doc/veil-connect.ico ${WORKSPACE}/devops/deb-${DISTR}/root/opt/veil-connect
+                            cp ${WORKSPACE}/doc/veil-connect.desktop ${WORKSPACE}/devops/deb-${DISTR}/root/usr/share/applications
+                            sed -i -e "s:%%VER%%:${VERSION}~${DISTR}:g" ${WORKSPACE}/devops/deb-${DISTR}/root/DEBIAN/control
+                            chmod -R 777 ${WORKSPACE}/devops/deb-${DISTR}/root
+                            chmod -R 755 ${WORKSPACE}/devops/deb-${DISTR}/root/DEBIAN
+                            chown -R root:root ${WORKSPACE}/devops/deb-${DISTR}/root
+                            cd ${WORKSPACE}/devops/deb-${DISTR}
+                            dpkg-deb -b root .
                         '''
                     }
                 }
@@ -264,16 +225,37 @@ pipeline {
                         beforeAgent true
                         expression { params.BIONIC == true || params.EMBEDDED == true }
                     }
+                    environment { 
+                        DISTR = "bionic"
+                    }
                     agent {
-                        label 'ubuntu18'
+                        docker {
+                            image "veil-connect-builder-bionic:${VERSION}"
+                            args '-u root:root'
+                            reuseNode true
+                            label "${AGENT}"
+                        }
                     }
                     steps {
                         sh script: '''
-                            mkdir build
-                            cd build
+                            mkdir build-${DISTR}
+                            cd build-${DISTR}
                             cmake -DCMAKE_BUILD_TYPE=Release ../
                             make
                             rm -rf CMakeCache.txt  CMakeFiles  Makefile  cmake_install.cmake
+
+                            # make installer
+                            cp -r ${WORKSPACE}/devops/deb ${WORKSPACE}/devops/deb-${DISTR}
+                            mkdir -p ${WORKSPACE}/devops/deb-${DISTR}/root/opt/veil-connect
+                            mkdir -p ${WORKSPACE}/devops/deb-${DISTR}/root/usr/share/applications
+                            cp -r ${WORKSPACE}/build-${DISTR}/* ${WORKSPACE}/doc/veil-connect.ico ${WORKSPACE}/devops/deb-${DISTR}/root/opt/veil-connect
+                            cp ${WORKSPACE}/doc/veil-connect.desktop ${WORKSPACE}/devops/deb-${DISTR}/root/usr/share/applications
+                            sed -i -e "s:%%VER%%:${VERSION}~${DISTR}:g" ${WORKSPACE}/devops/deb-${DISTR}/root/DEBIAN/control
+                            chmod -R 777 ${WORKSPACE}/devops/deb-${DISTR}/root
+                            chmod -R 755 ${WORKSPACE}/devops/deb-${DISTR}/root/DEBIAN
+                            chown -R root:root ${WORKSPACE}/devops/deb-${DISTR}/root
+                            cd ${WORKSPACE}/devops/deb-${DISTR}
+                            dpkg-deb -b root .
                         '''
                     }
                 }
@@ -283,16 +265,37 @@ pipeline {
                         beforeAgent true
                         expression { params.FOCAL == true }
                     }
+                    environment { 
+                        DISTR = "focal"
+                    }
                     agent {
-                        label 'ubuntu20'
+                        docker {
+                            image "veil-connect-builder-focal:${VERSION}"
+                            args '-u root:root'
+                            reuseNode true
+                            label "${AGENT}"
+                        }
                     }
                     steps {
                         sh script: '''
-                            mkdir build
-                            cd build
+                            mkdir build-${DISTR}
+                            cd build-${DISTR}
                             cmake -DCMAKE_BUILD_TYPE=Release ../
                             make
                             rm -rf CMakeCache.txt  CMakeFiles  Makefile  cmake_install.cmake
+
+                            # make installer
+                            cp -r ${WORKSPACE}/devops/deb ${WORKSPACE}/devops/deb-${DISTR}
+                            mkdir -p ${WORKSPACE}/devops/deb-${DISTR}/root/opt/veil-connect
+                            mkdir -p ${WORKSPACE}/devops/deb-${DISTR}/root/usr/share/applications
+                            cp -r ${WORKSPACE}/build-${DISTR}/* ${WORKSPACE}/doc/veil-connect.ico ${WORKSPACE}/devops/deb-${DISTR}/root/opt/veil-connect
+                            cp ${WORKSPACE}/doc/veil-connect.desktop ${WORKSPACE}/devops/deb-${DISTR}/root/usr/share/applications
+                            sed -i -e "s:%%VER%%:${VERSION}~${DISTR}:g" ${WORKSPACE}/devops/deb-${DISTR}/root/DEBIAN/control
+                            chmod -R 777 ${WORKSPACE}/devops/deb-${DISTR}/root
+                            chmod -R 755 ${WORKSPACE}/devops/deb-${DISTR}/root/DEBIAN
+                            chown -R root:root ${WORKSPACE}/devops/deb-${DISTR}/root
+                            cd ${WORKSPACE}/devops/deb-${DISTR}
+                            dpkg-deb -b root .
                         '''
                     }
                 }
@@ -302,16 +305,36 @@ pipeline {
                         beforeAgent true
                         expression { params.EL7 == true }
                     }
+                    environment { 
+                        DISTR = "el7"
+                    }
                     agent {
-                        label 'centos7-2'
+                        docker {
+                            image "veil-connect-builder-el7:${VERSION}"
+                            args '-u root:root'
+                            reuseNode true
+                            label "${AGENT}"
+                        }
                     }
                     steps {
                         sh script: '''
-                            mkdir build
-                            cd build
+                            mkdir build-${DISTR}
+                            cd build-${DISTR}
                             cmake3 -DCMAKE_BUILD_TYPE=Release ../
                             make
                             rm -rf CMakeCache.txt  CMakeFiles  Makefile  cmake_install.cmake
+                            cd ${WORKSPACE}
+
+                            # make installer
+                            mkdir -p rpmbuild-${DISTR}/{BUILD,BUILDROOT,RPMS,SOURCES,SPECS,SRPMS}
+                            cp devops/rpm/veil-connect.spec rpmbuild-${DISTR}/SPECS
+                            sed -i -e "s:%%VER%%:${VERSION}:g" rpmbuild-${DISTR}/SPECS/veil-connect.spec
+                            mkdir -p rpmbuild-${DISTR}/BUILD/opt/veil-connect
+                            mkdir -p rpmbuild-${DISTR}/BUILD/usr/share/applications
+                            cp -r build-${DISTR}/* doc/veil-connect.ico rpmbuild-${DISTR}/BUILD/opt/veil-connect
+                            cp doc/veil-connect.desktop rpmbuild-${DISTR}/BUILD/usr/share/applications
+                            cd rpmbuild-${DISTR}
+                            rpmbuild --define "_topdir `pwd`" -v -ba SPECS/veil-connect.spec
                         '''
                     }
                 }
@@ -321,16 +344,36 @@ pipeline {
                         beforeAgent true
                         expression { params.EL8 == true }
                     }
+                    environment { 
+                        DISTR = "el8"
+                    }
                     agent {
-                        label 'centos8'
+                        docker {
+                            image "veil-connect-builder-el8:${VERSION}"
+                            args '-u root:root'
+                            reuseNode true
+                            label "${AGENT}"
+                        }
                     }
                     steps {
                         sh script: '''
-                            mkdir build
-                            cd build
+                            mkdir build-${DISTR}
+                            cd build-${DISTR}
                             cmake3 -DCMAKE_BUILD_TYPE=Release ../
                             make
                             rm -rf CMakeCache.txt  CMakeFiles  Makefile  cmake_install.cmake
+                            cd ${WORKSPACE}
+
+                            # make installer
+                            mkdir -p rpmbuild-${DISTR}/{BUILD,BUILDROOT,RPMS,SOURCES,SPECS,SRPMS}
+                            cp devops/rpm/veil-connect.spec rpmbuild-${DISTR}/SPECS
+                            sed -i -e "s:%%VER%%:${VERSION}:g" rpmbuild-${DISTR}/SPECS/veil-connect.spec
+                            mkdir -p rpmbuild-${DISTR}/BUILD/opt/veil-connect
+                            mkdir -p rpmbuild-${DISTR}/BUILD/usr/share/applications
+                            cp -r build-${DISTR}/* doc/veil-connect.ico rpmbuild-${DISTR}/BUILD/opt/veil-connect
+                            cp doc/veil-connect.desktop rpmbuild-${DISTR}/BUILD/usr/share/applications
+                            cd rpmbuild-${DISTR}
+                            rpmbuild --define "_topdir `pwd`" -v -ba SPECS/veil-connect.spec
                         '''
                     }
                 }
@@ -344,47 +387,13 @@ pipeline {
                         label 'win7_x32'
                     }
                     steps {
+                        unstash 'src'
                         bat script: '''
                             mkdir build
                             cd build
                             cmake -DCMAKE_BUILD_TYPE=Release -DBUILD_x32=ON -G "MinGW Makefiles" ..
                             mingw32-make
-                        '''
-                    }
-                }
 
-                stage ('windows-x64. build') {
-                    when {
-                        beforeAgent true
-                        expression { params.WIN64 == true }
-                    }
-                    agent {
-                        label 'win10_x64_veil_guest_agent'
-                    }
-                    steps {
-                        bat script: '''
-                            mkdir build
-                            cd build
-                            cmake -DCMAKE_BUILD_TYPE=Release -G "MinGW Makefiles" ..
-                            mingw32-make
-                        '''
-                    }
-                }
-            }
-        }
-        
-        stage ('copy dependencies') {
-            parallel {
-                stage ('windows-x32. copy dependencies') {
-                    when {
-                        beforeAgent true
-                        expression { params.WIN32 == true }
-                    }
-                    agent {
-                        label 'win7_x32'
-                    }
-                    steps {
-                        bat script: '''
                             copy doc\\veil-connect.ico build
                             cd build
                             rmdir /S /Q CMakeFiles
@@ -437,11 +446,15 @@ pipeline {
 
                             copy C:\\msys32\\mingw32\\bin\\gspawn-win32-helper.exe
                             copy C:\\msys32\\mingw32\\bin\\gspawn-win32-helper-console.exe
+
+                            # make installer
+                            sed -i -e "s:&&VER&&:%VERSION%:g" -e "s:&&BUILD_VER&&:%BUILD_NUMBER%:g" %WORKSPACE%/devops\\inno-setup\\veil-connect-installer.iss
+                            iscc "%WORKSPACE%/devops\\inno-setup\\veil-connect-installer.iss"
                         '''
                     }
                 }
 
-                stage ('windows-x64. copy dependencies') {
+                stage ('windows-x64. build') {
                     when {
                         beforeAgent true
                         expression { params.WIN64 == true }
@@ -450,7 +463,13 @@ pipeline {
                         label 'win10_x64_veil_guest_agent'
                     }
                     steps {
+                        unstash 'src'
                         bat script: '''
+                            mkdir build
+                            cd build
+                            cmake -DCMAKE_BUILD_TYPE=Release -G "MinGW Makefiles" ..
+                            mingw32-make
+
                             copy doc\\veil-connect.ico build
                             cd build
                             rmdir /S /Q CMakeFiles
@@ -507,182 +526,8 @@ pipeline {
                             copy C:\\job\\openh264-6\\openh264-6.dll
 
                             perl -pi -e 's/crosshair/default\\0\\0/g' libspice-client-gtk-3.0-5.dll
-                        '''
-                    }
-                }
-            }
-        }
-        
-        stage ('make installer') {
-            parallel {
-                stage ('stretch. make installer') {
-                    when {
-                        beforeAgent true
-                        expression { params.STRETCH == true }
-                    }
-                    agent {
-                        label 'debian9'
-                    }
-                    steps {
-                        sh script: '''
-                            mkdir -p ${WORKSPACE}/devops/deb/root/opt/veil-connect
-                            mkdir -p ${WORKSPACE}/devops/deb/root/usr/share/applications
-                            cp -r ${WORKSPACE}/build/* ${WORKSPACE}/doc/veil-connect.ico ${WORKSPACE}/devops/deb/root/opt/veil-connect
-                            cp ${WORKSPACE}/doc/veil-connect.desktop ${WORKSPACE}/devops/deb/root/usr/share/applications
-                            sed -i -e "s:%%VER%%:${VERSION}~stretch:g" ${WORKSPACE}/devops/deb/root/DEBIAN/control
-                            chmod -R 777 ${WORKSPACE}/devops/deb/root
-                            chmod -R 755 ${WORKSPACE}/devops/deb/root/DEBIAN
-                            sudo chown -R root:root ${WORKSPACE}/devops/deb/root
-                            cd ${WORKSPACE}/devops/deb
-                            dpkg-deb -b root .
-                        '''
-                    }
-                }
 
-                stage ('buster. make installer') {
-                    when {
-                        beforeAgent true
-                        expression { params.BUSTER == true }
-                    }
-                    agent {
-                        label 'bld-agent-01'
-                    }
-                    steps {
-                        sh script: '''
-                            mkdir -p ${WORKSPACE}/devops/deb/root/opt/veil-connect
-                            mkdir -p ${WORKSPACE}/devops/deb/root/usr/share/applications
-                            cp -r ${WORKSPACE}/build/* ${WORKSPACE}/doc/veil-connect.ico ${WORKSPACE}/devops/deb/root/opt/veil-connect
-                            cp ${WORKSPACE}/doc/veil-connect.desktop ${WORKSPACE}/devops/deb/root/usr/share/applications
-                            sed -i -e "s:%%VER%%:${VERSION}~buster:g" ${WORKSPACE}/devops/deb/root/DEBIAN/control
-                            chmod -R 777 ${WORKSPACE}/devops/deb/root
-                            chmod -R 755 ${WORKSPACE}/devops/deb/root/DEBIAN
-                            sudo chown -R root:root ${WORKSPACE}/devops/deb/root
-                            cd ${WORKSPACE}/devops/deb
-                            dpkg-deb -b root .
-                        '''
-                    }
-                }
-
-                stage ('bionic. make installer') {
-                    when {
-                        beforeAgent true
-                        expression { params.BIONIC == true }
-                    }
-                    agent {
-                        label 'ubuntu18'
-                    }
-                    steps {
-                        sh script: '''
-                            mkdir -p ${WORKSPACE}/devops/deb/root/opt/veil-connect
-                            mkdir -p ${WORKSPACE}/devops/deb/root/usr/share/applications
-                            cp -r ${WORKSPACE}/build/* ${WORKSPACE}/doc/veil-connect.ico ${WORKSPACE}/devops/deb/root/opt/veil-connect
-                            cp ${WORKSPACE}/doc/veil-connect.desktop ${WORKSPACE}/devops/deb/root/usr/share/applications
-                            sed -i -e "s:%%VER%%:${VERSION}~bionic:g" ${WORKSPACE}/devops/deb/root/DEBIAN/control
-                            chmod -R 777 ${WORKSPACE}/devops/deb/root
-                            chmod -R 755 ${WORKSPACE}/devops/deb/root/DEBIAN
-                            sudo chown -R root:root ${WORKSPACE}/devops/deb/root
-                            cd ${WORKSPACE}/devops/deb
-                            dpkg-deb -b root .
-                        '''
-                    }
-                }
-
-                stage ('focal. make installer') {
-                    when {
-                        beforeAgent true
-                        expression { params.FOCAL == true }
-                    }
-                    agent {
-                        label 'ubuntu20'
-                    }
-                    steps {
-                        sh script: '''
-                            mkdir -p ${WORKSPACE}/devops/deb/root/opt/veil-connect
-                            mkdir -p ${WORKSPACE}/devops/deb/root/usr/share/applications
-                            cp -r ${WORKSPACE}/build/* ${WORKSPACE}/doc/veil-connect.ico ${WORKSPACE}/devops/deb/root/opt/veil-connect
-                            cp ${WORKSPACE}/doc/veil-connect.desktop ${WORKSPACE}/devops/deb/root/usr/share/applications
-                            sed -i -e "s:%%VER%%:${VERSION}~focal:g" ${WORKSPACE}/devops/deb/root/DEBIAN/control
-                            chmod -R 777 ${WORKSPACE}/devops/deb/root
-                            chmod -R 755 ${WORKSPACE}/devops/deb/root/DEBIAN
-                            sudo chown -R root:root ${WORKSPACE}/devops/deb/root
-                            cd ${WORKSPACE}/devops/deb
-                            dpkg-deb -b root .
-                        '''
-                    }
-                }
-
-                stage ('el7. make installer') {
-                    when {
-                        beforeAgent true
-                        expression { params.EL7 == true }
-                    }
-                    agent {
-                        label 'centos7-2'
-                    }
-                    steps {
-                        sh script: '''
-                            rm -rf ~/rpmbuild/
-                            rpmdev-setuptree
-                            sed -i -e "s:%%VER%%:${VERSION}:g" ${WORKSPACE}/devops/rpm/veil-connect.spec
-                            cp ${WORKSPACE}/devops/rpm/veil-connect.spec ~/rpmbuild/SPECS/
-                            mkdir -p ~/rpmbuild/BUILD/opt/veil-connect
-                            mkdir -p ~/rpmbuild/BUILD/usr/share/applications
-                            cp -r ${WORKSPACE}/build/* ${WORKSPACE}/doc/veil-connect.ico ~/rpmbuild/BUILD/opt/veil-connect
-                            cp ${WORKSPACE}/doc/veil-connect.desktop ~/rpmbuild/BUILD/usr/share/applications
-                            rpmbuild -bb ~/rpmbuild/SPECS/veil-connect.spec
-                        '''
-                    }
-                }
-
-                stage ('el8. make installer') {
-                    when {
-                        beforeAgent true
-                        expression { params.EL8 == true }
-                    }
-                    agent {
-                        label 'centos8'
-                    }
-                    steps {
-                        sh script: '''
-                            rm -rf ~/rpmbuild/
-                            rpmdev-setuptree
-                            sed -i -e "s:%%VER%%:${VERSION}:g" ${WORKSPACE}/devops/rpm/veil-connect.spec
-                            cp ${WORKSPACE}/devops/rpm/veil-connect.spec ~/rpmbuild/SPECS/
-                            mkdir -p ~/rpmbuild/BUILD/opt/veil-connect
-                            mkdir -p ~/rpmbuild/BUILD/usr/share/applications
-                            cp -r ${WORKSPACE}/build/* ${WORKSPACE}/doc/veil-connect.ico ~/rpmbuild/BUILD/opt/veil-connect
-                            cp ${WORKSPACE}/doc/veil-connect.desktop ~/rpmbuild/BUILD/usr/share/applications
-                            rpmbuild -bb ~/rpmbuild/SPECS/veil-connect.spec
-                        '''
-                    }
-                }
-                
-                stage ('windows-x32. make installer') {
-                    when {
-                        beforeAgent true
-                        expression { params.WIN32 == true }
-                    }
-                    agent {
-                        label 'win7_x32'
-                    }
-                    steps {
-                        bat script: '''
-                            sed -i -e "s:&&VER&&:%VERSION%:g" -e "s:&&BUILD_VER&&:%BUILD_NUMBER%:g" %WORKSPACE%/devops\\inno-setup\\veil-connect-installer.iss
-                            iscc "%WORKSPACE%/devops\\inno-setup\\veil-connect-installer.iss"
-                        '''
-                    }
-                }
-
-                stage ('windows-x64. make installer') {
-                    when {
-                        beforeAgent true
-                        expression { params.WIN64 == true }
-                    }
-                    agent {
-                        label 'win10_x64_veil_guest_agent'
-                    }
-                    steps {
-                        bat script: '''
+                            # make installer
                             sed -i -e "s:&&VER&&:%VERSION%:g" -e "s:&&BUILD_VER&&:%BUILD_NUMBER%:g" %WORKSPACE%/devops\\inno-setup\\veil-connect-installer.iss
                             iscc "%WORKSPACE%/devops\\inno-setup\\veil-connect-installer.iss"
                         '''
@@ -696,19 +541,28 @@ pipeline {
                 beforeAgent true
                 expression { params.EMBEDDED == true }
             }
+            environment {
+                DISTR = "bionic"
+            }
             agent {
-                label 'ubuntu18'
+                docker {
+                    image "veil-connect-builder-bionic:${VERSION}"
+                    args '-u root:root'
+                    reuseNode true
+                    label "${AGENT}"
+                }
             }
             steps {
                 sh script: '''
+                    # make installer
                     mkdir -p ${WORKSPACE}/devops/deb_embedded/root/opt/veil-connect
                     mkdir -p ${WORKSPACE}/devops/deb_embedded/root/usr/share/applications
-                    cp -r ${WORKSPACE}/build/* ${WORKSPACE}/doc/veil-connect.ico ${WORKSPACE}/devops/deb_embedded/root/opt/veil-connect
+                    cp -r ${WORKSPACE}/build-${DISTR}/* ${WORKSPACE}/doc/veil-connect.ico ${WORKSPACE}/devops/deb_embedded/root/opt/veil-connect
                     cp ${WORKSPACE}/doc/veil-connect.desktop ${WORKSPACE}/devops/deb_embedded/root/usr/share/applications
                     sed -i -e "s:%%VER%%:${VERSION}:g" ${WORKSPACE}/devops/deb_embedded/root/DEBIAN/control
                     chmod -R 777 ${WORKSPACE}/devops/deb_embedded/root
                     chmod -R 755 ${WORKSPACE}/devops/deb_embedded/root/DEBIAN
-                    sudo chown -R root:root ${WORKSPACE}/devops/deb_embedded/root
+                    chown -R root:root ${WORKSPACE}/devops/deb_embedded/root
                     cd ${WORKSPACE}/devops/deb_embedded
                     dpkg-deb -b root .
                 '''
@@ -722,17 +576,13 @@ pipeline {
                         beforeAgent true
                         expression { params.STRETCH == true }
                     }
-                    agent {
-                        label 'debian9'
+                    environment {
+                        DISTR = "stretch"
                     }
                     steps {
                         sh script: '''
-                            ssh uploader@192.168.10.144 mkdir -p /local_storage/veil-connect/${VERSION}/linux
-                            scp ${WORKSPACE}/devops/deb/*.deb uploader@192.168.10.144:/local_storage/veil-connect/${VERSION}/linux
-
-                            DISTR=stretch
                             REPO=${PRJNAME}-${DISTR}
-                            DEB=$(ls -1 ${WORKSPACE}/devops/deb/*.deb)
+                            DEB=$(ls -1 ${WORKSPACE}/devops/deb-${DISTR}/*.deb)
 
                             curl -sS -X POST -F file=@$DEB http://$APT_SRV:8008/api/files/${REPO}; echo ""
                             curl -sS -X POST http://$APT_SRV:8008/api/repos/${REPO}/file/${REPO}?forceReplace=1
@@ -749,17 +599,13 @@ pipeline {
                         beforeAgent true
                         expression { params.BUSTER == true }
                     }
-                    agent {
-                        label 'bld-agent-01'
+                    environment {
+                        DISTR = "buster"
                     }
                     steps {
                         sh script: '''
-                            ssh uploader@192.168.10.144 mkdir -p /local_storage/veil-connect/${VERSION}/linux
-                            scp ${WORKSPACE}/devops/deb/*.deb uploader@192.168.10.144:/local_storage/veil-connect/${VERSION}/linux
-
-                            DISTR=buster
                             REPO=${PRJNAME}-${DISTR}
-                            DEB=$(ls -1 ${WORKSPACE}/devops/deb/*.deb)
+                            DEB=$(ls -1 ${WORKSPACE}/devops/deb-${DISTR}/*.deb)
 
                             curl -sS -X POST -F file=@$DEB http://$APT_SRV:8008/api/files/${REPO}; echo ""
                             curl -sS -X POST http://$APT_SRV:8008/api/repos/${REPO}/file/${REPO}?forceReplace=1
@@ -776,17 +622,13 @@ pipeline {
                         beforeAgent true
                         expression { params.BIONIC == true }
                     }
-                    agent {
-                        label 'ubuntu18'
+                    environment {
+                        DISTR = "bionic"
                     }
                     steps {
                         sh script: '''
-                            ssh uploader@192.168.10.144 mkdir -p /local_storage/veil-connect/${VERSION}/linux
-                            scp ${WORKSPACE}/devops/deb/*.deb uploader@192.168.10.144:/local_storage/veil-connect/${VERSION}/linux
-
-                            DISTR=bionic
                             REPO=${PRJNAME}-${DISTR}
-                            DEB=$(ls -1 ${WORKSPACE}/devops/deb/*.deb)
+                            DEB=$(ls -1 ${WORKSPACE}/devops/deb-${DISTR}/*.deb)
 
                             curl -sS -X POST -F file=@$DEB http://$APT_SRV:8008/api/files/${REPO}; echo ""
                             curl -sS -X POST http://$APT_SRV:8008/api/repos/${REPO}/file/${REPO}?forceReplace=1
@@ -803,17 +645,13 @@ pipeline {
                         beforeAgent true
                         expression { params.FOCAL == true }
                     }
-                    agent {
-                        label 'ubuntu20'
+                    environment {
+                        DISTR = "focal"
                     }
                     steps {
                         sh script: '''
-                            ssh uploader@192.168.10.144 mkdir -p /local_storage/veil-connect/${VERSION}/linux
-                            scp ${WORKSPACE}/devops/deb/*.deb uploader@192.168.10.144:/local_storage/veil-connect/${VERSION}/linux
-
-                            DISTR=focal
                             REPO=${PRJNAME}-${DISTR}
-                            DEB=$(ls -1 ${WORKSPACE}/devops/deb/*.deb)
+                            DEB=$(ls -1 ${WORKSPACE}/devops/deb-${DISTR}/*.deb)
 
                             curl -sS -X POST -F file=@$DEB http://$APT_SRV:8008/api/files/${REPO}; echo ""
                             curl -sS -X POST http://$APT_SRV:8008/api/repos/${REPO}/file/${REPO}?forceReplace=1
@@ -830,13 +668,15 @@ pipeline {
                         beforeAgent true
                         expression { params.EL7 == true }
                     }
-                    agent {
-                        label 'centos7-2'
+                    environment {
+                        DISTR = "el7"
                     }
                     steps {
                         sh script: '''
-                            ssh uploader@192.168.10.144 mkdir -p /local_storage/veil-connect/${VERSION}/linux
-                            scp ~/rpmbuild/RPMS/x86_64/*.rpm uploader@192.168.10.144:/local_storage/veil-connect/${VERSION}/linux
+                            # upload to nfs
+                            mkdir -p ${NFS_DIR}/${VERSION}
+                            rm -f ${NFS_DIR}/${VERSION}/*${DISTR}.x86_64.rpm
+                            cp ${WORKSPACE}/rpmbuild-${DISTR}/RPMS/x86_64/*.rpm ${NFS_DIR}/${VERSION}
                         '''
                     }
                 }
@@ -846,14 +686,15 @@ pipeline {
                         beforeAgent true
                         expression { params.EL8 == true }
                     }
-                    agent {
-                        label 'centos8'
+                    environment {
+                        DISTR = "el8"
                     }
                     steps {
                         sh script: '''
-                            ssh uploader@192.168.10.144 mkdir -p /local_storage/veil-connect/${VERSION}/linux
-                            chmod 644 ~/rpmbuild/RPMS/x86_64/*.rpm
-                            scp ~/rpmbuild/RPMS/x86_64/*.rpm uploader@192.168.10.144:/local_storage/veil-connect/${VERSION}/linux
+                            # upload to nfs
+                            mkdir -p ${NFS_DIR}/${VERSION}
+                            rm -f ${NFS_DIR}/${VERSION}/*${DISTR}.x86_64.rpm
+                            cp ${WORKSPACE}/rpmbuild-${DISTR}/RPMS/x86_64/*.rpm ${NFS_DIR}/${VERSION}
                         '''
                     }
                 }
@@ -897,16 +738,12 @@ pipeline {
                 beforeAgent true
                 expression { params.EMBEDDED == true }
             }
-            agent {
-                label 'ubuntu18'
-            }
             steps {
                 sh script: '''
-                    scp -r uploader@192.168.10.144:/local_storage/other/debs-astra-orel ${WORKSPACE}/devops/deb_embedded/
-                    cd ${WORKSPACE}/devops/deb_embedded && tar czvf veil-connect-embedded-${VERSION}.tar.gz debs-astra-orel/ veil-connect-embedded*.deb veil-connect-embedded-installer.sh
-                    
-                    ssh uploader@192.168.10.144 mkdir -p /local_storage/veil-connect-embedded/${VERSION}/
-                    scp ${WORKSPACE}/devops/deb_embedded/veil-connect-embedded-${VERSION}.tar.gz uploader@192.168.10.144:/local_storage/veil-connect-embedded/${VERSION}/
+                    # upload to nfs
+                    mkdir -p ${NFS_DIR}/${VERSION}
+                    rm -f ${NFS_DIR}/${VERSION}/veil-connect-embedded*.deb
+                    cp ${WORKSPACE}/devops/deb_embedded/*.deb ${NFS_DIR}/${VERSION}
                 '''
             }
         }

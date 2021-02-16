@@ -1,6 +1,6 @@
 Name: veil-connect
 Version: %%VER%%
-Release: 1%{?dist}
+Release: 0%{?dist}
 Summary: VeiL Connect Thin Client
 
 Group: Network
