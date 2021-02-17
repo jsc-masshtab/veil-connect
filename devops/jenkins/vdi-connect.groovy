@@ -54,7 +54,7 @@ pipeline {
         booleanParam(name: 'EL8',                  defaultValue: true,              description: 'create RPM?')
         booleanParam(name: 'WIN32',                defaultValue: true,              description: 'create EXE?')
         booleanParam(name: 'WIN64',                defaultValue: true,              description: 'create EXE?')
-        booleanParam(name: 'UNIVERSAL',            defaultValue: false,             description: 'create TAR?')
+//      booleanParam(name: 'UNIVERSAL',            defaultValue: false,             description: 'create TAR?')
         booleanParam(name: 'EMBEDDED',             defaultValue: true,              description: 'create DEB?')
     }
 
@@ -673,10 +673,13 @@ pipeline {
                     }
                     steps {
                         sh script: '''
-                            # upload to nfs
-                            mkdir -p ${NFS_DIR}/${VERSION}
-                            rm -f ${NFS_DIR}/${VERSION}/*${DISTR}.x86_64.rpm
-                            cp ${WORKSPACE}/rpmbuild-${DISTR}/RPMS/x86_64/*.rpm ${NFS_DIR}/${VERSION}
+                            ssh uploader@192.168.10.144 "mkdir -p /local_storage/veil-connect/linux/yum/${DISTR}/x86_64/Packages"
+                            scp ${WORKSPACE}/rpmbuild-${DISTR}/RPMS/x86_64/*.rpm uploader@192.168.10.144:/local_storage/veil-connect/linux/yum/${DISTR}/x86_64/Packages/
+
+                            ssh uploader@192.168.10.144 "
+                              rpm --resign /local_storage/veil-connect/linux/yum/${DISTR}/x86_64/Packages/*.rpm
+                              createrepo --update /local_storage/veil-connect/linux/yum/${DISTR}/x86_64
+                            "
                         '''
                     }
                 }
@@ -691,10 +694,13 @@ pipeline {
                     }
                     steps {
                         sh script: '''
-                            # upload to nfs
-                            mkdir -p ${NFS_DIR}/${VERSION}
-                            rm -f ${NFS_DIR}/${VERSION}/*${DISTR}.x86_64.rpm
-                            cp ${WORKSPACE}/rpmbuild-${DISTR}/RPMS/x86_64/*.rpm ${NFS_DIR}/${VERSION}
+                            ssh uploader@192.168.10.144 "mkdir -p /local_storage/veil-connect/linux/yum/${DISTR}/x86_64/Packages"
+                            scp ${WORKSPACE}/rpmbuild-${DISTR}/RPMS/x86_64/*.rpm uploader@192.168.10.144:/local_storage/veil-connect/linux/yum/${DISTR}/x86_64/Packages/
+
+                            ssh uploader@192.168.10.144 "
+                              rpm --resign /local_storage/veil-connect/linux/yum/${DISTR}/x86_64/Packages/*.rpm
+                              createrepo --update /local_storage/veil-connect/linux/yum/${DISTR}/x86_64
+                            "
                         '''
                     }
                 }
@@ -709,8 +715,8 @@ pipeline {
                     }
                     steps {
                         bat script: '''
-                            ssh uploader@mothership.bazalt.team mkdir -p /local_storage/veil-connect/%VERSION%/windows
-                            scp veil-connect-installer.exe uploader@mothership.bazalt.team:/local_storage/veil-connect/%VERSION%/windows/veil-connect_%VERSION%-x32-installer.exe
+                            ssh uploader@mothership.bazalt.team mkdir -p /local_storage/veil-connect/windows/%VERSION%
+                            scp veil-connect-installer.exe uploader@mothership.bazalt.team:/local_storage/veil-connect/windows/%VERSION%/veil-connect_%VERSION%-x32-installer.exe
                         '''
                     }
                 }
@@ -725,8 +731,8 @@ pipeline {
                     }
                     steps {
                         bat script: '''
-                            ssh uploader@mothership.bazalt.team mkdir -p /local_storage/veil-connect/%VERSION%/windows
-                            scp veil-connect-installer.exe uploader@mothership.bazalt.team:/local_storage/veil-connect/%VERSION%/windows/veil-connect_%VERSION%-x64-installer.exe
+                            ssh uploader@mothership.bazalt.team mkdir -p /local_storage/veil-connect/windows/%VERSION%
+                            scp veil-connect-installer.exe uploader@mothership.bazalt.team:/local_storage/veil-connect/windows/%VERSION%/veil-connect_%VERSION%-x64-installer.exe
                         '''
                     }
                 }
