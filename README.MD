@@ -48,7 +48,6 @@ mkdir build
 cd build
 cmake3 -DCMAKE_BUILD_TYPE=Release ../
 make
-rm -rf CMakeCache.txt  CMakeFiles  Makefile  cmake_install.cmake
 ```
 
 ## Building on Centos 8
@@ -62,7 +61,6 @@ mkdir build
 cd build
 cmake3 -DCMAKE_BUILD_TYPE=Release ../
 make
-rm -rf CMakeCache.txt  CMakeFiles  Makefile  cmake_install.cmake
 ```
 
 ## Building on Windows
