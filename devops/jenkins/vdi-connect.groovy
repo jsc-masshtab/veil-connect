@@ -717,6 +717,7 @@ pipeline {
                         bat script: '''
                             ssh uploader@mothership.bazalt.team mkdir -p /local_storage/veil-connect/windows/%VERSION%
                             scp veil-connect-installer.exe uploader@mothership.bazalt.team:/local_storage/veil-connect/windows/%VERSION%/veil-connect_%VERSION%-x32-installer.exe
+                            ssh uploader@192.168.10.144 ln -sfT /local_storage/veil-connect/windows/%VERSION% /local_storage/veil-connect/windows/latest
                         '''
                     }
                 }
@@ -733,6 +734,7 @@ pipeline {
                         bat script: '''
                             ssh uploader@mothership.bazalt.team mkdir -p /local_storage/veil-connect/windows/%VERSION%
                             scp veil-connect-installer.exe uploader@mothership.bazalt.team:/local_storage/veil-connect/windows/%VERSION%/veil-connect_%VERSION%-x64-installer.exe
+                            ssh uploader@192.168.10.144 ln -sfT /local_storage/veil-connect/windows/%VERSION% /local_storage/veil-connect/windows/latest
                         '''
                     }
                 }
@@ -754,34 +756,10 @@ pipeline {
             }
         }
 
-        stage ('make universal linux installer') {
-            when {
-                beforeAgent true
-                expression { params.UNIVERSAL == true }
-            }
-            agent {
-                label 'ubuntu18'
-            }
+        stage ('deploy universal linux installer') {
             steps {
                 sh script: '''
-                    ssh uploader@192.168.10.144 rm -f /local_storage/veil-connect/${VERSION}/linux/veil-connect-${VERSION}-linux.tar
-                    scp ${WORKSPACE}/doc/readme.txt uploader@192.168.10.144:/local_storage/veil-connect/${VERSION}/linux
-                    scp ${WORKSPACE}/devops/veil-connect-linux-installer.sh uploader@192.168.10.144:/local_storage/veil-connect/${VERSION}/linux
-                    ssh uploader@192.168.10.144 chmod +x /local_storage/veil-connect/${VERSION}/linux/veil-connect-linux-installer.sh
-                    
-                    # debs for astra linux:
-                    ssh uploader@192.168.10.144 "cp -r /local_storage/other/freerdp2-astra-orel /local_storage/veil-connect/${VERSION}/linux"
-                    ssh uploader@192.168.10.144 "cp -r /local_storage/other/debs-astra-smolensk /local_storage/veil-connect/${VERSION}/linux"
-                    
-                    # archivation
-                    ssh uploader@192.168.10.144 "cd /local_storage/veil-connect/${VERSION}/linux && tar cvf veil-connect-${VERSION}-linux.tar --exclude=*.txt ./*"
-
-                    # remove files
-                    ssh uploader@192.168.10.144 rm -f /local_storage/veil-connect/${VERSION}/linux/*.deb /local_storage/veil-connect/${VERSION}/linux/*.rpm /local_storage/veil-connect/${VERSION}/linux/*.sh
-                    ssh uploader@192.168.10.144 rm -rf /local_storage/veil-connect/${VERSION}/linux/*-astra-*
-                    
-                    # create symlink to latest version
-                    ssh uploader@192.168.10.144 ln -sfT /local_storage/veil-connect/${VERSION} /local_storage/veil-connect/latest
+                    scp ${WORKSPACE}/devops/veil-connect-linux-installer.sh uploader@192.168.10.144:/local_storage/veil-connect/linux/
                 '''
             }
         }
