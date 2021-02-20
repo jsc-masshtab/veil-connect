@@ -282,7 +282,20 @@ app_updater_get_linux_updates_task(GTask    *task G_GNUC_UNUSED,
     self->_is_getting_updates = 1;
     gdk_threads_add_idle((GSourceFunc)state_changed, self);
 
-    // Проверка наличия обновлении в linux репозитории пакетов
+    // Получение списка возможных обновлений
+    if (self->_linux_distro == LINUX_DISTRO_DEBIAN_LIKE)
+        command_line = g_strdup_printf("./update_script.sh %s %s", "apt_update", self->_admin_password);
+    else if (self->_linux_distro == LINUX_DISTRO_CENTOS_LIKE)
+        command_line = g_strdup_printf("./update_script.sh %s %s", "yum_update", self->_admin_password);
+
+    g_spawn_command_line_sync(command_line, &standard_output, &standard_error, &self->_last_exit_status, NULL);
+    g_info("1App update standard_output: %s", standard_output);
+    g_info("1App update standard_error: %s", standard_error);
+    free_memory_safely(&command_line);
+    free_memory_safely(&standard_output);
+    free_memory_safely(&standard_error);
+
+    // Проверка наличия обновлений
     if (!app_updater_check_linux_updates(self,
             &command_line, &standard_output, &standard_error, &last_version,
             &regex, &match_info))
@@ -300,9 +313,9 @@ app_updater_get_linux_updates_task(GTask    *task G_GNUC_UNUSED,
 
     g_mutex_lock(&self->priv_members_mutex);
     if (self->_linux_distro == LINUX_DISTRO_DEBIAN_LIKE)
-        command_line = g_strdup_printf("./start_client_update_debian.sh %s %s", self->_admin_password, PACKAGE);
+        command_line = g_strdup_printf("./update_script.sh %s %s %s", "apt_install", self->_admin_password, PACKAGE);
     else if (self->_linux_distro == LINUX_DISTRO_CENTOS_LIKE)
-        command_line = g_strdup_printf("./start_client_update_centos.sh %s %s", self->_admin_password, PACKAGE);
+        command_line = g_strdup_printf("./update_script.sh %s %s %s", "yum_install", self->_admin_password, PACKAGE);
     g_mutex_unlock(&self->priv_members_mutex);
 
     gboolean cmd_success = g_spawn_command_line_sync(command_line, &standard_output, &standard_error,
@@ -311,8 +324,8 @@ app_updater_get_linux_updates_task(GTask    *task G_GNUC_UNUSED,
         set_status_msg(self, "Не удалось запустить процесс установки новой версии ПО.");
         goto clear_mark;
     }
-    g_info("App update standard_output: %s", standard_output);
-    g_info("App update standard_error: %s", standard_error);
+    g_info("2App update standard_output: %s", standard_output);
+    g_info("2App update standard_error: %s", standard_error);
     g_info("App update exit_status: %i", self->_last_exit_status);
 
     if (self->_last_exit_status == 0)
