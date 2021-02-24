@@ -16,11 +16,10 @@ then
   echo $2 | sudo -S apt-get --yes install $3
 elif [ $1 == "yum_update" ]
 then
-  echo $2 | sudo -S yum -y update
+  echo $2 | sudo -S yum -y makecache
 elif [ $1 == "yum_install" ]
 then
   echo $2 | sudo -S yum -y update $3
 else
   echo "Wrong option"
 fi
-

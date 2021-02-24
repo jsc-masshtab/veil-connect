@@ -68,6 +68,13 @@ static ExtendedRdpContext* create_rdp_context()
 static void destroy_rdp_context(ExtendedRdpContext* ex_rdp_context, GThread *rdp_client_routine_thread)
 {
     if (ex_rdp_context) {
+        rdpContext *context = (rdpContext *) ex_rdp_context;
+        // В режиме запуска удаленного приложения закрываем текущее окно послав alt f4, так как пользователь ожидает,
+        // что приложение закроется
+        if (context->settings->RemoteApplicationMode) {
+            rdp_viewer_window_send_key_shortcut(context, 15); // 15 - index in keyCombos
+        }
+
         // stopping RDP routine
 
         g_info("%s: abort now: %i", (const char *)__func__, ex_rdp_context->test_int);
@@ -217,7 +224,7 @@ RemoteViewerState rdp_viewer_start(const gchar *usename, const gchar *password, 
 
     usbredir_controller_stop_all_cur_tasks(FALSE);
 
-    // clear memory
+    // deinit all
     destroy_rdp_context(ex_rdp_context, rdp_client_routine_thread);
 
     // destroy rdp windows

@@ -43,6 +43,7 @@ static const struct keyComboDef keyCombos[] = {
     { { RDP_SCANCODE_LCONTROL, RDP_SCANCODE_LMENU, RDP_SCANCODE_F11, GDK_KEY_VoidSymbol }, "Ctrl+Alt+F11", NULL},
     { { RDP_SCANCODE_LCONTROL, RDP_SCANCODE_LMENU, RDP_SCANCODE_F12, GDK_KEY_VoidSymbol }, "Ctrl+Alt+F12", NULL},
     { { RDP_SCANCODE_PRINTSCREEN, GDK_KEY_VoidSymbol }, "_PrintScreen", NULL},
+    { { RDP_SCANCODE_LMENU, RDP_SCANCODE_F4, GDK_KEY_VoidSymbol }, "Alt+F_4", NULL},
 };
 
 #ifdef G_OS_WIN32
@@ -302,18 +303,6 @@ static void rdp_viewer_item_menu_usb_activated(GtkWidget *menu G_GNUC_UNUSED, gp
     usbredir_dialog_start(GTK_WINDOW(rdp_window_data->rdp_viewer_window));
 }
 
-static void rdp_viewer_window_send_key_shortcut(rdpContext* context, int key_shortcut_index)
-{
-    rdpInput *input = context->input;
-
-    guint key_array_size = get_nkeys(keyCombos[key_shortcut_index].keys);
-
-    for (guint i = 0; i < key_array_size; ++i)
-        freerdp_input_send_keyboard_event_ex(input, TRUE, keyCombos[key_shortcut_index].keys[i]);
-    for (guint i = 0; i < key_array_size; ++i)
-        freerdp_input_send_keyboard_event_ex(input, FALSE, keyCombos[key_shortcut_index].keys[i]);
-}
-
 static void rdp_viewer_window_menu_send(GtkWidget *menu, gpointer userdata)
 {
     ExtendedRdpContext* ex_rdp_context = (ExtendedRdpContext*)userdata;
@@ -447,7 +436,6 @@ create_new_button_for_overlay_toolbar(RdpWindowData *rdp_window_data, const gcha
     gtk_toolbar_insert(GTK_TOOLBAR(rdp_window_data->overlay_toolbar), GTK_TOOL_ITEM(button), 0);
 
     return button;
-    g_signal_connect(button, "clicked", G_CALLBACK(rdp_viewer_window_toolbar_leave_fullscreen), rdp_window_data);
 }
 
 static void rdp_viewer_toolbar_setup(GtkBuilder *builder, RdpWindowData *rdp_window_data)
@@ -472,6 +460,10 @@ static void rdp_viewer_toolbar_setup(GtkBuilder *builder, RdpWindowData *rdp_win
                 G_CALLBACK(rdp_viewer_window_toolbar_leave_fullscreen_for_all_windows),
                 rdp_window_data);
     }
+
+    // Disconnect
+    button = create_new_button_for_overlay_toolbar(rdp_window_data, "system-log-out", "Отключиться");
+    g_signal_connect(button, "clicked", G_CALLBACK(rdp_viewer_window_menu_switch_off), rdp_window_data);
 
     // add tollbar to overlay
     rdp_window_data->revealer = virt_viewer_timed_revealer_new(rdp_window_data->overlay_toolbar);
@@ -538,7 +530,7 @@ RdpWindowData *rdp_viewer_window_create(ExtendedRdpContext *ex_rdp_context)
     rdp_viewer_control_menu_setup(builder, rdp_window_data);
 
     // controll toolbar used in fullscreen
-    rdp_viewer_toolbar_setup(builder, rdp_window_data);
+    rdp_viewer_toolbar_setup(builder, rdp_window_data); // for overlay controll
 
     // view menu
     gtk_widget_destroy(GTK_WIDGET(gtk_builder_get_object(builder, "menu-view-zoom")));
@@ -618,4 +610,16 @@ void rdp_viewer_window_stop(RdpWindowData *rdp_window_data, RemoteViewerState ne
 {
     *rdp_window_data->ex_rdp_context->next_app_state_p = next_app_state;
     shutdown_loop(*rdp_window_data->loop_p);
+}
+
+void rdp_viewer_window_send_key_shortcut(rdpContext* context, int key_shortcut_index)
+{
+    rdpInput *input = context->input;
+
+    guint key_array_size = get_nkeys(keyCombos[key_shortcut_index].keys);
+
+    for (guint i = 0; i < key_array_size; ++i)
+        freerdp_input_send_keyboard_event_ex(input, TRUE, keyCombos[key_shortcut_index].keys[i]);
+    for (guint i = 0; i < key_array_size; ++i)
+        freerdp_input_send_keyboard_event_ex(input, FALSE, keyCombos[key_shortcut_index].keys[i]);
 }
