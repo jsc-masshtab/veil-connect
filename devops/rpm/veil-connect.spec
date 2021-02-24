@@ -43,7 +43,6 @@ perl -pi -e 's/crosshair/default\0\0/g' /usr/lib64/libspice-client-gtk-3.0.so.5
 %attr (777,root,root) /opt/veil-connect/veil_connect
 %attr (777,root,root) /opt/veil-connect/veil-connect.ico
 %attr (644,root,root) /usr/share/applications/veil-connect.desktop
-%attr (777,root,root) /opt/veil-connect/start_client_update_centos.sh
-%attr (777,root,root) /opt/veil-connect/start_client_update_debian.sh
+%attr (777,root,root) /opt/veil-connect/update_script.sh
 
 %changelog
