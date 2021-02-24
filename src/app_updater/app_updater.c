@@ -159,7 +159,7 @@ app_updater_on_check_updates_task_finished(GObject *source_object G_GNUC_UNUSED,
 // Проверяет наличие новой версии. Возвращает TRUE если есть новая версия
 static gboolean app_updater_check_linux_updates(AppUpdater *self,
         gchar **command_line, gchar **standard_output, gchar **standard_error, gchar **last_version,
-                                            GRegex **regex, GMatchInfo **match_info)
+                                            GMatchInfo **match_info)
 {
     if (self->_linux_distro == LINUX_DISTRO_DEBIAN_LIKE)
         *command_line = g_strdup_printf("apt list --upgradable | grep %s", PACKAGE);
@@ -178,11 +178,13 @@ static gboolean app_updater_check_linux_updates(AppUpdater *self,
     // Найти строку содержащую veil-connect. Разделить по пробелам. Второй элемент - новая версия
     // ^(veil-connect.+)\n
     gchar *string_pattern = g_strdup_printf("^(%s.+)\\n", PACKAGE);
-    *regex = g_regex_new(string_pattern, G_REGEX_MULTILINE, 0, NULL);
-    g_regex_match(*regex, *standard_output, 0, match_info);
+    GRegex *regex = g_regex_new(string_pattern, G_REGEX_MULTILINE, 0, NULL);
+    g_regex_match(regex, *standard_output, 0, match_info);
     g_free(string_pattern);
 
     gboolean is_matched = g_match_info_matches(*match_info);
+
+    g_regex_unref(regex);
 
     if (!is_matched) {
         set_status_msg(self, "Нет доступных обновлений [код: 1].");
@@ -233,14 +235,10 @@ app_updater_check_linux_updates_task(GTask    *task G_GNUC_UNUSED,
     gchar *standard_error = NULL;
     gchar *command_line = NULL;
     GMatchInfo *match_info = NULL;
-    GRegex *regex = NULL;
 
     gboolean is_updates_available = app_updater_check_linux_updates(self,
-                                    &command_line, &standard_output, &standard_error, &last_version,
-                                    &regex, &match_info);
+                                    &command_line, &standard_output, &standard_error, &last_version, &match_info);
 
-    if (regex)
-        g_regex_unref(regex);
     if(match_info)
         g_match_info_free(match_info);
     free_memory_safely(&command_line);
@@ -271,18 +269,32 @@ app_updater_get_linux_updates_task(GTask    *task G_GNUC_UNUSED,
     gchar *standard_error = NULL;
     gchar *command_line = NULL;
     GMatchInfo *match_info = NULL;
-    GRegex *regex = NULL;
 
     g_mutex_lock(&self->priv_members_mutex);
     free_memory_safely(&self->_last_standard_output);
     free_memory_safely(&self->_last_standard_error);
     g_mutex_unlock(&self->priv_members_mutex);
 
+    // Проверка пароля
+    set_status_msg(self, "Проверка sudo пароля.");
+    command_line = g_strdup_printf("./update_script.sh %s %s", "check_sudo_pass", self->_admin_password);
+    g_spawn_command_line_sync(command_line, &standard_output, &standard_error, &self->_last_exit_status, NULL);
+    if (!strstr(standard_output, "success_pass")) {
+        set_status_msg(self, "Неправильный пароль.");
+        goto clear_mark;
+    }
+
+    g_info("0App update standard_output: %s", standard_output);
+    g_info("0App update standard_error: %s", standard_error);
+    free_memory_safely(&command_line);
+    free_memory_safely(&standard_output);
+    free_memory_safely(&standard_error);
+
+    // Получение списка возможных обновлений
     set_status_msg(self, "Проверка наличия обновлений.");
     self->_is_getting_updates = 1;
     gdk_threads_add_idle((GSourceFunc)state_changed, self);
 
-    // Получение списка возможных обновлений
     if (self->_linux_distro == LINUX_DISTRO_DEBIAN_LIKE)
         command_line = g_strdup_printf("./update_script.sh %s %s", "apt_update", self->_admin_password);
     else if (self->_linux_distro == LINUX_DISTRO_CENTOS_LIKE)
@@ -297,8 +309,7 @@ app_updater_get_linux_updates_task(GTask    *task G_GNUC_UNUSED,
 
     // Проверка наличия обновлений
     if (!app_updater_check_linux_updates(self,
-            &command_line, &standard_output, &standard_error, &last_version,
-            &regex, &match_info))
+            &command_line, &standard_output, &standard_error, &last_version, &match_info))
         goto clear_mark;
 
     // clear
@@ -338,8 +349,6 @@ app_updater_get_linux_updates_task(GTask    *task G_GNUC_UNUSED,
     // clear
     clear_mark:
 
-    if (regex)
-        g_regex_unref(regex);
     if(match_info)
         g_match_info_free(match_info);
 

@@ -20,6 +20,9 @@ then
 elif [ $1 == "yum_install" ]
 then
   echo $2 | sudo -S yum -y update $3
+elif [ $1 == "check_sudo_pass" ]
+then
+  echo $2 | sudo -S echo "success_pass"
 else
   echo "Wrong option"
 fi
