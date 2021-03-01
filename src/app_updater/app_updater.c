@@ -87,7 +87,7 @@ static void app_updater_init( AppUpdater *self )
     self->_admin_password = NULL;
     self->_last_standard_output = NULL;
     self->_last_standard_error = NULL;
-    self->_windows_releases_url = g_strdup("https://veil-update.mashtab.org/files/veil-connect/latest/windows/");
+    self->_windows_releases_url = g_strdup("https://veil-update.mashtab.org/veil-connect/windows/latest/");
 
     g_mutex_unlock(&self->priv_members_mutex);
 
