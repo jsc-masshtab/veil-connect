@@ -480,8 +480,9 @@ pipeline {
                             copy C:\\msys32\\mingw64\\lib\\gdk-pixbuf-2.0\\2.10.0\\loaders.cache lib\\gdk-pixbuf-2.0\\2.10.0
                             xcopy C:\\msys32\\mingw64\\lib\\gio lib\\gio /E /H /I
 
-                            for %%I in (libgstapp libgstaudioconvert libgstaudiorate libgstaudioresample libgstautodetect libgstcoreelements ^
-                            libgstcoretracers libgstdirectsound) do (echo D|xcopy C:\\msys32\\mingw64\\lib\\gstreamer-1.0\\%%I.dll lib\\gstreamer-1.0)
+                            for %%I in (libgstapp libgstaudioconvert libgstaudiorate libgstaudioresample libgstautodetect ^
+                            libgstcoreelements libgstcoretracers libgstdirectsound libgstdirectsoundsink ^
+                            libgstdirectsoundsrc) do (echo D|xcopy C:\\msys32\\mingw64\\lib\\gstreamer-1.0\\%%I.dll lib\\gstreamer-1.0)
 
                             copy rdp_data\\rdp_template_file.txt rdp_data\\rdp_file.rdp
 
