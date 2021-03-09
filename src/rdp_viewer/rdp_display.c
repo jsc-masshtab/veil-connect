@@ -3,9 +3,6 @@
 #include <gio/gio.h>
 #include <gtk/gtk.h>
 #include <glib/garray.h>
-#include <gdk-pixbuf/gdk-pixbuf.h>
-
-#include <cairo/cairo.h>
 
 #include <freerdp/locale/keyboard.h>
 #include <freerdp/scancode.h>
@@ -49,11 +46,11 @@
 #endif
 
 
-static gboolean fuzzy_compare(double number_1, double number_2)
-{
-    const double epsilon = 0.00001;
-    return fabs(number_1 - number_2) < epsilon;
-}
+//static gboolean fuzzy_compare(double number_1, double number_2)
+//{
+//    const double epsilon = 0.00001;
+//    return fabs(number_1 - number_2) < epsilon;
+//}
 
 static const gchar *error_to_str(UINT32 rdp_error)
 {
@@ -182,7 +179,7 @@ static void rdp_viewer_handle_key_event(GdkEventKey *event, ExtendedRdpContext* 
         return;
     rdpInput *input = tf->context.input;
 
-#ifdef __linux__
+#ifdef G_OS_UNIX
     DWORD rdp_scancode = freerdp_keyboard_get_rdp_scancode_from_x11_keycode(event->hardware_keycode);
 #elif _WIN32
     DWORD rdp_scancode = 0;
@@ -374,7 +371,7 @@ static void rdp_display_draw_text_message(cairo_t* context, const gchar *msg, do
     cairo_show_text(context, msg);
 }
 
-static gboolean rdp_display_event_on_draw(GtkWidget* widget, cairo_t* context, gpointer user_data)
+static gboolean rdp_display_event_on_draw(GtkWidget* widget G_GNUC_UNUSED, cairo_t* context, gpointer user_data)
 {
     //g_info("%s START\n", (const char *)__func__);
 
@@ -390,15 +387,18 @@ static gboolean rdp_display_event_on_draw(GtkWidget* widget, cairo_t* context, g
 
             if (ex_rdp_contect->surface) {
 
+                //gint64 start = g_get_monotonic_time();
+                //cairo_push_group(context);
+
                 cairo_set_source_surface(context, ex_rdp_contect->surface, -rdp_window_data->monitor_geometry.x,
                                          -rdp_window_data->monitor_geometry.y);
-                //if (!fuzzy_compare(scale_f, 1))
-                //    cairo_surface_set_device_scale(ex_rdp_contect->surface, scale_f, scale_f);
 
                 cairo_set_operator(context, CAIRO_OPERATOR_OVER);     // Ignore alpha channel from FreeRDP
                 cairo_set_antialias(context, CAIRO_ANTIALIAS_FAST);
 
+                //cairo_pop_group(context);
                 cairo_paint(context);
+                //g_info("Paint time %lli", g_get_monotonic_time() - start);
 
             } else { // Поверхность создается сразу после подключения. Если ее нет, значит мы ожидаем подключение
                 rdp_display_draw_text_message(context, "Ожидаем подключение", 50);

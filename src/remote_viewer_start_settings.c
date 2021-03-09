@@ -262,7 +262,7 @@ btn_archive_logs_clicked_cb(GtkButton *button G_GNUC_UNUSED, ConnectSettingsDial
 {
     gchar *log_dir = get_log_dir_path();
 
-#ifdef __linux__
+#ifdef G_OS_UNIX
     gchar *tar_cmd = g_strdup_printf("tar -czvf log.tar.gz %s", log_dir);
 
     int res = system(tar_cmd);

@@ -46,6 +46,7 @@
 
 #include "vdi_session.h"
 #include "settingsfile.h"
+#include "about_dialog.h"
 
 //#include "remote-viewer-iso-list-dialog.h"
 
@@ -1118,7 +1119,7 @@ G_MODULE_EXPORT void
 virt_viewer_window_menu_help_about(GtkWidget *menu G_GNUC_UNUSED,
                                    VirtViewerWindow *self)
 {
-    show_about_dialog(GTK_WINDOW(self->priv->window), self);
+    show_about_dialog(GTK_WINDOW(self->priv->window));
 }
 
 #if HAVE_OVIRT

@@ -4,11 +4,8 @@
  *
  */
 
-#ifdef __linux__
-#include <X11/Xlib.h>
-#endif
-
 #include <config.h>
+
 #include <locale.h>
 #include <gio/gio.h>
 #include <gtk/gtk.h>
@@ -17,6 +14,10 @@
 #include <glib.h>
 #include <glib/gstdio.h>
 #include <fcntl.h>
+
+#ifdef G_OS_UNIX
+#include <X11/Xlib.h>
+#endif
 
 #include <freerdp/version.h>
 
@@ -81,7 +82,7 @@ main(int argc, char **argv)
     // disable stdout buffering
     setbuf(stdout, NULL);
 
-#ifdef __linux__
+#ifdef G_OS_UNIX
     XInitThreads();
 #endif
     // start app

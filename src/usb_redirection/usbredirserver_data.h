@@ -11,11 +11,12 @@
 #define USB_REDIR_FINISH_SUCCESS 0
 #define USB_REDIR_FINISH_FAIL -1
 
-
 typedef struct{
 
     int verbose;
 #ifdef __linux__
+    int client_fd;
+#elif __APPLE__ || __MACH__
     int client_fd;
 #elif _WIN32
     SOCKET client_fd;

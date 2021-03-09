@@ -795,6 +795,11 @@ static void
 virt_viewer_session_spice_usb_device_selection(VirtViewerSession *session,
                                                GtkWindow *parent)
 {
+#ifdef __APPLE__
+    show_msg_box_dialog(GTK_WINDOW(parent), "Проброс USB не поддерживается на текущей ОС");
+    return;
+#endif
+
     // Не показывать если запрещено в админке
     if (!vdi_session_is_usb_redir_permitted()) {
         show_msg_box_dialog(GTK_WINDOW(parent), "Проброс USB запрещен администратором");

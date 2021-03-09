@@ -37,6 +37,8 @@
 #include <glib/gi18n.h>
 #include <errno.h>
 
+#include "settingsfile.h"
+
 #ifdef HAVE_SYS_SOCKET_H
 #include <sys/socket.h>
 #endif
@@ -153,7 +155,6 @@ struct _VirtViewerAppPrivate {
 
     gint focused;
     GKeyFile *config;
-    gchar *config_file;
 
     guint insert_smartcard_accel_key;
     GdkModifierType insert_smartcard_accel_mods;
@@ -258,7 +259,7 @@ virt_viewer_app_save_config(VirtViewerApp *self)
     GError *error = NULL;
     gchar *dir, *data;
 
-    dir = g_path_get_dirname(priv->config_file);
+    dir = g_path_get_dirname(get_ini_file_name());
     if (g_mkdir_with_parents(dir, S_IRWXU) == -1)
         g_warning("failed to create config directory");
     g_free(dir);
@@ -278,7 +279,7 @@ virt_viewer_app_save_config(VirtViewerApp *self)
     }
 
     if ((data = g_key_file_to_data(priv->config, NULL, &error)) == NULL ||
-        !g_file_set_contents(priv->config_file, data, -1, &error)) {
+        !g_file_set_contents(get_ini_file_name(), data, -1, &error)) {
         g_warning("Couldn't save configuration: %s", error->message);
         g_clear_error(&error);
     }
@@ -577,23 +578,6 @@ void virt_viewer_app_set_window_name(VirtViewerApp *app, const gchar *vm_verbose
     g_object_set(app, "guest-name", window_name, NULL);
     g_free(window_name);
     g_free(username);
-}
-
-G_MODULE_EXPORT void
-virt_viewer_app_about_close(GtkWidget *dialog,
-                            VirtViewerApp *self G_GNUC_UNUSED)
-{
-    gtk_widget_hide(dialog);
-    gtk_widget_destroy(dialog);
-}
-
-G_MODULE_EXPORT void
-virt_viewer_app_about_delete(GtkWidget *dialog,
-                             void *dummy G_GNUC_UNUSED,
-                             VirtViewerApp *self G_GNUC_UNUSED)
-{
-    gtk_widget_hide(dialog);
-    gtk_widget_destroy(dialog);
 }
 
 #if defined(HAVE_SOCKETPAIR) && defined(HAVE_FORK)
@@ -1766,8 +1750,6 @@ virt_viewer_app_dispose (GObject *object)
     priv->title = NULL;
     g_free(priv->uuid);
     priv->uuid = NULL;
-    g_free(priv->config_file);
-    priv->config_file = NULL;
     g_clear_pointer(&priv->config, g_key_file_free);
     g_clear_pointer(&priv->initial_display_map, g_hash_table_unref);
 
@@ -1831,13 +1813,12 @@ virt_viewer_app_init(VirtViewerApp *self)
 
     self->priv->displays = g_hash_table_new_full(g_direct_hash, g_direct_equal, NULL, g_object_unref);
     self->priv->config = g_key_file_new();
-    self->priv->config_file = g_build_filename(g_get_user_config_dir(),
-                                               "veil_connect", "settings", NULL);
-    g_key_file_load_from_file(self->priv->config, self->priv->config_file,
+
+    g_key_file_load_from_file(self->priv->config, get_ini_file_name(),
                     G_KEY_FILE_KEEP_COMMENTS|G_KEY_FILE_KEEP_TRANSLATIONS, &error);
 
     if (g_error_matches(error, G_FILE_ERROR, G_FILE_ERROR_NOENT))
-        g_debug("No configuration file %s", self->priv->config_file);
+        g_debug("No configuration file %s", get_ini_file_name());
     else if (error)
         g_warning("Couldn't load configuration: %s", error->message);
 

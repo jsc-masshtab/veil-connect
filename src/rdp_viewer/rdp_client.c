@@ -89,7 +89,6 @@ static void rdp_client_read_str_rdp_param_from_ini_and_add(GArray *rdp_params_dy
 static GArray * rdp_client_create_params_array(ExtendedRdpContext* ex)
 {
     g_info("%s W: %i x H:%i", (const char*)__func__, ex->whole_image_width, ex->whole_image_height);
-    rdpContext *context = (rdpContext *)ex;
 
     GArray *rdp_params_dyn_array = g_array_new(FALSE, FALSE, sizeof(gchar *));
 
@@ -410,11 +409,14 @@ static BOOL rdp_post_connect(freerdp* instance)
     // PIXEL_FORMAT_BGRA32      CAIRO_FORMAT_ARGB32
     g_info("%s", (const char *)__func__);
 
-    // get image pixel format from ini file
-    gchar *rdp_pixel_format_str = read_str_from_ini_file("RDPSettings", "rdp_pixel_format");
     UINT32 freerdp_pix_format = PIXEL_FORMAT_RGB16; // default
     cairo_format_t cairo_format = CAIRO_FORMAT_RGB16_565; // default
-
+#ifdef __APPLE__ // support only BGRA32
+    gchar *rdp_pixel_format_str = g_strdup("BGRA32");
+#else
+    // get image pixel format from ini file
+    gchar *rdp_pixel_format_str = read_str_from_ini_file("RDPSettings", "rdp_pixel_format");
+#endif
     if (g_strcmp0(rdp_pixel_format_str, "BGRA32") == 0) {
         freerdp_pix_format = PIXEL_FORMAT_BGRA32;
         cairo_format = CAIRO_FORMAT_ARGB32;
@@ -455,6 +457,8 @@ static BOOL rdp_post_connect(freerdp* instance)
     int stride = cairo_format_stride_for_width(cairo_format, gdi->width);
     ex->surface = cairo_image_surface_create_for_data((unsigned char*)gdi->primary_buffer,
                                                       cairo_format, gdi->width, gdi->height, stride);
+   // ex->surface = cairo_image_surface_create (CAIRO_FORMAT_RGB16_565,
+     //       gdi->width, gdi->height);
 
     g_mutex_unlock(&ex->primary_buffer_mutex);
 

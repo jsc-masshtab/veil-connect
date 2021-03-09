@@ -76,56 +76,77 @@ In MSYS2 packages are installed using the pacman package manager.
 
 Note: in the following steps, we will assume you're using a 64-bit Windows. Therefore, the package names include the x86_64 architecture identifier. If you're using a 32-bit Windows, please adapt the instructions below using the i686 architecture identifier.
 
-Step 1: Install MSYS2
+- Install MSYS2
 
 
 Download the MSYS2 installer that matches your platform and follow the installation instructions.
 
-Step 2: Install GTK3 and its dependencies
+- Install GTK3 and its dependencies
 
 
-Open a MSYS2 shell, and run:
+- Open a MSYS2 shell, and run:
 
 pacman -S mingw-w64-x86_64-gtk3
 
 
-Install build tools
+- Install build tools
 
 pacman -S mingw-w64-x86_64-toolchain base-devel
 
 
-Install dependencies:
+- Install dependencies:
 pacman -S mingw64/mingw-w64-x86_64-libsoup
 
 pacman -S mingw64/mingw-w64-x86_64-spice-gtk
 
 pacman -S mingw64/mingw-w64-x86_64-libusb
 
-In file CmaleLists.txt in variable LIBS_INCLUDE_PATH set the path to MSYS_INCLUDE
+- In file CmaleLists.txt in variable LIBS_INCLUDE_PATH set the path to MSYS_INCLUDE
 
+- Собрать freerdp
 
-Сборка freerdp
+  - Скачать freerdp https://github.com/FreeRDP/FreeRDP/releases/tag/2.0.0-rc4 распаковать.
+  freerdp на винде возможно собрать только с помощью нативного компилятора (visual C) 
 
--Скачать freerdp https://github.com/FreeRDP/FreeRDP/releases/tag/2.0.0-rc4 распаковать.
-
-freerdp на винде возможно собрать только с помощью нативного компилятора (visual C) 
-
--Ставим visual studio https://visualstudio.microsoft.com/ru/downloads/
+  - Ставим visual studio https://visualstudio.microsoft.com/ru/downloads/
 Файл FreeRDP.sln открываем в студии. Выбираем режим Release и собираем. В папке freerdp
+Будет создана папка Release с собранными либами
+  - В файле CmaleLists.txt в переменной FREERDP_PATH указываем путь к папке freerdp
+ 
+- Install Clion
 
-будет создана папка Release с собранными либами
-В файле CmaleLists.txt в переменной FREERDP_PATH указываем путь к папке freerdp
- Install Clion
+- In Clion open CmakeListx.txt and build the project
 
+## Building on Mac
 
-In Clion open CmakeListx.txt and build the project
+- Установить средства разработки выполнив в терминале
+```  
+xcode-select --install
+```
 
+- Установить macports следуя инструкциям https://www.macports.org/install.php
+- Установить xquartz
+  https://www.xquartz.org/
+```
+  sudo /opt/local/bin/port -v install xorg-server
+```
 
+- Установить зависимости
+```
+sudo /opt/local/bin/port install gtk3 +x11
+sudo /opt/local/bin/port install freerdp
+sudo /opt/local/bin/port install spice-gtk +x11
+sudo /opt/local/bin/port install usbredir
+sudo /opt/local/bin/port install libsoup
+sudo /opt/local/bin/port install hiredis
+```
+
+- В Clion открыть CmakeListx.txt и собрать
 
 ## INSTALL AND LAUNCH
 
-Windows
+###Windows
 Запустить инсталятор, следовать инструкциям. 
 
-Linux
+###Linux
 Установить deb пакет.

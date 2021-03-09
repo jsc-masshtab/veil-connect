@@ -1,7 +1,7 @@
 /**
  * FreeRDP: A Remote Desktop Protocol Implementation
  * GTK GUI
- * Solomin a.solomin@mashtab.otg
+ * Solomin a.solomin@mashtab.org
  */
 
 #include <gio/gio.h>
@@ -25,6 +25,7 @@
 #include "vdi_session.h"
 
 #define MAX_MONITOR_AMOUNT 3
+#define MAC_PANEL_HEIGHT 90 // Высота панели на маке
 
 static gboolean is_rdp_context_created = FALSE;
 
@@ -183,7 +184,8 @@ RemoteViewerState rdp_viewer_start(const gchar *usename, const gchar *password, 
             GdkRectangle geometry = set_monitor_data_and_create_rdp_viewer_window(monitor, i, ex_rdp_context,
                                                         &loop);
             total_monitor_width += geometry.width;
-            monitor_height = geometry.height;
+            // find smallest height
+            monitor_height = (i == 0) ? geometry.height : MIN(monitor_height, geometry.height);
         }
     // Create windows only for primary monitor
     } else {
@@ -201,7 +203,9 @@ RemoteViewerState rdp_viewer_start(const gchar *usename, const gchar *password, 
         // Это необходимо, чтобы не было отступа при рисовании картинки или получени позиции мыши
         rdp_window_data->monitor_geometry.x = rdp_window_data->monitor_geometry.y = 0;
     }
-
+#ifdef __APPLE__
+    monitor_height = monitor_height - MAC_PANEL_HEIGHT;
+#endif
     // Notify if folders redir is forbidden
     gchar *shared_folders_str = read_str_from_ini_file("RDPSettings", "rdp_shared_folders");
     if (strlen_safely(shared_folders_str) && !vdi_session_is_folders_redir_permitted()) {

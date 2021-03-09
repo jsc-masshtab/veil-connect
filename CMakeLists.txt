@@ -34,6 +34,8 @@ list(APPEND SRC_CODE
         src/remote-viewer-timed-revealer.h
         src/remote_viewer_start_settings.h
         src/remote_viewer_start_settings.c
+        src/about_dialog.h
+        src/about_dialog.c
         src/main.c
 
 # virt_viewer
@@ -140,20 +142,23 @@ list(APPEND SRC_CODE
 endif (WIN32)
 
 ###############################LIBRARIES###############################
-    # GLIB
-    find_package(PkgConfig REQUIRED)
-    pkg_search_module(GLIB REQUIRED glib-2.0)
-    INCLUDE_DIRECTORIES(${GLIB_INCLUDE_DIRS})
+if (APPLE)
+#    # Quartz
+#    SET(LIBS_INCLUDE_PATH /usr/local/include/)
+#    INCLUDE_DIRECTORIES(${LIBS_INCLUDE_PATH})
+#    LINK_DIRECTORIES(/usr/local/lib)
 
-    # GTK
-    PKG_CHECK_MODULES(GTK3 REQUIRED gtk+-3.0)
-    INCLUDE_DIRECTORIES(${GTK3_INCLUDE_DIRS})
-    SET(LIBS ${LIBS} ${GTK3_LIBRARIES})
-    ADD_DEFINITIONS(${GTK3_CFLAGS_OTHER})
+    # X11
+    SET(LIBS_INCLUDE_PATH /opt/local/include/)
+    INCLUDE_DIRECTORIES(${LIBS_INCLUDE_PATH})
+    LINK_DIRECTORIES(/opt/local/lib)
+endif (APPLE)
+
+if(UNIX AND NOT APPLE)
+    SET(LIBS_INCLUDE_PATH /usr/include/)
+endif (UNIX AND NOT APPLE)
 
 if (UNIX)
-    SET(LIBS_INCLUDE_PATH /usr/include/)
-
     # redis hiredis
     INCLUDE_DIRECTORIES(${LIBS_INCLUDE_PATH}hiredis)
     SET(LIBS ${LIBS} hiredis)
@@ -219,6 +224,18 @@ if (WIN32)
     SET(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)
     SET(GUI_TYPE WIN32) # switch off console
 endif (WIN32)
+
+    # GLIB
+    find_package(PkgConfig REQUIRED)
+    pkg_search_module(GLIB REQUIRED glib-2.0)
+    INCLUDE_DIRECTORIES(${GLIB_INCLUDE_DIRS})
+
+    # GTK
+    PKG_CHECK_MODULES(GTK3 REQUIRED gtk+-3.0)
+    INCLUDE_DIRECTORIES(${GTK3_INCLUDE_DIRS})
+    LINK_DIRECTORIES(${GTK3_LIBRARY_DIRS})
+    SET(LIBS ${LIBS} ${GTK3_LIBRARIES})
+    ADD_DEFINITIONS(${GTK3_CFLAGS_OTHER})
 
     # libxml
     INCLUDE_DIRECTORIES(${LIBS_INCLUDE_PATH}libxml2)

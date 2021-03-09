@@ -10,6 +10,7 @@
 
 #include "rdp_display.h"
 #include "vdi_session.h"
+#include "about_dialog.h"
 
 #include "settingsfile.h"
 #include "usbredir_dialog.h"
@@ -168,6 +169,7 @@ static void rdp_viewer_window_toggle_fullscreen(RdpWindowData *rdp_window_data, 
         // fullscreen
         gtk_window_set_resizable(GTK_WINDOW(rdp_window_data->rdp_viewer_window), TRUE);
         gtk_window_fullscreen(GTK_WINDOW(rdp_window_data->rdp_viewer_window));
+        //gtk_window_move(GTK_WINDOW(rdp_window_data->rdp_viewer_window), 0, 0);
 
         // show toolbar
         gtk_widget_hide(rdp_window_data->top_menu);
@@ -206,12 +208,15 @@ static gboolean rdp_viewer_window_deleted_cb(gpointer userdata)
     return TRUE;
 }
 
-static void rdp_viewer_window_event_on_mapped(GtkWidget *widget G_GNUC_UNUSED, GdkEvent *event G_GNUC_UNUSED,
-        gpointer user_data)
-{
-    RdpWindowData *rdp_window_data = (RdpWindowData *)user_data;
-    rdp_viewer_window_toggle_fullscreen(rdp_window_data, TRUE);
-}
+//static gboolean rdp_viewer_window_event_on_mapped(GtkWidget *widget G_GNUC_UNUSED, GdkEvent *event G_GNUC_UNUSED,
+//        gpointer user_data)
+//{
+//    g_info("%s", (const char *)__func__);
+//    RdpWindowData *rdp_window_data = (RdpWindowData *)user_data;
+//    rdp_viewer_window_toggle_fullscreen(rdp_window_data, TRUE);
+//
+//    return FALSE;
+//}
 
 // it seems focus-in-event and focus-out-event don’t work when keyboard is grabbed
 gboolean rdp_viewer_window_on_state_event(GtkWidget *widget G_GNUC_UNUSED, GdkEventWindowState  *event,
@@ -276,11 +281,18 @@ static void rdp_viewer_item_about_activated(GtkWidget *menu G_GNUC_UNUSED, gpoin
 {
     g_info("%s", (const char *)__func__);
     GtkWindow *rdp_viewer_window = (GtkWindow *)userdata;
-    show_about_dialog(rdp_viewer_window, NULL);
+    show_about_dialog(rdp_viewer_window);
 }
 
 static void rdp_viewer_item_menu_usb_activated(GtkWidget *menu G_GNUC_UNUSED, gpointer userdata)
 {
+    RdpWindowData *rdp_window_data = (RdpWindowData *)userdata;
+#ifdef __APPLE__
+    show_msg_box_dialog(GTK_WINDOW(rdp_window_data->rdp_viewer_window),
+                        "Проброс USB не поддерживается на текущей ОС");
+    return;
+#endif
+
     // Работает только в связке с veil
     if (opt_manual_mode)
         return;
@@ -288,7 +300,6 @@ static void rdp_viewer_item_menu_usb_activated(GtkWidget *menu G_GNUC_UNUSED, gp
     if (usbredir_controller_is_usb_tcp_window_shown())
         return;
 
-    RdpWindowData *rdp_window_data = (RdpWindowData *)userdata;
     // Не показывать если запрещено в админке
     if (!vdi_session_is_usb_redir_permitted()) {
         show_msg_box_dialog(GTK_WINDOW(rdp_window_data->rdp_viewer_window), "Проброс USB запрещен администратором");
@@ -506,8 +517,8 @@ RdpWindowData *rdp_viewer_window_create(ExtendedRdpContext *ex_rdp_context)
     gtk_widget_add_events(rdp_viewer_window, GDK_KEY_PRESS_MASK | GDK_KEY_RELEASE_MASK | GDK_FOCUS_CHANGE_MASK);
     g_signal_connect_swapped(rdp_viewer_window, "delete-event",
                              G_CALLBACK(rdp_viewer_window_deleted_cb), rdp_window_data);
-    g_signal_connect(rdp_viewer_window, "map-event",
-            G_CALLBACK(rdp_viewer_window_event_on_mapped), rdp_window_data);
+    //g_signal_connect(rdp_viewer_window, "map-event",
+    //        G_CALLBACK(rdp_viewer_window_event_on_mapped), rdp_window_data);
     g_signal_connect(rdp_viewer_window, "window-state-event",
                      G_CALLBACK(rdp_viewer_window_on_state_event), rdp_window_data);
 
@@ -570,7 +581,9 @@ RdpWindowData *rdp_viewer_window_create(ExtendedRdpContext *ex_rdp_context)
     gtk_window_set_position(GTK_WINDOW(rdp_viewer_window), GTK_WIN_POS_CENTER);
     //gtk_window_resize(GTK_WINDOW(rdp_viewer_window), whole_image_width, whole_image_height);
     gtk_widget_show_all(rdp_viewer_window);
-
+#ifndef __APPLE__
+    rdp_viewer_window_toggle_fullscreen(rdp_window_data, TRUE);
+#endif
     // get desired fps from ini file
     UINT32 rdp_fps = CLAMP(read_int_from_ini_file("RDPSettings", "rdp_fps", 30), 1, 60);
     guint redraw_timeout = 1000 / rdp_fps;

@@ -823,7 +823,7 @@ GtkWidget *get_widget_from_builder(GtkBuilder *builder, const gchar *name)
 gchar *get_log_dir_path()
 {
     // log dir dipends on OS
-#ifdef __linux__
+#ifdef G_OS_UNIX
     gchar *log_dir = g_strdup("log");
 #elif _WIN32
     const gchar *locap_app_data_path = g_getenv("LOCALAPPDATA");
@@ -868,35 +868,6 @@ gchar *get_windows_app_data_location(void)
     const gchar *locap_app_data_path = g_getenv("LOCALAPPDATA");
     gchar *app_data_dir = g_strdup_printf("%s\\%s", locap_app_data_path, APPLICATION_NAME);
     return app_data_dir;
-}
-
-void show_about_dialog(GtkWindow *parent_window, gpointer data_for_builder_connect_signal)
-{
-    GtkBuilder *about;
-    GtkWidget *dialog;
-    GdkPixbuf *icon;
-
-    about = remote_viewer_util_load_ui("virt-viewer-about.ui");
-
-    dialog = GTK_WIDGET(gtk_builder_get_object(about, "about"));
-    gtk_about_dialog_set_version ((GtkAboutDialog *)dialog, VERSION);
-
-    icon = gdk_pixbuf_new_from_resource(VIRT_VIEWER_RESOURCE_PREFIX"/icons/content/img/veil-32x32.png", NULL);
-    if (icon != NULL) {
-        gtk_about_dialog_set_logo(GTK_ABOUT_DIALOG(dialog), icon);
-        g_object_unref(icon);
-    } else {
-        gtk_about_dialog_set_logo_icon_name(GTK_ABOUT_DIALOG(dialog), "virt-viewer_veil");
-    }
-
-    gtk_window_set_transient_for(GTK_WINDOW(dialog), parent_window);
-
-    if (data_for_builder_connect_signal)
-        gtk_builder_connect_signals(about, data_for_builder_connect_signal);
-
-    gtk_widget_show(dialog);
-
-    g_object_unref(G_OBJECT(about));
 }
 
 const gchar *get_cur_ini_param_group()
@@ -946,10 +917,10 @@ H264_CODEC_TYPE string_to_h264_codec(const gchar *str)
 
 H264_CODEC_TYPE get_default_h264_codec()
 {
-#ifdef __linux__
-    return H264_CODEC_AVC444;
-#elif _WIN32
+#ifdef _WIN32
     return H264_CODEC_AVC420;
+#else
+    return H264_CODEC_AVC444;
 #endif
 }
 

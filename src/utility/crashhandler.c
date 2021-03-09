@@ -10,6 +10,7 @@
 #ifdef __linux__
 #include <execinfo.h>
 #elif defined _WIN32
+#elif __APPLE__ || __MACH__
 #else
 #error "current OS is not supported"
 #endif
@@ -25,7 +26,7 @@
 static char fileName[NAME_LENGTH];
 
 void crush_handler(int sig){
-
+// todo: implement for windows and mac (winapi)
 #ifdef __linux__
     void *array[ARRAY_SIZE];
     int size;
@@ -49,8 +50,10 @@ void crush_handler(int sig){
         (void)sizeWritten;
         backtrace_symbols_fd(array, size, pfd);
     }
-#elif defined _WIN32 // todo: implement for windows (winapi)
+#elif defined _WIN32
     (void)sig;
+#elif __APPLE__ || __MACH__
+
 #else
 #error "current OS is not supported"
 #endif

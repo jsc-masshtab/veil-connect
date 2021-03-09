@@ -10,17 +10,13 @@ const gchar *
 get_ini_file_name()
 {
     if (ini_file_path == NULL) {
-#ifdef __linux__
-        ini_file_path = g_strdup("veil_client_settings.ini");
-#elif _WIN32
-        const gchar *locap_app_data_path = g_getenv("LOCALAPPDATA");
-        // create app dir in local
-        gchar *app_data_dir = g_strdup_printf("%s/%s/", locap_app_data_path, APPLICATION_NAME);
+        // create app dir
+        gchar *app_data_dir = g_build_filename(g_get_user_config_dir(), APPLICATION_NAME, NULL);
         g_mkdir_with_parents(app_data_dir, 0755);
-        // ini file full path
-        ini_file_path = g_strdup_printf("%s/veil_client_settings.ini", app_data_dir);
         g_free(app_data_dir);
-#endif
+
+        ini_file_path = g_build_filename(g_get_user_config_dir(),
+                                         APPLICATION_NAME, "veil_client_settings.ini", NULL);
 
         if (!g_file_test(ini_file_path, G_FILE_TEST_EXISTS)) {
             // create file
@@ -29,6 +25,8 @@ get_ini_file_name()
             write_str_to_ini_file("RDPSettings", "rdp_pixel_format", "BGRA16");
             write_str_to_ini_file("RDPSettings", "rdp_args", "");
         }
+
+        g_info("ini_file_path %s", ini_file_path);
     }
     return ini_file_path;
 }

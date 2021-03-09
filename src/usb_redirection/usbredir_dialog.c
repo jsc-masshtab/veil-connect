@@ -421,7 +421,6 @@ static void usbredir_dialog_determine_tk_address_task(GTask    *task,
         g_match_info_free(match_info);
         g_regex_unref(regex);
     }
-
 #elif _WIN32
     // Get gateway from tracert     get_ip.bat %s
     GError *error = NULL;
@@ -480,6 +479,8 @@ static void usbredir_dialog_determine_tk_address_task(GTask    *task,
     // 6
     if (pAdapterInfo)
         free(pAdapterInfo);
+#elif __APPLE__ || __MACH__
+    gchar *command_line = NULL; // fixme
 #endif
 
     clean_mark:
