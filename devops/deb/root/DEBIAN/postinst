@@ -18,6 +18,7 @@ case "$1" in
 		    configure_other
 		else
 		    # действия только при обновлении
+			exit 0
 		fi
 
 		exit 0
