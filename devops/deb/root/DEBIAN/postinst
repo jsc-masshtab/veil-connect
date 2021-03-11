@@ -1,4 +1,32 @@
 #!/bin/sh
 
-ln -s /opt/veil-connect/start_vdi_client.sh /usr/bin/
-perl -pi -e 's/crosshair/default\0\0/g' /usr/lib/x86_64-linux-gnu/libspice-client-gtk-3.0.so.5
+set -e
+
+configure_other()
+{
+    echo "Configure other..."
+    ln -s /opt/veil-connect/start_vdi_client.sh /usr/bin/
+    perl -pi -e 's/crosshair/default\0\0/g' /usr/lib/x86_64-linux-gnu/libspice-client-gtk-3.0.so.5
+}
+
+case "$1" in
+	configure)
+		# действия и при установке и при обновлении
+
+		if [ -z "$2" ] ; then
+		    # действия только при установке
+		    configure_other
+		else
+		    # действия только при обновлении
+		fi
+
+		exit 0
+		;;
+	abort-upgrade|abort-remove|abort-deconfigure)
+		exit 0
+		;;
+	*)
+		echo "postinst called with unknown argument: $*" >&2
+		exit 1
+		;;
+esac
