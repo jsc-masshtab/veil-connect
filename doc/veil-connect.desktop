@@ -1,6 +1,6 @@
 [Desktop Entry]
-Name=Veil Connect
-Comment=Veil Connect Thin Client
+Name=VeiL Connect
+Comment=VeiL Connect Thin Client
 GenericName=Thin Client
 Exec=/opt/veil-connect/start_vdi_client.sh
 Icon=/opt/veil-connect/veil-connect.ico
