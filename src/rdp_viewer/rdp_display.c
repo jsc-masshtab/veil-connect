@@ -1,3 +1,11 @@
+/*
+ * VeiL Connect
+ * VeiL VDI Client
+ * Based on virt-viewer and freerdp
+ *
+ * Author: http://mashtab.org/
+ */
+
 #include <math.h>
 
 #include <gio/gio.h>
@@ -425,21 +433,6 @@ static gboolean rdp_display_event_on_draw(GtkWidget* widget G_GNUC_UNUSED, cairo
     return TRUE;
 }
 
-// todo: выглядит как реликт прошлого. мб удалить.
-static gboolean rdp_display_event_on_configure(GtkWidget *widget G_GNUC_UNUSED,
-                                               GdkEvent *event G_GNUC_UNUSED, gpointer user_data)
-{
-    RdpWindowData *rdp_window_data = (RdpWindowData *)user_data;
-    ExtendedRdpContext *ex_contect = rdp_window_data->ex_rdp_context;
-
-    if (ex_contect && ex_contect->is_running) {
-        g_mutex_lock(&ex_contect->primary_buffer_mutex);
-        g_mutex_unlock(&ex_contect->primary_buffer_mutex);
-    }
-
-    return TRUE;
-}
-
 GtkWidget *rdp_display_create(RdpWindowData *rdp_window_data, ExtendedRdpContext *ex_rdp_context)
 {
     GtkWidget *rdp_display = gtk_drawing_area_new();
@@ -455,7 +448,6 @@ GtkWidget *rdp_display_create(RdpWindowData *rdp_window_data, ExtendedRdpContext
     g_signal_connect(rdp_display, "button-press-event",G_CALLBACK (rdp_display_mouse_btn_pressed), rdp_window_data);
     g_signal_connect(rdp_display, "button-release-event",G_CALLBACK (rdp_display_mouse_btn_released), rdp_window_data);
     g_signal_connect(rdp_display, "scroll-event",G_CALLBACK (rdp_display_wheel_scrolled), rdp_window_data);
-    g_signal_connect(rdp_display, "configure-event", G_CALLBACK(rdp_display_event_on_configure), rdp_window_data);
     g_signal_connect(rdp_display, "draw", G_CALLBACK(rdp_display_event_on_draw), rdp_window_data);
 
     //GtkClipboard *gtkClipboard = gtk_widget_get_clipboard(rdp_display, GDK_SELECTION_CLIPBOARD);

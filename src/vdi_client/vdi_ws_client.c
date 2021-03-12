@@ -1,3 +1,11 @@
+/*
+ * VeiL Connect
+ * VeiL VDI Client
+ * Based on virt-viewer and freerdp
+ *
+ * Author: http://mashtab.org/
+ */
+
 #include <stdio.h>
 #include <libsoup/soup-session.h>
 #include <libsoup/soup-message.h>
@@ -166,7 +174,8 @@ void vdi_ws_client_start(VdiWsClient *vdi_ws_client, const gchar *vdi_ip, int vd
     //GArray *query_params_dyn_array = g_array_new(FALSE, FALSE, sizeof(gchar *));
     //g_array_append_val(query_params_dyn_array, rdp_param);
 
-    g_autofree gchar *query_pars = g_strdup_printf("?token=%s&"
+    g_autofree gchar *base_query_pars = NULL;
+    base_query_pars = g_strdup_printf("?token=%s&"
                                                    "is_conn_init_by_user=%i&"
                                                    "veil_connect_version=%s&"
                                                    "tk_os=%s",
@@ -176,8 +185,11 @@ void vdi_ws_client_start(VdiWsClient *vdi_ws_client, const gchar *vdi_ip, int vd
                                                    util_get_os_name());
     vdi_ws_client->is_connect_initiated_by_user = FALSE; // reset
 
+    g_autofree gchar *query_pars = NULL;
     if (vdi_session_get_current_vm_id())
-        query_pars = g_strdup_printf("%s&%s", query_pars, vdi_session_get_current_vm_id());
+        query_pars = g_strdup_printf("%s&%s", base_query_pars, vdi_session_get_current_vm_id());
+    else
+        query_pars = g_strdup(base_query_pars);
 
     vdi_ws_client->vdi_url = g_strdup_printf("%s/%s", base_url, query_pars);
 

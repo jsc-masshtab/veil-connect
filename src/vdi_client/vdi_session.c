@@ -1,6 +1,11 @@
-//
-// Created by solomin on 15.06.19.
-//
+/*
+ * VeiL Connect
+ * VeiL VDI Client
+ * Based on virt-viewer and freerdp
+ *
+ * Author: http://mashtab.org/
+ */
+
 #include <string.h>
 #include <stdlib.h>
 
@@ -219,7 +224,7 @@ static gboolean vdi_api_session_get_token()
             free_memory_safely(&vdi_session_static->jwt);
             vdi_session_static->jwt = g_strdup(json_object_get_string_member_safely(reply_json_object, "access_token"));
             // В основном потоке вызывается на смену токена
-            g_timeout_add(300, (GSourceFunc)vdi_api_session_restart_vdi_ws_client, NULL);
+            g_timeout_add(500, (GSourceFunc)vdi_api_session_restart_vdi_ws_client, NULL);
 
             g_object_unref(msg);
             g_object_unref(parser);
@@ -254,34 +259,24 @@ static void vdi_api_session_register_for_license() {
     ServerReplyType server_reply_type;
     JsonObject *data_member_object = jsonhandler_get_data_or_errors_object(parser, response_body_str,
                                                                            &server_reply_type);
+    free_memory_safely(&response_body_str);
 
     if (server_reply_type == SERVER_REPLY_TYPE_DATA) {
 
+        // connect to Redis and subscribe to channel
         vdi_redis_client_clear_connection_data(&vdi_session_static->redis_client);
         vdi_session_static->redis_client.adress = g_strdup(vdi_session_static->vdi_ip);
         vdi_session_static->redis_client.port = json_object_get_int_member_safely(data_member_object, "port");
-        vdi_session_static->redis_client.password = g_strdup(
-            g_strdup(json_object_get_string_member_safely(data_member_object, "password")));
-        vdi_session_static->redis_client.channel = g_strdup(
-            g_strdup(json_object_get_string_member_safely(data_member_object, "channel")));
+        vdi_session_static->redis_client.password =
+                g_strdup(json_object_get_string_member_safely(data_member_object, "password"));
+        vdi_session_static->redis_client.channel =
+                g_strdup(json_object_get_string_member_safely(data_member_object, "channel"));
         vdi_session_static->redis_client.db = json_object_get_int_member_safely(data_member_object, "db");
 
-        // connect to Redis and subscribe to channel
         vdi_redis_client_init(&vdi_session_static->redis_client);
     }
 
     g_object_unref(parser);
-}
-
-void vdi_session_static_destroy()
-{
-    // logout
-    vdi_session_logout();
-
-    // free memory
-    g_object_unref(vdi_session_static->soup_session);
-    free_session_memory();
-    g_object_unref(vdi_session_static);
 }
 
 // some kind of singleton
@@ -291,6 +286,20 @@ VdiSession *get_vdi_session_static()
         vdi_session_static = vdi_session_new();
 
     return vdi_session_static;
+}
+
+void vdi_session_static_destroy()
+{
+    if (vdi_session_static == NULL)
+        return;
+
+    // logout
+    vdi_session_logout();
+
+    // free memory
+    g_object_unref(vdi_session_static->soup_session);
+    free_session_memory();
+    g_object_unref(vdi_session_static);
 }
 
 void vdi_session_vm_state_change_notify(int power_state)
@@ -399,7 +408,7 @@ VdiVmRemoteProtocol vdi_session_str_to_remote_protocol(const gchar *protocol_str
     return protocol;
 }
 
-const gchar *vdi_session_remote_protocol_str(VdiVmRemoteProtocol protocol)
+const gchar *vdi_session_remote_protocol_to_str(VdiVmRemoteProtocol protocol)
 {
     switch (protocol) {
         case VDI_SPICE_PROTOCOL:
@@ -413,24 +422,6 @@ const gchar *vdi_session_remote_protocol_str(VdiVmRemoteProtocol protocol)
         case VDI_ANOTHER_REMOTE_PROTOCOL:
         default:
             return "UNKNOWN_PROTOCOL";
-    }
-}
-
-// todo: в будущем перейти к заглавным буквам. Оставлено для совместимости со старыми версиями vdi
-static const gchar *vdi_session_remote_protocol_to_str_old(VdiVmRemoteProtocol vm_remote_protocol)
-{
-    switch (vm_remote_protocol) {
-        case VDI_SPICE_PROTOCOL:
-            return "spice";
-        case VDI_SPICE_DIRECT_PROTOCOL:
-            return "spice_direct";
-        case VDI_RDP_PROTOCOL:
-            return "rdp";
-        case VDI_RDP_WINDOWS_NATIVE_PROTOCOL:
-            return "native_rdp";
-        case VDI_ANOTHER_REMOTE_PROTOCOL:
-        default:
-            return "unknown_protocol";
     }
 }
 
@@ -577,8 +568,7 @@ void vdi_session_get_vm_from_pool_task(GTask       *task,
     // get vm from pool
     gchar *url_str = g_strdup_printf("%s/client/pools/%s", vdi_session_static->api_url,
             vdi_session_static->current_pool_id);
-    // todo: use vdi_session_remote_protocol_str in future. Cant replace now cause some people use old vdi server
-    gchar *bodyStr = g_strdup_printf("{\"remote_protocol\":\"%s\"}", vdi_session_remote_protocol_to_str_old(
+    gchar *bodyStr = g_strdup_printf("{\"remote_protocol\":\"%s\"}", vdi_session_remote_protocol_to_str(
             vdi_session_static->current_remote_protocol));
 
     gchar *response_body_str = vdi_session_api_call("POST", url_str, bodyStr, NULL);
@@ -656,11 +646,12 @@ void vdi_session_do_action_on_vm_task(GTask      *task,
     else
         bodyStr = g_strdup_printf("{\"force\":false}");
 
-    gchar *response_body_str G_GNUC_UNUSED = vdi_session_api_call("POST", url_str, bodyStr, NULL);
+    gchar *response_body_str = vdi_session_api_call("POST", url_str, bodyStr, NULL);
 
     // free url and body
     free_memory_safely(&url_str);
     free_memory_safely(&bodyStr);
+    free_memory_safely(&response_body_str);
     // free ActionOnVmData
     vdi_api_session_free_action_on_vm_data(action_on_vm_data);
 }

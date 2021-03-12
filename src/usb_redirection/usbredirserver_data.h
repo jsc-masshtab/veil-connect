@@ -1,6 +1,10 @@
-//
-// Created by solomin on 02.09.2020.
-//
+/*
+ * VeiL Connect
+ * VeiL VDI Client
+ * Based on virt-viewer and freerdp
+ *
+ * Author: http://mashtab.org/
+ */
 
 #ifndef VEIL_CONNECT_USBREDIRSERVER_DATA_H
 #define VEIL_CONNECT_USBREDIRSERVER_DATA_H
@@ -48,6 +52,30 @@ typedef struct{
     int usbaddr;
 
 } UsbRedirTaskResaultData;
+
+/*
+static void free_usbredir_task_resault_data(UsbRedirTaskResaultData *usbredir_task_resault_data)
+{
+    if (!usbredir_task_resault_data)
+        return;
+
+    free_memory_safely(&usbredir_task_resault_data->message);
+    free(usbredir_task_resault_data);
+    usbredir_task_resault_data = NULL;
+}*/
+
+/*
+static UsbRedirTaskResaultData *clone_usbredir_task_resault_data(UsbRedirTaskResaultData *usbredir_task_resault_data)
+{
+    if (!usbredir_task_resault_data)
+        return NULL;
+
+    UsbRedirTaskResaultData *cloned_data = calloc(1, sizeof(UsbRedirTaskResaultData));
+    memcpy(cloned_data, usbredir_task_resault_data, sizeof(UsbRedirTaskResaultData));
+    cloned_data->message = g_strdup(usbredir_task_resault_data->message);
+
+    return cloned_data;
+}*/
 
 
 #endif //VEIL_CONNECT_USBREDIRSERVER_DATA_H

@@ -1,7 +1,9 @@
 /*
- * Veil Connect
+ * VeiL Connect
+ * VeiL VDI Client
  * Based on virt-viewer and freerdp
  *
+ * Author: http://mashtab.org/
  */
 
 #include <config.h>
@@ -86,7 +88,7 @@ main(int argc, char **argv)
     XInitThreads();
 #endif
     // start app
-    virt_viewer_util_init("Veil Connect");
+    virt_viewer_util_init(APPLICATION_NAME_WITH_SPACES);
     g_info("APP VERSION %s FREERDP_VERSION %s", VERSION, FREERDP_VERSION_FULL);
     g_info("Build data time: %s %s", __DATE__, __TIME__);
 

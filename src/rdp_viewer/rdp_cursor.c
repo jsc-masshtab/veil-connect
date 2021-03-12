@@ -1,4 +1,10 @@
-// Черновой вариант. Не продумана нормально передача данных в update_cursor_callback
+/*
+ * VeiL Connect
+ * VeiL VDI Client
+ * Based on virt-viewer and freerdp
+ *
+ * Author: http://mashtab.org/
+ */
 
 #include "rdp_client.h"
 
@@ -9,7 +15,7 @@ static BOOL xf_Pointer_New(rdpContext* context, rdpPointer* pointer)
     //ExtendedRdpContext *ex_rdp_context = (ExtendedRdpContext*)context;
     ExtendedPointer *ex_pointer = (ExtendedPointer *)pointer;
 
-    UINT32 cursor_format = PIXEL_FORMAT_RGBA32; // todo: random pick. think about this
+    UINT32 cursor_format = PIXEL_FORMAT_RGBA32;
 
     // create buffer
     size_t size = pointer->height * pointer->width * GetBytesPerPixel(cursor_format);

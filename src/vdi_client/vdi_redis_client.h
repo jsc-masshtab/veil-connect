@@ -1,3 +1,11 @@
+/*
+ * VeiL Connect
+ * VeiL VDI Client
+ * Based on virt-viewer and freerdp
+ *
+ * Author: http://mashtab.org/
+ */
+
 #ifndef VDI_REDIS_CLIENT_H
 #define VDI_REDIS_CLIENT_H
 

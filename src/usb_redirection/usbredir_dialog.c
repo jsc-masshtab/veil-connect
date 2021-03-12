@@ -1,6 +1,10 @@
-//
-// Created by ubuntu on 09.09.2020.
-//
+/*
+ * VeiL Connect
+ * VeiL VDI Client
+ * Based on virt-viewer and freerdp
+ *
+ * Author: http://mashtab.org/
+ */
 
 #include <stdlib.h>
 
@@ -19,6 +23,7 @@
 #include "settingsfile.h"
 
 #include "async.h"
+#include "usbredir_controller.h"
 
 
 #define MAX_USB_NUMBER 20
@@ -157,13 +162,13 @@ usbredir_dialog_on_usb_device_toggled(GtkCellRendererToggle *cell_renderer G_GNU
 }
 
 static void
-usbredir_dialog_usb_task_finished_callback(UsbRedirTaskResaultData *res_data, gpointer user_data)
+usbredir_dialog_usb_task_finished(gpointer source G_GNUC_UNUSED, int code, const gchar *message,
+        int usbbus, int usbaddr, UsbredirMainDialogData *priv)
 {
+    g_info("%s", (const char*)__func__);
     if (!usbredir_controller_is_usb_tcp_window_shown())
         return;
-    g_info("%s", (const char*)__func__);
 
-    UsbredirMainDialogData *priv = (UsbredirMainDialogData *)user_data;
     if (!priv) {
         g_critical("%s priv == NULL. Logical error", (const char*)__func__);
         return;
@@ -172,8 +177,8 @@ usbredir_dialog_usb_task_finished_callback(UsbRedirTaskResaultData *res_data, gp
     // find USB
     int found_usb_index = -1;
     for (ssize_t i = 0; i < priv->cur_usb_devices_number; i++) {
-        if (priv->usb_state_array[i].usbbus == res_data->usbbus &&
-        priv->usb_state_array[i].usbaddr == res_data->usbaddr) {
+        if (priv->usb_state_array[i].usbbus == usbbus &&
+        priv->usb_state_array[i].usbaddr == usbaddr) {
             found_usb_index = i;
             break;
         }
@@ -190,12 +195,12 @@ usbredir_dialog_usb_task_finished_callback(UsbRedirTaskResaultData *res_data, gp
     gtk_tree_model_get_iter_from_string(GTK_TREE_MODEL(priv->usb_list_store), &iter, path_string);
 
     // set status messege color
-    gdouble red = (res_data->code == USB_REDIR_FINISH_SUCCESS) ? 0.0 : 1.0;
+    gdouble red = (code == USB_REDIR_FINISH_SUCCESS) ? 0.0 : 1.0;
     GdkRGBA color = {red, 0.0, 0.0, 0.0};
 
     gtk_list_store_set(priv->usb_list_store, &iter,
                    COLUMN_USB_REDIR_TOGGLE, 0,
-                   COLUMN_USB_REDIR_STATE, res_data->message,
+                   COLUMN_USB_REDIR_STATE, message,
                    COLUMN_USB_COLOR, &color,
                    -1);
 
@@ -270,7 +275,6 @@ usbredir_dialog_fill_usb_model(UsbredirMainDialogData *priv)
     for (ssize_t i = 0; i < priv->cur_usb_devices_number; i++)
     {
         libusb_device *dev = usb_list[i];
-
         // get USB data
         UsbDeviceData usb_device_data;
         usb_device_data.usbbus = libusb_get_bus_number(dev);
@@ -287,6 +291,8 @@ usbredir_dialog_fill_usb_model(UsbredirMainDialogData *priv)
 
         gchar *usb_name = g_strdup_printf("%04x:%04x %s %s", usb_device_data.usbbus, usb_device_data.usbaddr,
                                           manufacturer, product);
+        free_memory_safely(&manufacturer);
+        free_memory_safely(&product);
         g_info("USB  %s", usb_name);
 
         // determine state
@@ -421,6 +427,8 @@ static void usbredir_dialog_determine_tk_address_task(GTask    *task,
         g_match_info_free(match_info);
         g_regex_unref(regex);
     }
+#elif __APPLE__ || __MACH__
+    gchar *command_line = NULL;
 #elif _WIN32
     // Get gateway from tracert     get_ip.bat %s
     GError *error = NULL;
@@ -479,11 +487,9 @@ static void usbredir_dialog_determine_tk_address_task(GTask    *task,
     // 6
     if (pAdapterInfo)
         free(pAdapterInfo);
-#elif __APPLE__ || __MACH__
-    gchar *command_line = NULL; // fixme
-#endif
 
     clean_mark:
+#endif
     g_free(command_line);
     free_memory_safely(&standard_output);
     free_memory_safely(&standard_error);
@@ -541,8 +547,8 @@ usbredir_dialog_check_if_reset_required_and_reset(UsbredirMainDialogData *priv)
 void
 usbredir_dialog_start(GtkWindow *parent)
 {
+    usbredir_controller_set_usb_tcp_window_shown(TRUE);
     UsbredirMainDialogData priv;
-    usbredir_controller_set_gui_usb_tcp_window_data(TRUE, usbredir_dialog_usb_task_finished_callback, &priv);
 
     GtkBuilder *builder = remote_viewer_util_load_ui("usb_tcp_redir_form.ui");
 
@@ -560,8 +566,11 @@ usbredir_dialog_start(GtkWindow *parent)
 
     priv.ok_btn = get_widget_from_builder(builder, "ok_btn");
 
+    // connect signals
     g_signal_connect_swapped(priv.main_window, "delete-event", G_CALLBACK(usbredir_dialog_window_deleted_cb), &priv);
     g_signal_connect(priv.ok_btn, "clicked", G_CALLBACK(usbredir_dialog_btn_ok_clicked_cb), &priv);
+    gulong usb_redir_finished_handle = g_signal_connect(usbredir_controller_get_static(), "usb-redir-finished",
+                                              G_CALLBACK(usbredir_dialog_usb_task_finished), &priv);
 
     /// view
     usbredir_dialog_add_columns_to_usb_view(&priv);
@@ -588,6 +597,9 @@ usbredir_dialog_start(GtkWindow *parent)
 
     create_loop_and_launch(&priv.loop);
 
+    // disconnect signals
+    g_signal_handler_disconnect(usbredir_controller_get_static(), usb_redir_finished_handle);
+
     // save to ini
     const gchar *tk_address = gtk_entry_get_text((GtkEntry*)priv.tk_address_entry);
     write_str_to_ini_file("General", "current_tk_address", tk_address);
@@ -595,5 +607,6 @@ usbredir_dialog_start(GtkWindow *parent)
     // free
     g_object_unref(builder);
     gtk_widget_destroy(priv.main_window);
-    usbredir_controller_set_gui_usb_tcp_window_data(FALSE, NULL, NULL);
+
+    usbredir_controller_set_usb_tcp_window_shown(FALSE);
 }

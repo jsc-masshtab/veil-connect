@@ -362,7 +362,7 @@ static void usbredirhost_set_max_streams(struct usbredirhost *host,
 /* Called from open/close and parser read callbacks */
 static void usbredirhost_send_interface_n_ep_info(struct usbredirhost *host)
 {
-    int i;
+    uint32_t i;
     const struct libusb_interface_descriptor *intf_desc;
     struct usb_redir_ep_info_header ep_info;
     struct usb_redir_interface_info_header interface_info = { 0, };
@@ -381,7 +381,7 @@ static void usbredirhost_send_interface_n_ep_info(struct usbredirhost *host)
     }
     usbredirparser_send_interface_info(host->parser, &interface_info);
 
-    for (i = 0; i < MAX_ENDPOINTS; i++) {
+    for (i = 0; i < (uint32_t)MAX_ENDPOINTS; i++) {
         ep_info.type[i] = host->endpoint[i].type;
         ep_info.interval[i] = host->endpoint[i].interval;
         ep_info.interface[i] = host->endpoint[i].interface;
@@ -1614,6 +1614,7 @@ unlock:
 static void usbredirhost_hello(void *priv, struct usb_redir_hello_header *h)
 {
     struct usbredirhost *host = priv;
+    (void)h;
 
     if (host->connect_pending)
         usbredirhost_send_device_connect(host);
@@ -1872,7 +1873,7 @@ static void usbredirhost_alloc_bulk_streams(void *priv, uint64_t id,
         ERROR("could not alloc bulk streams: %s", libusb_error_name(r));
         streams_status.status =
             libusb_status_or_error_to_redir_status(host, r);
-    } else if (r < alloc_bulk_streams->no_streams) {
+    } else if ((uint32_t)r < alloc_bulk_streams->no_streams) {
         ERROR("tried to alloc %u bulk streams but got only %d",
               alloc_bulk_streams->no_streams, r);
         streams_status.status = usb_redir_ioerror;

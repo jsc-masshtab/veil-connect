@@ -1,7 +1,12 @@
 
-/* usbredirserver.c simple usb network redirection tcp/ip server (host).
-
-   Refactored version version of application https://github.com/freedesktop/spice-usbredir/tree/master/usbredirserver
+/*
+ * VeiL Connect
+ * VeiL VDI Client
+ * Based on virt-viewer and freerdp
+ *
+ * Author: http://mashtab.org/
+ *
+ * Refactored version version of application https://github.com/freedesktop/spice-usbredir/tree/master/usbredirserver
 */
 
 //#define  FD_SETSIZE 256
@@ -439,9 +444,9 @@ void usbredirserver_launch_task(GTask           *task,
 
     if (!handle) { // Failed to open USB device. Possibly permissions problem.
         fprintf(stdout, "libusb_device_handle !handle. Close client_fd\n");
-        task_res_data->message = g_strdup_printf("Не удалось открыть USB устройство. Нет прав?"
-                                                 "Попробуйте chmod 666 /dev/bus/usb/%03i/%03i", task_res_data->usbbus,
-                                                 task_res_data->usbaddr);
+        task_res_data->message = g_strdup_printf("Не удалось открыть USB устройство. Нет прав?\n"
+                                                 "Попробуйте выполнить chmod 666 /dev/bus/usb/%03i/%03i",
+                                                 task_res_data->usbbus, task_res_data->usbaddr);
         goto releasing_resources;
     }
 
@@ -468,7 +473,7 @@ void usbredirserver_launch_task(GTask           *task,
     }
 
     // successsfull finish
-    task_res_data->message = g_strdup("USB redirection finished");
+    task_res_data->message = g_strdup("Перенаправление USB завершилось");
     task_res_data->code = USB_REDIR_FINISH_SUCCESS;
 
 releasing_resources:

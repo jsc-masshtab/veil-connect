@@ -1,7 +1,9 @@
-/**
- * FreeRDP: A Remote Desktop Protocol Implementation
- * GTK GUI
- * Solomin a.solomin@mashtab.org
+/*
+ * VeiL Connect
+ * VeiL VDI Client
+ * Based on virt-viewer and freerdp
+ *
+ * Author: http://mashtab.org/
  */
 
 #include <gio/gio.h>
@@ -113,11 +115,8 @@ static GdkRectangle set_monitor_data_and_create_rdp_viewer_window(GdkMonitor *mo
     settings->MonitorDefArray[index].is_primary = is_mon_primary;
 
     // create rdp viewer window
-    RdpWindowData *rdp_window_data = rdp_viewer_window_create(ex_rdp_context);
+    RdpWindowData *rdp_window_data = rdp_viewer_window_create(ex_rdp_context, index, geometry);
     g_array_append_val(ex_rdp_context->rdp_windows_array, rdp_window_data);
-
-    // set monitor data for rdp viewer window
-    rdp_viewer_window_set_monitor_data(rdp_window_data, geometry, index);
 
     // set references
     rdp_window_data->loop_p = loop_p;

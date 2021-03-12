@@ -1,3 +1,11 @@
+/*
+ * VeiL Connect
+ * VeiL VDI Client
+ * Based on virt-viewer and freerdp
+ *
+ * Author: http://mashtab.org/
+ */
+
 #ifndef RDP_VIEWER_WINDOW_H
 #define RDP_VIEWER_WINDOW_H
 
@@ -44,13 +52,14 @@ typedef struct{
     // signal handles
     gulong vm_changed_handle;
     gulong ws_cmd_received_handle;
+    gulong usb_redir_finished_handle;
 
 } RdpWindowData;
 
 
-RdpWindowData *rdp_viewer_window_create(ExtendedRdpContext *ex_rdp_context);
+RdpWindowData *rdp_viewer_window_create(ExtendedRdpContext *ex_rdp_context, int index, GdkRectangle geometry);
 void rdp_viewer_window_destroy(RdpWindowData *rdp_window_data);
-void rdp_viewer_window_set_monitor_data(RdpWindowData *rdp_window_data, GdkRectangle geometry, int monitor_index);
+void rdp_viewer_window_set_monitor_data(RdpWindowData *rdp_window_data, GdkRectangle geometry);
 void rdp_viewer_window_stop(RdpWindowData *rdp_window_data, RemoteViewerState next_app_state);
 
 void rdp_viewer_window_send_key_shortcut(rdpContext* context, int key_shortcut_index);

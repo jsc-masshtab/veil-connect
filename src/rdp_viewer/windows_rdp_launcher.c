@@ -1,3 +1,11 @@
+/*
+ * VeiL Connect
+ * VeiL VDI Client
+ * Based on virt-viewer and freerdp
+ *
+ * Author: http://mashtab.org/
+ */
+
 #include <config.h>
 #include <gio/gio.h>
 #include <gtk/gtk.h>
@@ -19,6 +27,7 @@ launch_windows_rdp_client(const gchar *usename, const gchar *password G_GNUC_UNU
 #ifdef __linux__
     (void)usename;
     (void)ip;
+    (void)domain;
 #elif defined _WIN32
     //create rdp file based on template
     //open template for reading and take its content

@@ -1,6 +1,10 @@
-//
-// Created by ubuntu on 22.09.2020.
-//
+/*
+ * VeiL Connect
+ * VeiL VDI Client
+ * Based on virt-viewer and freerdp
+ *
+ * Author: http://mashtab.org/
+ */
 
 #include "rdp_keyboard.h"
 #include "rdp_viewer_window.h"

@@ -1,6 +1,10 @@
-//
-// Created by solomin on 23.12.2020.
-//
+/*
+ * VeiL Connect
+ * VeiL VDI Client
+ * Based on virt-viewer and freerdp
+ *
+ * Author: http://mashtab.org/
+ */
 
 #include "vdi_session.h"
 #include "app_updater.h"
@@ -26,6 +30,7 @@ G_DEFINE_TYPE( AppUpdater, app_updater, G_TYPE_OBJECT )
 
 static void app_updater_finalize( GObject *object );
 
+#ifdef _WIN32
 static void app_updater_read_windows_updates_url_from_file(AppUpdater *self)
 {
     gchar *windows_updates_url = read_str_from_ini_file("ServiceSettings", "windows_updates_url");
@@ -34,6 +39,7 @@ static void app_updater_read_windows_updates_url_from_file(AppUpdater *self)
         g_free(windows_updates_url);
     }
 }
+#endif
 
 static void app_updater_class_init( AppUpdaterClass *klass )
 {
@@ -193,7 +199,7 @@ static gboolean app_updater_check_linux_updates(AppUpdater *self,
 
     gchar *found_match = g_match_info_fetch(*match_info, 0);
     // вычленить версию
-    gint requied_tokens = 3;
+    const guint requied_tokens = 3;
     //gchar **package_str_array = g_strsplit(found_match, " ", max_tokens);
     gchar **package_str_array = g_regex_split_simple("\\s+", found_match, 0, 0);
     free_memory_safely(&found_match);

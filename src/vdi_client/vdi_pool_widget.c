@@ -1,6 +1,10 @@
-//
-// Created by Solomin on 18.06.19.
-//
+/*
+ * VeiL Connect
+ * VeiL VDI Client
+ * Based on virt-viewer and freerdp
+ *
+ * Author: http://mashtab.org/
+ */
 
 #include "vdi_pool_widget.h"
 
@@ -16,7 +20,7 @@ static void vdi_pool_widget_check_protocol_available_and_add(
 
         const gchar *protocol_name = json_array_get_string_element(conn_types_json_array, (guint)i);
         //
-        if (g_strcmp0(protocol_name, vdi_session_remote_protocol_str(protocol)) == 0) {
+        if (g_strcmp0(protocol_name, vdi_session_remote_protocol_to_str(protocol)) == 0) {
             gtk_combo_box_text_append_text((GtkComboBoxText*)combobox_remote_protocol, protocol_name);
             return;
         }

@@ -1,7 +1,9 @@
-/**
- * FreeRDP: A Remote Desktop Protocol Implementation
- * GTK GUI
- * Solomin a.solomin@mashtab.otg
+/*
+ * VeiL Connect
+ * VeiL VDI Client
+ * Based on virt-viewer and freerdp
+ *
+ * Author: http://mashtab.org/
  */
 
 #ifdef HAVE_CONFIG_H

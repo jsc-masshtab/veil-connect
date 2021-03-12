@@ -1,7 +1,9 @@
-/**
- * FreeRDP: A Remote Desktop Protocol Implementation
- * GTK GUI
- * Solomin a.solomin@mashtab.otg
+/*
+ * VeiL Connect
+ * VeiL VDI Client
+ * Based on virt-viewer and freerdp
+ *
+ * Author: http://mashtab.org/
  */
 
 #ifdef HAVE_CONFIG_H
@@ -31,8 +33,8 @@
  * @return 0 on success, otherwise a Win32 error code
  */
 static UINT
-rdp_encomsp_participant_created(EncomspClientContext* context,
-                               const ENCOMSP_PARTICIPANT_CREATED_PDU* participantCreated)
+rdp_encomsp_participant_created(EncomspClientContext* context G_GNUC_UNUSED,
+                               const ENCOMSP_PARTICIPANT_CREATED_PDU* participantCreated G_GNUC_UNUSED)
 {
 	/* WINPR_UNUSED(context);
 	WINPR_UNUSED(participantCreated); */

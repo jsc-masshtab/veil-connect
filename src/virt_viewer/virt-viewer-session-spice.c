@@ -346,6 +346,7 @@ uuid_changed(GObject *gobject G_GNUC_UNUSED,
              GParamSpec *pspec G_GNUC_UNUSED,
              VirtViewerSessionSpice *self)
 {
+    /*
     guint8* uuid = NULL;
     VirtViewerApp* app = virt_viewer_session_get_app(VIRT_VIEWER_SESSION(self));
 
@@ -361,12 +362,12 @@ uuid_changed(GObject *gobject G_GNUC_UNUSED,
             }
         }
 
-        /*if (!uuid_empty) {
+        if (!uuid_empty) {
             gchar *uuid_str = spice_uuid_to_string(uuid);
             g_object_set(app, "uuid", uuid_str, NULL);
             g_free(uuid_str);
-        }*/
-    }
+        }
+    }*/
 
     virt_viewer_session_spice_fullscreen_auto_conf(self);
 }
@@ -869,7 +870,7 @@ destroy_display(gpointer data)
     g_return_if_fail (display != NULL);
 
     session = virt_viewer_display_get_session(display);
-    g_debug("Destroying spice display %p", display);
+    g_debug("Destroying spice display %p", (void *)display);
     virt_viewer_session_remove_display(session, display);
     g_object_unref(display);
 }
@@ -983,7 +984,7 @@ virt_viewer_session_spice_channel_new(SpiceSession *s,
 
     g_object_get(channel, "channel-id", &id, NULL);
 
-    g_debug("New spice channel %p %s %d", channel, g_type_name(G_OBJECT_TYPE(channel)), id);
+    g_debug("New spice channel %p %s %d", (void *)channel, g_type_name(G_OBJECT_TYPE(channel)), id);
 
     if (SPICE_IS_MAIN_CHANNEL(channel)) {
         if (self->priv->main_channel != NULL)

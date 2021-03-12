@@ -1,6 +1,10 @@
-//
-// Created by Solomin on 13.06.19.
-//
+/*
+ * VeiL Connect
+ * VeiL VDI Client
+ * Based on virt-viewer and freerdp
+ *
+ * Author: http://mashtab.org/
+ */
 
 #include <glib/gi18n.h>
 #include <gdk/gdkkeysyms.h>
@@ -28,7 +32,6 @@ typedef enum
 
 
 // functions declarations
-static void set_init_values(void);
 static void set_vdi_client_state(VdiManager *self, VdiClientState vdi_client_state,
         const gchar *message, gboolean error_message);
 static void refresh_vdi_pool_data_async(VdiManager *self);
@@ -332,7 +335,7 @@ static void on_button_quit_clicked(GtkButton *button G_GNUC_UNUSED, VdiManager *
 
 // ws conn state callback
 static void
-on_ws_conn_changed(GtkWidget *widget G_GNUC_UNUSED, int ws_connected, VdiManager *self)
+on_ws_conn_changed(gpointer data G_GNUC_UNUSED, int ws_connected, VdiManager *self)
 {
     set_ws_conn_state(self, ws_connected);
 }
@@ -362,7 +365,7 @@ static void on_vm_start_button_clicked(GtkButton *button, VdiManager *self)
 
     // take from gui currect remote protocol
     VdiVmRemoteProtocol remote_protocol = vdi_pool_widget_get_current_protocol(&vdi_pool_widget);
-    g_info("%s remote_protocol %s", (const char *)__func__, vdi_session_remote_protocol_str(remote_protocol));
+    g_info("%s remote_protocol %s", (const char *)__func__, vdi_session_remote_protocol_to_str(remote_protocol));
     vdi_session_set_current_remote_protocol(remote_protocol);
     // execute task
     execute_async_task(vdi_session_get_vm_from_pool_task, (GAsyncReadyCallback)on_vdi_session_get_vm_from_pool_finished,

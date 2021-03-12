@@ -1,6 +1,10 @@
-//
-// Created by solomin on 15.06.19.
-//
+/*
+ * VeiL Connect
+ * VeiL VDI Client
+ * Based on virt-viewer and freerdp
+ *
+ * Author: http://mashtab.org/
+ */
 
 #ifndef VIRT_VIEWER_VEIL_VDI_API_SESSION_H
 #define VIRT_VIEWER_VEIL_VDI_API_SESSION_H
@@ -133,10 +137,9 @@ GType vdi_session_get_type( void ) G_GNUC_CONST;
 VdiSession *vdi_session_new(void);
 
 // Functions
+VdiSession *get_vdi_session_static(void);
 // deinit session
 void vdi_session_static_destroy(void);
-
-VdiSession *get_vdi_session_static(void);
 
 // vm params change notification
 void vdi_session_vm_state_change_notify(int power_state);
@@ -172,7 +175,7 @@ void vdi_session_set_current_remote_protocol(VdiVmRemoteProtocol remote_protocol
 VdiVmRemoteProtocol vdi_session_get_current_remote_protocol(void);
 
 VdiVmRemoteProtocol vdi_session_str_to_remote_protocol(const gchar *protocol_str);
-const gchar *vdi_session_remote_protocol_str(VdiVmRemoteProtocol protocol);
+const gchar *vdi_session_remote_protocol_to_str(VdiVmRemoteProtocol protocol);
 
 VdiWsClient *vdi_session_get_ws_client(void);
 

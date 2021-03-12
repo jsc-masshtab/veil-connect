@@ -1,7 +1,9 @@
 /*
- * Veil VDI thin client
+ * VeiL Connect
+ * VeiL VDI Client
  * Based on virt-viewer and freerdp
  *
+ * Author: http://mashtab.org/
  */
 
 #include <config.h>
@@ -68,7 +70,6 @@ static gboolean remote_viewer_start(VirtViewerApp *self, GError **error, RemoteV
 #ifdef HAVE_SPICE_GTK
 static gboolean remote_viewer_activate(VirtViewerApp *self, GError **error);
 static void remote_viewer_window_added(GtkApplication *app, GtkWindow *w);
-static void spice_foreign_menu_updated(RemoteViewer *self);
 #endif
 
 #ifdef HAVE_SPICE_CONTROLLER
@@ -235,7 +236,7 @@ remote_viewer_init(RemoteViewer *self)
     self->app_updater = app_updater_new();
 
     // init usb redir
-    usbredir_controller_init();
+    usbredir_controller_get_static();
 
     // create vdi session
     get_vdi_session_static();
@@ -257,7 +258,7 @@ void remote_viewer_free_resources(RemoteViewer *self)
     if (self->vdi_manager)
         g_object_unref(self->vdi_manager);
 
-    usbredir_controller_deinit();
+    usbredir_controller_deinit_static();
     vdi_session_static_destroy();
 }
 
@@ -330,6 +331,16 @@ static GtkCssProvider * setup_css()
                                               GTK_STYLE_PROVIDER(cssProvider),
                                               GTK_STYLE_PROVIDER_PRIORITY_USER);
     return cssProvider;
+}
+
+static void connect_settings_data_free(ConnectSettingsData *connect_settings_data)
+{
+    g_info("%s", (const char *)__func__);
+    free_memory_safely(&connect_settings_data->user);
+    free_memory_safely(&connect_settings_data->password);
+    free_memory_safely(&connect_settings_data->domain);
+    free_memory_safely(&connect_settings_data->ip);
+    free_memory_safely(&connect_settings_data->vm_verbose_name);
 }
 
 static gboolean

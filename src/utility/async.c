@@ -1,3 +1,11 @@
+/*
+ * VeiL Connect
+ * VeiL VDI Client
+ * Based on virt-viewer and freerdp
+ *
+ * Author: http://mashtab.org/
+ */
+
 #include "async.h"
 
 GTask *execute_async_task(GTaskThreadFunc task_func, GAsyncReadyCallback callback,

@@ -86,7 +86,7 @@ virt_viewer_notebook_show_status_va(VirtViewerNotebook *self, const gchar *fmt, 
     VirtViewerNotebookPrivate *priv;
     gchar *text;
 
-    g_debug("notebook show status %p", self);
+    g_debug("notebook show status %p", (void *)self);
     g_return_if_fail(VIRT_VIEWER_IS_NOTEBOOK(self));
 
     text = g_strdup_vprintf(fmt, args);
@@ -114,7 +114,7 @@ virt_viewer_notebook_show_display(VirtViewerNotebook *self)
 {
     GtkWidget *display;
 
-    g_debug("notebook show display %p", self);
+    g_debug("notebook show display %p", (void *)self);
     g_return_if_fail(VIRT_VIEWER_IS_NOTEBOOK(self));
 
     display = gtk_notebook_get_nth_page(GTK_NOTEBOOK(self), 1);

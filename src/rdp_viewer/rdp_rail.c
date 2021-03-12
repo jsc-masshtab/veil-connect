@@ -1,6 +1,10 @@
-//
-// Created by ubuntu on 17.09.2020.
-//
+/*
+ * VeiL Connect
+ * VeiL VDI Client
+ * Based on virt-viewer and freerdp
+ *
+ * Author: http://mashtab.org/
+ */
 
 //#include "freerdp/rail/rail.h"
 #include <freerdp/version.h>
@@ -297,7 +301,7 @@ int rdp_rail_uninit(ExtendedRdpContext* ex_rdp_context, RailClientContext* rail 
 
 const gchar *rail_error_to_string(UINT16 rail_error)
 {
-    if (rail_error >= 0 && rail_error < RAIL_ERROR_ARRAY_SIZE)
+    if (rail_error < RAIL_ERROR_ARRAY_SIZE)
         return error_code_names[rail_error];
     else
         return "RAIL exec error: Unknown error";

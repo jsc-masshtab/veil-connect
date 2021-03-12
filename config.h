@@ -1,6 +1,3 @@
-/* config.h.  Generated from config.h.in by configure.  */
-/* config.h.in.  Generated from configure.ac by autoheader.  */
-
 /* Build version details */
 #define BUILDID ""
 
@@ -114,6 +111,8 @@
 
 /* Name of application */
 #define APPLICATION_NAME "VeilConnect"
+
+#define APPLICATION_NAME_WITH_SPACES "VeiL Connect"
 
 /* Name of package */
 #define PACKAGE "veil-connect"

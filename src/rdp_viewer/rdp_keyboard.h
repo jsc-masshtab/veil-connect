@@ -1,6 +1,10 @@
-//
-// Created by ubuntu on 22.09.2020.
-//
+/*
+ * VeiL Connect
+ * VeiL VDI Client
+ * Based on virt-viewer and freerdp
+ *
+ * Author: http://mashtab.org/
+ */
 
 #ifndef VEIL_CONNECT_RDP_KEYBOARD_H
 #define VEIL_CONNECT_RDP_KEYBOARD_H

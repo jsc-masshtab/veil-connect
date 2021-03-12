@@ -1,3 +1,11 @@
+/*
+ * VeiL Connect
+ * VeiL VDI Client
+ * Based on virt-viewer and freerdp
+ *
+ * Author: http://mashtab.org/
+ */
+
 #include <stdio.h>
 #include <signal.h>
 #include <stdlib.h>
@@ -26,7 +34,7 @@
 static char fileName[NAME_LENGTH];
 
 void crush_handler(int sig){
-// todo: implement for windows and mac (winapi)
+// todo: implement for windows and mac
 #ifdef __linux__
     void *array[ARRAY_SIZE];
     int size;

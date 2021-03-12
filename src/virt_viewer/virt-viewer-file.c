@@ -94,7 +94,7 @@ struct _VirtViewerFilePrivate {
     GKeyFile* keyfile;
 };
 
-G_DEFINE_TYPE(VirtViewerFile, virt_viewer_file, G_TYPE_OBJECT);
+G_DEFINE_TYPE(VirtViewerFile, virt_viewer_file, G_TYPE_OBJECT)
 
 #define VIRT_VIEWER_FILE_GET_PRIVATE(o) (G_TYPE_INSTANCE_GET_PRIVATE((o), VIRT_VIEWER_TYPE_FILE, VirtViewerFilePrivate))
 
@@ -889,7 +889,7 @@ virt_viewer_file_fill_app(VirtViewerFile* self, VirtViewerApp *app, GError **err
             { "smartcard-remove", "<virt-viewer>/file/smartcard-remove" },
             { "secure-attention", "<virt-viewer>/send/secure-attention" }
         };
-        int i;
+        guint i;
 
         for (i = 0; i < G_N_ELEMENTS(accels); i++) {
             if (!virt_viewer_file_is_set(self, accels[i].prop))

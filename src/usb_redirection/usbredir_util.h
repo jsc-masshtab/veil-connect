@@ -1,7 +1,10 @@
-//
-// Created by ubuntu on 10.09.2020.
-// Взята из spice-gtk
-//
+/*
+ * VeiL Connect
+ * VeiL VDI Client
+ * Based on virt-viewer and freerdp
+ *
+ * Author: http://mashtab.org/
+ */
 
 #ifndef VEIL_CONNECT_USBREDIR_UTIL_H
 #define VEIL_CONNECT_USBREDIR_UTIL_H

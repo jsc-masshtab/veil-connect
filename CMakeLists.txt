@@ -7,7 +7,7 @@ set(CMAKE_C_STANDARD 99)
 option(BUILD_x32 "Use path to 32bit dependencies" OFF)
 
 ######################COMPILER OPTIONS#################################
-add_compile_options(-Wno-deprecated-declarations)
+add_compile_options(-Wno-deprecated-declarations) # -Wall -Wextra
 
 INCLUDE_DIRECTORIES(
         .

@@ -1,6 +1,10 @@
-//
-// Created by Solomin on 11.07.19.
-//
+/*
+ * VeiL Connect
+ * VeiL VDI Client
+ * Based on virt-viewer and freerdp
+ *
+ * Author: http://mashtab.org/
+ */
 
 #include <stdio.h>
 

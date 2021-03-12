@@ -1,7 +1,11 @@
-//
-// Created by ubuntu on 24.09.2020.
+/*
+ * VeiL Connect
+ * VeiL VDI Client
+ * Based on virt-viewer and freerdp
+ *
+ * Author: http://mashtab.org/
+ */
 // Based on remmina source code https://github.com/FreeRDP/Remmina
-//
 
 #include <stdlib.h>
 
@@ -93,8 +97,8 @@ static GtkClipboard* get_gtk_clipboard(ExtendedRdpContext *ex_context)
     return gtk_widget_get_clipboard(rdp_window_data->rdp_viewer_window, GDK_SELECTION_CLIPBOARD);
 }
 
-void rdp_cliprdr_request_data(GtkClipboard *gtkClipboard, GtkSelectionData *selection_data, guint info,
-                              RdpClipboard* clipboard)
+void rdp_cliprdr_request_data(GtkClipboard *gtkClipboard G_GNUC_UNUSED,
+        GtkSelectionData *selection_data G_GNUC_UNUSED, guint info, RdpClipboard* clipboard)
 {
     g_info("%s", (const char *)__func__);
 
@@ -452,7 +456,8 @@ static CLIPRDR_FORMAT_LIST rdp_cliprdr_get_client_format_list(RdpClipboard* clip
     return cliprdr_format_list;
 }
 
-static UINT rdp_cliprdr_monitor_ready(CliprdrClientContext* context, const CLIPRDR_MONITOR_READY* monitorReady)
+static UINT rdp_cliprdr_monitor_ready(CliprdrClientContext* context,
+        const CLIPRDR_MONITOR_READY* monitorReady G_GNUC_UNUSED)
 {
     g_info("%s", (const char *)__func__);
     RdpClipboard* clipboard = (RdpClipboard*)context->custom;
@@ -468,7 +473,8 @@ static UINT rdp_cliprdr_monitor_ready(CliprdrClientContext* context, const CLIPR
     return CHANNEL_RC_OK;
 }
 
-static UINT rdp_cliprdr_server_capabilities(CliprdrClientContext* context, const CLIPRDR_CAPABILITIES* capabilities)
+static UINT rdp_cliprdr_server_capabilities(CliprdrClientContext* context G_GNUC_UNUSED,
+        const CLIPRDR_CAPABILITIES* capabilities G_GNUC_UNUSED)
 {
     g_info("%s", (const char *)__func__);
     return CHANNEL_RC_OK;
@@ -486,7 +492,7 @@ static UINT rdp_cliprdr_server_format_list(CliprdrClientContext* context, const 
 
     GtkTargetList *list = gtk_target_list_new(NULL, 0); // will be freed in callback
 
-    for (int i = 0; i < formatList->numFormats; i++) {
+    for (UINT32 i = 0; i < formatList->numFormats; i++) {
         CLIPRDR_FORMAT *format = &formatList->formats[i];
         if (format->formatId == CF_UNICODETEXT) {
             GdkAtom atom = gdk_atom_intern("UTF8_STRING", TRUE);
@@ -532,8 +538,8 @@ static UINT rdp_cliprdr_server_format_list(CliprdrClientContext* context, const 
     return context->ClientFormatListResponse(clipboard->context, &formatListResponse);
 }
 
-static UINT rdp_cliprdr_server_format_list_response(CliprdrClientContext* context,
-        const CLIPRDR_FORMAT_LIST_RESPONSE* formatListResponse)
+static UINT rdp_cliprdr_server_format_list_response(CliprdrClientContext* context G_GNUC_UNUSED,
+        const CLIPRDR_FORMAT_LIST_RESPONSE* formatListResponse G_GNUC_UNUSED)
 {
     g_info("%s", (const char *)__func__);
     return CHANNEL_RC_OK;
@@ -686,7 +692,8 @@ static UINT rdp_cliprdr_server_format_data_response(CliprdrClientContext* contex
     return CHANNEL_RC_OK;
 }
 
-static gboolean rdp_event_on_clipboard(GtkClipboard *gtkClipboard, GdkEvent *event, RdpClipboard* clipboard)
+static gboolean rdp_event_on_clipboard(GtkClipboard *gtkClipboard G_GNUC_UNUSED, GdkEvent *event G_GNUC_UNUSED,
+        RdpClipboard* clipboard)
 {
     /* Signal handler for GTK clipboard owner-change */
     g_info("%s",(const char*)__func__);

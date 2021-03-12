@@ -65,73 +65,53 @@ make
 
 ## Building on Windows
 
-MSYS2 installation
+- Установить MSYS2, следуя инструкциям  https://www.gtk.org/docs/installations/windows
 
 
-The MSYS2 project provides a UNIX-like development environment for Windows. It provides packages for many software applications and libraries, including the GTK stack. If you prefer developing using Visual Studio, you may be better off installing GTK from vcpkg instead.
-
-
-In MSYS2 packages are installed using the pacman package manager.
-
-
-Note: in the following steps, we will assume you're using a 64-bit Windows. Therefore, the package names include the x86_64 architecture identifier. If you're using a 32-bit Windows, please adapt the instructions below using the i686 architecture identifier.
-
-- Install MSYS2
-
-
-Download the MSYS2 installer that matches your platform and follow the installation instructions.
-
-- Install GTK3 and its dependencies
-
-
-- Open a MSYS2 shell, and run:
-
+- Установить GTK3. Открыть MSYS2 терминал и выполнить:
+```
 pacman -S mingw-w64-x86_64-gtk3
+```
 
-
-- Install build tools
-
+- Установить инструментарий:
+```
 pacman -S mingw-w64-x86_64-toolchain base-devel
+```
 
-
-- Install dependencies:
+- Установить зависимости:
+```
 pacman -S mingw64/mingw-w64-x86_64-libsoup
-
 pacman -S mingw64/mingw-w64-x86_64-spice-gtk
-
 pacman -S mingw64/mingw-w64-x86_64-libusb
-
-- In file CmaleLists.txt in variable LIBS_INCLUDE_PATH set the path to MSYS_INCLUDE
+```
+- В файле CmaleLists.txt в переменную LIBS_INCLUDE_PATH задать путь MSYS_INCLUDE
 
 - Собрать freerdp
 
-  - Скачать freerdp https://github.com/FreeRDP/FreeRDP/releases/tag/2.0.0-rc4 распаковать.
-  freerdp на винде возможно собрать только с помощью нативного компилятора (visual C) 
+  - Скачать freerdp https://github.com/FreeRDP/FreeRDP/releases/latest распаковать.
+  Freerdp на Windows возможно собрать только с помощью нативного компилятора (visual C) 
 
-  - Ставим visual studio https://visualstudio.microsoft.com/ru/downloads/
-Файл FreeRDP.sln открываем в студии. Выбираем режим Release и собираем. В папке freerdp
-Будет создана папка Release с собранными либами
-  - В файле CmaleLists.txt в переменной FREERDP_PATH указываем путь к папке freerdp
+  - Поставить visual studio https://visualstudio.microsoft.com/ru/downloads/ .
+Файл FreeRDP.sln открыть в студии. Выбрать режим Release и собрать. В папке freerdp
+будет создана папка Release с собранными библиотеками.
+  - В файле CmaleLists.txt в переменной FREERDP_PATH указать путь к папке freerdp
  
-- Install Clion
-
-- In Clion open CmakeListx.txt and build the project
+- Собрать Veil Connect
 
 ## Building on Mac
 
-- Установить средства разработки выполнив в терминале
+- Установить средства разработки выполнив в терминале:
 ```  
 xcode-select --install
 ```
 
 - Установить macports следуя инструкциям https://www.macports.org/install.php
-- Установить xquartz
-  https://www.xquartz.org/
+- Установить xquartz  https://www.xquartz.org/ :
 ```
   sudo /opt/local/bin/port -v install xorg-server
 ```
 
-- Установить зависимости
+- Установить зависимости:
 ```
 sudo /opt/local/bin/port install gtk3 +x11
 sudo /opt/local/bin/port install freerdp
@@ -141,12 +121,5 @@ sudo /opt/local/bin/port install libsoup
 sudo /opt/local/bin/port install hiredis
 ```
 
-- В Clion открыть CmakeListx.txt и собрать
+- Собрать Veil Connect
 
-## INSTALL AND LAUNCH
-
-###Windows
-Запустить инсталятор, следовать инструкциям. 
-
-###Linux
-Установить deb пакет.

@@ -1,6 +1,10 @@
-//
-// Created by developer on 05.03.2021.
-//
+/*
+ * VeiL Connect
+ * VeiL VDI Client
+ * Based on virt-viewer and freerdp
+ *
+ * Author: http://mashtab.org/
+ */
 
 #ifndef VEIL_CONNECT_ABOUT_DIALOG_H
 #define VEIL_CONNECT_ABOUT_DIALOG_H

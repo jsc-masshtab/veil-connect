@@ -989,7 +989,7 @@ virt_viewer_app_display_added(VirtViewerSession *session G_GNUC_UNUSED,
 
     g_object_get(display, "nth-display", &nth, NULL);
 
-    g_debug("Insert display %d %p", nth, display);
+    g_debug("Insert display %d %p", nth, (void *)display);
     g_hash_table_insert(self->priv->displays, GINT_TO_POINTER(nth), g_object_ref(display));
 
     g_signal_connect(display, "notify::show-hint",
@@ -1006,12 +1006,12 @@ static void virt_viewer_app_remove_nth_window(VirtViewerApp *self,
         return;
     virt_viewer_window_set_display(win, NULL);
     if (win == self->priv->main_window) {
-        g_debug("Not removing main window %d %p", nth, win);
+        g_debug("Not removing main window %d %p", nth, (void *)win);
         return;
     }
     virt_viewer_window_hide(win);
 
-    g_debug("Remove window %d %p", nth, win);
+    g_debug("Remove window %d %p", nth, (void *)win);
     self->priv->windows = g_list_remove(self->priv->windows, win);
 
     g_object_unref(win);
@@ -1787,7 +1787,7 @@ static int opt_zoom = NORMAL_ZOOM_LEVEL;
 static gchar *opt_hotkeys = NULL;
 static gboolean opt_version = FALSE;
 static gboolean opt_verbose = FALSE;
-static gboolean opt_debug = FALSE;
+// static gboolean opt_debug = FALSE;
 static gboolean opt_fullscreen = FALSE;
 static gboolean opt_kiosk = FALSE;
 static gboolean opt_kiosk_quit = FALSE;
@@ -2645,7 +2645,7 @@ virt_viewer_app_show_preferences(VirtViewerApp *self, GtkWidget *parent)
 
     gtk_window_present(GTK_WINDOW(preferences));
 }
-
+/*
 static gboolean
 option_kiosk_quit(G_GNUC_UNUSED const gchar *option_name,
                   const gchar *value,
@@ -2662,7 +2662,7 @@ option_kiosk_quit(G_GNUC_UNUSED const gchar *option_name,
 
     g_set_error(error, G_OPTION_ERROR, G_OPTION_ERROR_FAILED, _("Invalid kiosk-quit argument: %s"), value);
     return FALSE;
-}
+}*/
 
 static void
 virt_viewer_app_add_option_entries(G_GNUC_UNUSED VirtViewerApp *self,

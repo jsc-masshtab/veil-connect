@@ -1,7 +1,9 @@
-/**
- * FreeRDP: A Remote Desktop Protocol Implementation
- * GTK GUI
- * Solomin a.solomin@mashtab.otg
+/*
+ * VeiL Connect
+ * VeiL VDI Client
+ * Based on virt-viewer and freerdp
+ *
+ * Author: http://mashtab.org/
  */
 
 #ifndef RDP_DISPLAY_H
@@ -24,13 +26,5 @@
 //} RdpDisplayData;
 
 GtkWidget *rdp_display_create(RdpWindowData *rdp_window_data, ExtendedRdpContext *ex_rdp_context);
-
-
-
-
-
-
-
-
 
 #endif // RDP_DISPLAY_H

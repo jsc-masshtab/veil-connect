@@ -1,7 +1,9 @@
 /*
- * Veil VDI thin client
+ * VeiL Connect
+ * VeiL VDI Client
  * Based on virt-viewer and freerdp
  *
+ * Author: http://mashtab.org/
  */
 
 #include <config.h>
@@ -212,19 +214,16 @@ void connect_to_vdi_server(RemoteViewerConnData *ci)
     set_auth_dialog_state(AUTH_GUI_CONNECT_TRY_STATE, ci);
 
     // 2 варианта: подключиться к сразу к предыдущему пулу, либо перейти к vdi менеджеру для выбора пула
-    if (ci->p_conn_data->is_connect_to_prev_pool) {
+    // Если нет информации о предыдущем пуле, то сбрасываем флаг
+    g_autofree gchar *last_pool_id = NULL;
+    last_pool_id = read_str_from_ini_file("RemoteViewerConnect", "last_pool_id");
+    if (!last_pool_id)
+        ci->p_conn_data->is_connect_to_prev_pool = FALSE;
 
-        // get pool id from settings file
-        gchar *last_pool_id = read_str_from_ini_file("RemoteViewerConnect", "last_pool_id");
-        if (!last_pool_id) {
-            set_message_to_info_label(GTK_LABEL(ci->message_display_label), "Нет информации о предыдущем пуле");
-            set_auth_dialog_state(AUTH_GUI_DEFAULT_STATE, ci);
-            return;
-        }
+    if (ci->p_conn_data->is_connect_to_prev_pool) {
 
         set_message_to_info_label(GTK_LABEL(ci->message_display_label), "Автоподключение к предыдущему пулу");
         vdi_session_set_current_pool_id(last_pool_id);
-        free_memory_safely(&last_pool_id);
 
         VdiVmRemoteProtocol remote_protocol = read_int_from_ini_file("General",
                 "cur_remote_protocol_index", VDI_SPICE_PROTOCOL);
@@ -327,16 +326,13 @@ read_data_from_ini_file(RemoteViewerConnData *ci)
     fill_p_conn_data_from_ini_file(ci->p_conn_data);
 }
 
-// В этом ёба режиме сразу автоматом пытаемся подрубиться к предыдущему пулу не дожидаясь действий пользователя.
-// Поступаем так только один раз при старте приложения, чтоб у пользователя была возможносмть сменить
-// логин пароль
+// В этом режиме сразу автоматом пытаемся подключиться к предыдущему пулу, не дожидаясь действий пользователя.
+// Поступаем так только один раз при старте приложения, чтоб у пользователя была возможносмть
+// попасть на начальную форму
 static void fast_forward_connect_to_prev_pool_if_enabled(RemoteViewerConnData *ci)
 {
-    gboolean is_fastforward_conn_to_prev_pool =
-            read_int_from_ini_file("RemoteViewerConnect", "is_conn_to_prev_pool_btn_checked", 0);
-
     static gboolean is_first_time = TRUE;
-    if (is_fastforward_conn_to_prev_pool && is_first_time && !opt_manual_mode) {
+    if(ci->p_conn_data->is_connect_to_prev_pool && is_first_time && !opt_manual_mode) {
         connect_to_vdi_server(ci);
         is_first_time = FALSE;
     }

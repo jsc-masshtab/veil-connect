@@ -35,6 +35,10 @@
      padding-right: 12px;
 }
 
+#header-label {
+     color: black;
+}
+
 #login-entry, #password-entry {
      min-height: 25px;
      border: 0;

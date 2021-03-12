@@ -1,6 +1,10 @@
-//
-// Created by ubuntu on 10.09.2020.
-//
+/*
+ * VeiL Connect
+ * VeiL VDI Client
+ * Based on virt-viewer and freerdp
+ *
+ * Author: http://mashtab.org/
+ */
 
 #include <glib-object.h>
 #include <ctype.h>

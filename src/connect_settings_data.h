@@ -1,6 +1,10 @@
-//
-// Created by ubuntu on 15.10.2020.
-//
+/*
+ * VeiL Connect
+ * VeiL VDI Client
+ * Based on virt-viewer and freerdp
+ *
+ * Author: http://mashtab.org/
+ */
 
 #ifndef VEIL_CONNECT_CONNECT_SETTINGS_DATA_H
 #define VEIL_CONNECT_CONNECT_SETTINGS_DATA_H
@@ -27,15 +31,5 @@ typedef struct{
     gchar *vm_verbose_name;
 
 } ConnectSettingsData;
-
-static void connect_settings_data_free(ConnectSettingsData *connect_settings_data)
-{
-    g_info("%s", (const char *)__func__);
-    free_memory_safely(&connect_settings_data->user);
-    free_memory_safely(&connect_settings_data->password);
-    free_memory_safely(&connect_settings_data->domain);
-    free_memory_safely(&connect_settings_data->ip);
-    free_memory_safely(&connect_settings_data->vm_verbose_name);
-}
 
 #endif //VEIL_CONNECT_CONNECT_SETTINGS_DATA_H

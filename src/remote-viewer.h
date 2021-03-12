@@ -1,7 +1,9 @@
 /*
- * Veil VDI thin client
+ * VeiL Connect
+ * VeiL VDI Client
  * Based on virt-viewer and freerdp
  *
+ * Author: http://mashtab.org/
  */
 
 #ifndef REMOTE_VIEWER_H

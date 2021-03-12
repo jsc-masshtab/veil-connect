@@ -1,6 +1,10 @@
-//
-// Created by solomin on 03.09.2020.
-//
+/*
+ * VeiL Connect
+ * VeiL VDI Client
+ * Based on virt-viewer and freerdp
+ *
+ * Author: http://mashtab.org/
+ */
 
 #ifndef VEIL_CONNECT_USBREDIR_CONTROLLER_H
 #define VEIL_CONNECT_USBREDIR_CONTROLLER_H
@@ -9,15 +13,15 @@
 #include <gtk/gtk.h>
 
 #include "usbredirserver_data.h"
-//  int usbbus, int usbaddr, const char *message
-typedef void (*UsbTaskFinishedCallback) (UsbRedirTaskResaultData *res_data, gpointer callback_data);
 
-// UsbRedirController will only 1  static object in application
+#define TYPE_USBREDIR_CONTROLLER   ( usbredir_controller_get_type( ) )
+#define USBREDIR_CONTROLLER( obj ) ( G_TYPE_CHECK_INSTANCE_CAST((obj), TYPE_USBREDIR_CONTROLLER, UsbRedirController) )
+
+
 typedef struct{
-    GArray *tasks_array;
+    GObject parent;
 
-    UsbTaskFinishedCallback usb_task_finished_callback;
-    gpointer usb_task_finished_callback_data;
+    GArray *tasks_array;
 
     int port;
 
@@ -27,9 +31,19 @@ typedef struct{
     gboolean is_usb_tcp_window_shown; // Открыто ли в данный момент окно управления USB TCP
 } UsbRedirController;
 
+typedef struct
+{
+    GObjectClass parent_class;
 
-void usbredir_controller_init(void);
-void usbredir_controller_deinit(void);
+    /* signals */
+    void (*usb_redir_finished)(UsbRedirController *self, int code, const gchar *message, int usbbus, int usbaddr);
+
+} UsbRedirControllerClass;
+
+GType usbredir_controller_get_type( void ) G_GNUC_CONST;
+
+UsbRedirController *usbredir_controller_new(void);
+
 void usbredir_controller_start_task(UsbServerStartData start_data);
 void usbredir_controller_stop_task(int usbbus, int usbaddr);
 void usbredir_controller_stop_all_cur_tasks(gboolean with_sleep);
@@ -41,9 +55,10 @@ gboolean usbredir_controller_check_if_task_active(int task_index);
 void usbredir_controller_reset_tcp_usb_devices_on_next_gui_opening(gboolean flag);
 gboolean usbredir_controller_is_tcp_usb_devices_reset_required(void);
 
-void usbredir_controller_set_gui_usb_tcp_window_data(gboolean is_shown,
-        UsbTaskFinishedCallback usb_task_finished_callback,
-        gpointer callback_data);
 gboolean usbredir_controller_is_usb_tcp_window_shown(void);
+void usbredir_controller_set_usb_tcp_window_shown(gboolean is_shown);
+
+UsbRedirController *usbredir_controller_get_static(void);
+void usbredir_controller_deinit_static(void);
 
 #endif //VEIL_CONNECT_USBREDIR_CONTROLLER_H

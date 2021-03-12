@@ -1,3 +1,11 @@
+/*
+ * VeiL Connect
+ * VeiL VDI Client
+ * Based on virt-viewer and freerdp
+ *
+ * Author: http://mashtab.org/
+ */
+
 #include <stdio.h>
 #include <ctype.h>
 #include <glib/gstdio.h>
@@ -341,7 +349,7 @@ on_app_updater_status_changed(gpointer data G_GNUC_UNUSED,
 
 // По нажатию квавиши enter на password_entry скрываем окно ввода пароля и луп диалога превывается
 static void
-on_password_entry_activated(GtkEntry *entry, GtkWidget *ask_pass_dialog)
+on_password_entry_activated(GtkEntry *entry G_GNUC_UNUSED, GtkWidget *ask_pass_dialog)
 {
     gtk_widget_hide(ask_pass_dialog);
 }
@@ -455,9 +463,8 @@ fill_connect_settings_gui(ConnectSettingsDialogData *dialog_data, ConnectSetting
     gboolean is_ldap_btn_checked = p_conn_data->is_ldap;
     gtk_toggle_button_set_active((GtkToggleButton *)dialog_data->ldap_check_btn, is_ldap_btn_checked);
     // Connect to prev pool
-    gboolean is_conn_to_prev_pool_btn_checked = p_conn_data->is_connect_to_prev_pool;
     gtk_toggle_button_set_active((GtkToggleButton *)dialog_data->conn_to_prev_pool_checkbutton,
-                                 is_conn_to_prev_pool_btn_checked);
+                                 p_conn_data->is_connect_to_prev_pool);
     // pswd
     gtk_toggle_button_set_active((GtkToggleButton *)dialog_data->save_password_checkbtn, p_conn_data->to_save_pswd);
 

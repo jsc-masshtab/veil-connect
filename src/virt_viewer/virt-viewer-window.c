@@ -196,7 +196,7 @@ virt_viewer_window_dispose (GObject *object)
         priv->display = NULL;
     }
 
-    g_debug("Disposing window %p\n", object);
+    g_debug("Disposing window %p\n", (void *)object);
 
     if (priv->window) {
         gtk_widget_destroy(priv->window);
@@ -721,7 +721,7 @@ accel_map_item_cb(gpointer data,
 static GtkMenu*
 virt_viewer_window_get_keycombo_menu(VirtViewerWindow *self)
 {
-    gint i;
+    guint i;
     VirtViewerWindowPrivate *priv = self->priv;
     GtkMenu *menu = GTK_MENU(gtk_menu_new());
     gtk_menu_set_accel_group(menu, priv->accel_group);
@@ -1581,7 +1581,7 @@ virt_viewer_window_set_zoom_level(VirtViewerWindow *self, gint zoom_level)
         priv->zoomlevel = min_zoom;
     }
 
-    if (priv->zoomlevel == virt_viewer_display_get_zoom_level(priv->display) &&
+    if (priv->zoomlevel == (gint)virt_viewer_display_get_zoom_level(priv->display) &&
         priv->zoomlevel == virt_viewer_window_get_real_zoom_level(self)) {
         g_debug("Zoom level not changed, using: %d", priv->zoomlevel);
         return;

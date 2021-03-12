@@ -1,3 +1,10 @@
+/*
+ * VeiL Connect
+ * VeiL VDI Client
+ * Based on virt-viewer and freerdp
+ *
+ * Author: http://mashtab.org/
+ */
 
 #include "rdp_viewer_window.h"
 
@@ -169,7 +176,6 @@ static void rdp_viewer_window_toggle_fullscreen(RdpWindowData *rdp_window_data, 
         // fullscreen
         gtk_window_set_resizable(GTK_WINDOW(rdp_window_data->rdp_viewer_window), TRUE);
         gtk_window_fullscreen(GTK_WINDOW(rdp_window_data->rdp_viewer_window));
-        //gtk_window_move(GTK_WINDOW(rdp_window_data->rdp_viewer_window), 0, 0);
 
         // show toolbar
         gtk_widget_hide(rdp_window_data->top_menu);
@@ -496,12 +502,26 @@ static void fill_shortcuts_menu(GtkMenu *sub_menu_send, ExtendedRdpContext* ex_r
     }
 }
 
-RdpWindowData *rdp_viewer_window_create(ExtendedRdpContext *ex_rdp_context)
+static void
+rdp_viewer_window_usb_redir_task_finished(gpointer source G_GNUC_UNUSED, int code, const gchar *message,
+                                  int usbbus, int usbaddr, RdpWindowData *rdp_window_data)
+{
+    if (code == USB_REDIR_FINISH_SUCCESS)
+        return;
+
+    g_autofree gchar *msg = NULL;
+    msg = g_strdup_printf("Перенаправление USB /dev/bus/usb/%03i/%03i завершилось с ошибкой.\n%s",
+                          usbbus, usbaddr, message);
+    show_msg_box_dialog(GTK_WINDOW(rdp_window_data->rdp_viewer_window), msg);
+}
+
+RdpWindowData *rdp_viewer_window_create(ExtendedRdpContext *ex_rdp_context, int index, GdkRectangle geometry)
 {
     RdpWindowData *rdp_window_data = malloc(sizeof(RdpWindowData));
     memset(rdp_window_data, 0, sizeof(RdpWindowData));
 
     rdp_window_data->ex_rdp_context = ex_rdp_context;
+    rdp_window_data->monitor_index = index;
 
     // gui
     GtkBuilder *builder = rdp_window_data->builder = remote_viewer_util_load_ui("virt-viewer_veil.ui");
@@ -509,7 +529,7 @@ RdpWindowData *rdp_viewer_window_create(ExtendedRdpContext *ex_rdp_context)
     GtkWidget *rdp_viewer_window = rdp_window_data->rdp_viewer_window =
             GTK_WIDGET(gtk_builder_get_object(builder, "viewer"));
     gchar *title = g_strdup_printf("ВМ: %s     Пользователь: %s    %s", vdi_session_get_current_vm_name(),
-            ex_rdp_context->usename, APPLICATION_NAME);
+            ex_rdp_context->usename, APPLICATION_NAME_WITH_SPACES);
     gtk_window_set_title(GTK_WINDOW(rdp_viewer_window), title);
     //gtk_window_set_deletable(GTK_WINDOW(rdp_viewer_window), FALSE);
     free_memory_safely(&title);
@@ -571,15 +591,19 @@ RdpWindowData *rdp_viewer_window_create(ExtendedRdpContext *ex_rdp_context)
             G_CALLBACK(on_vm_status_changed), rdp_window_data);
     rdp_window_data->ws_cmd_received_handle = g_signal_connect(get_vdi_session_static(), "ws-cmd-received",
             G_CALLBACK(on_ws_cmd_received), rdp_window_data);
+    // Для первого окна добавляем сигнал для показа сообщения о проблеме USB
+    if (rdp_window_data->monitor_index == 0)
+        rdp_window_data->usb_redir_finished_handle = g_signal_connect(usbredir_controller_get_static(),
+                "usb-redir-finished", G_CALLBACK(rdp_viewer_window_usb_redir_task_finished), rdp_window_data);
 
     // create RDP display
     rdp_window_data->rdp_display = rdp_display_create(rdp_window_data, ex_rdp_context);
     GtkWidget *vbox = GTK_WIDGET(gtk_builder_get_object(builder, "viewer-box"));
     gtk_box_pack_end(GTK_BOX(vbox), rdp_window_data->rdp_display, TRUE, TRUE, 0);
 
+    // set monitor data for rdp viewer window
+    rdp_viewer_window_set_monitor_data(rdp_window_data, geometry);
     // show
-    gtk_window_set_position(GTK_WINDOW(rdp_viewer_window), GTK_WIN_POS_CENTER);
-    //gtk_window_resize(GTK_WINDOW(rdp_viewer_window), whole_image_width, whole_image_height);
     gtk_widget_show_all(rdp_viewer_window);
 #ifndef __APPLE__
     rdp_viewer_window_toggle_fullscreen(rdp_window_data, TRUE);
@@ -600,6 +624,8 @@ void rdp_viewer_window_destroy(RdpWindowData *rdp_window_data)
 
     g_signal_handler_disconnect(get_vdi_session_static(), rdp_window_data->vm_changed_handle);
     g_signal_handler_disconnect(get_vdi_session_static(), rdp_window_data->ws_cmd_received_handle);
+    if (rdp_window_data->usb_redir_finished_handle)
+        g_signal_handler_disconnect(usbredir_controller_get_static(), rdp_window_data->usb_redir_finished_handle);
     g_source_remove(rdp_window_data->g_timeout_id);
     g_object_unref(rdp_window_data->builder);
     gtk_widget_destroy(rdp_window_data->overlay_toolbar);
@@ -607,16 +633,17 @@ void rdp_viewer_window_destroy(RdpWindowData *rdp_window_data)
     free(rdp_window_data);
 }
 
-void rdp_viewer_window_set_monitor_data(RdpWindowData *rdp_window_data, GdkRectangle geometry, int monitor_index)
+void rdp_viewer_window_set_monitor_data(RdpWindowData *rdp_window_data, GdkRectangle geometry)
 {
-    rdp_window_data->monitor_index = monitor_index;
-    g_info("%s W: %u x H:%u", (const char *)__func__, geometry.width, geometry.height);
+    g_info("%s W: %u x H:%u x:%i y:%i", (const char *)__func__,
+            geometry.width, geometry.height, geometry.x, geometry.y);
     rdp_window_data->monitor_geometry = geometry;
 
     gtk_window_resize(GTK_WINDOW(rdp_window_data->rdp_viewer_window),
                       rdp_window_data->monitor_geometry.width, rdp_window_data->monitor_geometry.height);
     gtk_window_move(GTK_WINDOW(rdp_window_data->rdp_viewer_window),
                       rdp_window_data->monitor_geometry.x, rdp_window_data->monitor_geometry.y);
+    gtk_window_set_position(GTK_WINDOW(rdp_window_data), GTK_WIN_POS_CENTER);
 }
 
 void rdp_viewer_window_stop(RdpWindowData *rdp_window_data, RemoteViewerState next_app_state)

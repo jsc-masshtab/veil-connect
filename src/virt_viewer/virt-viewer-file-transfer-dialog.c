@@ -243,7 +243,7 @@ static void task_finished(SpiceFileTransferTask *task,
 
     if (error && !g_error_matches(error, G_IO_ERROR, G_IO_ERROR_CANCELLED)) {
         self->priv->failed = g_slist_prepend(self->priv->failed, g_object_ref(task));
-        g_warning("File transfer task %p failed: %s", task, error->message);
+        g_warning("File transfer task %p failed: %s", (void *)task, error->message);
     }
 
     self->priv->file_transfers = g_slist_remove(self->priv->file_transfers, task);

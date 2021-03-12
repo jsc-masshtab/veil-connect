@@ -1,3 +1,11 @@
+/*
+ * VeiL Connect
+ * VeiL VDI Client
+ * Based on virt-viewer and freerdp
+ *
+ * Author: http://mashtab.org/
+ */
+
 #ifndef REMOTE_VIEWER_START_SETTINGS_H
 #define REMOTE_VIEWER_START_SETTINGS_H
 

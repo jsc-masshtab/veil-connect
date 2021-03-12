@@ -1,6 +1,11 @@
-//
-// Created by developer on 05.03.2021.
-//
+/*
+ * VeiL Connect
+ * VeiL VDI Client
+ * Based on virt-viewer and freerdp
+ *
+ * Author: http://mashtab.org/
+ */
+
 #include "about_dialog.h"
 #include "remote-viewer-util.h"
 #include "config.h"
@@ -13,13 +18,13 @@ static void about_close(GtkWidget *dialog,
     gtk_widget_destroy(dialog);
 }
 
-static void about_delete(GtkWidget *dialog,
-                         void *dummy G_GNUC_UNUSED,
-                         gpointer data G_GNUC_UNUSED)
-{
-    gtk_widget_hide(dialog);
-    gtk_widget_destroy(dialog);
-}
+//static void about_delete(GtkWidget *dialog,
+//                         void *dummy G_GNUC_UNUSED,
+//                         gpointer data G_GNUC_UNUSED)
+//{
+//    gtk_widget_hide(dialog);
+//    gtk_widget_destroy(dialog);
+//}
 
 void show_about_dialog(GtkWindow *parent_window)
 {

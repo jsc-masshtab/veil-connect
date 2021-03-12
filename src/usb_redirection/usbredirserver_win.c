@@ -1,6 +1,11 @@
-/* usbredirserver.c simple usb network redirection tcp/ip server (host).
-
-   Ported Windows version of application https://github.com/freedesktop/spice-usbredir/tree/master/usbredirserver
+/*
+ * VeiL Connect
+ * VeiL VDI Client
+ * Based on virt-viewer and freerdp
+ *
+ * Author: http://mashtab.org/
+ *
+ * Ported Windows version of application https://github.com/freedesktop/spice-usbredir/tree/master/usbredirserver
 */
 
 //#define  FD_SETSIZE 256
@@ -272,7 +277,6 @@ void usbredirserver_apply_keep_alive(SOCKET sock)
             }
         }
     }
-    // todo: доделать keepalive?
 }
 
 void usbredirserver_make_socket_nonblocking(SOCKET sock)
@@ -481,7 +485,7 @@ void usbredirserver_launch_task(GTask           *task,
     g_thread_join(usb_events_thread);
 
     // successsfull finish
-    task_res_data->message = g_strdup("USB redirection finished");
+    task_res_data->message = g_strdup("Перенаправление USB завершилось");
     task_res_data->code = USB_REDIR_FINISH_SUCCESS;
 
 releasing_resources:
