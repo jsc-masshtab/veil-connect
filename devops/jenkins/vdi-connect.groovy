@@ -424,7 +424,7 @@ pipeline {
                         '''
                     }
                 }
-        
+
                 stage ('windows-x32. build') {
                     when {
                         beforeAgent true
@@ -770,7 +770,7 @@ pipeline {
                         '''
                     }
                 }
-                
+
                 stage ('windows-x32. deploy to repo') {
                     when {
                         beforeAgent true
