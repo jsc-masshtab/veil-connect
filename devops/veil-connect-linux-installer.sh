@@ -14,6 +14,7 @@ echo "
     6. Centos 8
     7. Astra Linux Orel 2.12
     8. Astra Linux Smolensk 1.6
+    9. Alt Linux 9
 "
 
 echo "My OS is:"
@@ -55,6 +56,11 @@ EOF
         ;;
     8)
         echo "Please visit https://veil.mashtab.org/docs/vdi/connect/how_to/install for info" ;;
+    9)
+        apt-get update && apt-get install wget -y
+        wget https://veil-update.mashtab.org/veil-connect/linux/apt-rpm/x86_64/RPMS.alt9/veil-connect-latest.rpm
+        apt-get install ./veil-connect-latest.rpm -y
+        ;;
     *)
         echo "Error: Empty OS" ;;
 esac

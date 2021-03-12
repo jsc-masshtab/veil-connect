@@ -1,18 +1,16 @@
 def currentDate = new Date().format('yyyyMMddHHmmss')
 def rocketNotify = true
 
-notifyBuild(rocketNotify, ":bell: STARTED", "Start new build. Version: ${currentDate}")
-
 pipeline {
     agent {
-        label "bld-agent-02"
+        label "bld-agent"
     }
 
     environment {
         APT_SRV = "192.168.11.118"
         PRJNAME = "veil-connect"
         DATE = "$currentDate"
-        AGENT = "bld-agent-02"
+        AGENT = "bld-agent"
         NFS_DIR = "/nfs/veil-connect"
     }
 
@@ -20,17 +18,17 @@ pipeline {
         failure {
             println "Something goes wrong"
             println "Current build marked as ${currentBuild.result}"
-            notifyBuild(rocketNotify,":x: FAILED", "Something goes wrong. Version: ${currentDate}")
+            notifyBuild(rocketNotify,":x: FAILED")
         }
 
         aborted {
             println "Build was interrupted manually"
             println "Current build marked as ${currentBuild.result}"
-            notifyBuild(rocketNotify,":x: FAILED", "Build was interrupted manually. Version: ${currentDate}")
+            notifyBuild(rocketNotify,":x: FAILED")
         }
 
         success {
-            notifyBuild(rocketNotify, ":white_check_mark: SUCCESSFUL","Build SUCCESSFUL. Version: ${currentDate}")
+            notifyBuild(rocketNotify, ":white_check_mark: SUCCESSFUL")
         }
     }
 
@@ -52,15 +50,16 @@ pipeline {
         booleanParam(name: 'FOCAL',                defaultValue: true,              description: 'create DEB?')
         booleanParam(name: 'EL7',                  defaultValue: true,              description: 'create RPM?')
         booleanParam(name: 'EL8',                  defaultValue: true,              description: 'create RPM?')
+        booleanParam(name: 'ALT9',                 defaultValue: true,              description: 'create RPM?')
         booleanParam(name: 'WIN32',                defaultValue: true,              description: 'create EXE?')
         booleanParam(name: 'WIN64',                defaultValue: true,              description: 'create EXE?')
-//      booleanParam(name: 'UNIVERSAL',            defaultValue: false,             description: 'create TAR?')
         booleanParam(name: 'EMBEDDED',             defaultValue: true,              description: 'create DEB?')
     }
 
     stages {
         stage ('checkout') {
             steps {
+                notifyBuild(rocketNotify, ":bell: STARTED")
                 cleanWs()
                 checkout([ $class: 'GitSCM',
                     branches: [[name: '$BRANCH']],
@@ -133,6 +132,16 @@ pipeline {
                     }
                     steps {
                         sh "docker build -f devops/docker/Dockerfile.el8 . -t veil-connect-builder-el8:${VERSION}"
+                    }
+                }
+
+                stage ('alt9. docker build') {
+                    when {
+                        beforeAgent true
+                        expression { params.ALT9 == true }
+                    }
+                    steps {
+                        sh "docker build -f devops/docker/Dockerfile.alt9 . -t veil-connect-builder-alt9:${VERSION}"
                     }
                 }
             }
@@ -334,7 +343,7 @@ pipeline {
                             cp -r build-${DISTR}/* doc/veil-connect.ico rpmbuild-${DISTR}/BUILD/opt/veil-connect
                             cp doc/veil-connect.desktop rpmbuild-${DISTR}/BUILD/usr/share/applications
                             cd rpmbuild-${DISTR}
-                            rpmbuild --define "_topdir `pwd`" -v -ba SPECS/veil-connect.spec
+                            rpmbuild --define "_topdir `pwd`" -v -bb SPECS/veil-connect.spec
                         '''
                     }
                 }
@@ -373,7 +382,45 @@ pipeline {
                             cp -r build-${DISTR}/* doc/veil-connect.ico rpmbuild-${DISTR}/BUILD/opt/veil-connect
                             cp doc/veil-connect.desktop rpmbuild-${DISTR}/BUILD/usr/share/applications
                             cd rpmbuild-${DISTR}
-                            rpmbuild --define "_topdir `pwd`" -v -ba SPECS/veil-connect.spec
+                            rpmbuild --define "_topdir `pwd`" -v -bb SPECS/veil-connect.spec
+                        '''
+                    }
+                }
+
+                stage ('alt9. build') {
+                    when {
+                        beforeAgent true
+                        expression { params.ALT9 == true }
+                    }
+                    environment {
+                        DISTR = "alt9"
+                    }
+                    agent {
+                        docker {
+                            image "veil-connect-builder-alt9:${VERSION}"
+                            reuseNode true
+                            label "${AGENT}"
+                        }
+                    }
+                    steps {
+                        sh script: '''
+                            mkdir build-${DISTR}
+                            cd build-${DISTR}
+                            cmake -DCMAKE_BUILD_TYPE=Release ../
+                            make
+                            rm -rf CMakeCache.txt  CMakeFiles  Makefile  cmake_install.cmake
+                            cd ${WORKSPACE}
+
+                            # make installer
+                            mkdir -p rpmbuild-${DISTR}/{BUILD,BUILDROOT,RPMS,SOURCES,SPECS,SRPMS}
+                            cp devops/rpm/veil-connect-alt.spec rpmbuild-${DISTR}/SPECS
+                            sed -i -e "s:%%VER%%:${VERSION}:g" rpmbuild-${DISTR}/SPECS/veil-connect-alt.spec
+                            mkdir -p rpmbuild-${DISTR}/BUILD/opt/veil-connect
+                            mkdir -p rpmbuild-${DISTR}/BUILD/usr/share/applications
+                            cp -r build-${DISTR}/* doc/veil-connect.ico rpmbuild-${DISTR}/BUILD/opt/veil-connect
+                            cp doc/veil-connect.desktop rpmbuild-${DISTR}/BUILD/usr/share/applications
+                            cd rpmbuild-${DISTR}
+                            rpmbuild --define "_topdir `pwd`" -v -bb SPECS/veil-connect-alt.spec
                         '''
                     }
                 }
@@ -705,6 +752,24 @@ pipeline {
                         '''
                     }
                 }
+
+                stage ('alt9. deploy to repo') {
+                    when {
+                        beforeAgent true
+                        expression { params.ALT9 == true }
+                    }
+                    environment {
+                        DISTR = "alt9"
+                        ARCH = "x86_64"
+                    }
+                    steps {
+                        sh script: '''
+                            ssh uploader@192.168.10.144 "mkdir -p /local_storage/veil-connect/linux/apt-rpm/${ARCH}/RPMS.${DISTR}"
+                            scp ${WORKSPACE}/rpmbuild-${DISTR}/RPMS/${ARCH}/${PRJNAME}-${VERSION}*.rpm uploader@192.168.10.144:/local_storage/veil-connect/linux/apt-rpm/${ARCH}/RPMS.${DISTR}/
+                            ssh uploader@192.168.10.144 "ln -sf /local_storage/veil-connect/linux/apt-rpm/${ARCH}/RPMS.${DISTR}/${PRJNAME}-${VERSION}*.rpm /local_storage/veil-connect/linux/apt-rpm/${ARCH}/RPMS.${DISTR}/${PRJNAME}-latest.rpm"
+                        '''
+                    }
+                }
                 
                 stage ('windows-x32. deploy to repo') {
                     when {
@@ -767,14 +832,18 @@ pipeline {
     }
 }
 
-def notifyBuild(rocketNotify, buildStatus, msg) {
+def notifyBuild(rocketNotify, buildStatus) {
     buildStatus =  buildStatus ?: 'SUCCESSFUL'
 
     def summary = "${buildStatus}: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]' (${env.BUILD_URL})" + "\n"
 
-    summary += "${msg}"
+    summary += "BRANCH: ${BRANCH}. VERSION: ${VERSION}"
 
     if (rocketNotify){
-        rocketSend (channel: 'jenkins-notify', message: summary, serverUrl: '192.168.14.210', trustSSL: true, rawMessage: true)
+        try {
+            rocketSend (channel: 'jenkins-notify', message: summary, serverUrl: '192.168.14.210', trustSSL: true, rawMessage: true)
+        } catch (Exception e) {
+            println "Notify is failed"
+        }
     }
 }
