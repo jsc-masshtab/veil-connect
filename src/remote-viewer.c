@@ -102,8 +102,13 @@ static void
 remote_viewer_deactivated(VirtViewerApp *app, gboolean connect_error)
 {
     VIRT_VIEWER_APP_CLASS(remote_viewer_parent_class)->deactivated(app, connect_error);
-    virt_viewer_app_hide_all_windows_forced(app);
-    shutdown_loop(REMOTE_VIEWER(app)->priv->virt_viewer_loop);
+    if (virt_viewer_app_hide_windows_on_disconnect(app)) {
+        // Закрыть окно virt-viewer и остановить луп
+        virt_viewer_app_hide_all_windows_forced(app);
+        shutdown_loop(REMOTE_VIEWER(app)->priv->virt_viewer_loop);
+    }
+    // Далее закрывать окна пока не будет явно указано обратное
+    virt_viewer_app_set_hide_windows_on_disconnect(app, TRUE);
 }
 
 static void
@@ -439,7 +444,8 @@ retry_connect_to_vm:
             virt_viewer_app_set_window_name(app, con_data.vm_verbose_name);
             set_spice_session_data(app, con_data.ip, con_data.port, con_data.user, con_data.password);
             // start connect attempt timer
-            virt_viewer_start_reconnect_poll(app);
+            virt_viewer_app_set_hide_windows_on_disconnect(app, TRUE);
+            virt_viewer_app_start_reconnect_poll(app);
             // Показывается окно virt viewer // virt_viewer_app_default_start
             VIRT_VIEWER_APP_CLASS(remote_viewer_parent_class)->start(app, NULL, APP_STATE_AUTH_DIALOG);
             create_loop_and_launch(&REMOTE_VIEWER(app)->priv->virt_viewer_loop);

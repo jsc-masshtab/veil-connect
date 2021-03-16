@@ -266,17 +266,13 @@ static void rdp_viewer_item_tk_doc_activated(GtkWidget *menu G_GNUC_UNUSED, gpoi
     gtk_show_uri_on_window(NULL, VEIL_CONNECT_DOC_SITE, GDK_CURRENT_TIME, NULL);
 }
 
-static void on_vm_status_changed (gpointer data G_GNUC_UNUSED,
-                                  int power_state,
-                                  RdpWindowData *rdp_window_data)
+static void on_vm_status_changed(gpointer data G_GNUC_UNUSED, int power_state, RdpWindowData *rdp_window_data)
 {
     set_vm_power_state_on_label(
             GTK_LABEL(gtk_builder_get_object(rdp_window_data->builder, "vm_status_display")), power_state);
 }
 
-static void on_ws_cmd_received (gpointer data  G_GNUC_UNUSED,
-                                const gchar *cmd,
-                                RdpWindowData *rdp_window_data)
+static void on_ws_cmd_received(gpointer data  G_GNUC_UNUSED, const gchar *cmd, RdpWindowData *rdp_window_data)
 {
     g_info("rdp on_ws_cmd_received");
     if (g_strcmp0(cmd, "DISCONNECT") == 0)
@@ -348,7 +344,33 @@ rdp_viewer_window_menu_switch_off(GtkWidget *menu G_GNUC_UNUSED, gpointer userda
 {
     g_info("%s", (const char *)__func__);
     RdpWindowData *rdp_window_data = (RdpWindowData *)userdata;
+    if (rdp_window_data->ex_rdp_context->is_connecting) // обход проблемы отмены во время стадии коннекта
+        return;
+
     rdp_viewer_window_stop(rdp_window_data, APP_STATE_VDI_DIALOG);
+}
+
+static void
+rdp_viewer_window_menu_reconnect(GtkWidget *menu G_GNUC_UNUSED, gpointer userdata)
+{
+    g_info("%s", (const char *)__func__);
+    RdpWindowData *rdp_window_data = (RdpWindowData *)userdata;
+
+    // При отмене во время коннекта freerdp бывает морозиться на некоторое время.
+    // Поэтому игнорируем. (Еще как вариант - делать кнопку переподключения недоступной на время подключения)
+    if (rdp_window_data->ex_rdp_context->is_connecting)
+        return;
+
+    // reconnect
+    rdp_window_data->ex_rdp_context->is_reconnecting = TRUE;
+
+    rdp_client_stop_routine_thread(rdp_window_data->ex_rdp_context);
+    // Если выполняем переподключение, то ждем немного
+    // Мгновенное подключение после дисконекта заставит RDP сервер вернуть ошибку
+    g_usleep(500000);
+    rdp_client_start_routine_thread(rdp_window_data->ex_rdp_context);
+
+    rdp_window_data->ex_rdp_context->is_reconnecting = FALSE;
 }
 
 static void
@@ -397,6 +419,7 @@ static void
 rdp_viewer_control_menu_setup(GtkBuilder *builder, RdpWindowData *rdp_window_data)
 {
     GtkMenuItem *menu_switch_off = GTK_MENU_ITEM(gtk_builder_get_object(builder, "menu-switch-off"));
+    GtkMenuItem *menu_reconnect = GTK_MENU_ITEM(gtk_builder_get_object(builder, "menu-reconnect"));
     GtkMenuItem *menu_start_vm = GTK_MENU_ITEM(gtk_builder_get_object(builder, "menu-start-vm"));
     GtkMenuItem *menu_suspend_vm = GTK_MENU_ITEM(gtk_builder_get_object(builder, "menu-suspend-vm"));
     GtkMenuItem *menu_shutdown_vm = GTK_MENU_ITEM(gtk_builder_get_object(builder, "menu-shutdown-vm"));
@@ -405,6 +428,8 @@ rdp_viewer_control_menu_setup(GtkBuilder *builder, RdpWindowData *rdp_window_dat
     GtkMenuItem *menu_reboot_vm_force = GTK_MENU_ITEM(gtk_builder_get_object(builder, "menu-reboot-vm-force"));
 
     g_signal_connect(menu_switch_off, "activate", G_CALLBACK(rdp_viewer_window_menu_switch_off), rdp_window_data);
+    g_signal_connect(menu_reconnect, "activate", G_CALLBACK(rdp_viewer_window_menu_reconnect), rdp_window_data);
+
     g_signal_connect(menu_start_vm, "activate", G_CALLBACK(rdp_viewer_window_menu_start_vm), NULL);
     g_signal_connect(menu_suspend_vm, "activate", G_CALLBACK(rdp_viewer_window_menu_suspend_vm), NULL);
     g_signal_connect(menu_shutdown_vm, "activate", G_CALLBACK(rdp_viewer_window_menu_shutdown_vm), NULL);
@@ -478,8 +503,11 @@ static void rdp_viewer_toolbar_setup(GtkBuilder *builder, RdpWindowData *rdp_win
                 rdp_window_data);
     }
 
+    // Reconnect
+    button = create_new_button_for_overlay_toolbar(rdp_window_data, "system-reboot", "Переподключиться");
+    g_signal_connect(button, "clicked", G_CALLBACK(rdp_viewer_window_menu_reconnect), rdp_window_data);
     // Disconnect
-    button = create_new_button_for_overlay_toolbar(rdp_window_data, "system-log-out", "Отключиться");
+    button = create_new_button_for_overlay_toolbar(rdp_window_data, "window-close", "Отключиться");
     g_signal_connect(button, "clicked", G_CALLBACK(rdp_viewer_window_menu_switch_off), rdp_window_data);
 
     // add tollbar to overlay
@@ -643,7 +671,7 @@ void rdp_viewer_window_set_monitor_data(RdpWindowData *rdp_window_data, GdkRecta
                       rdp_window_data->monitor_geometry.width, rdp_window_data->monitor_geometry.height);
     gtk_window_move(GTK_WINDOW(rdp_window_data->rdp_viewer_window),
                       rdp_window_data->monitor_geometry.x, rdp_window_data->monitor_geometry.y);
-    gtk_window_set_position(GTK_WINDOW(rdp_window_data), GTK_WIN_POS_CENTER);
+    //gtk_window_set_position(GTK_WINDOW(rdp_window_data->rdp_viewer_window), GTK_WIN_POS_CENTER);
 }
 
 void rdp_viewer_window_stop(RdpWindowData *rdp_window_data, RemoteViewerState next_app_state)

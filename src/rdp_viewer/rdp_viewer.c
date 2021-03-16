@@ -55,7 +55,11 @@ static gboolean update_cursor_callback(rdpContext* context)
 
 static ExtendedRdpContext* create_rdp_context()
 {
-    rdpContext* context = rdp_client_create_context();
+    RDP_CLIENT_ENTRY_POINTS clientEntryPoints;
+    rdp_client_entry(&clientEntryPoints);
+    rdpContext* context = freerdp_client_context_new(&clientEntryPoints);
+
+
     ExtendedRdpContext* ex_rdp_context = (ExtendedRdpContext*)context;
     ex_rdp_context->is_running = FALSE;
     //ex_rdp_context->update_image_callback = (UpdateImageCallback)update_image_callback;
@@ -68,22 +72,12 @@ static ExtendedRdpContext* create_rdp_context()
     return ex_rdp_context;
 }
 
-static void destroy_rdp_context(ExtendedRdpContext* ex_rdp_context, GThread *rdp_client_routine_thread)
+static void destroy_rdp_context(ExtendedRdpContext* ex_rdp_context)
 {
     if (ex_rdp_context) {
-        rdpContext *context = (rdpContext *) ex_rdp_context;
-        // В режиме запуска удаленного приложения закрываем текущее окно послав alt f4, так как пользователь ожидает,
-        // что приложение закроется
-        if (context->settings->RemoteApplicationMode) {
-            rdp_viewer_window_send_key_shortcut(context, 15); // 15 - index in keyCombos
-        }
 
         // stopping RDP routine
-
-        g_info("%s: abort now: %i", (const char *)__func__, ex_rdp_context->test_int);
-        rdp_client_abort_connection(ex_rdp_context->context.instance);
-        // wait until rdp thread finishes (it should happen after abort)
-        g_thread_join(rdp_client_routine_thread);
+        rdp_client_stop_routine_thread(ex_rdp_context);
 
         wair_for_mutex_and_clear(&ex_rdp_context->cursor_mutex);
 
@@ -220,7 +214,7 @@ RemoteViewerState rdp_viewer_start(const gchar *usename, const gchar *password, 
     rdp_client_set_rdp_image_size(ex_rdp_context, image_width, image_height);
 
     // launch RDP routine in thread
-    GThread *rdp_client_routine_thread = g_thread_new(NULL, (GThreadFunc)rdp_client_routine, ex_rdp_context);
+    rdp_client_start_routine_thread(ex_rdp_context);
 
     // launch event loop
     create_loop_and_launch(&loop);
@@ -228,7 +222,7 @@ RemoteViewerState rdp_viewer_start(const gchar *usename, const gchar *password, 
     usbredir_controller_stop_all_cur_tasks(FALSE);
 
     // deinit all
-    destroy_rdp_context(ex_rdp_context, rdp_client_routine_thread);
+    destroy_rdp_context(ex_rdp_context);
 
     // destroy rdp windows
     guint i;

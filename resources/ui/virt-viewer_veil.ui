@@ -232,10 +232,10 @@
                   </object>
                 </child>
                 <child>
-                  <object class="GtkMenuItem" id="menu-control">
+                  <object class="GtkMenuItem" id="menu-connection">
                     <property name="visible">True</property>
                     <property name="can_focus">False</property>
-                    <property name="label" translatable="yes">_Управление</property>
+                    <property name="label" translatable="yes">_Соединение</property>
                     <property name="use_underline">True</property>
                     <child type="submenu">
                       <object class="GtkMenu">
@@ -251,6 +251,29 @@
                             <signal name="activate" handler="virt_viewer_window_menu_switch_off" swapped="no"/>
                           </object>
                         </child>
+                        <child>
+                          <object class="GtkMenuItem" id="menu-reconnect">
+                            <property name="visible">True</property>
+                            <property name="can_focus">False</property>
+                            <property name="label" translatable="yes">_Переподключиться</property>
+                            <property name="use_underline">True</property>
+                            <signal name="activate" handler="virt_viewer_window_menu_reconnect" swapped="no"/>
+                          </object>
+                        </child>
+                      </object>
+                    </child>
+                  </object>
+                </child>
+                <child>
+                  <object class="GtkMenuItem" id="menu-control">
+                    <property name="visible">True</property>
+                    <property name="can_focus">False</property>
+                    <property name="label" translatable="yes">_Управление ВМ</property>
+                    <property name="use_underline">True</property>
+                    <child type="submenu">
+                      <object class="GtkMenu">
+                        <property name="visible">True</property>
+                        <property name="can_focus">False</property>
                         <child>
                           <object class="GtkMenuItem" id="menu-start-vm">
                             <property name="use_action_appearance">False</property>

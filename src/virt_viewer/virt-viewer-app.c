@@ -164,6 +164,7 @@ struct _VirtViewerAppPrivate {
 
     gboolean is_polling; // flag for session reconnect
     guint reconnect_poll; // id for reconnect timer
+    gboolean hide_windows_on_disconnect; // whether hide or not windows on disconnect
 };
 
 
@@ -1387,9 +1388,6 @@ virt_viewer_app_default_deactivated(VirtViewerApp *self, gboolean connect_error)
         virt_viewer_app_trace(self, "Guest %s display has disconnected, shutting down",
                               priv->guest_name);
     }
-
-    //if (self->priv->quit_on_disconnect) // maybe temp
-    //    g_application_quit(G_APPLICATION(self));
 }
 
 static void
@@ -1421,11 +1419,21 @@ void virt_viewer_app_enable_auto_clipboard(VirtViewerApp *self, gboolean enabled
 void virt_viewer_app_hide_and_deactivate(VirtViewerApp *self)
 {
     // turn off polling if its in process
-    virt_viewer_stop_reconnect_poll(self);
+    virt_viewer_app_stop_reconnect_poll(self);
     // hide monitor windows
     virt_viewer_app_hide_all_windows_forced(self);
     //deactivare app
     virt_viewer_app_deactivate(self, TRUE);
+}
+
+void virt_viewer_app_set_hide_windows_on_disconnect(VirtViewerApp *self, gboolean hide_windows_on_disconnect)
+{
+    self->priv->hide_windows_on_disconnect = hide_windows_on_disconnect;
+}
+
+gboolean virt_viewer_app_hide_windows_on_disconnect(VirtViewerApp *self)
+{
+    return self->priv->hide_windows_on_disconnect;
 }
 
 /*static */void
@@ -1450,7 +1458,7 @@ virt_viewer_app_deactivate(VirtViewerApp *self, gboolean connect_error)
             g_idle_add(virt_viewer_app_retryauth, self);
         } else {
             g_clear_object(&priv->session);
-            // Go to begining if no polling
+            // Go to beginning if no polling
             if (!priv->is_polling)
                 virt_viewer_app_deactivated(self, connect_error);
         }
@@ -1467,7 +1475,7 @@ virt_viewer_app_connected(VirtViewerSession *session G_GNUC_UNUSED,
     VirtViewerAppPrivate *priv = self->priv;
 
     // turn off polling
-    virt_viewer_stop_reconnect_poll(self);
+    virt_viewer_app_stop_reconnect_poll(self);
 
     priv->connected = TRUE;
 
@@ -1540,7 +1548,7 @@ static void virt_viewer_app_auth_refused(VirtViewerSession *session,
                        !virt_viewer_session_get_file(session));
 
     // no point to try to connect if credentials are wrong
-    virt_viewer_stop_reconnect_poll(self);
+    virt_viewer_app_stop_reconnect_poll(self);
 }
 
 static void virt_viewer_app_auth_unsupported(VirtViewerSession *session G_GNUC_UNUSED,
@@ -1551,7 +1559,7 @@ static void virt_viewer_app_auth_unsupported(VirtViewerSession *session G_GNUC_U
                                           _("Unable to authenticate with remote desktop server: %s"),
                                           msg);
 
-    virt_viewer_stop_reconnect_poll(self);
+    virt_viewer_app_stop_reconnect_poll(self);
 }
 
 static void virt_viewer_app_usb_failed(VirtViewerSession *session G_GNUC_UNUSED,
@@ -2701,7 +2709,7 @@ virt_viewer_connect_timer(VirtViewerApp *self)
     VirtViewerAppPrivate *app_priv = self->priv;
     // stop polling if app->is_polling is false. it happens when spice session connected
     if (!app_priv->is_polling){
-        virt_viewer_stop_reconnect_poll(self);
+        virt_viewer_app_stop_reconnect_poll(self);
         return FALSE;
     }
 
@@ -2726,7 +2734,7 @@ virt_viewer_connect_timer(VirtViewerApp *self)
 }
 
 void
-virt_viewer_start_reconnect_poll(VirtViewerApp *self)
+virt_viewer_app_start_reconnect_poll(VirtViewerApp *self)
 {
     VirtViewerAppPrivate *app_priv = self->priv;
     if (virt_viewer_app_is_active(self))
@@ -2743,7 +2751,7 @@ virt_viewer_start_reconnect_poll(VirtViewerApp *self)
 }
 
 void
-virt_viewer_stop_reconnect_poll(VirtViewerApp *self)
+virt_viewer_app_stop_reconnect_poll(VirtViewerApp *self)
 {
     VirtViewerAppPrivate *app_priv = self->priv;
     app_priv->is_polling = FALSE;

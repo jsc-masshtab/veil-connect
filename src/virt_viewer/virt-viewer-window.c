@@ -74,8 +74,10 @@ void virt_viewer_window_menu_file_smartcard_remove(GtkWidget *menu, VirtViewerWi
 void virt_viewer_window_menu_view_release_cursor(GtkWidget *menu, VirtViewerWindow *self);
 void virt_viewer_window_menu_preferences_cb(GtkWidget *menu, VirtViewerWindow *self);
 void virt_viewer_window_menu_change_cd_activate(GtkWidget *menu, VirtViewerWindow *self);
-// vm control
+// connection control
 void virt_viewer_window_menu_switch_off(GtkWidget *menu, VirtViewerWindow *self);
+void virt_viewer_window_menu_reconnect(GtkWidget *menu, VirtViewerWindow *self);
+// vm control
 void virt_viewer_window_menu_start_vm(GtkWidget *menu, VirtViewerWindow *self);
 void virt_viewer_window_menu_suspend_vm(GtkWidget *menu, VirtViewerWindow *self);
 void virt_viewer_window_menu_shutdown_vm(GtkWidget *menu, VirtViewerWindow *self);
@@ -327,7 +329,7 @@ on_ws_cmd_received (gpointer data G_GNUC_UNUSED,
 {
     if (g_strcmp0(cmd, "DISCONNECT") == 0 && virt_viewer_app_is_active(self->priv->app)) {
         virt_viewer_set_next_app_state(self->priv->app, APP_STATE_AUTH_DIALOG);
-        virt_viewer_window_menu_switch_off(NULL, self);
+        virt_viewer_app_hide_and_deactivate(self->priv->app);
     }
 }
 
@@ -1164,8 +1166,23 @@ virt_viewer_window_menu_change_cd_activate(GtkWidget *menu G_GNUC_UNUSED,
 G_MODULE_EXPORT void
 virt_viewer_window_menu_switch_off(GtkWidget *menu G_GNUC_UNUSED, VirtViewerWindow *self)
 {
+    // Завершаем соединение, закрываем окно
     g_info("%s\n", (const char *)__func__);
     virt_viewer_app_hide_and_deactivate(self->priv->app);
+}
+
+G_MODULE_EXPORT void
+virt_viewer_window_menu_reconnect(GtkWidget *menu G_GNUC_UNUSED, VirtViewerWindow *self)
+{
+    // Завершаем соединение и подключаемся снова, не закрывая окно
+    g_info("%s\n", (const char *)__func__);
+    VirtViewerApp *app = self->priv->app;
+
+    virt_viewer_app_set_hide_windows_on_disconnect(app, FALSE);
+    virt_viewer_app_stop_reconnect_poll(app);
+    virt_viewer_app_deactivate(app, FALSE);
+    virt_viewer_app_show_status(app, _("Reconnecting"));
+    virt_viewer_app_start_reconnect_poll(app);
 }
 
 G_MODULE_EXPORT void
@@ -1174,7 +1191,7 @@ virt_viewer_window_menu_start_vm(GtkWidget *menu G_GNUC_UNUSED, VirtViewerWindow
     g_info("%s\n", (const char *)__func__);
     vdi_api_session_execute_task_do_action_on_vm("start", FALSE);
     // start connect atempts
-    virt_viewer_start_reconnect_poll(self->priv->app);
+    virt_viewer_app_start_reconnect_poll(self->priv->app);
 }
 
 G_MODULE_EXPORT void

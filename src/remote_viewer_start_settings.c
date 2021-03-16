@@ -567,7 +567,7 @@ save_data_to_ini_file(ConnectSettingsDialogData *dialog_data)
     if (dialog_data->remote_protocol_combobox) {
         gint remote_protocol_combobox_index =
                 gtk_combo_box_get_active((GtkComboBox*)dialog_data->remote_protocol_combobox);
-        // индекс 0 - спайс индекс 1 - рдп
+
         VdiVmRemoteProtocol protocol = (remote_protocol_combobox_index == 0) ? VDI_SPICE_PROTOCOL : VDI_RDP_PROTOCOL;
         write_int_to_ini_file("General", "cur_remote_protocol_index", protocol);
     }

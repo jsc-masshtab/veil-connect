@@ -50,25 +50,7 @@
 
 
 static DWORD WINAPI rdp_client_thread_proc(ExtendedRdpContext *ex);
-static int rdp_client_entry(RDP_CLIENT_ENTRY_POINTS* pEntryPoints);
 
-//// Проверка поддерживается ли параметр. По другому никак
-//static gboolean check_if_param_supported(rdpSettings* settings, const gchar *param_name)
-//{
-//    const int arg_number = 3;
-//    gchar** argv = malloc(arg_number * sizeof(gchar*));
-//    argv[0] = g_strdup(PROGRAMM_NAME);
-//    argv[1] = g_strdup(param_name);
-//    argv[2] = NULL;
-//
-//    int status = freerdp_client_settings_parse_command_line(settings, arg_number - 1, argv, FALSE);
-//    g_info("!!!status1: %i ", status);
-//    g_free(argv[0]);
-//    g_free(argv[1]);
-//    free(argv);
-//
-//    return (status == 0) ? TRUE : FALSE;
-//}
 
 static void add_rdp_param(GArray *rdp_params_dyn_array, gchar *rdp_param)
 {
@@ -187,15 +169,6 @@ static void rdp_client_destroy_params_array(GArray *rdp_params_dyn_array)
     g_array_free(rdp_params_dyn_array, TRUE);
 }
 
-rdpContext* rdp_client_create_context()
-{
-    RDP_CLIENT_ENTRY_POINTS clientEntryPoints;
-    rdpContext* context;
-    rdp_client_entry(&clientEntryPoints);
-    context = freerdp_client_context_new(&clientEntryPoints);
-    return context;
-}
-
 void rdp_client_set_credentials(ExtendedRdpContext *ex_rdp_context,
                                 const gchar *usename, const gchar *password, gchar *domain,
                                 gchar *ip, int port)
@@ -217,11 +190,17 @@ void rdp_client_set_rdp_image_size(ExtendedRdpContext *ex_rdp_context,
 //===============================Thread client routine==================================
 void* rdp_client_routine(ExtendedRdpContext *ex_contect)
 {
+    if (ex_contect->is_abort_demanded)
+        return NULL;
+
+    ex_contect->is_running = TRUE;
+    ex_contect->is_connecting = TRUE;
+
     int status;
     rdpContext *context = (rdpContext *)ex_contect;
 
     if (!context)
-        goto stop;
+        goto end;
 
     // rdp params
     GArray *rdp_params_dyn_array = rdp_client_create_params_array(ex_contect);
@@ -251,30 +230,96 @@ void* rdp_client_routine(ExtendedRdpContext *ex_contect)
     rdp_client_destroy_params_array(rdp_params_dyn_array);
 
     if (status)
-        goto stop;
+        goto end;
 
-    if (freerdp_client_start(context) != 0)
-        goto stop;
+    // MAIN RDP LOOP
+    freerdp* instance = (freerdp*)ex_contect->context.instance;
+    DWORD nCount;
+    HANDLE handles[64];
 
-    ex_contect->is_running = TRUE;
+    g_info("Before freerdp_connect(instance))");
+    if (!freerdp_connect(instance)) {
+        g_info("connection failure");
+        g_info("After freerdp_connect(instance))1");
+        goto end;
+    }
+    ex_contect->is_connecting = FALSE;
+    g_info("After freerdp_connect(instance))2");
 
-    // main loop
-    rdp_client_thread_proc(ex_contect);
+    if ( *(ex_contect->p_loop) == NULL )
+        goto disconnect;
 
-    // stopping
-    freerdp_client_stop(context);
+    while (!freerdp_shall_disconnect(instance)) {
 
-stop:
+        if (ex_contect->is_abort_demanded)
+            break;
+
+        if (freerdp_focus_required(instance)){
+            g_info(" if (freerdp_focus_required(instance))");
+            rdp_keyboard_focus_in(ex_contect);
+        }
+
+        nCount = freerdp_get_event_handles(instance->context, &handles[0], 64);
+
+        if (nCount == 0) {
+            WLog_ERR(TAG, "%s: freerdp_get_event_handles failed", __FUNCTION__);
+            break;
+        }
+
+        DWORD wait_status = WaitForMultipleObjects(nCount, handles, FALSE, 100);
+        if (wait_status == WAIT_FAILED) {
+            WLog_ERR(TAG, "%s: WaitForMultipleObjects failed with %" PRIu32 "", __FUNCTION__, wait_status);
+            break;
+        }
+
+        if (!freerdp_check_event_handles(instance->context)) {
+            break;
+        }
+    }
+
+    BOOL diss_res;
+disconnect:
+    diss_res = freerdp_disconnect(instance);
+    g_info("dissconn res: %i", diss_res);
+end:
     g_info("%s: g_mutex_unlock", (const char *)__func__);
     ex_contect->is_running = FALSE;
+    ex_contect->is_connecting = FALSE;
     return NULL;
 }
 
 BOOL rdp_client_abort_connection(freerdp* instance)
 {
     ExtendedRdpContext *ex_context = (ExtendedRdpContext*)instance->context;
-    ex_context->is_stop_intentional = TRUE;
+    ex_context->is_abort_demanded = TRUE;
     return freerdp_abort_connect(instance);
+}
+
+void rdp_client_start_routine_thread(ExtendedRdpContext *ex_rdp_context)
+{
+    ex_rdp_context->is_abort_demanded = FALSE; // reset abort demand before start
+    ex_rdp_context->rdp_client_routine_thread = g_thread_new(NULL, (GThreadFunc)rdp_client_routine, ex_rdp_context);
+}
+
+void rdp_client_stop_routine_thread(ExtendedRdpContext *ex_rdp_context)
+{
+    if (!ex_rdp_context->rdp_client_routine_thread)
+        return;
+
+    // В режиме запуска удаленного приложения закрываем текущее окно послав alt f4, так как пользователь ожидает,
+    // что приложение закроется
+    rdpContext *context = (rdpContext *) ex_rdp_context;
+    if (context->settings->RemoteApplicationMode) {
+        rdp_viewer_window_send_key_shortcut(context, 15); // 15 - index in keyCombos
+    }
+
+    //g_info("%s: abort now: %i", (const char *)__func__, ex_rdp_context->test_int);
+    rdp_client_abort_connection(ex_rdp_context->context.instance);
+    // wait until rdp thread finishes (it should happen after abort)
+    g_thread_join(ex_rdp_context->rdp_client_routine_thread);
+    ex_rdp_context->rdp_client_routine_thread = NULL;
+    // reset errors
+    freerdp_set_last_error(context, FREERDP_ERROR_SUCCESS);
 }
 
 //static BOOL update_send_synchronize(rdpContext* context)
@@ -455,12 +500,10 @@ static BOOL rdp_post_connect(freerdp* instance)
 
     g_mutex_lock(&ex->primary_buffer_mutex);
 
-    g_info("%s W: %i H: %i", (const char *)__func__, gdi->width, gdi->height);
+    //g_info("%s W: %i H: %i", (const char *)__func__, gdi->width, gdi->height);
     int stride = cairo_format_stride_for_width(cairo_format, gdi->width);
     ex->surface = cairo_image_surface_create_for_data((unsigned char*)gdi->primary_buffer,
                                                       cairo_format, gdi->width, gdi->height, stride);
-   // ex->surface = cairo_image_surface_create (CAIRO_FORMAT_RGB16_565,
-     //       gdi->width, gdi->height);
 
     g_mutex_unlock(&ex->primary_buffer_mutex);
 
@@ -499,106 +542,20 @@ static void rdp_post_disconnect(freerdp* instance)
 
     // Close rdp windows if LOGOFF_BY_USER received or there are no errors
     // For situation where user intentionally closed connection
-    gboolean is_closed_intentionally = FALSE;
-    if (last_error >= 0x10000 && last_error < 0x00020000) {
-        if ((last_error & 0xFFFF) == ERRINFO_LOGOFF_BY_USER ||
-        (last_error & 0xFFFF) == ERRINFO_RPC_INITIATED_DISCONNECT_BY_USER)
-            is_closed_intentionally = TRUE;
-    }
-
-    if (is_closed_intentionally || (last_error == 0 && ex_rdp_context->rail_rdp_error == 0)) {
-        if (*ex_rdp_context->next_app_state_p == APP_STATE_UNDEFINED)
-            *ex_rdp_context->next_app_state_p = APP_STATE_VDI_DIALOG;
-        shutdown_loop(*(ex_rdp_context->p_loop));
-    }
-}
-
-static BOOL handle_window_events(freerdp* instance)
-{
-    rdpSettings* settings;
-
-    if (!instance || !instance->settings)
-        return FALSE;
-
-    settings = instance->settings;
-
-    if (!settings->AsyncInput) {
-         ExtendedRdpContext *ex_context = (ExtendedRdpContext*)instance->context;
-
-        if (ex_context->is_stop_intentional) {
-            WLog_INFO(TAG, "Stopped");
-            return FALSE;
-        }
-    }
-
-    return TRUE;
-}
-
-/* RDP main loop.
- * Connects RDP, loops while running and handles event and dispatch, cleans up
- * after the connection ends. */
-static DWORD WINAPI rdp_client_thread_proc(ExtendedRdpContext* ex)
-{
-    freerdp* instance = (freerdp*)ex->context.instance;
-    DWORD nCount;
-    DWORD status;
-    HANDLE handles[64];
-    DWORD exit_code = 0;
-
-    if (!freerdp_connect(instance))
-    {
-        WLog_ERR(TAG, "connection failure");
-        return 0;
-    }
-
-    if ( *(ex->p_loop) == NULL )
-        return 0;
-
-    while (!freerdp_shall_disconnect(instance))
-    {
-        if (freerdp_focus_required(instance))
-        {
-            g_info(" if (freerdp_focus_required(instance))");
-            rdp_keyboard_focus_in(ex);
+    if (!ex_rdp_context->is_reconnecting) {
+        gboolean is_stop_intentional = FALSE;
+        if (last_error >= 0x10000 && last_error < 0x00020000) {
+            if ((last_error & 0xFFFF) == ERRINFO_LOGOFF_BY_USER ||
+                (last_error & 0xFFFF) == ERRINFO_RPC_INITIATED_DISCONNECT_BY_USER)
+                is_stop_intentional = TRUE;
         }
 
-        nCount = freerdp_get_event_handles(instance->context, &handles[0], 64);
-
-        if (nCount == 0)
-        {
-            WLog_ERR(TAG, "%s: freerdp_get_event_handles failed", __FUNCTION__);
-            break;
-        }
-
-        status = WaitForMultipleObjects(nCount, handles, FALSE, 100);
-
-        if (status == WAIT_FAILED)
-        {
-            WLog_ERR(TAG, "%s: WaitForMultipleObjects failed with %" PRIu32 "", __FUNCTION__,
-                     status);
-            break;
-        }
-
-        if (!freerdp_check_event_handles(instance->context))
-        {
-            UINT32 last_error = freerdp_get_last_error(instance->context);
-            if (last_error == FREERDP_ERROR_SUCCESS)
-                break;
-
-            // try to reconnect
-            if (client_auto_reconnect_ex(instance, handle_window_events))
-                continue;
-
-            if (freerdp_get_last_error(instance->context) == FREERDP_ERROR_SUCCESS)
-                WLog_ERR(TAG, "Failed to check FreeRDP event handles");
-
-            break;
+        if (is_stop_intentional || (last_error == 0 && ex_rdp_context->rail_rdp_error == 0)) {
+            if (*ex_rdp_context->next_app_state_p == APP_STATE_UNDEFINED)
+                *ex_rdp_context->next_app_state_p = APP_STATE_VDI_DIALOG;
+            shutdown_loop(*(ex_rdp_context->p_loop));
         }
     }
-
-    BOOL res = freerdp_disconnect(instance);
-    g_info("diss conn res: %i", res);
-    return exit_code;
 }
 
 static BOOL rdp_client_global_init(void)
@@ -685,7 +642,7 @@ static int rdp_client_stop(rdpContext* context)
     return 0;
 }
 
-static int rdp_client_entry(RDP_CLIENT_ENTRY_POINTS* pEntryPoints)
+int rdp_client_entry(RDP_CLIENT_ENTRY_POINTS* pEntryPoints)
 {
     ZeroMemory(pEntryPoints, sizeof(RDP_CLIENT_ENTRY_POINTS));
     pEntryPoints->Version = RDP_CLIENT_INTERFACE_VERSION;

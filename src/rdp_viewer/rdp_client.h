@@ -57,7 +57,9 @@ typedef struct {
     int test_int;
 
     gboolean is_running; // is rdp routine running
-    gboolean is_stop_intentional; // required to leave auto reconnect
+    gboolean is_abort_demanded;
+    gboolean is_reconnecting; // is reconnect going on
+    gboolean is_connecting;
 
     // credentials
     gchar *usename;
@@ -80,10 +82,10 @@ typedef struct {
     GMainLoop **p_loop;
     RemoteViewerState *next_app_state_p;
 
+    GThread *rdp_client_routine_thread;
+
 } ExtendedRdpContext;
 
-
-rdpContext* rdp_client_create_context(void);
 
 void rdp_client_set_credentials(ExtendedRdpContext *ex_rdp_context,
                                      const gchar *usename, const gchar *password, gchar *domain, gchar *ip, int port);
@@ -94,7 +96,10 @@ void* rdp_client_routine(ExtendedRdpContext *ex_contect);
 
 BOOL rdp_client_abort_connection(freerdp* instance);
 
-void rdp_client_adjust_im_origin_point(ExtendedRdpContext* ex_rdp_context);
+void rdp_client_start_routine_thread(ExtendedRdpContext *ex_rdp_context);
+void rdp_client_stop_routine_thread(ExtendedRdpContext *ex_rdp_context);
+
+int rdp_client_entry(RDP_CLIENT_ENTRY_POINTS* pEntryPoints);
 
 
 #endif /* FREERDP_CLIENT_SAMPLE_H */
