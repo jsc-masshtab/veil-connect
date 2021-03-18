@@ -47,6 +47,7 @@
 
 #define PROGRAMM_NAME "rdp_gtk_client"
 #define TAG CLIENT_TAG(PROGRAMM_NAME)
+#define CONN_TRY_NUMBER 2
 
 
 static DWORD WINAPI rdp_client_thread_proc(ExtendedRdpContext *ex);
@@ -82,7 +83,7 @@ static GArray * rdp_client_create_params_array(ExtendedRdpContext* ex)
     add_rdp_param(rdp_params_dyn_array, full_adress);
     add_rdp_param(rdp_params_dyn_array, g_strdup_printf("/d:%s", ex->domain));
     add_rdp_param(rdp_params_dyn_array, g_strdup_printf("/u:%s", ex->usename));
-    add_rdp_param(rdp_params_dyn_array, g_strdup_printf("/p:%s", ex->password));
+    add_rdp_param(rdp_params_dyn_array, g_strdup_printf("/p:%s", ex->password)); // ex->password
     add_rdp_param(rdp_params_dyn_array, g_strdup_printf("/w:%i", ex->whole_image_width));
     add_rdp_param(rdp_params_dyn_array, g_strdup_printf("/h:%i", ex->whole_image_height));
     add_rdp_param(rdp_params_dyn_array, g_strdup("/cert-ignore"));
@@ -237,50 +238,56 @@ void* rdp_client_routine(ExtendedRdpContext *ex_contect)
     DWORD nCount;
     HANDLE handles[64];
 
-    g_info("Before freerdp_connect(instance))");
-    if (!freerdp_connect(instance)) {
-        g_info("connection failure");
-        g_info("After freerdp_connect(instance))1");
-        goto end;
-    }
-    ex_contect->is_connecting = FALSE;
-    g_info("After freerdp_connect(instance))2");
-
-    if ( *(ex_contect->p_loop) == NULL )
-        goto disconnect;
-
-    while (!freerdp_shall_disconnect(instance)) {
+    for(int conn_try = 0; conn_try < CONN_TRY_NUMBER; conn_try++) {
 
         if (ex_contect->is_abort_demanded)
             break;
 
-        if (freerdp_focus_required(instance)){
-            g_info(" if (freerdp_focus_required(instance))");
-            rdp_keyboard_focus_in(ex_contect);
+        g_info("RDP. Connect attempt number: %i", conn_try + 1);
+        if (!freerdp_connect(instance)) {
+            g_info("connection failure");
+            g_info("After freerdp_connect(instance))1");
+            g_usleep(500000);
+            continue; // to the next attempt
+        }
+        conn_try = 0;
+        ex_contect->is_connecting = FALSE;
+        g_info("After freerdp_connect(instance))2");
+
+        while (!freerdp_shall_disconnect(instance)) {
+
+            if (ex_contect->is_abort_demanded)
+                break;
+
+            if (freerdp_focus_required(instance)) {
+                g_info(" if (freerdp_focus_required(instance))");
+                rdp_keyboard_focus_in(ex_contect);
+            }
+
+            nCount = freerdp_get_event_handles(instance->context, &handles[0], 64);
+
+            if (nCount == 0) {
+                WLog_ERR(TAG, "%s: freerdp_get_event_handles failed", __FUNCTION__);
+                break;
+            }
+
+            DWORD wait_status = WaitForMultipleObjects(nCount, handles, FALSE, 100);
+            if (wait_status == WAIT_FAILED) {
+                WLog_ERR(TAG, "%s: WaitForMultipleObjects failed with %" PRIu32 "", __FUNCTION__, wait_status);
+                break;
+            }
+
+            if (!freerdp_check_event_handles(instance->context)) {
+                /* Only auto reconnect on network disconnects. */
+                if (freerdp_error_info(instance) != 0)
+                    ex_contect->is_abort_demanded = TRUE;
+                break;
+            }
         }
 
-        nCount = freerdp_get_event_handles(instance->context, &handles[0], 64);
-
-        if (nCount == 0) {
-            WLog_ERR(TAG, "%s: freerdp_get_event_handles failed", __FUNCTION__);
-            break;
-        }
-
-        DWORD wait_status = WaitForMultipleObjects(nCount, handles, FALSE, 100);
-        if (wait_status == WAIT_FAILED) {
-            WLog_ERR(TAG, "%s: WaitForMultipleObjects failed with %" PRIu32 "", __FUNCTION__, wait_status);
-            break;
-        }
-
-        if (!freerdp_check_event_handles(instance->context)) {
-            break;
-        }
+        BOOL diss_res = freerdp_disconnect(instance);
+        g_info("dissconn res: %i", diss_res);
     }
-
-    BOOL diss_res;
-disconnect:
-    diss_res = freerdp_disconnect(instance);
-    g_info("dissconn res: %i", diss_res);
 end:
     g_info("%s: g_mutex_unlock", (const char *)__func__);
     ex_contect->is_running = FALSE;
