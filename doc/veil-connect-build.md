@@ -1,4 +1,67 @@
 # Инструкция по сборке veil-connect
+## Alt Linux
+### Подготовка
+0. Сборка производится в ОС Alt Linux 9.x. Для установки ОС Alt Linux на компьютер "Таволга Терминал" воспользуйтесь инструкцией: https://www.altlinux.org/Ports/mipsel/%D0%9F%D1%80%D0%BE%D1%88%D0%B8%D0%B2%D0%BA%D0%B0_%D0%BE%D0%B1%D1%80%D0%B0%D0%B7%D0%B0_%D0%B2_%D1%84%D0%BE%D1%80%D0%BC%D0%B0%D1%82%D0%B5_recovery.tar_%D0%BD%D0%B0_%D0%A2%D0%B0%D0%B2%D0%BE%D0%BB%D0%B3%D0%B0_%D0%A2%D0%B5%D1%80%D0%BC%D0%B8%D0%BD%D0%B0%D0%BB
+1. Дополнительно к ОС должны быть установлены следующие пакеты:
+```
+rpm-build
+libspice-gtk3-devel
+libfreerdp-devel
+libjson-glib-devel
+libsoup-devel
+libxml2-devel
+gcc
+cmake
+make
+libhiredis-devel
+libusbredir-devel
+libusb-devel
+```
+Выполнить установку этих пакетов:
+```
+apt-get update
+apt-get install -y -q rpm-build libspice-gtk3-devel libfreerdp-devel libjson-glib-devel libsoup-devel libxml2-devel gcc cmake make libhiredis-devel libusbredir-devel libusb-devel
+```
+2. Создать рабочий каталог, в который будут скопированы исходные тексты, с помощью команды:
+```
+mkdir /tmp/veil-connect
+```
+Вставить в устройство чтения компакт-дисков РМС компакт-диск с исходными текстами, смонтировать и скопировать содержимое диска в рабочий каталог с помощью команд:
+```
+mount /media/cdrom
+cp -a /media/cdrom/* /tmp/veil-connect
+```
+Размонтировать компакт-диск с исходными текстами командой:
+```
+umount /media/cdrom
+```
+### Сборка
+3. Выполнить команды для сборки бинарных файлов:
+```
+DISTR=alt9
+cd /tmp/veil-connect
+mkdir build-${DISTR}
+cd build-${DISTR}
+cmake -DCMAKE_BUILD_TYPE=Release ../
+make
+rm -rf CMakeCache.txt  CMakeFiles  Makefile  cmake_install.cmake
+```
+Выполнить команды для сборки rpm-пакета:
+```
+DISTR=alt9
+VERSION=1.5.0
+cd /tmp/veil-connect
+mkdir -p rpmbuild-${DISTR}/{BUILD,BUILDROOT,RPMS,SOURCES,SPECS,SRPMS}
+cp devops/rpm/veil-connect-alt.spec rpmbuild-${DISTR}/SPECS
+sed -i -e "s:%%VER%%:${VERSION}:g" rpmbuild-${DISTR}/SPECS/veil-connect-alt.spec
+mkdir -p rpmbuild-${DISTR}/BUILD/opt/veil-connect
+mkdir -p rpmbuild-${DISTR}/BUILD/usr/share/applications
+cp -r build-${DISTR}/* doc/veil-connect.ico rpmbuild-${DISTR}/BUILD/opt/veil-connect
+cp doc/veil-connect.desktop rpmbuild-${DISTR}/BUILD/usr/share/applications
+cd rpmbuild-${DISTR}
+rpmbuild --define "_topdir `pwd`" -v -bb SPECS/veil-connect-alt.spec
+```
+4. Готовый rpm-пакет будет находиться в каталоге: `/tmp/veil-connect/rpmbuild-${DISTR}/RPMS/${ARCH}`
 ## Astra Linux Leningrad
 ### Подготовка
 0. Сборка производится в ОС Astra Linux Special Edition (релиз «Ленинград»)
@@ -30,8 +93,8 @@ locales-all
 ```
 Выполнить установку этих пакетов:
 ```
-apt update
-apt install -y spice-client-gtk libspice-client-gtk-3.0-dev libjson-glib-dev libxml2-dev libsoup2.4-dev freerdp2-dev libfreerdp-client2-2 libwinpr2-2 libwinpr2-dev gcc cmake pkg-config binutils-dev binutils dprof gcov gdb lcc-1.23 libc-dev-bin libc6-dev-e2k32 libc6-dev libstdc++6-e2k32 linux-libc-dev locales-all
+apt-get update
+apt-get install -y spice-client-gtk libspice-client-gtk-3.0-dev libjson-glib-dev libxml2-dev libsoup2.4-dev freerdp2-dev libfreerdp-client2-2 libwinpr2-2 libwinpr2-dev gcc cmake pkg-config binutils-dev binutils dprof gcov gdb lcc-1.23 libc-dev-bin libc6-dev-e2k32 libc6-dev libstdc++6-e2k32 linux-libc-dev locales-all
 ```
 2. Создать рабочий каталог, в который будут скопированы исходные тексты, с помощью команды:
 ```
@@ -93,8 +156,8 @@ pkg-config
 ```
 Выполнить установку этих пакетов:
 ```
-apt update
-apt install -y spice-client-gtk libspice-client-gtk-3.0-dev libjson-glib-dev libxml2-dev libsoup2.4-dev freerdp2-dev libfreerdp-client2-2 libwinpr2-2 libwinpr2-dev gcc cmake pkg-config
+apt-get update
+apt-get install -y spice-client-gtk libspice-client-gtk-3.0-dev libjson-glib-dev libxml2-dev libsoup2.4-dev freerdp2-dev libfreerdp-client2-2 libwinpr2-2 libwinpr2-dev gcc cmake pkg-config
 ```
 2. Создать рабочий каталог, в который будут скопированы исходные тексты, с помощью команды:
 ```
