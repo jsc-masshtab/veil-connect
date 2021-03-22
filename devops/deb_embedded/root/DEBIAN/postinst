@@ -7,18 +7,18 @@ KIOSK_USER="veil-connect"
 configure_other()
 {
     echo "Configure other..."
-    ln -s /opt/veil-connect/start_vdi_client.sh /usr/bin/
+    ln -sf /opt/veil-connect/start_vdi_client.sh /usr/bin/
     perl -pi -e 's/crosshair/default\0\0/g' /usr/lib/x86_64-linux-gnu/libspice-client-gtk-3.0.so.5
 }
 
 configure_users()
 {
     echo "Configure users..."
-    useradd -m $KIOSK_USER
+    useradd -m $KIOSK_USER || true
     passwd -d $KIOSK_USER 1>/dev/null
 }
 
-configure_kiosk()
+configure_kiosk_orel()
 {
 echo "Configure kiosk..."
 mkdir -p /etc/fly-kiosk/$KIOSK_USER/single
@@ -59,14 +59,12 @@ IsGroup=false
 EOF
 }
 
-configure_autologin()
-{
-    echo "Configure autologin..."
-    sed -i -e "s/.*AutoLoginEnable=.*/AutoLoginEnable=true/" /etc/X11/fly-dm/fly-dmrc
-    sed -i -e "s/.*AutoLoginUser=.*/AutoLoginUser=$KIOSK_USER/" /etc/X11/fly-dm/fly-dmrc
+configure_kiosk_smolensk() {
+    echo "Configure kiosk..."
+    fly-kiosk -u $KIOSK_USER --action lock -p /usr/bin/start_vdi_client.sh 1>/dev/null
 }
 
-configure_screenlocker()
+configure_screenlocker_orel()
 {
     echo "Configure screenlocker..."
     sed -i -e 's/.*ScreenSaverDelay=.*/ScreenSaverDelay=0/' /usr/share/fly-wm/theme/default.themerc.fly-kiosk
@@ -75,6 +73,26 @@ configure_screenlocker()
     sed -i -e 's/.*LockerOnDPMS=.*/LockerOnDPMS=false/' /usr/share/fly-wm/theme/default.themerc.fly-kiosk
     sed -i -e 's/.*LockerOnLid=.*/LockerOnLid=false/' /usr/share/fly-wm/theme/default.themerc.fly-kiosk
     sed -i -e 's/.*LockerOnSwitch=.*/LockerOnSwitch=false/' /usr/share/fly-wm/theme/default.themerc.fly-kiosk
+}
+
+configure_screenlocker_smolensk()
+{
+echo "Configure screenlocker..."
+tee /usr/share/fly-wm/theme/default.themerc.fly-kiosk 1>/dev/null <<EOF
+ScreenSaverDelay=0
+LockerDpmsOffTimeout=0
+LockerOnSleep=false
+LockerOnDPMS=false
+LockerOnLid=false
+LockerOnSwitch=false
+EOF
+}
+
+configure_autologin()
+{
+    echo "Configure autologin..."
+    sed -i -e "s/.*AutoLoginEnable=.*/AutoLoginEnable=true/" /etc/X11/fly-dm/fly-dmrc
+    sed -i -e "s/.*AutoLoginUser=.*/AutoLoginUser=$KIOSK_USER/" /etc/X11/fly-dm/fly-dmrc
 }
 
 configure_usb()
@@ -101,9 +119,14 @@ case "$1" in
 		if [ ! -n "$2" ] ; then
             configure_other
 		    configure_users
-			configure_kiosk
+            if cat /etc/issue | grep -i smolensk 1>/dev/null; then
+			    configure_kiosk_smolensk
+                configure_screenlocker_smolensk
+            elif cat /etc/issue | grep -i orel 1>/dev/null; then
+                configure_kiosk_orel
+                configure_screenlocker_orel
+            fi
             configure_autologin
-            configure_screenlocker
             configure_usb
 		fi
 
