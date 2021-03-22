@@ -3,7 +3,7 @@
 
 | ОС                 | Пакет   |
 |--------------------|---------|
-| Astra 1.6 Smolensk | bionic  |
+| Astra 1.6 Smolensk | stretch |
 | Astra 2.12 Orel    | bionic  |
 | Debian 9           | stretch |
 | Debian 10          | buster  |
@@ -11,6 +11,7 @@
 | Ubuntu 20.04       | focal   |
 | Centos 7           |  el7    |
 | Centos 8           |  el8    |
+| Alt Linux 9        |  alt9   |
 
 
 ## Building on Debian 9
