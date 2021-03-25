@@ -607,7 +607,7 @@ pipeline {
                     mkdir -p ${WORKSPACE}/devops/deb_embedded/root/usr/share/applications
                     cp -r ${WORKSPACE}/build-${DISTR}/* ${WORKSPACE}/doc/veil-connect.ico ${WORKSPACE}/devops/deb_embedded/root/opt/veil-connect
                     cp ${WORKSPACE}/doc/veil-connect.desktop ${WORKSPACE}/devops/deb_embedded/root/usr/share/applications
-                    sed -i -e "s:%%VER%%:${VERSION}:g" ${WORKSPACE}/devops/deb_embedded/root/DEBIAN/control
+                    sed -i -e "s:%%VER%%:${VERSION}~orel:g" ${WORKSPACE}/devops/deb_embedded/root/DEBIAN/control
                     chmod -R 777 ${WORKSPACE}/devops/deb_embedded/root
                     chmod -R 755 ${WORKSPACE}/devops/deb_embedded/root/DEBIAN
                     chown -R root:root ${WORKSPACE}/devops/deb_embedded/root
@@ -814,10 +814,9 @@ pipeline {
             }
             steps {
                 sh script: '''
-                    # upload to nfs
-                    mkdir -p ${NFS_DIR}/${VERSION}
-                    rm -f ${NFS_DIR}/${VERSION}/veil-connect-embedded*.deb
-                    cp ${WORKSPACE}/devops/deb_embedded/*.deb ${NFS_DIR}/${VERSION}
+                    ssh uploader@192.168.10.144 mkdir -p /local_storage/veil-connect-embedded/${VERSION}
+                    scp ${WORKSPACE}/devops/deb_embedded/*.deb uploader@192.168.10.144:/local_storage/veil-connect-embedded/${VERSION}/
+                    ssh uploader@192.168.10.144 ln -sfT /local_storage/veil-connect-embedded/${VERSION} /local_storage/veil-connect-embedded/latest
                 '''
             }
         }

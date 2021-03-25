@@ -46,6 +46,7 @@ gpgkey=$REPO_URL/yum/RPM-GPG-KEY-veil-connect
 enabled=1
 EOF
 
+        yum install epel-release -y
         yum install veil-connect -y
         ;;
     7)
