@@ -11,8 +11,10 @@
 
 #include <gtk/gtk.h>
 
+#include "remote-viewer.h"
 #include "remote-viewer-util.h"
 
-RemoteViewerState rdp_viewer_start(const gchar *usename, const gchar *password, gchar *domain, gchar *ip, int port);
+RemoteViewerState rdp_viewer_start(RemoteViewer *app,
+        const gchar *usename, const gchar *password, gchar *domain, gchar *ip, int port);
 
 #endif /* RDK_VIEWER_H */

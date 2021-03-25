@@ -764,7 +764,7 @@ void free_memory_safely(gchar **string_ptr)
     }
 }
 
-size_t strlen_safely(const gchar * str)
+size_t strlen_safely(const gchar *str)
 {
     if (str)
         return strlen(str);

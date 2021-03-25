@@ -45,5 +45,7 @@ void vdi_ws_client_send_vm_changed(VdiWsClient *ws_vdi_client, const gchar *vm_i
 // В Qt очень просто можно установить фильтр ивентов сразу на все приложение, в gtk такого не нашел.
 // Поэтому вызываем этот метод везде, где хотим оповестить сервер об активности клиета
 void vdi_ws_client_send_user_gui(VdiWsClient *ws_vdi_client);
+// Послать тексотовое сообщение администратору VeiL VDI
+//void vdi_ws_client_send_text_msg(VdiWsClient *ws_vdi_client, const gchar *text_msg);
 
 #endif // WS_VDI_CLIENT_H

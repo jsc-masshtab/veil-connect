@@ -1109,6 +1109,14 @@ virt_viewer_window_menu_help_tk_doc(GtkWidget *menu G_GNUC_UNUSED,
 }
 
 G_MODULE_EXPORT void
+virt_viewer_window_menu_dialog_with_admin(GtkWidget *menu G_GNUC_UNUSED, VirtViewerWindow *self)
+{
+    g_info("%s", (const char *)__func__);
+    VeilMessenger *veil_messenger = REMOTE_VIEWER(self->priv->app)->veil_messenger;
+    veil_messenger_show_on_top(veil_messenger);
+}
+
+G_MODULE_EXPORT void
 virt_viewer_window_guest_details_response(GtkDialog *dialog,
                                           gint response_id,
                                           gpointer user_data G_GNUC_UNUSED)

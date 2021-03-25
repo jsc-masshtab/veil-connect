@@ -81,6 +81,16 @@ typedef struct {
     gboolean remove_all;
 } DetachUsbData;
 
+// Data with message to admin. Структура введена на случай появлянию до параметров
+typedef struct{
+    gchar *message; // сообщение
+    gpointer weak_ref_to_logical_owner; // сущность, из которой было отослано сообщение
+
+    gboolean is_successfully_sent; // Было ли сообщение успешно отправлено (определяется по ответу от сервера)
+    gchar *error_message; // ответное сообщение от сервера. (Не NULL если возникла ошибка при отправке)
+
+} TextMessageData;
+
 //VdiSession class
 
 #define TYPE_VDI_SESSION         ( vdi_session_get_type( ) )
@@ -130,6 +140,7 @@ struct _VdiSessionClass
     void (*vm_changed)(VdiSession *self, int power_state);
     void (*ws_conn_changed)(VdiSession *self, int ws_connected);
     void (*ws_cmd_received)(VdiSession *self, const gchar *cmd);
+    void (*text_msg_received)(VdiSession *self, const gchar *author, const gchar *text);
 };
 
 GType vdi_session_get_type( void ) G_GNUC_CONST;
@@ -145,6 +156,7 @@ void vdi_session_static_destroy(void);
 void vdi_session_vm_state_change_notify(int power_state);
 void vdi_session_ws_conn_change_notify(int ws_connected);
 void vdi_session_ws_cmd_received_notify(const gchar *cmd);
+void vdi_session_text_msg_received_notify(const gchar *author, const gchar *text);
 
 // get vid server ip
 const gchar *vdi_session_get_vdi_ip(void);
@@ -219,6 +231,12 @@ void vdi_session_do_action_on_vm_task(GTask *task,
                      gpointer       task_data,
                      GCancellable  *cancellable);
 
+// Send text message
+void vdi_session_send_text_msg_task(GTask *task,
+                                      gpointer       source_object,
+                                      gpointer       task_data,
+                                      GCancellable  *cancellable);
+
 // Log out sync
 gboolean vdi_session_logout(void);
 
@@ -244,5 +262,6 @@ void vdi_api_session_free_action_on_vm_data(ActionOnVmData *action_on_vm_data);
 void vdi_api_session_free_vdi_vm_data(VdiVmData *vdi_vm_data);
 void vdi_api_session_free_attach_usb_data(AttachUsbData *attach_usb_data);
 void vdi_api_session_free_detach_usb_data(DetachUsbData *detach_usb_data);
+void vdi_api_session_free_text_message_data(TextMessageData *text_message_data);
 
 #endif //VIRT_VIEWER_VEIL_VDI_API_SESSION_H

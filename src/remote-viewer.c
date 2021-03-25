@@ -263,6 +263,9 @@ void remote_viewer_free_resources(RemoteViewer *self)
     if (self->vdi_manager)
         g_object_unref(self->vdi_manager);
 
+    if (self->veil_messenger)
+        g_object_unref(self->veil_messenger);
+
     usbredir_controller_deinit_static();
     vdi_session_static_destroy();
 }
@@ -355,10 +358,12 @@ remote_viewer_start(VirtViewerApp *app, GError **err G_GNUC_UNUSED, RemoteViewer
     GError *error = NULL;
     ConnectSettingsData con_data = {};
     GtkCssProvider *css_provider = setup_css(); // CSS setup
-
+    //create veil messenger
+    REMOTE_VIEWER(app)->veil_messenger = veil_messenger_new();
     // remote connect dialog
 retry_auth:
     {
+        veil_messenger_hide(REMOTE_VIEWER(app)->veil_messenger);
         // Забираем из ui адрес и порт
         GtkResponseType dialog_window_response = remote_viewer_connect_dialog(REMOTE_VIEWER(app), &con_data);
         if (dialog_window_response == GTK_RESPONSE_CLOSE)
@@ -371,8 +376,8 @@ retry_connect_to_vm:
     /// instant connect attempt
     if (opt_manual_mode) {
         if (vdi_session_get_current_remote_protocol() == VDI_RDP_PROTOCOL) {
-            RemoteViewerState app_state = rdp_viewer_start(con_data.user, con_data.password, con_data.domain,
-                                                              con_data.ip, con_data.port);
+            RemoteViewerState app_state = rdp_viewer_start(REMOTE_VIEWER(app),
+                    con_data.user, con_data.password, con_data.domain, con_data.ip, con_data.port);
             if (app_state == APP_STATE_AUTH_DIALOG)
                 goto retry_auth;
             else if (app_state == APP_STATE_EXITING)
@@ -433,7 +438,7 @@ retry_connect_to_vm:
         // connect to vm depending using remote protocol
         RemoteViewerState next_app_state = APP_STATE_VDI_DIALOG;
         if (vdi_session_get_current_remote_protocol() == VDI_RDP_PROTOCOL) {
-            next_app_state = rdp_viewer_start(vdi_session_get_vdi_username(),
+            next_app_state = rdp_viewer_start(REMOTE_VIEWER(app), vdi_session_get_vdi_username(),
                     vdi_session_get_vdi_password(), con_data.domain, con_data.ip, 0);
 #ifdef _WIN32
         }else if (vdi_session_get_current_remote_protocol() == VDI_RDP_WINDOWS_NATIVE_PROTOCOL) {

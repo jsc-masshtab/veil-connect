@@ -359,6 +359,15 @@
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
                         <child>
+                          <object class="GtkMenuItem" id="menu_dialog_with_admin">
+                            <property name="visible">True</property>
+                            <property name="can_focus">False</property>
+                            <property name="label" translatable="yes">_Открыть диалог с администратором</property>
+                            <property name="use_underline">True</property>
+                            <signal name="activate" handler="virt_viewer_window_menu_dialog_with_admin" swapped="no"/>
+                          </object>
+                        </child>
+                        <child>
                           <object class="GtkMenuItem" id="menu-help-guest-details">
                             <property name="use_action_appearance">False</property>
                             <property name="visible">True</property>

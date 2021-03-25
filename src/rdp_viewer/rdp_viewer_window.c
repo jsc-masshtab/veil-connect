@@ -266,6 +266,13 @@ static void rdp_viewer_item_tk_doc_activated(GtkWidget *menu G_GNUC_UNUSED, gpoi
     gtk_show_uri_on_window(NULL, VEIL_CONNECT_DOC_SITE, GDK_CURRENT_TIME, NULL);
 }
 
+static void rdp_viewer_item_dialog_with_admin_activated(GtkWidget *menu G_GNUC_UNUSED,
+        ExtendedRdpContext *ex_rdp_context)
+{
+    VeilMessenger *veil_messenger = REMOTE_VIEWER(ex_rdp_context->app)->veil_messenger;
+    veil_messenger_show_on_top(veil_messenger);
+}
+
 static void on_vm_status_changed(gpointer data G_GNUC_UNUSED, int power_state, RdpWindowData *rdp_window_data)
 {
     set_vm_power_state_on_label(
@@ -609,10 +616,14 @@ RdpWindowData *rdp_viewer_window_create(ExtendedRdpContext *ex_rdp_context, int 
     GtkWidget *item_product_site = GTK_WIDGET(gtk_builder_get_object(builder, "menu-help-guest-details"));
     GtkWidget *item_about = GTK_WIDGET(gtk_builder_get_object(builder, "imagemenuitem10"));
     GtkWidget *item_tk_doc = GTK_WIDGET(gtk_builder_get_object(builder, "menu-tk-doc"));
+    GtkWidget *item_dialog_with_admin = GTK_WIDGET(gtk_builder_get_object(builder, "menu_dialog_with_admin"));
+
     g_signal_connect(item_product_site, "activate",
                      G_CALLBACK(rdp_viewer_item_product_site_activated), rdp_viewer_window);
     g_signal_connect(item_about, "activate", G_CALLBACK(rdp_viewer_item_about_activated), NULL);
     g_signal_connect(item_tk_doc, "activate", G_CALLBACK(rdp_viewer_item_tk_doc_activated), NULL);
+    g_signal_connect(item_dialog_with_admin, "activate",
+            G_CALLBACK(rdp_viewer_item_dialog_with_admin_activated), ex_rdp_context);
 
     // other signals
     rdp_window_data->vm_changed_handle = g_signal_connect(get_vdi_session_static(), "vm-changed",

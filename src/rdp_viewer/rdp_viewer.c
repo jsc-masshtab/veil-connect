@@ -118,7 +118,8 @@ static GdkRectangle set_monitor_data_and_create_rdp_viewer_window(GdkMonitor *mo
     return geometry;
 }
 
-RemoteViewerState rdp_viewer_start(const gchar *usename, const gchar *password, gchar *domain, gchar *ip, int port)
+RemoteViewerState rdp_viewer_start(RemoteViewer *app,
+        const gchar *usename, const gchar *password, gchar *domain, gchar *ip, int port)
 {
     g_info("%s domain %s", (const char *)__func__, domain);
 
@@ -128,10 +129,11 @@ RemoteViewerState rdp_viewer_start(const gchar *usename, const gchar *password, 
     ExtendedRdpContext *ex_rdp_context = create_rdp_context();
     ex_rdp_context->p_loop = &loop;
     ex_rdp_context->next_app_state_p = &next_app_state;
+    ex_rdp_context->app = app;
 
     // Логин в формате name@domain не нравится freerdp, поэтому отбрасываем @domain
     gchar *corrected_usename = NULL;
-    char *sub_string = strchr(usename, '@');
+    gchar *sub_string = strchr(usename, '@');
     if (sub_string) {
         int index = (int) (sub_string - usename);
         corrected_usename = g_strndup(usename, index);

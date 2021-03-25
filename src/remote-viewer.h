@@ -13,6 +13,7 @@
 #include "virt-viewer-app.h"
 #include "app_updater.h"
 #include "vdi_manager.h"
+#include "messenger.h"
 
 G_BEGIN_DECLS
 
@@ -30,6 +31,8 @@ typedef struct {
     RemoteViewerPrivate *priv;
     AppUpdater *app_updater;
     VdiManager *vdi_manager;
+
+    VeilMessenger *veil_messenger;
 
 } RemoteViewer;
 

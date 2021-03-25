@@ -22,7 +22,7 @@
 #include <gtk/gtk.h>
 
 #include "rdp_cursor.h"
-//#include "rdp_clipboard.h"
+#include "remote-viewer.h"
 #include "remote-viewer-util.h"
 
 struct ExtendedRdpContext;
@@ -83,6 +83,8 @@ typedef struct {
     RemoteViewerState *next_app_state_p;
 
     GThread *rdp_client_routine_thread;
+
+    RemoteViewer *app;
 
 } ExtendedRdpContext;
 

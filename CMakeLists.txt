@@ -18,6 +18,7 @@ INCLUDE_DIRECTORIES(
         src/rdp_viewer
         src/usb_redirection
         src/app_updater
+        src/messenger
 )
 
 #############################APP FILES#################################
@@ -115,6 +116,9 @@ list(APPEND SRC_CODE
 # app_updater
         src/app_updater/app_updater.h
         src/app_updater/app_updater.c
+# messenger
+        src/messenger/messenger.h
+        src/messenger/messenger.c
 )
 
 ## usb_redirection

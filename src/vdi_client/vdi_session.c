@@ -72,6 +72,16 @@ static void vdi_session_class_init( VdiSessionClass *klass )
                  G_TYPE_NONE,
                  1,
                  G_TYPE_STRING);
+
+    g_signal_new("text-msg-received",
+                 G_OBJECT_CLASS_TYPE(gobject_class),
+                 G_SIGNAL_RUN_FIRST,
+                 G_STRUCT_OFFSET(VdiSessionClass, text_msg_received),
+                 NULL, NULL,
+                 NULL,
+                 G_TYPE_NONE,
+                 2,
+                 G_TYPE_STRING, G_TYPE_STRING);
 }
 
 static void vdi_session_init( VdiSession *self G_GNUC_UNUSED)
@@ -317,6 +327,11 @@ void vdi_session_ws_cmd_received_notify(const gchar *cmd)
     g_signal_emit_by_name(vdi_session_static, "ws-cmd-received", cmd);
 }
 
+void vdi_session_text_msg_received_notify(const gchar *sender_name, const gchar *text)
+{
+    g_signal_emit_by_name(vdi_session_static, "text-msg-received", sender_name, text);
+}
+
 const gchar *vdi_session_get_vdi_ip()
 {
     return vdi_session_static->vdi_ip;
@@ -359,7 +374,13 @@ void vdi_session_set_credentials(const gchar *username, const gchar *password, c
 
     const gchar *http_protocol = determine_http_protocol_by_port(port);
 
-    vdi_session_static->api_url = g_strdup_printf("%s://%s:%i/api", http_protocol,
+    gboolean is_proxy_not_used = read_int_from_ini_file("General", "is_proxy_not_used", FALSE);
+    // В штатном режиме подключаемся к прокси серверу
+    if (is_proxy_not_used)
+        vdi_session_static->api_url = g_strdup_printf("%s://%s:%i", http_protocol,
+                                                      vdi_session_static->vdi_ip, vdi_session_static->vdi_port);
+    else
+        vdi_session_static->api_url = g_strdup_printf("%s://%s:%i/api", http_protocol,
             vdi_session_static->vdi_ip, vdi_session_static->vdi_port);
 
     vdi_session_static->auth_url = g_strdup_printf("%s/auth/", vdi_session_static->api_url);
@@ -656,13 +677,62 @@ void vdi_session_do_action_on_vm_task(GTask      *task,
     vdi_api_session_free_action_on_vm_data(action_on_vm_data);
 }
 
-//void vdi_session_attach_tcp_usb(GTask         *task,
-//                                gpointer       source_object,
-//                                gpointer       task_data,
-//                                GCancellable  *cancellable)
-//{
-//
-//}
+void vdi_session_send_text_msg_task(GTask *task G_GNUC_UNUSED,
+                                    gpointer source_object G_GNUC_UNUSED,
+                                    gpointer task_data,
+                                    GCancellable *cancellable G_GNUC_UNUSED)
+{
+    TextMessageData *text_message_data = (TextMessageData *)task_data;
+
+    // url
+    g_autofree gchar *url_str = NULL;
+    url_str = g_strdup_printf("%s/client/send_text_message", vdi_session_static->api_url);
+
+    // Generate body
+    JsonBuilder *builder = json_builder_new();
+    json_builder_begin_object(builder);
+
+    json_builder_set_member_name(builder, "msg_type");
+    json_builder_add_string_value(builder, "text_msg");
+
+    json_builder_set_member_name(builder, "message");
+    json_builder_add_string_value(builder, text_message_data->message);
+
+    json_builder_end_object (builder);
+
+    JsonGenerator *gen = json_generator_new();
+    JsonNode * root = json_builder_get_root(builder);
+    json_generator_set_root(gen, root);
+    gchar *body_str = json_generator_to_data(gen, NULL);
+    g_info("%s: body_str: %s", (const char *)__func__, body_str);
+
+    // Send
+    gchar *response_body_str = vdi_session_api_call("POST", url_str, body_str, NULL);
+
+    // Parse reply
+    text_message_data->is_successfully_sent = FALSE;
+    if (response_body_str) {
+        JsonParser *parser = json_parser_new();
+        ServerReplyType server_reply_type;
+        JsonObject *reply_json_object = jsonhandler_get_data_or_errors_object(parser, response_body_str,
+                                                                              &server_reply_type);
+        if (server_reply_type == SERVER_REPLY_TYPE_DATA) {
+            text_message_data->is_successfully_sent = TRUE;
+        } else {
+            const gchar *message = json_object_get_string_member_safely(reply_json_object, "message");
+            text_message_data->error_message = g_strdup(message);
+        }
+
+        g_object_unref(parser);
+    }
+
+    // Free
+    g_free(body_str);
+    g_free(response_body_str);
+    json_node_free(root);
+    g_object_unref(gen);
+    g_object_unref(builder);
+}
 
 gboolean vdi_session_logout(void)
 {
@@ -933,4 +1003,11 @@ void vdi_api_session_free_detach_usb_data(DetachUsbData *detach_usb_data)
 {
     free_memory_safely(&detach_usb_data->usb_uuid);
     free(detach_usb_data);
+}
+
+void vdi_api_session_free_text_message_data(TextMessageData *text_message_data)
+{
+    free_memory_safely(&text_message_data->message);
+    free_memory_safely(&text_message_data->error_message);
+    free(text_message_data);
 }

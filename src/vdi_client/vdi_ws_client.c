@@ -55,20 +55,27 @@ static void vdi_ws_client_on_message(SoupWebsocketConnection *ws_conn G_GNUC_UNU
             return;
         }
         // type
-        // data - в данный момент присылается полученоое от вейла сообщение
         const gchar *msg_type = json_object_get_string_member_safely(root_object, "msg_type");
+
         if (g_strcmp0(msg_type, "data") == 0) {
+            // ретранслированное от вейла сообщение
             // object
             JsonObject *vm_member_object = json_object_get_object_member_safely(root_object, "object");
             int power_state = json_object_get_int_member_safely(vm_member_object, "user_power_state");
             vdi_session_vm_state_change_notify(power_state);
 
         } else if (g_strcmp0(msg_type, "control") == 0) {
+            // команда от администратора  VeiL VDI
             const gchar *cmd = json_object_get_string_member_safely(root_object, "cmd");
             // Если пришла команда отключиться, то не делаем попытки рекконекта
             if (g_strcmp0(cmd, "DISCONNECT") == 0)
                 vdi_ws_client->reconnect_if_conn_lost = FALSE;
             vdi_session_ws_cmd_received_notify(cmd);
+        } else if (g_strcmp0(msg_type, "text_msg") == 0) {
+            // текстовое сообщение от администратора  VeiL VDI
+            const gchar *sender_name = json_object_get_string_member_safely(root_object, "sender_name");
+            const gchar *text_message = json_object_get_string_member_safely(root_object, "message");
+            vdi_session_text_msg_received_notify(sender_name, text_message);
         }
 
         g_object_unref(parser);
@@ -164,7 +171,11 @@ void vdi_ws_client_start(VdiWsClient *vdi_ws_client, const gchar *vdi_ip, int vd
     const gchar *protocol = determine_http_protocol_by_port(vdi_port);
 
     g_autofree gchar *base_url = NULL;
-    base_url = g_strdup_printf("%s://%s:%i/api/ws/client", protocol, vdi_ip, vdi_port);
+    gboolean is_proxy_not_used = read_int_from_ini_file("General", "is_proxy_not_used", FALSE);
+    if (is_proxy_not_used)
+        base_url = g_strdup_printf("%s://%s:%i/ws/client", protocol, vdi_ip, vdi_port);
+    else
+        base_url = g_strdup_printf("%s://%s:%i/api/ws/client", protocol, vdi_ip, vdi_port);
 
     // add query parameters
     // Token for authentication on server.
@@ -280,3 +291,36 @@ void vdi_ws_client_send_user_gui(VdiWsClient *ws_vdi_client)
                             "}");
     vdi_ws_client_send_text(ws_vdi_client, tk_data);
 }
+/*
+void vdi_ws_client_send_text_msg(VdiWsClient *ws_vdi_client, const gchar *text_msg)
+{
+    if (!ws_vdi_client->ws_conn)
+        return;
+
+    // Generate
+    JsonBuilder *builder = json_builder_new();
+    json_builder_begin_object(builder);
+
+    json_builder_set_member_name(builder, "msg_type");
+    json_builder_add_string_value(builder, "text_msg");
+
+    json_builder_set_member_name(builder, "message");
+    json_builder_add_string_value(builder, text_msg);
+
+    json_builder_end_object (builder);
+
+    JsonGenerator *gen = json_generator_new();
+    JsonNode * root = json_builder_get_root(builder);
+    json_generator_set_root(gen, root);
+    gchar *tk_data = json_generator_to_data(gen, NULL);
+    g_info("%s: %s", (const char *)__func__, tk_data);
+
+    // Send
+    vdi_ws_client_send_text(ws_vdi_client, tk_data);
+
+    // Free
+    g_free(tk_data);
+    json_node_free(root);
+    g_object_unref(gen);
+    g_object_unref(builder);
+}*/
