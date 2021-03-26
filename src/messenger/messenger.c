@@ -99,10 +99,10 @@ void on_send_text_msg_task_finished(GObject *source_object G_GNUC_UNUSED,
         const gchar *err_msg = text_message_data->error_message ? text_message_data->error_message : "";
         full_err_msg = g_strdup_printf("Send error: %s", err_msg);
         g_autofree gchar *trimmed_err_msg = NULL;
-        trimmed_err_msg = g_strndup(full_err_msg, 100);
+        trimmed_err_msg = g_strndup(full_err_msg, 120);
 
         gtk_label_set_text(GTK_LABEL(self->label_status), trimmed_err_msg);
-        g_warning("%s", trimmed_err_msg);
+        g_warning("%s", full_err_msg);
 
     } else {
         GtkTextBuffer *message_entry_view_buffer = gtk_text_view_get_buffer(GTK_TEXT_VIEW(self->message_entry_view));
