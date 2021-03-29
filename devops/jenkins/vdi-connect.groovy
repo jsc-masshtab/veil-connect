@@ -61,14 +61,7 @@ pipeline {
             steps {
                 notifyBuild(rocketNotify, ":bell: STARTED")
                 cleanWs()
-                checkout([ $class: 'GitSCM',
-                    branches: [[name: '$BRANCH']],
-                    doGenerateSubmoduleConfigurations: false,
-                    extensions: [], submoduleCfg: [],
-                    userRemoteConfigs: [[credentialsId: '',
-                    url: 'http://gitlab+deploy-token-3:LD2jHQCWDYSEt-8AJQzs@gitlab.bazalt.team/vdi/veil-connect.git']]
-                ])
-
+                git branch: '$BRANCH', url: 'git@gitlab.bazalt.team:vdi/veil-connect.git'
                 stash name: 'src', includes: '**', excludes: '**/.git,**/.git/**'
             }
         }
