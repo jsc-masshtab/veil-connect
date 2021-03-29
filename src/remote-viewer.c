@@ -404,6 +404,7 @@ retry_connect_to_vm:
             goto to_exit;
         }
 
+        virt_viewer_app_set_hide_windows_on_disconnect(app, TRUE);
         VIRT_VIEWER_APP_CLASS(remote_viewer_parent_class)->start(app, NULL, APP_STATE_AUTH_DIALOG);
         create_loop_and_launch(&REMOTE_VIEWER(app)->priv->virt_viewer_loop);
 

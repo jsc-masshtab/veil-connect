@@ -266,17 +266,48 @@ void vdi_ws_client_send_vm_changed(VdiWsClient *ws_vdi_client, const gchar *vm_i
 {
     if (!ws_vdi_client->ws_conn)
         return;
-    //g_info("vm_id: %s", vm_id);
-    gchar *vm_id_json = string_to_json_value(vm_id);
-    gchar *tk_data = g_strdup_printf("{"
-                                     "\"msg_type\": \"UPDATED\", "
-                                     "\"event\": \"vm_changed\", "
-                                     "\"vm_id\": %s"
-                                     "}",
-                                     vm_id_json);
+
+    // Generate
+    JsonBuilder *builder = json_builder_new();
+    json_builder_begin_object(builder);
+
+    json_builder_set_member_name(builder, "msg_type");
+    json_builder_add_string_value(builder, "UPDATED");
+
+    json_builder_set_member_name(builder, "event");
+    json_builder_add_string_value(builder, "vm_changed");
+
+    json_builder_set_member_name(builder, "vm_id");
+    json_builder_add_string_value(builder, vm_id);
+
+    json_builder_set_member_name(builder, "connection_type");
+    VdiVmRemoteProtocol protocol = vdi_session_get_current_remote_protocol();
+    if (vm_id == NULL || protocol == VDI_ANOTHER_REMOTE_PROTOCOL)
+        json_builder_add_string_value(builder, NULL);
+    else
+        json_builder_add_string_value(builder, vdi_session_remote_protocol_to_str(protocol));
+
+    json_builder_set_member_name(builder, "is_connection_secure");
+    // RDP соединения шифруются, другие нет.
+    gboolean is_connection_secure = (protocol == VDI_RDP_PROTOCOL || protocol == VDI_RDP_WINDOWS_NATIVE_PROTOCOL);
+    json_builder_add_boolean_value(builder, is_connection_secure);
+
+    json_builder_end_object(builder);
+
+    JsonGenerator *gen = json_generator_new();
+    JsonNode * root = json_builder_get_root(builder);
+    json_generator_set_root(gen, root);
+    gchar *tk_data = json_generator_to_data(gen, NULL);
+    g_info("%s: %s", (const char *)__func__, tk_data);
+
+    // Send
     vdi_ws_client_send_text(ws_vdi_client, tk_data);
+
+    // Free
     g_free(tk_data);
-    g_free(vm_id_json);
+    json_node_free(root);
+    g_object_unref(gen);
+    g_object_unref(builder);
 }
 
 void vdi_ws_client_send_user_gui(VdiWsClient *ws_vdi_client)
