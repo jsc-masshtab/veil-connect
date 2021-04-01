@@ -182,7 +182,7 @@ static gboolean vdi_api_session_restart_vdi_ws_client(gpointer data G_GNUC_UNUSE
 }
 
 // Получаем токен
-static gboolean vdi_api_session_get_token()
+static gboolean vdi_session_auth_request()
 {
     g_info("%s", (const char *)__func__);
 
@@ -508,7 +508,7 @@ gchar *vdi_session_api_call(const char *method, const char *uri_string, const gc
 
     // get the token if we dont have it
     if (vdi_session_static->jwt == NULL)
-        vdi_api_session_get_token();
+        vdi_session_auth_request();
 
     SoupMessage *msg = soup_message_new(method, uri_string);
     if (msg == NULL) // this may happen according to doc
@@ -531,7 +531,7 @@ gchar *vdi_session_api_call(const char *method, const char *uri_string, const gc
 
         // При первой попытке если AUTH_FAIL_RESPONSE, то пробуем обновить токен и повторить
         if (msg->status_code == AUTH_FAIL_RESPONSE && attempt_count == 0) {
-            vdi_api_session_get_token();
+            vdi_session_auth_request();
             gchar *auth_header = g_strdup_printf("jwt %s", vdi_session_static->jwt);
             soup_message_headers_replace(msg->request_headers, "Authorization", auth_header);
             g_free(auth_header);
@@ -556,7 +556,7 @@ void vdi_session_log_in_task(GTask       *task,
 {
     // get token
     free_memory_safely(&vdi_session_static->jwt);
-    gboolean token_received = vdi_api_session_get_token();
+    gboolean token_received = vdi_session_auth_request();
 
     // register for licensing
     if (token_received)
@@ -608,7 +608,6 @@ void vdi_session_get_vm_from_pool_task(GTask       *task,
     ServerReplyType server_reply_type;
     JsonObject *reply_json_object = jsonhandler_get_data_or_errors_object(parser, response_body_str,
             &server_reply_type);
-    g_info("%s: server_reply_type %i", (const char *)__func__, server_reply_type);
 
     VdiVmData *vdi_vm_data = calloc(1, sizeof(VdiVmData));
     vdi_vm_data->server_reply_type = server_reply_type;
@@ -638,6 +637,8 @@ void vdi_session_get_vm_from_pool_task(GTask       *task,
         //g_info("vm_password %s", vdi_vm_data->vm_password);
         g_info("vm_verbose_name %s", vdi_vm_data->vm_verbose_name);
         g_info("current_controller_address %s", vdi_session_static->current_controller_address);
+    } else {
+        g_warning("%s Error reply. Response_body_str: %s", (const char *)__func__, response_body_str);
     }
 
     vdi_vm_data->message = g_strdup(json_object_get_string_member_safely(reply_json_object, "message"));
@@ -698,7 +699,7 @@ void vdi_session_send_text_msg_task(GTask *task G_GNUC_UNUSED,
     json_builder_set_member_name(builder, "message");
     json_builder_add_string_value(builder, text_message_data->message);
 
-    json_builder_end_object (builder);
+    json_builder_end_object(builder);
 
     JsonGenerator *gen = json_generator_new();
     JsonNode * root = json_builder_get_root(builder);
@@ -940,7 +941,7 @@ gboolean vdi_session_detach_usb(DetachUsbData *detach_usb_data)
     // request
     int resp_code;
     gchar *response_body_str = vdi_session_api_call("POST", url_str, body_str, &resp_code);
-
+    g_info("%s: response_body_str: %s", (const char*)__func__, response_body_str);
     if (resp_code == OK_RESPONSE || resp_code == ACCEPT_RESPONSE)
         status = TRUE;
     // parse

@@ -187,18 +187,18 @@ void vdi_ws_client_start(VdiWsClient *vdi_ws_client, const gchar *vdi_ip, int vd
 
     g_autofree gchar *base_query_pars = NULL;
     base_query_pars = g_strdup_printf("?token=%s&"
-                                                   "is_conn_init_by_user=%i&"
-                                                   "veil_connect_version=%s&"
-                                                   "tk_os=%s",
-                                                   vdi_session_get_token(),
-                                                   vdi_ws_client->is_connect_initiated_by_user,
-                                                   VERSION,
-                                                   util_get_os_name());
+                                      "is_conn_init_by_user=%i&"
+                                      "veil_connect_version=%s&"
+                                      "tk_os=%s",
+                                      vdi_session_get_token(),
+                                      vdi_ws_client->is_connect_initiated_by_user,
+                                      VERSION,
+                                      util_get_os_name());
     vdi_ws_client->is_connect_initiated_by_user = FALSE; // reset
 
     g_autofree gchar *query_pars = NULL;
     if (vdi_session_get_current_vm_id())
-        query_pars = g_strdup_printf("%s&%s", base_query_pars, vdi_session_get_current_vm_id());
+        query_pars = g_strdup_printf("%s&vm_id=%s", base_query_pars, vdi_session_get_current_vm_id());
     else
         query_pars = g_strdup(base_query_pars);
 
