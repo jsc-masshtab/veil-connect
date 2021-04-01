@@ -776,7 +776,7 @@ pipeline {
                         bat script: '''
                             ssh uploader@mothership.bazalt.team mkdir -p /local_storage/veil-connect/windows/%VERSION%
                             scp veil-connect-installer.exe uploader@mothership.bazalt.team:/local_storage/veil-connect/windows/%VERSION%/veil-connect_%VERSION%-x32-installer.exe
-                            ssh uploader@192.168.10.144 ln -sfT /local_storage/veil-connect/windows/%VERSION% /local_storage/veil-connect/windows/latest
+                            ssh uploader@192.168.10.144 "cd /local_storage/veil-connect/windows/; ln -sfT %VERSION% latest"
                         '''
                     }
                 }
@@ -793,7 +793,7 @@ pipeline {
                         bat script: '''
                             ssh uploader@mothership.bazalt.team mkdir -p /local_storage/veil-connect/windows/%VERSION%
                             scp veil-connect-installer.exe uploader@mothership.bazalt.team:/local_storage/veil-connect/windows/%VERSION%/veil-connect_%VERSION%-x64-installer.exe
-                            ssh uploader@192.168.10.144 ln -sfT /local_storage/veil-connect/windows/%VERSION% /local_storage/veil-connect/windows/latest
+                            ssh uploader@192.168.10.144 "cd /local_storage/veil-connect/windows/; ln -sfT %VERSION% latest"
                         '''
                     }
                 }
@@ -809,7 +809,7 @@ pipeline {
                 sh script: '''
                     ssh uploader@192.168.10.144 mkdir -p /local_storage/veil-connect-embedded/${VERSION}
                     scp ${WORKSPACE}/devops/deb_embedded/*.deb uploader@192.168.10.144:/local_storage/veil-connect-embedded/${VERSION}/
-                    ssh uploader@192.168.10.144 ln -sfT /local_storage/veil-connect-embedded/${VERSION} /local_storage/veil-connect-embedded/latest
+                    ssh uploader@192.168.10.144 "cd /local_storage/veil-connect-embedded/; ln -sfT ${VERSION} latest"
                 '''
             }
         }
