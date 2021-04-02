@@ -855,7 +855,7 @@ gchar *get_windows_app_data_location(void)
 
 const gchar *get_cur_ini_param_group()
 {
-    return opt_manual_mode ? "RemoteViewerConnectManual" : "RemoteViewerConnect";
+    return "RemoteViewerConnect";
 }
 
 //void gtk_combo_box_text_set_active_text(GtkComboBoxText *combo_box, const gchar *text)

@@ -248,14 +248,14 @@
                       </packing>
                     </child>
                     <child>
-                      <object class="GtkComboBoxText" id="combobox_remote_protocol">
-                        <property name="name">combobox_remote_protocol</property>
+                      <object class="GtkComboBoxText" id="remote_protocol_combobox">
+                        <property name="name">remote_protocol_combobox</property>
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
                         <property name="active">0</property>
                         <items>
-                          <item translatable="yes">SPICE</item>
-                          <item translatable="yes">RDP</item>
+                          <item id="SPICE" translatable="yes">SPICE</item>
+                          <item id="RDP" translatable="yes">RDP</item>
                         </items>
                       </object>
                       <packing>
@@ -575,6 +575,7 @@
                                 <property name="name">rdp_fps_spin_btn</property>
                                 <property name="visible">True</property>
                                 <property name="can_focus">True</property>
+                                <property name="tooltip_text" translatable="yes">Частота обновления изображения</property>
                                 <property name="max_length">2</property>
                                 <property name="width_chars">2</property>
                                 <property name="text" translatable="yes">30</property>
@@ -747,6 +748,20 @@
                       <packing>
                         <property name="left_attach">0</property>
                         <property name="top_attach">6</property>
+                      </packing>
+                    </child>
+                    <child>
+                      <object class="GtkCheckButton" id="direct_connect_mode_check_btn">
+                        <property name="label" translatable="yes">Подключение к удаленной машине напрямую</property>
+                        <property name="visible">True</property>
+                        <property name="can_focus">True</property>
+                        <property name="receives_default">False</property>
+                        <property name="tooltip_text" translatable="yes">Режим, в котором подключение будет производиться не к VDI серверу, а напрямую к удаленной машине</property>
+                        <property name="draw_indicator">True</property>
+                      </object>
+                      <packing>
+                        <property name="left_attach">0</property>
+                        <property name="top_attach">7</property>
                       </packing>
                     </child>
                   </object>

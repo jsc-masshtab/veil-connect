@@ -66,6 +66,8 @@ typedef struct{
     GtkWidget *check_updates_label;
     GtkWidget *windows_updates_url_entry;
 
+    GtkWidget *direct_connect_mode_check_btn;
+
     // control buttons
     GtkWidget *bt_cancel;
     GtkWidget *bt_ok;
@@ -73,7 +75,19 @@ typedef struct{
     ConnectSettingsData *p_conn_data;
     RemoteViewer *p_remote_viewer;
 
+    // signal handler ids
+    gulong on_direct_connect_mode_check_btn_toggled_id;
+
 } ConnectSettingsDialogData;
+
+// D режиме по умолчанию подключение к VDI серверу. В ручном режиме прямое подключение к ВМ
+static void update_gui_according_to_cur_connect_mode(ConnectSettingsDialogData *dialog_data,
+        gboolean _opt_manual_mode)
+{
+    gtk_widget_set_sensitive(dialog_data->ldap_check_btn, !_opt_manual_mode);
+    gtk_widget_set_sensitive(dialog_data->conn_to_prev_pool_checkbutton, !_opt_manual_mode);
+    gtk_widget_set_visible(dialog_data->remote_protocol_combobox, _opt_manual_mode);
+}
 
 static gboolean
 window_deleted_cb(ConnectSettingsDialogData *dialog_data)
@@ -406,8 +420,23 @@ btn_get_app_updates_clicked_cb(GtkButton *button G_GNUC_UNUSED, ConnectSettingsD
 }
 
 static void
-btn_open_doc_clicked_cb(){
+btn_open_doc_clicked_cb()
+{
     gtk_show_uri_on_window(NULL, VEIL_CONNECT_DOC_SITE, GDK_CURRENT_TIME, NULL);
+}
+
+static void
+on_direct_connect_mode_check_btn_toggled(GtkToggleButton *check_btn, gpointer user_data)
+{
+    g_info("%s", (const char*)__func__);
+    ConnectSettingsDialogData *dialog_data = (ConnectSettingsDialogData *)user_data;
+    gboolean _opt_manual_mode = gtk_toggle_button_get_active(check_btn);
+    update_gui_according_to_cur_connect_mode(dialog_data, _opt_manual_mode);
+
+    // При включении режима прямого подключения сбрасываем порт, чтобы пользователь не пытался бездумно подключиться
+    // по порту VDI сервера, что нежелательно.
+    if (_opt_manual_mode)
+        gtk_entry_set_text(GTK_ENTRY(dialog_data->port_entry), "");
 }
 
 static void
@@ -469,9 +498,9 @@ fill_connect_settings_gui(ConnectSettingsDialogData *dialog_data, ConnectSetting
     gtk_toggle_button_set_active((GtkToggleButton *)dialog_data->save_password_checkbtn, p_conn_data->to_save_pswd);
 
     if (dialog_data->remote_protocol_combobox) {
-        // индекс 0 - спайс индекс 1 - рдп
-        gint index = (p_conn_data->remote_protocol_type == VDI_SPICE_PROTOCOL) ? 0 : 1;
-        gtk_combo_box_set_active((GtkComboBox *) dialog_data->remote_protocol_combobox, index);
+        // Текст и id совпадают
+        const gchar *protocol_str = vdi_session_remote_protocol_to_str(p_conn_data->remote_protocol_type);
+        gtk_combo_box_set_active_id((GtkComboBox *) dialog_data->remote_protocol_combobox, protocol_str);
     }
 
     /// Spice settings
@@ -517,8 +546,7 @@ fill_connect_settings_gui(ConnectSettingsDialogData *dialog_data, ConnectSetting
     gboolean redirect_printers = read_int_from_ini_file("RDPSettings", "redirect_printers", FALSE);
     gtk_toggle_button_set_active((GtkToggleButton *)dialog_data->redirect_printers_check_btn, redirect_printers);
 
-    gboolean is_remote_app = read_int_from_ini_file("RDPSettings", "is_remote_app",
-            0);
+    gboolean is_remote_app = read_int_from_ini_file("RDPSettings", "is_remote_app", 0);
     gtk_toggle_button_set_active((GtkToggleButton *)dialog_data->remote_app_check_btn, is_remote_app);
     gchar *remote_app_name = read_str_from_ini_file("RDPSettings", "remote_app_name");
     if (remote_app_name) {
@@ -538,6 +566,11 @@ fill_connect_settings_gui(ConnectSettingsDialogData *dialog_data, ConnectSetting
     free_memory_safely(&cur_url);
     gtk_entry_set_text(GTK_ENTRY(dialog_data->windows_updates_url_entry), windows_updates_url);
     g_free(windows_updates_url);
+
+    gulong entry_handler_id = dialog_data->on_direct_connect_mode_check_btn_toggled_id;
+    g_signal_handler_block(dialog_data->direct_connect_mode_check_btn, entry_handler_id); // to prevent callback
+    gtk_toggle_button_set_active((GtkToggleButton *)dialog_data->direct_connect_mode_check_btn, opt_manual_mode);
+    g_signal_handler_unblock(dialog_data->direct_connect_mode_check_btn, entry_handler_id);
 }
 
 static void
@@ -565,10 +598,8 @@ save_data_to_ini_file(ConnectSettingsDialogData *dialog_data)
     write_int_to_ini_file(paramToFileGrpoup, "to_save_pswd", dialog_data->p_conn_data->to_save_pswd);
 
     if (dialog_data->remote_protocol_combobox) {
-        gint remote_protocol_combobox_index =
-                gtk_combo_box_get_active((GtkComboBox*)dialog_data->remote_protocol_combobox);
-
-        VdiVmRemoteProtocol protocol = (remote_protocol_combobox_index == 0) ? VDI_SPICE_PROTOCOL : VDI_RDP_PROTOCOL;
+        const gchar *protocol_str = gtk_combo_box_get_active_id((GtkComboBox*)dialog_data->remote_protocol_combobox);
+        VdiVmRemoteProtocol protocol = vdi_session_str_to_remote_protocol(protocol_str);
         write_int_to_ini_file("General", "cur_remote_protocol_index", protocol);
     }
 
@@ -618,7 +649,8 @@ save_data_to_ini_file(ConnectSettingsDialogData *dialog_data)
     write_str_to_ini_file("ServiceSettings", "windows_updates_url",
                           gtk_entry_get_text(GTK_ENTRY(dialog_data->windows_updates_url_entry)));
 
-} // remote_app_name_entry      remote_app_options_entry
+    opt_manual_mode = gtk_toggle_button_get_active((GtkToggleButton *)dialog_data->direct_connect_mode_check_btn);
+}
 
 GtkResponseType remote_viewer_start_settings_dialog(RemoteViewer *p_remote_viewer,
                                                     ConnectSettingsData *p_conn_data, GtkWindow *parent)
@@ -643,15 +675,9 @@ GtkResponseType remote_viewer_start_settings_dialog(RemoteViewer *p_remote_viewe
     dialog_data.address_entry = get_widget_from_builder(dialog_data.builder, "connection-address-entry");
     dialog_data.port_entry = get_widget_from_builder(dialog_data.builder, "connection-port-entry");
     dialog_data.ldap_check_btn = get_widget_from_builder(dialog_data.builder, "ldap-button");
-    gtk_widget_set_sensitive(dialog_data.ldap_check_btn, !opt_manual_mode);
     dialog_data.conn_to_prev_pool_checkbutton = get_widget_from_builder(dialog_data.builder, "connect-to-prev-button");
-    gtk_widget_set_sensitive(dialog_data.conn_to_prev_pool_checkbutton, !opt_manual_mode);
     dialog_data.save_password_checkbtn = get_widget_from_builder(dialog_data.builder, "save_password_btn");
-    dialog_data.remote_protocol_combobox =get_widget_from_builder(dialog_data.builder, "combobox_remote_protocol");
-    if (!opt_manual_mode) {
-        gtk_widget_destroy(dialog_data.remote_protocol_combobox);
-        dialog_data.remote_protocol_combobox = NULL;
-    }
+    dialog_data.remote_protocol_combobox = get_widget_from_builder(dialog_data.builder, "remote_protocol_combobox");
 
     // spice settings
     dialog_data.client_cursor_visible_checkbutton =
@@ -700,6 +726,9 @@ GtkResponseType remote_viewer_start_settings_dialog(RemoteViewer *p_remote_viewe
         gtk_widget_set_sensitive(dialog_data.btn_get_app_updates, FALSE);
     }
 
+    dialog_data.direct_connect_mode_check_btn = get_widget_from_builder(
+            dialog_data.builder, "direct_connect_mode_check_btn");
+
     // Signals
     g_signal_connect_swapped(dialog_data.window, "delete-event", G_CALLBACK(window_deleted_cb), &dialog_data);
     g_signal_connect(dialog_data.bt_cancel, "clicked", G_CALLBACK(cancel_button_clicked_cb), &dialog_data);
@@ -719,6 +748,9 @@ GtkResponseType remote_viewer_start_settings_dialog(RemoteViewer *p_remote_viewe
                      &dialog_data);
     g_signal_connect(dialog_data.btn_open_doc, "clicked", G_CALLBACK(btn_open_doc_clicked_cb),
                      &dialog_data);
+    dialog_data.on_direct_connect_mode_check_btn_toggled_id =
+            g_signal_connect(dialog_data.direct_connect_mode_check_btn, "toggled",
+            G_CALLBACK(on_direct_connect_mode_check_btn_toggled), &dialog_data);
 
     gulong st_msg_hdle = g_signal_connect(p_remote_viewer->app_updater, "status-msg-changed",
                      G_CALLBACK(on_app_updater_status_msg_changed),&dialog_data);
@@ -732,8 +764,8 @@ GtkResponseType remote_viewer_start_settings_dialog(RemoteViewer *p_remote_viewe
     // show window
     gtk_window_set_transient_for(GTK_WINDOW(dialog_data.window), parent);
     gtk_window_set_position(GTK_WINDOW(dialog_data.window), GTK_WIN_POS_CENTER);
-    //gtk_window_resize(GTK_WINDOW(dialog_data.window),         width,          height);
     gtk_widget_show_all(dialog_data.window);
+    update_gui_according_to_cur_connect_mode(&dialog_data, opt_manual_mode);
 #ifndef  _WIN32
     gtk_widget_hide(dialog_data.windows_updates_url_entry);
 #endif
@@ -758,24 +790,23 @@ GtkResponseType remote_viewer_start_settings_dialog(RemoteViewer *p_remote_viewe
 void fill_p_conn_data_from_ini_file(ConnectSettingsData *p_conn_data)
 {
     // Main settings
-    const gchar *paramToFileGrpoup = get_cur_ini_param_group();
+    const gchar *group_name = get_cur_ini_param_group();
     // domain
-    gchar *domain = read_str_from_ini_file(paramToFileGrpoup, "domain");
+    gchar *domain = read_str_from_ini_file(group_name, "domain");
     update_string_safely(&p_conn_data->domain, domain);
     free_memory_safely(&domain);
     // ip
-    gchar *ip = read_str_from_ini_file(paramToFileGrpoup, "ip");
+    gchar *ip = read_str_from_ini_file(group_name, "ip");
     update_string_safely(&p_conn_data->ip, ip);
     free_memory_safely(&ip);
     // port
-    p_conn_data->port = read_int_from_ini_file(paramToFileGrpoup, "port", 443);
+    p_conn_data->port = read_int_from_ini_file(group_name, "port", 443);
     // ldap
     p_conn_data->is_ldap = read_int_from_ini_file("RemoteViewerConnect", "is_ldap_btn_checked", 0);
     // Connect to prev pool
     p_conn_data->is_connect_to_prev_pool =
             read_int_from_ini_file("RemoteViewerConnect", "is_conn_to_prev_pool_btn_checked", 0);
     // pswd
-    const gchar *group_name = get_cur_ini_param_group();
     p_conn_data->to_save_pswd = read_int_from_ini_file(group_name, "to_save_pswd", 1);
 
     // remote protocol

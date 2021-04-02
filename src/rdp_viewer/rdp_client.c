@@ -195,7 +195,6 @@ void* rdp_client_routine(ExtendedRdpContext *ex_contect)
         return NULL;
 
     ex_contect->is_running = TRUE;
-    ex_contect->is_connecting = TRUE;
 
     int status;
     rdpContext *context = (rdpContext *)ex_contect;
@@ -229,7 +228,6 @@ void* rdp_client_routine(ExtendedRdpContext *ex_contect)
     // clear memory
     free(argv);
     rdp_client_destroy_params_array(rdp_params_dyn_array);
-
     if (status)
         goto end;
 
@@ -244,16 +242,18 @@ void* rdp_client_routine(ExtendedRdpContext *ex_contect)
             break;
 
         g_info("RDP. Connect attempt number: %i", conn_try + 1);
+        ex_contect->is_connecting = TRUE;
         if (!freerdp_connect(instance)) {
             g_info("connection failure");
             g_info("After freerdp_connect(instance))1");
             g_usleep(500000);
+            ex_contect->is_connecting = FALSE;
             continue; // to the next attempt
         }
-        conn_try = 0;
         ex_contect->is_connecting = FALSE;
-        g_info("After freerdp_connect(instance))2");
+        conn_try = 0;
 
+        g_info("After freerdp_connect(instance))2");
         while (!freerdp_shall_disconnect(instance)) {
 
             if (ex_contect->is_abort_demanded)
@@ -291,7 +291,6 @@ void* rdp_client_routine(ExtendedRdpContext *ex_contect)
 end:
     g_info("%s: g_mutex_unlock", (const char *)__func__);
     ex_contect->is_running = FALSE;
-    ex_contect->is_connecting = FALSE;
     return NULL;
 }
 
