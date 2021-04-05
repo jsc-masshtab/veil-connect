@@ -182,18 +182,19 @@ static gboolean vdi_api_session_restart_vdi_ws_client(gpointer data G_GNUC_UNUSE
 }
 
 // Получаем токен
-static gboolean vdi_session_auth_request()
+static gchar *vdi_session_auth_request()
 {
     g_info("%s", (const char *)__func__);
 
     if(vdi_session_static->auth_url == NULL)
-        return FALSE;
+        return NULL;
 
     // create request message
     SoupMessage *msg = soup_message_new("POST", vdi_session_static->auth_url);
     if(msg == NULL) {
-        g_info("%s Не удалось сформировать SoupMessage. Некорректный url?", (const char*)__func__);
-        return FALSE;
+        gchar *text_msg = g_strdup_printf("Не удалось сформировать SoupMessage. %s", vdi_session_static->auth_url);
+        g_info("%s: %s", (const char*)__func__, text_msg);
+        return text_msg;
     }
 
     // set header
@@ -217,9 +218,9 @@ static gboolean vdi_session_auth_request()
     //g_info("msg->response_body->data %s", msg->response_body->data);
 
     if(msg->status_code != OK_RESPONSE) {
+        gchar *reply_msg = g_strdup(msg->reason_phrase);
         g_object_unref(msg);
-        g_info("%s : Unable to get token", (const char *)__func__);
-        return FALSE;
+        return reply_msg;
     }
 
     // extract reply
@@ -238,16 +239,17 @@ static gboolean vdi_session_auth_request()
 
             g_object_unref(msg);
             g_object_unref(parser);
-            return TRUE;
+            return NULL;
         }
         case SERVER_REPLY_TYPE_ERROR:
         case SERVER_REPLY_TYPE_UNKNOWN:
         default: {
             const gchar *message = json_object_get_string_member_safely(reply_json_object, "message");
             g_info("%s : Unable to get token. %s", (const char *)__func__, message);
+            gchar *reply_msg = g_strdup(message ? message : msg->reason_phrase);
             g_object_unref(msg);
             g_object_unref(parser);
-            return FALSE;
+            return reply_msg;
         }
     }
 }
@@ -507,8 +509,10 @@ gchar *vdi_session_api_call(const char *method, const char *uri_string, const gc
         return response_body_str;
 
     // get the token if we dont have it
-    if (vdi_session_static->jwt == NULL)
-        vdi_session_auth_request();
+    if (vdi_session_static->jwt == NULL) {
+        gchar *reply_msg = vdi_session_auth_request();
+        g_free(reply_msg);
+    }
 
     SoupMessage *msg = soup_message_new(method, uri_string);
     if (msg == NULL) // this may happen according to doc
@@ -531,7 +535,8 @@ gchar *vdi_session_api_call(const char *method, const char *uri_string, const gc
 
         // При первой попытке если AUTH_FAIL_RESPONSE, то пробуем обновить токен и повторить
         if (msg->status_code == AUTH_FAIL_RESPONSE && attempt_count == 0) {
-            vdi_session_auth_request();
+            gchar *reply_msg = vdi_session_auth_request();
+            g_free(reply_msg);
             gchar *auth_header = g_strdup_printf("jwt %s", vdi_session_static->jwt);
             soup_message_headers_replace(msg->request_headers, "Authorization", auth_header);
             g_free(auth_header);
@@ -556,13 +561,13 @@ void vdi_session_log_in_task(GTask       *task,
 {
     // get token
     free_memory_safely(&vdi_session_static->jwt);
-    gboolean token_received = vdi_session_auth_request();
+    gchar *reply_msg = vdi_session_auth_request();
 
     // register for licensing
-    if (token_received)
+    if (vdi_session_static->jwt)
         vdi_api_session_register_for_license();
 
-    g_task_return_boolean(task, token_received);
+    g_task_return_pointer(task, reply_msg, NULL); // reply_msg is freed in task callback
 }
 
 void vdi_session_get_vdi_pool_data_task(GTask   *task,

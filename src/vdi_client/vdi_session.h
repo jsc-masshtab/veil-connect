@@ -29,7 +29,6 @@ typedef enum{
     USER_PERMISSION_FOLDERS_REDIR = 2, // 0010
     USER_PERMISSION_SHARED_CLIPBOARD = 4 // 0100
 } UserPermission;
-
 // remote protocol type
 typedef enum{
     VDI_SPICE_PROTOCOL,

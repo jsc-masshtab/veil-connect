@@ -183,19 +183,21 @@ on_vdi_session_log_in_finished(GObject *source_object G_GNUC_UNUSED,
 {
     RemoteViewerConnData *ci = user_data;
 
-    //GError *error = NULL;
-    gboolean token_refreshed = g_task_propagate_boolean(G_TASK(res), NULL); // &error
-    g_info("%s: is_token_refreshed %i", (const char *)__func__, token_refreshed);
+    g_autofree gchar *reply_msg = NULL;
+    reply_msg = g_task_propagate_pointer(G_TASK(res), NULL);
+    g_info("%s: is_token_refreshed %s", (const char *)__func__, reply_msg);
 
     set_auth_dialog_state(AUTH_GUI_DEFAULT_STATE, ci);
 
-    if (token_refreshed) {
+    if (vdi_session_get_token()) {
         ci->dialog_window_response = GTK_RESPONSE_OK;
         set_data_from_gui_in_outer_pointers(ci);
 
         shutdown_loop(ci->loop);
     } else {
-        set_message_to_info_label(GTK_LABEL(ci->message_display_label), "Не удалось авторизоваться");
+        g_autofree gchar *trimmed_err_msg = NULL;
+        trimmed_err_msg = g_strndup(reply_msg, 100);
+        set_message_to_info_label(GTK_LABEL(ci->message_display_label), trimmed_err_msg);
     }
 }
 
