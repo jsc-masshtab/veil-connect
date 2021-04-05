@@ -650,6 +650,7 @@ save_data_to_ini_file(ConnectSettingsDialogData *dialog_data)
                           gtk_entry_get_text(GTK_ENTRY(dialog_data->windows_updates_url_entry)));
 
     opt_manual_mode = gtk_toggle_button_get_active((GtkToggleButton *)dialog_data->direct_connect_mode_check_btn);
+    write_int_to_ini_file("General", "opt_manual_mode", opt_manual_mode);
 }
 
 GtkResponseType remote_viewer_start_settings_dialog(RemoteViewer *p_remote_viewer,
@@ -812,4 +813,6 @@ void fill_p_conn_data_from_ini_file(ConnectSettingsData *p_conn_data)
     // remote protocol
     gint remote_protocol_type = read_int_from_ini_file("General", "cur_remote_protocol_index", VDI_SPICE_PROTOCOL);
     p_conn_data->remote_protocol_type = (VdiVmRemoteProtocol)remote_protocol_type;
+
+    opt_manual_mode = read_int_from_ini_file("General", "opt_manual_mode", 0);
 }
