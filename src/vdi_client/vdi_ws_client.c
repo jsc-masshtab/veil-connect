@@ -225,8 +225,6 @@ void vdi_ws_client_stop(VdiWsClient *vdi_ws_client)
     if (!vdi_ws_client->is_running)
         return;
 
-    vdi_ws_client->is_running = FALSE;
-
     // cancel reconnecting if its active
     if (vdi_ws_client->reconnect_event_source_id)
         g_source_remove(vdi_ws_client->reconnect_event_source_id);
@@ -248,9 +246,10 @@ void vdi_ws_client_stop(VdiWsClient *vdi_ws_client)
     g_object_unref(vdi_ws_client->cancel_job);
     g_object_unref(vdi_ws_client->ws_soup_session);
 
-    g_free(vdi_ws_client->vdi_url);
+    free_memory_safely(&vdi_ws_client->vdi_url);
 
-    memset(vdi_ws_client, 0, sizeof(VdiWsClient));
+    vdi_ws_client->is_running = FALSE;
+    vdi_ws_client->reconnect_if_conn_lost = FALSE;
     g_info("%s", (const char *)__func__);
 }
 
