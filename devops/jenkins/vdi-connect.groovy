@@ -175,7 +175,7 @@ pipeline {
                             sed -i -e "s:%%VER%%:${VERSION}~${DISTR}:g" ${WORKSPACE}/devops/deb-${DISTR}/root/DEBIAN/control
                             chmod -R 777 ${WORKSPACE}/devops/deb-${DISTR}/root
                             chmod -R 755 ${WORKSPACE}/devops/deb-${DISTR}/root/DEBIAN
-                            chown -R root:root ${WORKSPACE}/devops/deb-${DISTR}/rootveil-connect/
+                            chown -R root:root ${WORKSPACE}/devops/deb-${DISTR}/root
                             cd ${WORKSPACE}/devops/deb-${DISTR}
                             dpkg-deb -b root .
                         '''
@@ -774,9 +774,9 @@ pipeline {
                     }
                     steps {
                         bat script: '''
-                            ssh uploader@mothership.bazalt.team mkdir -p /local_storage/veil-connect/windows/%VERSION%
-                            scp veil-connect-installer.exe uploader@mothership.bazalt.team:/local_storage/veil-connect/windows/%VERSION%/veil-connect_%VERSION%-x32-installer.exe
-                            ssh uploader@192.168.10.144 "cd /local_storage/veil-connect/windows/; ln -sfT %VERSION% latest"
+                            ssh uploader@mothership.bazalt.team mkdir -p /local_storage/veil-connect/%VERSION%/windows/
+                            scp veil-connect-installer.exe uploader@mothership.bazalt.team:/local_storage/veil-connect/%VERSION%/windows/veil-connect_%VERSION%-x32-installer.exe
+                            rem ssh uploader@192.168.10.144 "cd /local_storage/veil-connect/windows/; ln -sfT %VERSION% latest"
                         '''
                     }
                 }
@@ -791,9 +791,9 @@ pipeline {
                     }
                     steps {
                         bat script: '''
-                            ssh uploader@mothership.bazalt.team mkdir -p /local_storage/veil-connect/windows/%VERSION%
-                            scp veil-connect-installer.exe uploader@mothership.bazalt.team:/local_storage/veil-connect/windows/%VERSION%/veil-connect_%VERSION%-x64-installer.exe
-                            ssh uploader@192.168.10.144 "cd /local_storage/veil-connect/windows/; ln -sfT %VERSION% latest"
+                            ssh uploader@mothership.bazalt.team mkdir -p /local_storage/veil-connect/%VERSION%/windows/
+                            scp veil-connect-installer.exe uploader@mothership.bazalt.team:/local_storage/veil-connect/%VERSION%/windows/veil-connect_%VERSION%-x64-installer.exe
+                            rem ssh uploader@192.168.10.144 "cd /local_storage/veil-connect/windows/; ln -sfT %VERSION% latest"
                         '''
                     }
                 }
