@@ -818,6 +818,8 @@ pipeline {
             steps {
                 sh script: '''
                     scp ${WORKSPACE}/devops/veil-connect-linux-installer.sh uploader@192.168.10.144:/local_storage/veil-connect/${VERSION}/linux/
+                    ssh uploader@192.168.10.144 "cd /local_storage/veil-connect/; ln -sfT ${VERSION} latest"
+
                 '''
             }
         }
