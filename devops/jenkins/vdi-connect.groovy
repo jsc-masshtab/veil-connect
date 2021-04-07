@@ -175,7 +175,7 @@ pipeline {
                             sed -i -e "s:%%VER%%:${VERSION}~${DISTR}:g" ${WORKSPACE}/devops/deb-${DISTR}/root/DEBIAN/control
                             chmod -R 777 ${WORKSPACE}/devops/deb-${DISTR}/root
                             chmod -R 755 ${WORKSPACE}/devops/deb-${DISTR}/root/DEBIAN
-                            chown -R root:root ${WORKSPACE}/devops/deb-${DISTR}/root
+                            chown -R root:root ${WORKSPACE}/devops/deb-${DISTR}/rootveil-connect/
                             cd ${WORKSPACE}/devops/deb-${DISTR}
                             dpkg-deb -b root .
                         '''
@@ -714,12 +714,12 @@ pipeline {
                     }
                     steps {
                         sh script: '''
-                            ssh uploader@192.168.10.144 "mkdir -p /local_storage/veil-connect/linux/yum/${DISTR}/x86_64/Packages"
-                            scp ${WORKSPACE}/rpmbuild-${DISTR}/RPMS/x86_64/*.rpm uploader@192.168.10.144:/local_storage/veil-connect/linux/yum/${DISTR}/x86_64/Packages/
+                            ssh uploader@192.168.10.144 "mkdir -p /local_storage/veil-connect/${VERSION}/linux/yum/${DISTR}/x86_64/Packages"
+                            scp ${WORKSPACE}/rpmbuild-${DISTR}/RPMS/x86_64/*.rpm uploader@192.168.10.144:/local_storage/veil-connect/${VERSION}/linux/yum/${DISTR}/x86_64/Packages/
 
                             ssh uploader@192.168.10.144 "
-                              rpm --resign /local_storage/veil-connect/linux/yum/${DISTR}/x86_64/Packages/*.rpm
-                              createrepo --update /local_storage/veil-connect/linux/yum/${DISTR}/x86_64
+                              rpm --resign /local_storage/veil-connect/${VERSION}/linux/yum/${DISTR}/x86_64/Packages/*.rpm
+                              createrepo --update /local_storage/veil-connect/${VERSION}/linux/yum/${DISTR}/x86_64
                             "
                         '''
                     }
@@ -735,12 +735,12 @@ pipeline {
                     }
                     steps {
                         sh script: '''
-                            ssh uploader@192.168.10.144 "mkdir -p /local_storage/veil-connect/linux/yum/${DISTR}/x86_64/Packages"
-                            scp ${WORKSPACE}/rpmbuild-${DISTR}/RPMS/x86_64/*.rpm uploader@192.168.10.144:/local_storage/veil-connect/linux/yum/${DISTR}/x86_64/Packages/
+                            ssh uploader@192.168.10.144 "mkdir -p /local_storage/veil-connect/${VERSION}/linux/yum/${DISTR}/x86_64/Packages"
+                            scp ${WORKSPACE}/rpmbuild-${DISTR}/RPMS/x86_64/*.rpm uploader@192.168.10.144:/local_storage/veil-connect/${VERSION}/linux/yum/${DISTR}/x86_64/Packages/
 
                             ssh uploader@192.168.10.144 "
-                              rpm --resign /local_storage/veil-connect/linux/yum/${DISTR}/x86_64/Packages/*.rpm
-                              createrepo --update /local_storage/veil-connect/linux/yum/${DISTR}/x86_64
+                              rpm --resign /local_storage/veil-connect/${VERSION}/linux/yum/${DISTR}/x86_64/Packages/*.rpm
+                              createrepo --update /local_storage/veil-connect/${VERSION}/linux/yum/${DISTR}/x86_64
                             "
                         '''
                     }
@@ -757,9 +757,9 @@ pipeline {
                     }
                     steps {
                         sh script: '''
-                            ssh uploader@192.168.10.144 "mkdir -p /local_storage/veil-connect/linux/apt-rpm/${ARCH}/RPMS.${DISTR}"
-                            scp ${WORKSPACE}/rpmbuild-${DISTR}/RPMS/${ARCH}/${PRJNAME}-${VERSION}*.rpm uploader@192.168.10.144:/local_storage/veil-connect/linux/apt-rpm/${ARCH}/RPMS.${DISTR}/
-                            ssh uploader@192.168.10.144 "ln -sf /local_storage/veil-connect/linux/apt-rpm/${ARCH}/RPMS.${DISTR}/${PRJNAME}-${VERSION}*.rpm /local_storage/veil-connect/linux/apt-rpm/${ARCH}/RPMS.${DISTR}/${PRJNAME}-latest.rpm"
+                            ssh uploader@192.168.10.144 "mkdir -p /local_storage/veil-connect/${VERSION}/linux/apt-rpm/${ARCH}/RPMS.${DISTR}"
+                            scp ${WORKSPACE}/rpmbuild-${DISTR}/RPMS/${ARCH}/${PRJNAME}-${VERSION}*.rpm uploader@192.168.10.144:/local_storage/veil-connect/${VERSION}/linux/apt-rpm/${ARCH}/RPMS.${DISTR}/
+                            ssh uploader@192.168.10.144 "ln -sf /local_storage/veil-connect/${VERSION}/linux/apt-rpm/${ARCH}/RPMS.${DISTR}/${PRJNAME}-${VERSION}*.rpm /local_storage/veil-connect/${VERSION}/linux/apt-rpm/${ARCH}/RPMS.${DISTR}/${PRJNAME}-latest.rpm"
                         '''
                     }
                 }
@@ -817,7 +817,7 @@ pipeline {
         stage ('deploy universal linux installer') {
             steps {
                 sh script: '''
-                    scp ${WORKSPACE}/devops/veil-connect-linux-installer.sh uploader@192.168.10.144:/local_storage/veil-connect/linux/
+                    scp ${WORKSPACE}/devops/veil-connect-linux-installer.sh uploader@192.168.10.144:/local_storage/veil-connect/${VERSION}/linux/
                 '''
             }
         }
