@@ -108,7 +108,6 @@ static void virt_viewer_app_update_pretty_address(VirtViewerApp *self);
 static void virt_viewer_app_set_fullscreen(VirtViewerApp *self, gboolean fullscreen);
 static void virt_viewer_app_update_menu_displays(VirtViewerApp *self);
 static void virt_viewer_update_smartcard_accels(VirtViewerApp *self);
-static void virt_viewer_app_add_option_entries(VirtViewerApp *self, GOptionContext *context, GOptionGroup *group);
 
 
 struct _VirtViewerAppPrivate {
@@ -154,7 +153,6 @@ struct _VirtViewerAppPrivate {
     char *username; // login
 
     gint focused;
-    GKeyFile *config;
 
     guint insert_smartcard_accel_key;
     GdkModifierType insert_smartcard_accel_mods;
@@ -254,47 +252,12 @@ virt_viewer_app_simple_message_dialog(VirtViewerApp *self,
 }
 
 static void
-virt_viewer_app_save_config(VirtViewerApp *self)
-{
-    VirtViewerAppPrivate *priv = self->priv;
-    GError *error = NULL;
-    gchar *dir, *data;
-
-    dir = g_path_get_dirname(get_ini_file_name());
-    if (g_mkdir_with_parents(dir, S_IRWXU) == -1)
-        g_warning("failed to create config directory");
-    g_free(dir);
-
-    if (priv->uuid && priv->guest_name && g_key_file_has_group(priv->config, priv->uuid)) {
-        // if there's no comment for this uuid settings group, add a comment
-        // with the vm name so user can make sense of it later.
-        gchar *comment = g_key_file_get_comment(priv->config, priv->uuid, NULL, &error);
-        if (error) {
-            g_debug("Unable to get comment from key file: %s", error->message);
-            g_clear_error(&error);
-        } else {
-            if (!comment || *comment == '\0')
-                g_key_file_set_comment(priv->config, priv->uuid, NULL, priv->guest_name, NULL);
-        }
-        g_free(comment);
-    }
-
-    if ((data = g_key_file_to_data(priv->config, NULL, &error)) == NULL ||
-        !g_file_set_contents(get_ini_file_name(), data, -1, &error)) {
-        g_warning("Couldn't save configuration: %s", error->message);
-        g_clear_error(&error);
-    }
-    g_free(data);
-}
-
-static void
 virt_viewer_app_quit(VirtViewerApp *self)
 {
     g_return_if_fail(VIRT_VIEWER_IS_APP(self));
     g_return_if_fail(!self->priv->kiosk);
     VirtViewerAppPrivate *priv = self->priv;
 
-    virt_viewer_app_save_config(self);
     virt_viewer_app_hide_and_deactivate(self);
     priv->quitting = TRUE;
     priv->next_app_state = APP_STATE_EXITING;
@@ -387,17 +350,24 @@ virt_viewer_app_get_monitor_mapping_for_section(VirtViewerApp *self, const gchar
     gchar **mappings = NULL;
     GHashTable *mapping = NULL;
 
-    mappings = g_key_file_get_string_list(self->priv->config,
-                                          section, "monitor-mapping", &nmappings, &error);
-    if (error) {
-        if (error->code != G_KEY_FILE_ERROR_GROUP_NOT_FOUND
-            && error->code != G_KEY_FILE_ERROR_KEY_NOT_FOUND)
-            g_warning("Error reading monitor assignments for %s: %s", section, error->message);
-        g_clear_error(&error);
-    } else {
-        mapping = virt_viewer_parse_monitor_mappings(mappings, nmappings, get_n_client_monitors());
+    GKeyFile *keyfile = g_key_file_new();
+    if(g_key_file_load_from_file(keyfile, get_ini_file_name(),
+                              G_KEY_FILE_KEEP_COMMENTS |
+                              G_KEY_FILE_KEEP_TRANSLATIONS,
+                              NULL)) {
+        mappings = g_key_file_get_string_list(keyfile, section, "monitor-mapping", &nmappings, &error);
+
+        if (error) {
+            if (error->code != G_KEY_FILE_ERROR_GROUP_NOT_FOUND
+                && error->code != G_KEY_FILE_ERROR_KEY_NOT_FOUND)
+                g_warning("Error reading monitor assignments for %s: %s", section, error->message);
+            g_clear_error(&error);
+        } else {
+            mapping = virt_viewer_parse_monitor_mappings(mappings, nmappings, get_n_client_monitors());
+        }
+        g_strfreev(mappings);
     }
-    g_strfreev(mappings);
+    g_key_file_free(keyfile);
 
     return mapping;
 }
@@ -459,8 +429,7 @@ virt_viewer_app_maybe_quit(VirtViewerApp *self, VirtViewerWindow *window)
         return;
     }
 
-    gboolean ask = g_key_file_get_boolean(self->priv->config,
-                                          "virt-viewer", "ask-quit", &error);
+    gboolean ask = read_int_from_ini_file("General", "ask-quit", 0);
     if (error) {
         ask = TRUE;
         g_clear_error(&error);
@@ -483,8 +452,7 @@ virt_viewer_app_maybe_quit(VirtViewerApp *self, VirtViewerWindow *window)
 
         gboolean dont_ask = FALSE;
         g_object_get(check, "active", &dont_ask, NULL);
-        g_key_file_set_boolean(self->priv->config,
-                    "virt-viewer", "ask-quit", !dont_ask);
+        write_int_to_ini_file("General", "ask-quit", dont_ask);
 
         gtk_widget_destroy(dialog);
         switch (result) {
@@ -1758,7 +1726,6 @@ virt_viewer_app_dispose (GObject *object)
     priv->title = NULL;
     g_free(priv->uuid);
     priv->uuid = NULL;
-    g_clear_pointer(&priv->config, g_key_file_free);
     g_clear_pointer(&priv->initial_display_map, g_hash_table_unref);
 
     virt_viewer_app_free_connect_info(self);
@@ -1820,15 +1787,6 @@ virt_viewer_app_init(VirtViewerApp *self)
         gtk_window_set_default_icon(gdkPixbuf);
 
     self->priv->displays = g_hash_table_new_full(g_direct_hash, g_direct_equal, NULL, g_object_unref);
-    self->priv->config = g_key_file_new();
-
-    g_key_file_load_from_file(self->priv->config, get_ini_file_name(),
-                    G_KEY_FILE_KEEP_COMMENTS|G_KEY_FILE_KEEP_TRANSLATIONS, &error);
-
-    if (g_error_matches(error, G_FILE_ERROR, G_FILE_ERROR_NOENT))
-        g_debug("No configuration file %s", get_ini_file_name());
-    else if (error)
-        g_warning("Couldn't load configuration: %s", error->message);
 
     g_clear_error(&error);
     g_clear_error(&error2);
@@ -1940,57 +1898,6 @@ virt_viewer_app_on_application_startup(GApplication *app)
     }
 }
 
-static gboolean
-virt_viewer_app_local_command_line (GApplication   *gapp,
-                                    gchar        ***args,
-                                    int            *status)
-{
-    VirtViewerApp *self = VIRT_VIEWER_APP(gapp);
-    gboolean ret = FALSE;
-    gint argc = g_strv_length(*args);
-    GError *error = NULL;
-    GOptionContext *context = g_option_context_new(NULL);
-    GOptionGroup *group = g_option_group_new("virt-viewer", NULL, NULL, gapp, NULL);
-
-    *status = 0;
-    g_option_context_set_main_group(context, group);
-    VIRT_VIEWER_APP_GET_CLASS(self)->add_option_entries(self, context, group);
-
-    g_option_context_add_group(context, gtk_get_option_group(FALSE));
-
-#ifdef HAVE_GTK_VNC
-    g_option_context_add_group(context, vnc_display_get_option_group());
-#endif
-
-#ifdef HAVE_SPICE_GTK
-    g_option_context_add_group(context, spice_get_option_group());
-#endif
-
-    if (!g_option_context_parse(context, &argc, args, &error)) {
-        if (error != NULL) {
-            g_printerr(_("%s\n"), error->message);
-            g_error_free(error);
-        }
-
-        *status = 1;
-        ret = TRUE;
-        goto end;
-    }
-
-    if (opt_version) {
-        g_print(_("%s version %s"), g_get_prgname(), VERSION BUILDID);
-#ifdef REMOTE_VIEWER_OS_ID
-        g_print(" (OS ID: %s)", REMOTE_VIEWER_OS_ID);
-#endif
-        g_print("\n");
-        ret = TRUE;
-    }
-
-end:
-    g_option_context_free(context);
-    return ret;
-}
-
 static void
 virt_viewer_app_class_init (VirtViewerAppClass *klass)
 {
@@ -2003,7 +1910,6 @@ virt_viewer_app_class_init (VirtViewerAppClass *klass)
     object_class->set_property = virt_viewer_app_set_property;
     object_class->dispose = virt_viewer_app_dispose;
 
-    g_app_class->local_command_line = virt_viewer_app_local_command_line;
     g_app_class->startup = virt_viewer_app_on_application_startup;
     g_app_class->command_line = NULL; /* inhibit GApplication default handler */
 
@@ -2012,7 +1918,6 @@ virt_viewer_app_class_init (VirtViewerAppClass *klass)
     klass->activate = virt_viewer_app_default_activate;
     klass->deactivated = virt_viewer_app_default_deactivated;
     klass->open_connection = virt_viewer_app_default_open_connection;
-    klass->add_option_entries = virt_viewer_app_add_option_entries;
 
     g_object_class_install_property(object_class,
                                     PROP_VERBOSE,
@@ -2652,54 +2557,6 @@ virt_viewer_app_show_preferences(VirtViewerApp *self, GtkWidget *parent)
                                  GTK_WINDOW(parent));
 
     gtk_window_present(GTK_WINDOW(preferences));
-}
-/*
-static gboolean
-option_kiosk_quit(G_GNUC_UNUSED const gchar *option_name,
-                  const gchar *value,
-                  G_GNUC_UNUSED gpointer data, GError **error)
-{
-    if (g_str_equal(value, "never")) {
-        opt_kiosk_quit = FALSE;
-        return TRUE;
-    }
-    if (g_str_equal(value, "on-disconnect")) {
-        opt_kiosk_quit = TRUE;
-        return TRUE;
-    }
-
-    g_set_error(error, G_OPTION_ERROR, G_OPTION_ERROR_FAILED, _("Invalid kiosk-quit argument: %s"), value);
-    return FALSE;
-}*/
-
-static void
-virt_viewer_app_add_option_entries(G_GNUC_UNUSED VirtViewerApp *self,
-                                   G_GNUC_UNUSED GOptionContext *context,
-                                   GOptionGroup *group)
-{
-    static const GOptionEntry options [] = {
-        /*{ "version", 'V', 0, G_OPTION_ARG_NONE, &opt_version,
-          N_("Display version information"), NULL },*/
-        { "manual mode", 'm', 0, G_OPTION_ARG_NONE, &opt_manual_mode,
-          N_("Manual mode. Direct connection to VM"), NULL },
-//        { "zoom", 'z', 0, G_OPTION_ARG_INT, &opt_zoom,
-//          N_("Zoom level of window, in percentage"), "ZOOM" },
-//        { "full-screen", 'f', 0, G_OPTION_ARG_NONE, &opt_fullscreen,
-//          N_("Open in full screen mode (adjusts guest resolution to fit the client)"), NULL },
-//        { "hotkeys", 'H', 0, G_OPTION_ARG_STRING, &opt_hotkeys,
-//          N_("Customise hotkeys"), NULL },
-//        { "kiosk", 'k', 0, G_OPTION_ARG_NONE, &opt_kiosk,
-//          N_("Enable kiosk mode"), NULL },
-//        { "kiosk-quit", '\0', 0, G_OPTION_ARG_CALLBACK, option_kiosk_quit,
-//          N_("Quit on given condition in kiosk mode"), N_("<never|on-disconnect>") },
-        { "verbose", 'v', 0, G_OPTION_ARG_NONE, &opt_verbose,
-          N_("Display verbose information"), NULL },
-//        { "debug", '\0', 0, G_OPTION_ARG_NONE, &opt_debug,
-//          N_("Display debugging information"), NULL },
-        { NULL, 0, 0, G_OPTION_ARG_NONE, NULL, NULL, NULL }
-    };
-
-    g_option_group_add_entries(group, options);
 }
 
 // connection polling

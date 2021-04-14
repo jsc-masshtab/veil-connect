@@ -76,7 +76,7 @@ static void* net_speedometer_ping_job_linux(NetSpeedometer *self)
                         self->min_rtt = (float) atof(ping_stats_array[0]);
                         self->avg_rtt = (float) atof(ping_stats_array[1]);
                         self->max_rtt = (float) atof(ping_stats_array[2]);
-                        g_info("rtt min/avg/max parsed: %s", ping_data_str_with_commas);
+                        //g_info("rtt min/avg/max parsed: %s", ping_data_str_with_commas);
                         //self->is_ip_reachable = TRUE;
                     }
                     g_strfreev(ping_stats_array);
@@ -102,7 +102,7 @@ static void* net_speedometer_ping_job_linux(NetSpeedometer *self)
                     gchar **ping_loss_array = g_strsplit(ping_loss_data_str, "%", 2);
                     if (g_strv_length(ping_loss_array) > 1) {
                         self->loss_percentage = atoi(ping_loss_array[0]);
-                        g_info("Cur loss: %i", self->loss_percentage);
+                        //g_info("Cur loss: %i", self->loss_percentage);
                     }
 
                     g_strfreev(ping_loss_array);

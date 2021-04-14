@@ -53,20 +53,12 @@ enum RemoteViewerProperties {
 #ifdef HAVE_OVIRT
 #endif
 
-static gboolean remote_viewer_start(VirtViewerApp *self, GError **error, RemoteViewerState remoteViewerState);
+static gboolean remote_viewer_start(VirtViewerApp *app, GError **error, RemoteViewerState remoteViewerState);
 #ifdef HAVE_SPICE_GTK
-static gboolean remote_viewer_activate(VirtViewerApp *self, GError **error);
+static gboolean remote_viewer_activate(VirtViewerApp *app, GError **error);
 static void remote_viewer_window_added(GtkApplication *app, GtkWindow *w);
 #endif
 
-#ifdef HAVE_SPICE_CONTROLLER
-static void foreign_menu_title_changed(SpiceCtrlForeignMenu *menu, GParamSpec *pspec, RemoteViewer *self);
-#endif
-
-
-static gchar **opt_args = NULL;
-static char *opt_title = NULL;
-static gboolean opt_controller = FALSE;
 
 static void
 remote_viewer_dispose(GObject *object)
@@ -98,87 +90,44 @@ remote_viewer_deactivated(VirtViewerApp *app, gboolean connect_error)
     virt_viewer_app_set_hide_windows_on_disconnect(app, TRUE);
 }
 
-static void
-remote_viewer_add_option_entries(VirtViewerApp *self, GOptionContext *context, GOptionGroup *group)
-{
-    static const GOptionEntry options[] = {
-//        { "title", 't', 0, G_OPTION_ARG_STRING, &opt_title,
-//          N_("Set window title"), NULL },
-//#ifdef HAVE_SPICE_GTK
-//        { "spice-controller", '\0', 0, G_OPTION_ARG_NONE, &opt_controller,
-//          N_("Open connection using Spice controller communication"), NULL },
-//#endif
-        { G_OPTION_REMAINING, '\0', 0, G_OPTION_ARG_STRING_ARRAY, &opt_args,
-          NULL, "URI|VV-FILE" },
-        { NULL, 0, 0, G_OPTION_ARG_NONE, NULL, NULL, NULL }
-    };
-
-    VIRT_VIEWER_APP_CLASS(remote_viewer_parent_class)->add_option_entries(self, context, group);
-    g_option_context_set_summary(context, _("Thin client. Based on virt-viewer and freerdp"));
-    g_option_group_add_entries(group, options);
-
-#ifdef HAVE_OVIRT
-    g_option_context_add_group (context, ovirt_get_option_group ());
-#endif
-}
-
 static gboolean
 remote_viewer_local_command_line (GApplication   *gapp,
                                   gchar        ***args,
                                   int            *status)
 {
     gboolean ret = FALSE;
-    VirtViewerApp *app = VIRT_VIEWER_APP(gapp);
-    RemoteViewer *self = REMOTE_VIEWER(app);
+    gint argc = g_strv_length(*args);
+    GError *error = NULL;
+    GOptionContext *context = g_option_context_new(NULL);
+    GOptionGroup *group = g_option_group_new("virt-viewer", NULL, NULL, gapp, NULL);
 
-    ret = G_APPLICATION_CLASS(remote_viewer_parent_class)->local_command_line(gapp, args, status);
-    if (ret)
-        goto end;
+    *status = 0;
+    g_option_context_set_main_group(context, group);
 
-    if (!opt_args) {
-        self->priv->open_recent_dialog = TRUE;
-    } else {
-        if (g_strv_length(opt_args) > 1) {
-            g_printerr(_("\nError: can't handle multiple URIs\n\n"));
-            ret = TRUE;
-            *status = 1;
-            goto end;
+    g_option_context_add_group(context, gtk_get_option_group(FALSE));
+
+#ifdef HAVE_GTK_VNC
+    g_option_context_add_group(context, vnc_display_get_option_group());
+#endif
+
+#ifdef HAVE_SPICE_GTK
+    g_option_context_add_group(context, spice_get_option_group());
+#endif
+
+    if (!g_option_context_parse(context, &argc, args, &error)) {
+        if (error != NULL) {
+            g_printerr(_("%s\n"), error->message);
+            g_error_free(error);
         }
 
-        g_object_set(app, "guri", opt_args[0], NULL);
+        *status = 1;
+        ret = TRUE;
+        goto end;
     }
 
-    if (opt_title && !opt_controller)
-        g_object_set(app, "title", opt_title, NULL);
-
-end:
-    if (ret && *status)
-        g_printerr(_("Run '%s --help' to see a full list of available command line options\n"), g_get_prgname());
-
-    g_strfreev(opt_args);
+    end:
+    g_option_context_free(context);
     return ret;
-}
-
-static void
-remote_viewer_get_property(GObject *object, guint property_id,
-                           GValue *value G_GNUC_UNUSED,
-                           GParamSpec *pspec)
-{
-#ifdef HAVE_OVIRT
-    RemoteViewer *self = REMOTE_VIEWER(object);
-    RemoteViewerPrivate *priv = self->priv;
-#endif
-
-    switch (property_id) {
-#ifdef HAVE_OVIRT
-    case PROP_OVIRT_FOREIGN_MENU:
-        g_value_set_object(value, priv->ovirt_foreign_menu);
-        break;
-#endif
-
-    default:
-        G_OBJECT_WARN_INVALID_PROPERTY_ID (object, property_id, pspec);
-    }
 }
 
 static void
@@ -191,7 +140,6 @@ remote_viewer_class_init(RemoteViewerClass *klass)
 
     g_type_class_add_private (klass, sizeof (RemoteViewerPrivate));
 
-    object_class->get_property = remote_viewer_get_property;
     object_class->dispose = remote_viewer_dispose;
     object_class->finalize = remote_viewer_finalize;
 
@@ -199,7 +147,6 @@ remote_viewer_class_init(RemoteViewerClass *klass)
 
     app_class->start = remote_viewer_start;
     app_class->deactivated = remote_viewer_deactivated;
-    app_class->add_option_entries = remote_viewer_add_option_entries;
 #ifdef HAVE_SPICE_GTK
     app_class->activate = remote_viewer_activate;
     gtk_app_class->window_added = remote_viewer_window_added;
