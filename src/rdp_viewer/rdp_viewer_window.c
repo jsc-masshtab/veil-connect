@@ -355,6 +355,14 @@ rdp_viewer_window_menu_switch_off(GtkWidget *menu G_GNUC_UNUSED, gpointer userda
         return;
 
     rdp_viewer_window_stop(rdp_window_data, APP_STATE_VDI_DIALOG);
+
+    //UINT64 inBytes = 0;
+    //UINT64 outBytes = 0;
+    //UINT64 inPackets = 0;
+    //UINT64 outPackets = 0;
+    //freerdp_get_stats(rdp_window_data->ex_rdp_context->context.rdp, &inBytes, &outBytes, &inPackets, &outPackets);
+    //g_info("STATs: inBytes  %i outBytes  %i  inPackets  %i  outPackets  %i",
+    //       inBytes, outBytes, inPackets, outPackets);
 }
 
 static void

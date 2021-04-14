@@ -49,10 +49,6 @@
 #define TAG CLIENT_TAG(PROGRAMM_NAME)
 #define CONN_TRY_NUMBER 2
 
-
-static DWORD WINAPI rdp_client_thread_proc(ExtendedRdpContext *ex);
-
-
 static void add_rdp_param(GArray *rdp_params_dyn_array, gchar *rdp_param)
 {
     g_array_append_val(rdp_params_dyn_array, rdp_param);
@@ -91,8 +87,6 @@ static GArray * rdp_client_create_params_array(ExtendedRdpContext* ex)
     add_rdp_param(rdp_params_dyn_array, g_strdup("/smartcard"));
     add_rdp_param(rdp_params_dyn_array, g_strdup("+fonts"));
     add_rdp_param(rdp_params_dyn_array, g_strdup("/relax-order-checks"));
-    add_rdp_param(rdp_params_dyn_array, g_strdup("+auto-reconnect"));
-    add_rdp_param(rdp_params_dyn_array, g_strdup("/auto-reconnect-max-retries:3"));
     if (!vdi_session_is_shared_clipboard_permitted())
         add_rdp_param(rdp_params_dyn_array, g_strdup("-clipboard"));
 #ifdef __linux__

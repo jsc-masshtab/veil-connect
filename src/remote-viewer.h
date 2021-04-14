@@ -14,6 +14,7 @@
 #include "app_updater.h"
 #include "vdi_manager.h"
 #include "messenger.h"
+#include "net_speedometer.h"
 
 G_BEGIN_DECLS
 
@@ -31,8 +32,8 @@ typedef struct {
     RemoteViewerPrivate *priv;
     AppUpdater *app_updater;
     VdiManager *vdi_manager;
-
     VeilMessenger *veil_messenger;
+    NetSpeedometer *net_speedometer;
 
 } RemoteViewer;
 

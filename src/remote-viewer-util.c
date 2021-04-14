@@ -775,8 +775,12 @@ size_t strlen_safely(const gchar *str)
 void update_string_safely(gchar **string_ptr, const gchar *new_string)
 {
     free_memory_safely(string_ptr);
-    if (string_ptr && new_string)
-        *string_ptr = g_strdup(new_string);
+    if (string_ptr) {
+        if (new_string)
+            *string_ptr = g_strdup(new_string);
+        else
+            *string_ptr = NULL;
+    }
 }
 
 const gchar* determine_http_protocol_by_port(int port)

@@ -30,7 +30,7 @@ static void veil_messenger_finalize(GObject *object)
     ( *parent_class->finalize )( object );
 }
 
-static void veil_messenger_class_init( VeilMessengerClass *klass )
+static void veil_messenger_class_init(VeilMessengerClass *klass )
 {
     GObjectClass *gobject_class = G_OBJECT_CLASS(klass);
     gobject_class->finalize = veil_messenger_finalize;

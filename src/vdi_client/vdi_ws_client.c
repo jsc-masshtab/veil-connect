@@ -321,36 +321,69 @@ void vdi_ws_client_send_user_gui(VdiWsClient *ws_vdi_client)
                             "}");
     vdi_ws_client_send_text(ws_vdi_client, tk_data);
 }
-/*
-void vdi_ws_client_send_text_msg(VdiWsClient *ws_vdi_client, const gchar *text_msg)
+
+void vdi_ws_client_send_rdp_network_stats(VdiWsClient *ws_vdi_client, guint64 rdp_read_speed, guint64 rdp_write_speed,
+                                          float min_rtt, float avg_rtt, float max_rtt, int loss_percentage)
 {
     if (!ws_vdi_client->ws_conn)
         return;
 
-    // Generate
-    JsonBuilder *builder = json_builder_new();
-    json_builder_begin_object(builder);
+    g_autofree gchar *tk_data = NULL;
+    tk_data = g_strdup_printf("{"
+                              "\"msg_type\": \"UPDATED\","
+                              "\"event\": \"network_stats\","
+                              "\"connection_type\": \"RDP\","
 
-    json_builder_set_member_name(builder, "msg_type");
-    json_builder_add_string_value(builder, "text_msg");
+                              "\"read_speed\": %lu,"
+                              "\"write_speed\": %lu,"
 
-    json_builder_set_member_name(builder, "message");
-    json_builder_add_string_value(builder, text_msg);
+                              "\"min_rtt\": %i,"
+                              "\"avg_rtt\": %i,"
+                              "\"max_rtt\": %i,"
+                              "\"loss_percentage\": %i"
+                              "}", rdp_read_speed, rdp_write_speed,
+                              (int)min_rtt, (int)avg_rtt, (int)max_rtt, loss_percentage);
 
-    json_builder_end_object (builder);
-
-    JsonGenerator *gen = json_generator_new();
-    JsonNode * root = json_builder_get_root(builder);
-    json_generator_set_root(gen, root);
-    gchar *tk_data = json_generator_to_data(gen, NULL);
-    g_info("%s: %s", (const char *)__func__, tk_data);
-
-    // Send
     vdi_ws_client_send_text(ws_vdi_client, tk_data);
+}
 
-    // Free
-    g_free(tk_data);
-    json_node_free(root);
-    g_object_unref(gen);
-    g_object_unref(builder);
-}*/
+void vdi_ws_client_send_spice_network_stats(VdiWsClient *ws_vdi_client,
+                                            SpiceReadBytes *spice_speeds, gulong total_read_speed,
+                                            float min_rtt, float avg_rtt, float max_rtt, int loss_percentage)
+{
+    if (!ws_vdi_client->ws_conn)
+        return;
+
+    g_autofree gchar *tk_data = NULL;
+    tk_data = g_strdup_printf("{"
+                              "\"msg_type\": \"UPDATED\","
+                              "\"event\": \"network_stats\","
+                              "\"connection_type\": \"SPICE\","
+
+                              "\"inputs\": %lu,"
+                              "\"webdav\": %lu,"
+                              "\"cursor\": %lu,"
+                              "\"display\": %lu,"
+                              "\"record\": %lu,"
+                              "\"playback\": %lu,"
+                              "\"main\": %lu,"
+
+                              "\"total\": %lu,"
+
+                              "\"min_rtt\": %i,"
+                              "\"avg_rtt\": %i,"
+                              "\"max_rtt\": %i,"
+                              "\"loss_percentage\": %i"
+                              "}",
+                              spice_speeds->bytes_inputs,
+                              spice_speeds->bytes_webdav,
+                              spice_speeds->bytes_cursor,
+                              spice_speeds->bytes_display,
+                              spice_speeds->bytes_record,
+                              spice_speeds->bytes_playback,
+                              spice_speeds->bytes_main,
+                              total_read_speed,
+                              (int)min_rtt, (int)avg_rtt, (int)max_rtt, loss_percentage);
+
+    vdi_ws_client_send_text(ws_vdi_client, tk_data);
+}

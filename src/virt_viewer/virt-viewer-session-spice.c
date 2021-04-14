@@ -1188,6 +1188,44 @@ void virt_viewer_session_spice_enable_auto_clipboard(VirtViewerSessionSpice *sel
     g_object_set(self->priv->gtk_session, "auto-clipboard", enabled, NULL);
 }
 
+void virt_viewer_session_spice_get_stats(VirtViewerSessionSpice *self, SpiceReadBytes *spice_read_bytes)
+{
+    SpiceSession *session = self->priv->session;
+
+    GList *iter, *list = spice_session_get_channels(session);
+    gulong total_read_bytes;
+    gint  channel_type;
+
+    for (iter = list ; iter ; iter = iter->next) {
+        g_object_get(iter->data,
+                     "total-read-bytes", &total_read_bytes,
+                     "channel-type", &channel_type,
+                     NULL);
+
+        //g_info("SPICE STATS: %i   %s: %lu", channel_type,
+        //       spice_channel_type_to_string(channel_type),
+        //       total_read_bytes);
+
+        // Каналов одного типа может быть больше одного, поэтому суммируем (+=)
+        if (channel_type == SPICE_CHANNEL_INPUTS)
+            spice_read_bytes->bytes_inputs += total_read_bytes;
+        else if (channel_type == SPICE_CHANNEL_WEBDAV)
+            spice_read_bytes->bytes_webdav += total_read_bytes;
+        else if (channel_type == SPICE_CHANNEL_CURSOR)
+            spice_read_bytes->bytes_cursor += total_read_bytes;
+        else if (channel_type == SPICE_CHANNEL_DISPLAY)
+            spice_read_bytes->bytes_display += total_read_bytes;
+        else if (channel_type == SPICE_CHANNEL_RECORD)
+            spice_read_bytes->bytes_record += total_read_bytes;
+        else if (channel_type == SPICE_CHANNEL_PLAYBACK)
+            spice_read_bytes->bytes_playback += total_read_bytes;
+        else if (channel_type == SPICE_CHANNEL_MAIN)
+            spice_read_bytes->bytes_main += total_read_bytes;
+    }
+    g_list_free(list);
+    // g_info("!!! spice_read_bytes->bytes_display: %lu", spice_read_bytes->bytes_display);
+}
+
 static void
 virt_viewer_session_spice_smartcard_insert(VirtViewerSession *session G_GNUC_UNUSED)
 {

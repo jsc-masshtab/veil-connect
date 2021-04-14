@@ -72,6 +72,7 @@ void virt_viewer_session_spice_set_credentials(gchar *username, gchar *password)
 
 void virt_viewer_session_spice_enable_auto_clipboard(VirtViewerSessionSpice *self, gboolean enabled);
 
+void virt_viewer_session_spice_get_stats(VirtViewerSessionSpice *self, SpiceReadBytes *spice_read_bytes);
 
 G_END_DECLS
 

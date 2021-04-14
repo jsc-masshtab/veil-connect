@@ -19,6 +19,7 @@ INCLUDE_DIRECTORIES(
         src/usb_redirection
         src/app_updater
         src/messenger
+        src/net_speedometer
 )
 
 #############################APP FILES#################################
@@ -100,6 +101,8 @@ list(APPEND SRC_CODE
         src/utility/settingsfile.h
         src/utility/async.h
         src/utility/async.c
+        src/utility/atomic_string.h
+        src/utility/atomic_string.c
 
 # vdi client
         src/vdi_client/vdi_manager.h
@@ -119,9 +122,13 @@ list(APPEND SRC_CODE
 # messenger
         src/messenger/messenger.h
         src/messenger/messenger.c
+
+# net_speedometer
+        src/net_speedometer/net_speedometer.h
+        src/net_speedometer/net_speedometer.c
 )
 
-## usb_redirection
+# usb_redirection
 list(APPEND SRC_CODE
         src/usb_redirection/usbredirserver.h
         src/usb_redirection/usbredirserver_data.h

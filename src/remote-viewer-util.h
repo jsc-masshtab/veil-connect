@@ -54,6 +54,18 @@ typedef struct
 } ConnectionInfo;
 
 
+typedef struct {
+    gulong bytes_inputs;
+    gulong bytes_webdav;
+    gulong bytes_cursor;
+    gulong bytes_display;
+    gulong bytes_record;
+    gulong bytes_playback;
+    gulong bytes_main;
+
+} SpiceReadBytes;
+
+
 #define VIRT_VIEWER_ERROR virt_viewer_error_quark ()
 #define VIRT_VIEWER_RESOURCE_PREFIX  "/org/virt-manager/virt-viewer"
 

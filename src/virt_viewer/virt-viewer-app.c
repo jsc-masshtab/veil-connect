@@ -162,7 +162,7 @@ struct _VirtViewerAppPrivate {
     GdkModifierType remove_smartcard_accel_mods;
     gboolean quit_on_disconnect;
 
-    gboolean is_polling; // flag for session reconnect
+    gboolean is_polling; // flag for session polling (attempts to connect)
     guint reconnect_poll; // id for reconnect timer
     gboolean hide_windows_on_disconnect; // whether hide or not windows on disconnect
 };

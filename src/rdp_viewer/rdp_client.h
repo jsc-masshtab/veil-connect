@@ -25,8 +25,6 @@
 #include "remote-viewer.h"
 #include "remote-viewer-util.h"
 
-struct ExtendedRdpContext;
-
 typedef gboolean (*UpdateImageCallback) (rdpContext* context);
 typedef gboolean (*UpdateCursorCallback) (rdpContext* context);
 

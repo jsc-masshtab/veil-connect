@@ -25,6 +25,7 @@
 #include "async.h"
 #include "usbredir_controller.h"
 #include "vdi_session.h"
+#include "net_speedometer.h"
 
 #define MAX_MONITOR_AMOUNT 3
 #define MAC_PANEL_HEIGHT 90 // Высота панели на маке
@@ -122,7 +123,6 @@ RemoteViewerState rdp_viewer_start(RemoteViewer *app,
         const gchar *usename, const gchar *password, gchar *domain, gchar *ip, int port)
 {
     g_info("%s domain %s", (const char *)__func__, domain);
-
     RemoteViewerState next_app_state = APP_STATE_UNDEFINED;
     GMainLoop *loop = NULL;
     // create RDP context
@@ -130,6 +130,8 @@ RemoteViewerState rdp_viewer_start(RemoteViewer *app,
     ex_rdp_context->p_loop = &loop;
     ex_rdp_context->next_app_state_p = &next_app_state;
     ex_rdp_context->app = app;
+    // set pointer for statistics accumulation
+    net_speedometer_set_pointer_rdp_context(app->net_speedometer, ex_rdp_context->context.rdp);
 
     // Логин в формате name@domain не нравится freerdp, поэтому отбрасываем @domain
     gchar *corrected_usename = NULL;
@@ -221,7 +223,9 @@ RemoteViewerState rdp_viewer_start(RemoteViewer *app,
     // launch event loop
     create_loop_and_launch(&loop);
 
-    usbredir_controller_stop_all_cur_tasks(FALSE);
+    usbredir_controller_stop_all_cur_tasks(FALSE); // stop usb tasks if there are any
+
+    net_speedometer_set_pointer_rdp_context(app->net_speedometer, NULL); // reset pointer
 
     // deinit all
     destroy_rdp_context(ex_rdp_context);

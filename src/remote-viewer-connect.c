@@ -119,22 +119,19 @@ set_message_to_info_label(GtkLabel *label, const gchar *message)
     if (!message)
         return;
 
-    const guint max_str_width = 120;
+    const guint max_str_width = 110;
 
-    gchar *message_str;
-
-    const gchar *mask_string = "<span color=\"red\">%s</span>";
+    //const gchar *mask_string = "<span color=\"red\">%s</span>";
     // trim message
     if ( strlen(message) > max_str_width ) {
-        gchar *trimmed_message = g_strndup(message, max_str_width);
-        message_str = g_strdup_printf(mask_string, trimmed_message);
-        g_free(trimmed_message);
+        gchar *message_str = g_strndup(message, max_str_width);
+        gtk_label_set_text(label, message_str);
+        g_free(message_str);
     } else {
-        message_str = g_strdup_printf(mask_string, message);
+        gtk_label_set_text(label, message);
     }
 
-    gtk_label_set_markup(label, message_str);
-    g_free(message_str);
+    gtk_widget_set_tooltip_text(GTK_WIDGET(label), message);
 }
 
 // get vm from pool callback
@@ -195,9 +192,7 @@ on_vdi_session_log_in_finished(GObject *source_object G_GNUC_UNUSED,
 
         shutdown_loop(ci->loop);
     } else {
-        g_autofree gchar *trimmed_err_msg = NULL;
-        trimmed_err_msg = g_strndup(reply_msg, 100);
-        set_message_to_info_label(GTK_LABEL(ci->message_display_label), trimmed_err_msg);
+        set_message_to_info_label(GTK_LABEL(ci->message_display_label), reply_msg);
     }
 }
 
