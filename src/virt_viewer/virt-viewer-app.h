@@ -119,6 +119,8 @@ void virt_viewer_set_next_app_state(VirtViewerApp *self, RemoteViewerState next_
 RemoteViewerState virt_viewer_get_next_app_state(VirtViewerApp *self);
 
 void virt_viewer_app_enable_auto_clipboard(VirtViewerApp *self, gboolean enabled);
+
+void virt_viewer_app_start_loop(VirtViewerApp *self);
 G_END_DECLS
 
 #endif /* VIRT_VIEWER_APP_H */

@@ -242,6 +242,7 @@ void vdi_ws_client_stop(VdiWsClient *vdi_ws_client)
     // free memory
     if (vdi_ws_client->ws_conn)
         g_object_unref(vdi_ws_client->ws_conn);
+    vdi_ws_client->ws_conn = NULL;
     g_object_unref(vdi_ws_client->ws_msg);
     g_object_unref(vdi_ws_client->cancel_job);
     g_object_unref(vdi_ws_client->ws_soup_session);

@@ -163,6 +163,8 @@ struct _VirtViewerAppPrivate {
     gboolean is_polling; // flag for session polling (attempts to connect)
     guint reconnect_poll; // id for reconnect timer
     gboolean hide_windows_on_disconnect; // whether hide or not windows on disconnect
+
+    GMainLoop *virt_viewer_loop;
 };
 
 
@@ -1356,6 +1358,14 @@ virt_viewer_app_default_deactivated(VirtViewerApp *self, gboolean connect_error)
         virt_viewer_app_trace(self, "Guest %s display has disconnected, shutting down",
                               priv->guest_name);
     }
+
+    if (virt_viewer_app_hide_windows_on_disconnect(self)) {
+        // Закрыть окно virt-viewer и остановить луп
+        virt_viewer_app_hide_all_windows_forced(self);
+        shutdown_loop(self->priv->virt_viewer_loop);
+    }
+    // Далее закрывать окна пока не будет явно указано обратное
+    virt_viewer_app_set_hide_windows_on_disconnect(self, TRUE);
 }
 
 static void
@@ -1382,6 +1392,11 @@ void virt_viewer_app_enable_auto_clipboard(VirtViewerApp *self, gboolean enabled
     VirtViewerSessionSpice *spice_session =
             VIRT_VIEWER_SESSION_SPICE(virt_viewer_app_get_session(self));
     virt_viewer_session_spice_enable_auto_clipboard(spice_session, enabled);
+}
+
+void virt_viewer_app_start_loop(VirtViewerApp *self)
+{
+    create_loop_and_launch(&self->priv->virt_viewer_loop);
 }
 
 void virt_viewer_app_hide_and_deactivate(VirtViewerApp *self)

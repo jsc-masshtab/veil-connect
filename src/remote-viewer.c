@@ -35,8 +35,7 @@
 extern gboolean opt_manual_mode;
 
 struct _RemoteViewerPrivate {
-    gboolean open_recent_dialog;
-    GMainLoop *virt_viewer_loop;
+    gpointer reserved;
 };
 
 G_DEFINE_TYPE (RemoteViewer, remote_viewer, VIRT_VIEWER_TYPE_APP)
@@ -70,19 +69,6 @@ remote_viewer_finalize(GObject *object)
     G_OBJECT_CLASS(remote_viewer_parent_class)->finalize(object);
 }
 
-static void
-remote_viewer_deactivated(VirtViewerApp *app, gboolean connect_error)
-{
-    VIRT_VIEWER_APP_CLASS(remote_viewer_parent_class)->deactivated(app, connect_error);
-    if (virt_viewer_app_hide_windows_on_disconnect(app)) {
-        // Закрыть окно virt-viewer и остановить луп
-        virt_viewer_app_hide_all_windows_forced(app);
-        shutdown_loop(REMOTE_VIEWER(app)->priv->virt_viewer_loop);
-    }
-    // Далее закрывать окна пока не будет явно указано обратное
-    virt_viewer_app_set_hide_windows_on_disconnect(app, TRUE);
-}
-
 static gboolean
 remote_viewer_local_command_line (GApplication   *gapp,
                                   gchar        ***args,
@@ -92,7 +78,7 @@ remote_viewer_local_command_line (GApplication   *gapp,
     gint argc = g_strv_length(*args);
     GError *error = NULL;
     GOptionContext *context = g_option_context_new(NULL);
-    GOptionGroup *group = g_option_group_new("virt-viewer", NULL, NULL, gapp, NULL);
+    GOptionGroup *group = g_option_group_new(PACKAGE, NULL, NULL, gapp, NULL);
 
     *status = 0;
     g_option_context_set_main_group(context, group);
@@ -127,7 +113,6 @@ static void
 remote_viewer_class_init(RemoteViewerClass *klass)
 {
     GObjectClass *object_class = G_OBJECT_CLASS (klass);
-    GtkApplicationClass *gtk_app_class = GTK_APPLICATION_CLASS(klass);
     VirtViewerAppClass *app_class = VIRT_VIEWER_APP_CLASS (klass);
     GApplicationClass *g_app_class = G_APPLICATION_CLASS(klass);
 
@@ -139,17 +124,6 @@ remote_viewer_class_init(RemoteViewerClass *klass)
     g_app_class->local_command_line = remote_viewer_local_command_line;
 
     app_class->start = remote_viewer_start;
-    app_class->deactivated = remote_viewer_deactivated;
-
-#ifdef HAVE_OVIRT
-    g_object_class_install_property(object_class,
-                                    PROP_OVIRT_FOREIGN_MENU,
-                                    g_param_spec_object("ovirt-foreign-menu",
-                                                        "oVirt Foreign Menu",
-                                                        "Object which is used as interface to oVirt",
-                                                        OVIRT_TYPE_FOREIGN_MENU,
-                                                        G_PARAM_READABLE | G_PARAM_STATIC_STRINGS));
-#endif
 }
 
 static void
@@ -319,7 +293,7 @@ retry_connect_to_vm:
 
         virt_viewer_app_set_hide_windows_on_disconnect(app, TRUE);
         VIRT_VIEWER_APP_CLASS(remote_viewer_parent_class)->start(app, NULL, APP_STATE_AUTH_DIALOG);
-        create_loop_and_launch(&REMOTE_VIEWER(app)->priv->virt_viewer_loop);
+        virt_viewer_app_start_loop(app);
 
         // go back to auth or quit
         if (virt_viewer_app_is_quitting(app))
@@ -366,7 +340,7 @@ retry_connect_to_vm:
             virt_viewer_app_start_reconnect_poll(app);
             // Показывается окно virt viewer // virt_viewer_app_default_start
             VIRT_VIEWER_APP_CLASS(remote_viewer_parent_class)->start(app, NULL, APP_STATE_AUTH_DIALOG);
-            create_loop_and_launch(&REMOTE_VIEWER(app)->priv->virt_viewer_loop);
+            virt_viewer_app_start_loop(app);
             next_app_state = virt_viewer_get_next_app_state(app);
         }
 
