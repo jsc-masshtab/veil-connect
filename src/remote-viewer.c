@@ -50,14 +50,7 @@ enum RemoteViewerProperties {
 #endif
 };
 
-#ifdef HAVE_OVIRT
-#endif
-
 static gboolean remote_viewer_start(VirtViewerApp *app, GError **error, RemoteViewerState remoteViewerState);
-#ifdef HAVE_SPICE_GTK
-static gboolean remote_viewer_activate(VirtViewerApp *app, GError **error);
-static void remote_viewer_window_added(GtkApplication *app, GtkWindow *w);
-#endif
 
 
 static void
@@ -147,12 +140,6 @@ remote_viewer_class_init(RemoteViewerClass *klass)
 
     app_class->start = remote_viewer_start;
     app_class->deactivated = remote_viewer_deactivated;
-#ifdef HAVE_SPICE_GTK
-    app_class->activate = remote_viewer_activate;
-    gtk_app_class->window_added = remote_viewer_window_added;
-#else
-    (void) gtk_app_class;
-#endif
 
 #ifdef HAVE_OVIRT
     g_object_class_install_property(object_class,
@@ -206,24 +193,6 @@ void remote_viewer_free_resources(RemoteViewer *self)
 
     usbredir_controller_deinit_static();
     vdi_session_static_destroy();
-}
-
-static gboolean
-remote_viewer_activate(VirtViewerApp *app, GError **error)
-{
-    gboolean ret = FALSE;
-
-    g_return_val_if_fail(REMOTE_VIEWER_IS(app), FALSE);
-
-    ret = VIRT_VIEWER_APP_CLASS(remote_viewer_parent_class)->activate(app, error);
-    return ret;
-}
-
-static void
-remote_viewer_window_added(GtkApplication *app,
-                           GtkWindow *w)
-{
-    GTK_APPLICATION_CLASS(remote_viewer_parent_class)->window_added(app, w);
 }
 
 static void
