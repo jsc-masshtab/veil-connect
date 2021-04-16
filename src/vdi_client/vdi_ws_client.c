@@ -182,7 +182,7 @@ void vdi_ws_client_start(VdiWsClient *vdi_ws_client, const gchar *vdi_ip, int vd
     // Вместе с auth заодно пошлем информацию о тк
     // vm_id - это id машины к которой щас подключены
     // tk_os - os машины, где запущен тк
-    //GArray *query_params_dyn_array = g_array_new(FALSE, FALSE, sizeof(gchar *));
+    //GArray *query_params_dyn_array = g_array_new(уFALSE, FALSE, sizeof(gchar *));
     //g_array_append_val(query_params_dyn_array, rdp_param);
 
     g_autofree gchar *base_query_pars = NULL;

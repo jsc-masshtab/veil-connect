@@ -127,6 +127,10 @@ static void* net_speedometer_ping_job_linux(NetSpeedometer *self)
 #elif _WIN32
 static void* net_speedometer_ping_job_win(NetSpeedometer *self)
 {
+    // На Windows если вызвать пинг, то откроется консоль, что неприемлимо.
+    // Поэтому вызываем пинг через VBS скрипт и пишим результат в файл.
+    // Затем забираем данные из файла
+
     g_info("%s", (const char *) __func__);
 
     gchar *standard_output = NULL;
@@ -141,13 +145,18 @@ static void* net_speedometer_ping_job_win(NetSpeedometer *self)
             continue;
 
         g_autofree gchar *command_line = NULL;
-        command_line = g_strdup_printf("ping -w 500 -n 4 %s", vm_ip);
-
+        g_autofree gchar *temp_dir = NULL;
+        temp_dir = get_windows_app_temp_location();
+        const gchar *ping_output_file = "ping_output.txt";
+        //command_line = g_strdup_printf("wscript.exe ping_no_console.vbs %s %s\\%s",
+        //                               vm_ip, temp_dir, ping_output_file);
+        command_line = g_strdup_printf("wscript ping_no_console.vbs 8.8.8.8 C:Users\\solomin\\AppData\\Local\\VeilConnect\\temp\\ping_output.txt");
+        GError *error = NULL;
         gboolean cmd_res = g_spawn_command_line_sync(command_line,
                                                      &standard_output,
                                                      &standard_error,
                                                      &exit_status,
-                                                     NULL);
+                                                     &error);
         // parse
         if (cmd_res && standard_output) {
             //fprintf(stdout, "standard_output: %s \n", standard_output);
@@ -322,7 +331,7 @@ static void net_speedometer_init(NetSpeedometer *self)
     self->p_rdp = NULL;
 
     atomic_string_init(&self->vm_ip);
-    //atomic_string_set(&self->vm_ip, "8.8.8.8");
+    atomic_string_set(&self->vm_ip, "8.8.8.8");
     // quality
     self->min_rtt = 0; // ms
     self->avg_rtt = 0;
@@ -342,7 +351,7 @@ static void net_speedometer_init(NetSpeedometer *self)
 #ifdef G_OS_UNIX
     self->ping_job_thread = g_thread_new(NULL, (GThreadFunc)net_speedometer_ping_job_linux, self);
 #elif _WIN32
-    self->ping_job_thread = NULL;// g_thread_new(NULL, (GThreadFunc)net_speedometer_ping_job_win, self);
+    self->ping_job_thread = g_thread_new(NULL, (GThreadFunc)net_speedometer_ping_job_win, self);
 #endif
 
     // Start net stats checker timeout

@@ -850,11 +850,21 @@ void convert_string_from_utf8_to_locale(gchar **utf8_str)
     *utf8_str = local_str;
 }
 
-gchar *get_windows_app_data_location(void)
+gchar *get_windows_app_data_location()
 {
     const gchar *locap_app_data_path = g_getenv("LOCALAPPDATA");
     gchar *app_data_dir = g_strdup_printf("%s\\%s", locap_app_data_path, APPLICATION_NAME);
     return app_data_dir;
+}
+
+gchar *get_windows_app_temp_location()
+{
+    g_autofree gchar *app_data_dir = NULL;
+    app_data_dir = get_windows_app_data_location();
+    gchar *temp_dir = g_strdup_printf("%s\\temp", app_data_dir);
+    g_mkdir_with_parents(temp_dir, 0755);
+
+    return temp_dir;
 }
 
 const gchar *get_cur_ini_param_group()

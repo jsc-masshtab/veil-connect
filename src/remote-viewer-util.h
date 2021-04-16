@@ -131,6 +131,7 @@ gchar *replace_str(const gchar *src, const gchar *find, const gchar *replace);
 void convert_string_from_utf8_to_locale(gchar **utf8_str);
 
 gchar *get_windows_app_data_location(void);
+gchar *get_windows_app_temp_location(void);
 
 const gchar *get_cur_ini_param_group(void);
 

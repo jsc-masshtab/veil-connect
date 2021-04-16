@@ -423,9 +423,7 @@ app_updater_get_windows_updates_task(GTask    *task G_GNUC_UNUSED,
     gdk_threads_add_idle((GSourceFunc)state_changed, self);
 
     gchar *full_file_name = NULL;
-    gchar *app_data_dir = get_windows_app_data_location();
-    gchar *temp_dir = g_strdup_printf("%s/temp", app_data_dir);
-    g_mkdir_with_parents(temp_dir, 0755);
+    gchar *temp_dir = get_windows_app_temp_location();
 
     // Check for updates
     gchar *windows_releases_url = app_updater_get_windows_releases_url(self);
@@ -497,7 +495,6 @@ app_updater_get_windows_updates_task(GTask    *task G_GNUC_UNUSED,
     // clear
     clear_mark:
     free_memory_safely(&temp_dir);
-    free_memory_safely(&app_data_dir);
     free_memory_safely(&full_file_name);
     free_memory_safely(&last_version);
 
