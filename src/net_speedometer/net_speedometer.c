@@ -13,6 +13,8 @@
 #include <tchar.h>
 #endif
 
+#include <freerdp/version.h>
+
 #include "net_speedometer.h"
 #include "remote-viewer-util.h"
 #include "vdi_session.h"
@@ -214,6 +216,7 @@ static gboolean net_speedometer_check_stats(NetSpeedometer *self)
 {
     // net_speedometer_check_stats вызывается каждые STATS_CHECK_TIMEOUT секунд
     //RDP
+#if FREERDP_VERSION_MINOR >= 1
     if (self->p_rdp) {
         UINT64 in_bytes = 0;
         UINT64 out_bytes = 0;
@@ -235,7 +238,10 @@ static gboolean net_speedometer_check_stats(NetSpeedometer *self)
         self->rdp_read_bytes = 0;
         self->rdp_write_bytes = 0;
     }
-
+#else
+    self->rdp_read_speed = 0;
+    self->rdp_write_speed = 0;
+#endif
     // Spice
     if (virt_viewer_app_is_active(self->p_virt_viewer_app)) {
 
