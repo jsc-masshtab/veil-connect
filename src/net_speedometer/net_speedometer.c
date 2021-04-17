@@ -52,6 +52,10 @@ static void* net_speedometer_ping_job_linux(NetSpeedometer *self)
                                                      &standard_error,
                                                      &exit_status,
                                                      NULL);
+
+        // reset data
+        self->min_rtt = self->max_rtt = self->avg_rtt = 0;
+        self->loss_percentage = 100;
         // parse
         if (cmd_res) {
             //g_info("TEST PING: %s", standard_output);
@@ -137,33 +141,44 @@ static void* net_speedometer_ping_job_win(NetSpeedometer *self)
     gchar *standard_error = NULL;
     gint exit_status = 0;
 
+    g_autofree gchar *temp_files_dir = NULL;
+    temp_files_dir = get_windows_app_temp_location();
+    g_autofree gchar *temp_files_dir_2 = NULL;
+    temp_files_dir_2 = replace_str(temp_files_dir, "\\", "/"); // VBScript wants this
+    g_autofree gchar *ping_output_file = NULL;
+    ping_output_file = g_strdup_printf("%s/ping_output.txt", temp_files_dir_2);
+
     while(self->is_ping_job_running) {
 
         g_autofree gchar *vm_ip = NULL;
         vm_ip = atomic_string_get(&self->vm_ip);
-        if (vm_ip == NULL)
+        if (vm_ip == NULL) {
+            cancellable_sleep(PING_JOB_TIMEOUT, &self->is_ping_job_running);
             continue;
+        }
 
         g_autofree gchar *command_line = NULL;
-        g_autofree gchar *temp_dir = NULL;
-        temp_dir = get_windows_app_temp_location();
-        const gchar *ping_output_file = "ping_output.txt";
-        //command_line = g_strdup_printf("wscript.exe ping_no_console.vbs %s %s\\%s",
-        //                               vm_ip, temp_dir, ping_output_file);
-        command_line = g_strdup_printf("wscript ping_no_console.vbs 8.8.8.8 C:Users\\solomin\\AppData\\Local\\VeilConnect\\temp\\ping_output.txt");
-        GError *error = NULL;
+        command_line = g_strdup_printf("wscript.exe ping_no_console.vbs %s %s",
+                                       vm_ip, ping_output_file);
+        //GError *error = NULL;
         gboolean cmd_res = g_spawn_command_line_sync(command_line,
                                                      &standard_output,
                                                      &standard_error,
                                                      &exit_status,
-                                                     &error);
+                                                     NULL);
         // parse
-        if (cmd_res && standard_output) {
+        GMappedFile *file = g_mapped_file_new(ping_output_file, false, NULL);
+        gchar *contents = g_mapped_file_get_contents(file);
+
+        // reset data
+        self->min_rtt = self->max_rtt = self->avg_rtt = 0;
+        self->loss_percentage = 100;
+        if (cmd_res && contents) {
             //fprintf(stdout, "standard_output: %s \n", standard_output);
 
             GRegex *regex = g_regex_new(" = \\d+", 0, 0, NULL);
             GMatchInfo *match_info;
-            g_regex_match(regex, standard_output, 0, &match_info);
+            g_regex_match(regex, contents, 0, &match_info);
 
             int index = 0;
             int p_sent = 0;
@@ -206,6 +221,7 @@ static void* net_speedometer_ping_job_win(NetSpeedometer *self)
                 g_match_info_free(match_info);
         }
 
+        g_mapped_file_unref(file);
         free_memory_safely(&standard_output);
         free_memory_safely(&standard_error);
 
@@ -331,7 +347,7 @@ static void net_speedometer_init(NetSpeedometer *self)
     self->p_rdp = NULL;
 
     atomic_string_init(&self->vm_ip);
-    atomic_string_set(&self->vm_ip, "8.8.8.8");
+    //atomic_string_set(&self->vm_ip, "8.8.8.9");
     // quality
     self->min_rtt = 0; // ms
     self->avg_rtt = 0;
