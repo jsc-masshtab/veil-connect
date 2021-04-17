@@ -287,6 +287,8 @@ if (WIN32)
             DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
     file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/doc/usb.ids
             DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/share/hwdata)
+    file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/doc/ping_no_console.vbs
+            DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 endif (WIN32)
 
 # translations
