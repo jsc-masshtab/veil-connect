@@ -434,6 +434,7 @@ pipeline {
                             cmake -DCMAKE_BUILD_TYPE=Release -DBUILD_x32=ON -G "MinGW Makefiles" ..
                             mingw32-make
 
+                            cd ..
                             copy doc\\veil-connect.ico build
                             cd build
                             rmdir /S /Q CMakeFiles
@@ -510,6 +511,7 @@ pipeline {
                             cmake -DCMAKE_BUILD_TYPE=Release -G "MinGW Makefiles" ..
                             mingw32-make
 
+                            cd ..
                             copy doc\\veil-connect.ico build
                             cd build
                             rmdir /S /Q CMakeFiles
