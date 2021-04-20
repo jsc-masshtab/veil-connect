@@ -345,7 +345,7 @@ app_window_try_fullscreen(VirtViewerApp *self G_GNUC_UNUSED,
 }
 
 static GHashTable*
-virt_viewer_app_get_monitor_mapping_for_section(VirtViewerApp *self, const gchar *section)
+virt_viewer_app_get_monitor_mapping_for_section(VirtViewerApp *self G_GNUC_UNUSED, const gchar *section)
 {
     GError *error = NULL;
     gsize nmappings = 0;
@@ -1775,7 +1775,6 @@ gboolean opt_manual_mode = FALSE;
 
 static int opt_zoom = NORMAL_ZOOM_LEVEL;
 static gchar *opt_hotkeys = NULL;
-static gboolean opt_version = FALSE;
 static gboolean opt_verbose = FALSE;
 // static gboolean opt_debug = FALSE;
 static gboolean opt_fullscreen = FALSE;
