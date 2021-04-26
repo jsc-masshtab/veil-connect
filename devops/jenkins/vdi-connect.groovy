@@ -761,7 +761,7 @@ pipeline {
                         sh script: '''
                             ssh uploader@192.168.10.144 "mkdir -p /local_storage/veil-connect/linux/apt-rpm/${ARCH}/RPMS.${DISTR}"
                             scp ${WORKSPACE}/rpmbuild-${DISTR}/RPMS/${ARCH}/${PRJNAME}-${VERSION}*.rpm uploader@192.168.10.144:/local_storage/veil-connect/linux/apt-rpm/${ARCH}/RPMS.${DISTR}/
-                            ssh uploader@192.168.10.144 "ln -sf /local_storage/veil-connect/linux/apt-rpm/${ARCH}/RPMS.${DISTR}/${PRJNAME}-${VERSION}*.rpm /local_storage/veil-connect/linux/apt-rpm/${ARCH}/RPMS.${DISTR}/${PRJNAME}-latest.rpm"
+                            ssh uploader@192.168.10.144 "cd /local_storage/veil-connect/linux/apt-rpm/${ARCH}/RPMS.${DISTR}; ln -sf ${PRJNAME}-${VERSION}*.rpm ${PRJNAME}-latest.rpm"
                         '''
                     }
                 }
