@@ -26,6 +26,7 @@
 
 #include <glib/gi18n.h>
 #include <spice-client-gtk.h>
+#include <spice/vd_agent.h>
 
 #include "vdi_session.h"
 #include "usbredir_util.h"
@@ -36,6 +37,7 @@
 #include "virt-viewer-session-spice.h"
 #include "virt-viewer-display-spice.h"
 #include "virt-viewer-auth.h"
+#include "veil_logger.h"
 
 static gchar *spice_session_username = NULL;
 static gchar *spice_session_password = NULL;
@@ -969,6 +971,31 @@ on_new_file_transfer(SpiceMainChannel *channel G_GNUC_UNUSED,
                                               task);
 }
 
+static gboolean
+on_clipboard_from_client_to_vm(SpiceMainChannel *main G_GNUC_UNUSED, guint selection G_GNUC_UNUSED,
+                                  guint type, gpointer user_data G_GNUC_UNUSED)
+{
+    if (type == VD_AGENT_CLIPBOARD_UTF8_TEXT) {
+        //g_info("on_clipboard_from_client_to_vm");
+        GtkClipboard *gtk_clipboard = gtk_clipboard_get(GDK_SELECTION_CLIPBOARD);
+        gchar *text = gtk_clipboard_wait_for_text(gtk_clipboard);
+        logger_save_clipboard_data(text, strlen_safely(text), CLIPBOARD_LOGGER_FROM_CLIENT_TO_VM);
+        g_free(text);
+    }
+    return TRUE;
+}
+
+static void
+on_clipboard_got_from_vm(SpiceMainChannel *main G_GNUC_UNUSED, guint selection G_GNUC_UNUSED,
+                                     guint type, const guchar *data, guint size,
+                                     gpointer user_data G_GNUC_UNUSED)
+{
+    if (type == VD_AGENT_CLIPBOARD_UTF8_TEXT) {
+        //g_info("on_clipboard_got_from_guest %s", data);
+        logger_save_clipboard_data((const gchar *)data, size, CLIPBOARD_LOGGER_FROM_VM_TO_CLIENT);
+    }
+}
+
 static void
 virt_viewer_session_spice_channel_new(SpiceSession *s,
                                       SpiceChannel *channel,
@@ -1003,6 +1030,10 @@ virt_viewer_session_spice_channel_new(SpiceSession *s,
                                           G_CALLBACK(agent_connected_changed), self, 0);
         virt_viewer_signal_connect_object(channel, "new-file-transfer",
                                           G_CALLBACK(on_new_file_transfer), self, 0);
+        virt_viewer_signal_connect_object(channel, "main-clipboard-selection-request",
+                                          G_CALLBACK(on_clipboard_from_client_to_vm), self, 0);
+        virt_viewer_signal_connect_object(channel, "main-clipboard-selection",
+                                          G_CALLBACK(on_clipboard_got_from_vm), self, 0);
     }
 
     if (SPICE_IS_DISPLAY_CHANNEL(channel)) {

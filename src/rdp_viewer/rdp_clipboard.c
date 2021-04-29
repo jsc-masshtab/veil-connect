@@ -11,6 +11,7 @@
 
 #include "rdp_viewer_window.h"
 #include "rdp_clipboard.h"
+#include "veil_logger.h"
 
 #define CLIPBOARD_TRANSFER_WAIT_TIME 1 // sec
 
@@ -97,7 +98,7 @@ static GtkClipboard* get_gtk_clipboard(ExtendedRdpContext *ex_context)
     return gtk_widget_get_clipboard(rdp_window_data->rdp_viewer_window, GDK_SELECTION_CLIPBOARD);
 }
 
-void rdp_cliprdr_request_data(GtkClipboard *gtkClipboard G_GNUC_UNUSED,
+static void rdp_cliprdr_request_data(GtkClipboard *gtkClipboard G_GNUC_UNUSED,
         GtkSelectionData *selection_data G_GNUC_UNUSED, guint info, RdpClipboard* clipboard)
 {
     g_info("%s", (const char *)__func__);
@@ -139,7 +140,7 @@ void rdp_cliprdr_request_data(GtkClipboard *gtkClipboard G_GNUC_UNUSED,
     }
     clipboard->waiting_for_transfered_data = FALSE;
 
-    g_info("Broke from while");
+    // g_info("Broke from while");
     g_mutex_unlock(&clipboard->transfer_clip_mutex);
 }
 
@@ -168,6 +169,8 @@ static void rdp_cliprdr_get_clipboard_data(RdpClipboardEventData *rdp_clipboard_
             case CB_FORMAT_HTML:
             {
                 inbuf = (UINT8*)gtk_clipboard_wait_for_text(gtkClipboard);
+                logger_save_clipboard_data((const gchar *)inbuf, strlen((char*)inbuf),
+                        CLIPBOARD_LOGGER_FROM_CLIENT_TO_VM);
                 break;
             }
 
@@ -288,8 +291,9 @@ static void rdp_cliprdr_set_clipboard_content(RdpClipboardEventData *rdp_clipboa
         g_object_unref(rdp_clipboard_event_data->data);
     } else {
         const gchar *text = (gchar *)rdp_clipboard_event_data->data;
-        g_info("text: %s", text);
+        //g_info("text: %s", text);
         gtk_clipboard_set_text(gtkClipboard, text, -1);
+        logger_save_clipboard_data(text, strlen_safely(text), CLIPBOARD_LOGGER_FROM_VM_TO_CLIENT);
         free(rdp_clipboard_event_data->data);
     }
 }

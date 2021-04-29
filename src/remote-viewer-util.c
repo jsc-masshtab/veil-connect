@@ -285,7 +285,7 @@ static void log_handler(const gchar *log_domain G_GNUC_UNUSED,
     gchar *data_time_string = g_date_time_format(datetime, "%T");
     g_date_time_unref(datetime);
 
-    printf("%s %s: %s\n",log_level_to_str(log_level), data_time_string, message);
+    printf("%s %s: %s\n", log_level_to_str(log_level), data_time_string, message);
     g_free(data_time_string);
 }
 

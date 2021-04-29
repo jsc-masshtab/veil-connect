@@ -24,7 +24,7 @@ get_ini_file_name()
 
         if (!g_file_test(ini_file_path, G_FILE_TEST_EXISTS)) {
             // create file
-            FILE *fp = fopen (get_ini_file_name(), "ab"); fclose(fp);
+            FILE *fp = fopen(ini_file_path, "ab"); fclose(fp);
             // prefill file (maybe temp)
             write_str_to_ini_file("RDPSettings", "rdp_pixel_format", "BGRA16");
             write_str_to_ini_file("RDPSettings", "rdp_args", "");
@@ -118,21 +118,17 @@ read_int_from_ini_file(const gchar *group_name,  const gchar *key, gint def_valu
     gint value = 0;
     GKeyFile *keyfile = g_key_file_new();
 
-    if(!g_key_file_load_from_file(keyfile, get_ini_file_name(),
+    if(g_key_file_load_from_file(keyfile, get_ini_file_name(),
                                   G_KEY_FILE_KEEP_COMMENTS |
                                   G_KEY_FILE_KEEP_TRANSLATIONS,
-                                  &error))
-    {
-        if (error)
-            g_debug("%s", error->message);
-    }
-    else
-    {
-        g_clear_error(&error);
-        value = g_key_file_get_integer(keyfile, group_name, key, &error);
+                                  &error)) {
 
-        if (error)
-            value = def_value;
+        value = g_key_file_get_integer(keyfile, group_name, key, &error);
+    }
+
+    if (error) {
+        value = def_value;
+        g_info("%s", error->message);
     }
 
     g_clear_error(&error);

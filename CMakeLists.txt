@@ -103,6 +103,8 @@ list(APPEND SRC_CODE
         src/utility/async.c
         src/utility/atomic_string.h
         src/utility/atomic_string.c
+        src/utility/veil_logger.h
+        src/utility/veil_logger.c
 
 # vdi client
         src/vdi_client/vdi_manager.h
