@@ -79,7 +79,7 @@ void veil_logger_free()
 
 void logger_save_clipboard_data(const gchar *data, guint size, ClipboardLoggerDataType data_type)
 {
-    if (!clipboard_log_enabled)
+    if (clipboard_log_enabled != 1)
         return;
 
     // open file
@@ -106,11 +106,11 @@ void logger_save_clipboard_data(const gchar *data, guint size, ClipboardLoggerDa
 
         // write type
         if (data_type == CLIPBOARD_LOGGER_FROM_CLIENT_TO_VM) {
-            const gchar *type = " FROM_CLIENT_TO_VM:  ";
+            const gchar *type = " FROM_CLIENT_TO_VM:\n";
             fwrite(type, sizeof(gchar), strlen(type), file);
 
         } else if (data_type == CLIPBOARD_LOGGER_FROM_VM_TO_CLIENT) {
-            const gchar *type = " FROM_VM_TO_CLIENT:  ";
+            const gchar *type = " FROM_VM_TO_CLIENT:\n";
             fwrite(type, sizeof(gchar), strlen(type), file);
         }
 
