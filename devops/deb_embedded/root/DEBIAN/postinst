@@ -114,13 +114,16 @@ finish()
 }
 
 case "$1" in
-	configure)
+    configure)
         # действия только при установке
-		if [ ! -n "$2" ] ; then
+        if [ ! -n "$2" ] ; then
             configure_other
-		    configure_users
+            configure_users
             if cat /etc/issue | grep -i smolensk 1>/dev/null; then
-			    configure_kiosk_smolensk
+                configure_kiosk_smolensk
+                configure_screenlocker_smolensk
+            elif cat /etc/issue | grep -i leningrad 1>/dev/null; then
+                configure_kiosk_smolensk
                 configure_screenlocker_smolensk
             elif cat /etc/issue | grep -i orel 1>/dev/null; then
                 configure_kiosk_orel
@@ -128,18 +131,18 @@ case "$1" in
             fi
             configure_autologin
             configure_usb
-		fi
+        fi
 
-		# действия и при установке и при обновлении
-		finish
+        # действия и при установке и при обновлении
+        finish
 
-		exit 0
-		;;
-	abort-upgrade|abort-remove|abort-deconfigure)
-		exit 0
-		;;
-	*)
-		echo "postinst called with unknown argument: $*" >&2
-		exit 1
-		;;
+        exit 0
+        ;;
+    abort-upgrade|abort-remove|abort-deconfigure)
+        exit 0
+        ;;
+    *)
+        echo "postinst called with unknown argument: $*" >&2
+        exit 1
+        ;;
 esac
