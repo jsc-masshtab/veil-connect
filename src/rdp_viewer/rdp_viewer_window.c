@@ -214,15 +214,17 @@ static gboolean rdp_viewer_window_deleted_cb(gpointer userdata)
     return TRUE;
 }
 
-//static gboolean rdp_viewer_window_event_on_mapped(GtkWidget *widget G_GNUC_UNUSED, GdkEvent *event G_GNUC_UNUSED,
-//        gpointer user_data)
-//{
-//    g_info("%s", (const char *)__func__);
-//    RdpWindowData *rdp_window_data = (RdpWindowData *)user_data;
-//    rdp_viewer_window_toggle_fullscreen(rdp_window_data, TRUE);
-//
-//    return FALSE;
-//}
+// Oкно не перевести в фул скрин пока оно не показано. Поэтому так
+static gboolean rdp_viewer_window_event_on_mapped(GtkWidget *widget G_GNUC_UNUSED, GdkEvent *event G_GNUC_UNUSED,
+        gpointer user_data)
+{
+    g_info("%s", (const char *)__func__);
+    RdpWindowData *rdp_window_data = (RdpWindowData *)user_data;
+#ifndef __APPLE__
+    rdp_viewer_window_toggle_fullscreen(rdp_window_data, TRUE);
+#endif
+    return FALSE;
+}
 
 // it seems focus-in-event and focus-out-event don’t work when keyboard is grabbed
 gboolean rdp_viewer_window_on_state_event(GtkWidget *widget G_GNUC_UNUSED, GdkEventWindowState  *event,
@@ -572,8 +574,8 @@ RdpWindowData *rdp_viewer_window_create(ExtendedRdpContext *ex_rdp_context, int 
     gtk_widget_add_events(rdp_viewer_window, GDK_KEY_PRESS_MASK | GDK_KEY_RELEASE_MASK | GDK_FOCUS_CHANGE_MASK);
     g_signal_connect_swapped(rdp_viewer_window, "delete-event",
                              G_CALLBACK(rdp_viewer_window_deleted_cb), rdp_window_data);
-    //g_signal_connect(rdp_viewer_window, "map-event",
-    //        G_CALLBACK(rdp_viewer_window_event_on_mapped), rdp_window_data);
+    g_signal_connect(rdp_viewer_window, "map-event",
+            G_CALLBACK(rdp_viewer_window_event_on_mapped), rdp_window_data);
     g_signal_connect(rdp_viewer_window, "window-state-event",
                      G_CALLBACK(rdp_viewer_window_on_state_event), rdp_window_data);
 
@@ -644,9 +646,6 @@ RdpWindowData *rdp_viewer_window_create(ExtendedRdpContext *ex_rdp_context, int 
     rdp_viewer_window_set_monitor_data(rdp_window_data, geometry);
     // show
     gtk_widget_show_all(rdp_viewer_window);
-#ifndef __APPLE__
-    rdp_viewer_window_toggle_fullscreen(rdp_window_data, TRUE);
-#endif
     // get desired fps from ini file
     UINT32 rdp_fps = CLAMP(read_int_from_ini_file("RDPSettings", "rdp_fps", 30), 1, 60);
     guint redraw_timeout = 1000 / rdp_fps;
