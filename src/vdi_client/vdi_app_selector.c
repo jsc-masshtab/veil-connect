@@ -23,10 +23,10 @@ typedef struct{
 } VdiAppSelector;
 
 typedef struct{
-    GtkWidget *main_widget;
+    GtkWidget *app_btn;
+    GdkPixbuf *pix_buff;
 
-
-} VdiApplication;
+} VdiGuiApp;
 
 static gboolean window_deleted_cb(VdiAppSelector *self)
 {
@@ -36,11 +36,13 @@ static gboolean window_deleted_cb(VdiAppSelector *self)
 
 void vdi_app_selector_add_app(VdiAppSelector *self, VdiAppData app_data)
 {
+    VdiGuiApp gui_app_data = {};
+
     // Создается кнопка иконка для выбора приложения пользователем
-    GtkWidget *app_btn = gtk_button_new_with_label(app_data.app_name);
+    gui_app_data.app_btn = gtk_button_new_with_label(app_data.app_name);
 
     // decode base64 string to bytes array
-    size_t icon_base64_len =  strlen_safely(app_data.icon_base64);
+    size_t icon_base64_len = strlen_safely(app_data.icon_base64);
     if(icon_base64_len != 0 && icon_base64_len < 1048576) { // sanity check
 
         gsize icon_binary_data_len;
@@ -57,12 +59,12 @@ void vdi_app_selector_add_app(VdiAppSelector *self, VdiAppData app_data)
         gdk_pixbuf_loader_close(loader, NULL);
 
         if (res) {
-            GdkPixbuf *pix_buff = gdk_pixbuf_loader_get_pixbuf(loader);
+            gui_app_data.pix_buff = gdk_pixbuf_loader_get_pixbuf(loader);
 
-            GtkWidget *image_widget = gtk_image_new_from_pixbuf(pix_buff);
-            gtk_button_set_always_show_image(GTK_BUTTON (app_btn), TRUE);
-            gtk_button_set_image(GTK_BUTTON(app_btn), image_widget);
-            gtk_button_set_image_position(GTK_BUTTON (app_btn), GTK_POS_BOTTOM);
+            GtkWidget *image_widget = gtk_image_new_from_pixbuf(gui_app_data.pix_buff);
+            gtk_button_set_always_show_image(GTK_BUTTON (gui_app_data.app_btn), TRUE);
+            gtk_button_set_image(GTK_BUTTON(gui_app_data.app_btn), image_widget);
+            gtk_button_set_image_position(GTK_BUTTON (gui_app_data.app_btn), GTK_POS_BOTTOM);
         }
 
         g_free(icon_binary_data);
@@ -71,8 +73,8 @@ void vdi_app_selector_add_app(VdiAppSelector *self, VdiAppData app_data)
         g_warning("Wrong icon_base64_len: %lu", icon_base64_len);
     }
 
-    gtk_widget_set_size_request(app_btn, 100, 120);
-    gtk_flow_box_insert(GTK_FLOW_BOX(self->gtk_flow_box), app_btn, 0);
+    gtk_widget_set_size_request(gui_app_data.app_btn, 100, 120);
+    gtk_flow_box_insert(GTK_FLOW_BOX(self->gtk_flow_box), gui_app_data.app_btn, 0);
 }
 
 void vdi_app_selector_start(GArray *farm_array, GtkWindow *parent)
@@ -117,6 +119,7 @@ void vdi_app_selector_start(GArray *farm_array, GtkWindow *parent)
 
     create_loop_and_launch(&self->loop);
 
+    // free
     g_object_unref(self->builder);
     gtk_widget_destroy(self->window);
     free(self);
