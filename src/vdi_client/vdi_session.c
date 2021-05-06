@@ -598,6 +598,7 @@ void vdi_session_get_vm_from_pool_task(GTask       *task,
             vdi_session_static->current_remote_protocol));
 
     gchar *response_body_str = vdi_session_api_call("POST", url_str, bodyStr, NULL);
+
     g_free(url_str);
     g_free(bodyStr);
 
@@ -623,6 +624,46 @@ void vdi_session_get_vm_from_pool_task(GTask       *task,
         vdi_vm_data->vm_password = g_strdup(json_object_get_string_member_safely(reply_json_object, "password"));
         vdi_vm_data->vm_verbose_name = g_strdup(json_object_get_string_member_safely(
                 reply_json_object, "vm_verbose_name"));
+
+        // parse rds farm data
+        JsonArray *farm_array = json_object_get_array_member_safely(reply_json_object, "farm_list");
+        if (farm_array) {
+            vdi_vm_data->farm_array = g_array_new(FALSE, FALSE, sizeof(VdiFarmData));
+
+            guint farm_amount = json_array_get_length(farm_array);
+            for (guint i = 0; i < farm_amount; ++i) {
+                VdiFarmData farm_data = {};
+                //  farm_alias
+                JsonObject *farm_obj = json_array_get_object_element(farm_array, i);
+                farm_data.farm_alias = g_strdup(json_object_get_string_member_safely( farm_obj, "farm_alias"));
+
+                // app array
+                JsonArray *app_array = json_object_get_array_member_safely(farm_obj, "app_array");
+                if (app_array) {
+                    farm_data.app_array = g_array_new(FALSE, FALSE, sizeof(VdiAppData));
+
+                    guint app_amount = json_array_get_length(app_array);
+                    for (guint j = 0; j < app_amount; ++j) {
+                        VdiAppData app_data = {};
+
+                        JsonObject *app_obj = json_array_get_object_element(app_array, j);
+                        // app_name
+                        app_data.app_name = g_strdup(json_object_get_string_member_safely(
+                                app_obj, "app_name"));
+                        // app_alias
+                        app_data.app_alias = g_strdup(json_object_get_string_member_safely(
+                                app_obj, "app_alias"));
+                        // icon_base64
+                        app_data.icon_base64 = g_strdup(json_object_get_string_member_safely(
+                                app_obj, "icon"));
+
+                        g_array_append_val(farm_data.app_array, app_data);
+                    }
+                }
+
+                g_array_append_val(vdi_vm_data->farm_array, farm_data);
+            }
+        }
 
         // save some data in vdi_session_static
         update_string_safely(&vdi_session_static->current_vm_verbose_name, vdi_vm_data->vm_verbose_name);
@@ -996,6 +1037,7 @@ void vdi_api_session_free_vdi_vm_data(VdiVmData *vdi_vm_data)
     free_memory_safely(&vdi_vm_data->vm_password);
     free_memory_safely(&vdi_vm_data->message);
     free_memory_safely(&vdi_vm_data->vm_verbose_name);
+    // todo: clear farm_array
     free(vdi_vm_data);
 }
 

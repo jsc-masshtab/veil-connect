@@ -45,6 +45,21 @@ typedef enum{
     VDI_VM_ANOTHER_OS
 } VdiVmOs;
 
+typedef struct{
+
+    gchar *farm_alias;
+    GArray *app_array;
+
+} VdiFarmData;
+
+typedef struct{
+
+    gchar *app_name;
+    gchar *app_alias;
+    gchar *icon_base64;
+
+} VdiAppData;
+
 // Инфа о виртуальной машине полученная от vdi
 typedef struct{
 
@@ -59,6 +74,9 @@ typedef struct{
 
     gint test_data;
     ServerReplyType server_reply_type;
+
+    // For RDS only
+    GArray *farm_array;
 
 } VdiVmData;
 

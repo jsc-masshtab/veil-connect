@@ -117,6 +117,8 @@ list(APPEND SRC_CODE
         src/vdi_client/vdi_ws_client.c
         src/vdi_client/vdi_redis_client.h
         src/vdi_client/vdi_redis_client.c
+        src/vdi_client/vdi_app_selector.c
+        src/vdi_client/vdi_app_selector.h
 
 # app_updater
         src/app_updater/app_updater.h
