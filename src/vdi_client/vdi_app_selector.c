@@ -9,6 +9,7 @@
 #include "vdi_session.h"
 #include "remote-viewer-util.h"
 #include "vdi_app_selector.h"
+#include "vdi_session.h"
 
 
 typedef struct{
@@ -46,12 +47,13 @@ static void vdi_app_selector_set_image_on_btn(GtkWidget *btn, GtkWidget *image_w
 static void vdi_app_selector_on_icon_btn_clicked(GtkButton *btn, VdiAppSelector *self)
 {
     const gchar *app_alias = g_object_get_data(G_OBJECT(btn), "app_alias");
-    if (strlen_safely(app_alias) != 0) {
+    if (strlen_safely(app_alias) != 0) { // пользователь выбрал приложение
         self->selector_result.result_type = APP_SELECTOR_RESULT_APP;
         self->selector_result.rdp_settings.is_remote_app = TRUE;
         self->selector_result.rdp_settings.remote_app_name = g_strdup_printf("||%s", app_alias);
-    } else {
+    } else { // пользователь выбрал обычное подключение к рабочему столу
         self->selector_result.result_type = APP_SELECTOR_RESULT_DESKTOP;
+        self->selector_result.rdp_settings.is_remote_app = FALSE;
         self->selector_result.rdp_settings.remote_app_name = NULL;
     }
 
@@ -72,7 +74,7 @@ static void vdi_app_selector_setup_icon_btn(VdiAppSelector *self, GtkWidget *btn
             G_CALLBACK(vdi_app_selector_on_icon_btn_clicked), self);
 }
 
-void vdi_app_selector_add_app(VdiAppSelector *self, VdiAppData app_data)
+static void vdi_app_selector_add_app(VdiAppSelector *self, VdiAppData app_data)
 {
     VdiGuiApp gui_app_data = {};
 
@@ -108,6 +110,15 @@ void vdi_app_selector_add_app(VdiAppSelector *self, VdiAppData app_data)
         g_object_unref(loader);
     } else {
         g_warning("Wrong icon_base64_len: %lu", icon_base64_len);
+    }
+}
+
+static void on_ws_cmd_received(gpointer data G_GNUC_UNUSED, const gchar *cmd, VdiAppSelector *self)
+{
+    // Команда от админа
+    if (g_strcmp0(cmd, "DISCONNECT") == 0) {
+        self->selector_result.result_type = APP_SELECTOR_RESULT_NONE;
+        shutdown_loop(self->loop);
     }
 }
 
@@ -151,6 +162,8 @@ AppSelectorResult vdi_app_selector_start(GArray *farm_array, GtkWindow *parent)
     // Signals
     g_signal_connect_swapped(self->window, "delete-event",
             G_CALLBACK(window_deleted_cb), self);
+    gulong ws_cmd_received_handle = g_signal_connect(get_vdi_session_static(), "ws-cmd-received",
+                                                    G_CALLBACK(on_ws_cmd_received), self);
 
     // show window
     gtk_window_set_transient_for(GTK_WINDOW(self->window), parent);
@@ -161,6 +174,7 @@ AppSelectorResult vdi_app_selector_start(GArray *farm_array, GtkWindow *parent)
     create_loop_and_launch(&self->loop);
 
     // free
+    g_signal_handler_disconnect(get_vdi_session_static(), ws_cmd_received_handle);
     g_object_unref(self->builder);
     gtk_widget_destroy(self->window);
     free(self);
