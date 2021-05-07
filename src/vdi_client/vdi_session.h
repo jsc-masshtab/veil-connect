@@ -45,6 +45,13 @@ typedef enum{
     VDI_VM_ANOTHER_OS
 } VdiVmOs;
 
+typedef enum{
+    VDI_POOL_TYPE_UNKNOWN,
+    VDI_POOL_TYPE_STATIC,
+    VDI_POOL_TYPE_AUTOMATED,
+    VDI_POOL_TYPE_RDS
+} VdiPoolType;
+
 typedef struct{
 
     gchar *farm_alias;
@@ -137,6 +144,7 @@ struct _VdiSession
     gboolean is_ldap;
 
     // data about current pool and vm
+    VdiPoolType pool_type;
     gchar *current_pool_id;
     VdiVmRemoteProtocol current_remote_protocol;
     gchar *current_vm_id;
@@ -195,6 +203,8 @@ void vdi_session_set_credentials(const gchar *username, const gchar *password, c
 void vdi_session_set_current_pool_id(const gchar *current_pool_id);
 // get current vm id
 const gchar *vdi_session_get_current_pool_id(void);
+
+VdiPoolType vdi_session_get_current_pool_type(void);
 
 const gchar *vdi_session_get_current_vm_id(void);
 

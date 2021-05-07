@@ -118,6 +118,7 @@ VdiSession *vdi_session_new()
     vdi_session->auth_url = NULL;
     vdi_session->jwt = NULL;
 
+    vdi_session->pool_type = VDI_POOL_TYPE_UNKNOWN;
     vdi_session->current_pool_id = NULL;
     vdi_session->current_vm_id = NULL;
     vdi_session->current_vm_verbose_name = NULL;
@@ -401,6 +402,11 @@ const gchar *vdi_session_get_current_pool_id()
     return vdi_session_static->current_pool_id;
 }
 
+VdiPoolType vdi_session_get_current_pool_type()
+{
+    return vdi_session_static->pool_type;
+}
+
 const gchar *vdi_session_get_current_vm_id()
 {
     return vdi_session_static->current_vm_id;
@@ -672,6 +678,16 @@ void vdi_session_get_vm_from_pool_task(GTask       *task,
         update_string_safely(&vdi_session_static->current_controller_address, vm_controller_address);
         const gchar *vm_id = json_object_get_string_member_safely(reply_json_object, "vm_id");
         update_string_safely(&vdi_session_static->current_vm_id, vm_id);
+        // pool type
+        const gchar *pool_type = json_object_get_string_member_safely(reply_json_object, "pool_type");
+        if (g_strcmp0(pool_type, "AUTOMATED") == 0)
+            vdi_session_static->pool_type = VDI_POOL_TYPE_AUTOMATED;
+        else if (g_strcmp0(pool_type, "STATIC") == 0)
+            vdi_session_static->pool_type = VDI_POOL_TYPE_STATIC;
+        else if (g_strcmp0(pool_type, "RDS") == 0)
+            vdi_session_static->pool_type = VDI_POOL_TYPE_RDS;
+        else
+            vdi_session_static->pool_type = VDI_POOL_TYPE_UNKNOWN;
 
         JsonArray *user_permissions_array = json_object_get_array_member_safely(reply_json_object, "permissions");
         vdi_session_set_permissions(user_permissions_array);
