@@ -1037,7 +1037,27 @@ void vdi_api_session_free_vdi_vm_data(VdiVmData *vdi_vm_data)
     free_memory_safely(&vdi_vm_data->vm_password);
     free_memory_safely(&vdi_vm_data->message);
     free_memory_safely(&vdi_vm_data->vm_verbose_name);
-    // todo: clear farm_array
+
+    if (vdi_vm_data->farm_array) {
+        for (guint i = 0; i < vdi_vm_data->farm_array->len; ++i) {
+            VdiFarmData farm_data = g_array_index(vdi_vm_data->farm_array, VdiFarmData, i);
+            g_free(farm_data.farm_alias);
+
+            if (farm_data.app_array) {
+                for (guint j = 0; j < vdi_vm_data->farm_array->len; ++j) {
+                    VdiAppData app_data = g_array_index(farm_data.app_array, VdiAppData, j);
+                    g_free(app_data.app_alias);
+                    g_free(app_data.app_name);
+                    g_free(app_data.icon_base64);
+                }
+
+                g_array_free(farm_data.app_array, TRUE);
+            }
+        }
+
+        g_array_free(vdi_vm_data->farm_array, TRUE);
+    }
+
     free(vdi_vm_data);
 }
 
