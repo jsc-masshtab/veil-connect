@@ -120,7 +120,8 @@ static GdkRectangle set_monitor_data_and_create_rdp_viewer_window(GdkMonitor *mo
 }
 
 RemoteViewerState rdp_viewer_start(RemoteViewer *app,
-        const gchar *usename, const gchar *password, gchar *domain, gchar *ip, int port)
+        const gchar *usename, const gchar *password, gchar *domain, gchar *ip, int port,
+                                   VeilRdpSettings *p_rdp_settings)
 {
     g_info("%s domain %s", (const char *)__func__, domain);
     RemoteViewerState next_app_state = APP_STATE_UNDEFINED;
@@ -143,7 +144,7 @@ RemoteViewerState rdp_viewer_start(RemoteViewer *app,
         corrected_usename = g_strdup(usename);
     }
 
-    rdp_client_set_credentials(ex_rdp_context, corrected_usename, password, domain, ip, port);
+    rdp_client_set_credentials(ex_rdp_context, corrected_usename, password, domain, ip, port, p_rdp_settings);
     free_memory_safely(&corrected_usename);
 
     // Set some presettings

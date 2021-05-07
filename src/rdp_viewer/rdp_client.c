@@ -67,7 +67,7 @@ static void rdp_client_read_str_rdp_param_from_ini_and_add(GArray *rdp_params_dy
     }
 }
 
-static GArray * rdp_client_create_params_array(ExtendedRdpContext* ex)
+static GArray *rdp_client_create_params_array(ExtendedRdpContext* ex)
 {
     g_info("%s W: %i x H:%i", (const char*)__func__, ex->whole_image_width, ex->whole_image_height);
 
@@ -128,11 +128,19 @@ static GArray * rdp_client_create_params_array(ExtendedRdpContext* ex)
     }
     free_memory_safely(&shared_folders_str);
 
-    // remote app
-    gboolean is_remote_app = read_int_from_ini_file("RDPSettings", "is_remote_app", 0);
-    if (is_remote_app) {
-        rdp_client_read_str_rdp_param_from_ini_and_add(rdp_params_dyn_array, "remote_app_name", "/app", NULL);
-        rdp_client_read_str_rdp_param_from_ini_and_add(rdp_params_dyn_array, "remote_app_options", "/app-cmd", NULL);
+    // remote app. Сначала смотрим есть ли в переданных настройках, иначе - есть ли в ini
+    if(ex->p_rdp_settings && ex->p_rdp_settings->is_remote_app) {
+        add_rdp_param(rdp_params_dyn_array, g_strdup_printf("/app:%s", ex->p_rdp_settings->remote_app_name));
+        add_rdp_param(rdp_params_dyn_array, g_strdup_printf("/app-cmd:%s", ex->p_rdp_settings->remote_app_options));
+
+    }  else {
+        gboolean is_remote_app = read_int_from_ini_file("RDPSettings", "is_remote_app", 0);
+        if (is_remote_app) {
+            rdp_client_read_str_rdp_param_from_ini_and_add(rdp_params_dyn_array, "remote_app_name",
+                                                           "/app", NULL);
+            rdp_client_read_str_rdp_param_from_ini_and_add(rdp_params_dyn_array, "remote_app_options",
+                                                           "/app-cmd", NULL);
+        }
     }
 
     // rdp_args     custom from ini file
@@ -166,13 +174,15 @@ static void rdp_client_destroy_params_array(GArray *rdp_params_dyn_array)
 
 void rdp_client_set_credentials(ExtendedRdpContext *ex_rdp_context,
                                 const gchar *usename, const gchar *password, gchar *domain,
-                                gchar *ip, int port)
+                                gchar *ip, int port, VeilRdpSettings *p_rdp_settings)
 {
     ex_rdp_context->usename = g_strdup(usename);
     ex_rdp_context->password = g_strdup(password);
     ex_rdp_context->domain = g_strdup(domain);
     ex_rdp_context->ip = g_strdup(ip);
     ex_rdp_context->port = port;
+
+    ex_rdp_context->p_rdp_settings = p_rdp_settings;
 }
 
 void rdp_client_set_rdp_image_size(ExtendedRdpContext *ex_rdp_context,

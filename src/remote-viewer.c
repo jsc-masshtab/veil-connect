@@ -222,7 +222,7 @@ static GtkCssProvider * setup_css()
     return cssProvider;
 }
 
-static void connect_settings_data_free(ConnectSettingsData *connect_settings_data)
+static void connect_settings_data_clear(ConnectSettingsData *connect_settings_data)
 {
     g_info("%s", (const char *)__func__);
     free_memory_safely(&connect_settings_data->user);
@@ -230,6 +230,8 @@ static void connect_settings_data_free(ConnectSettingsData *connect_settings_dat
     free_memory_safely(&connect_settings_data->domain);
     free_memory_safely(&connect_settings_data->ip);
     free_memory_safely(&connect_settings_data->vm_verbose_name);
+
+    rdp_settings_clear(&connect_settings_data->rdp_settings);
 }
 
 static void remote_viewer_vm_changed_notify(RemoteViewer *self, const gchar *vm_id, const gchar *vm_ip)
@@ -264,7 +266,7 @@ retry_connect_to_vm:
     if (opt_manual_mode) {
         if (vdi_session_get_current_remote_protocol() == VDI_RDP_PROTOCOL) {
             RemoteViewerState app_state = rdp_viewer_start(REMOTE_VIEWER(app),
-                    con_data.user, con_data.password, con_data.domain, con_data.ip, con_data.port);
+                    con_data.user, con_data.password, con_data.domain, con_data.ip, con_data.port, NULL);
             if (app_state == APP_STATE_AUTH_DIALOG)
                 goto retry_auth;
             else if (app_state == APP_STATE_EXITING)
@@ -322,15 +324,15 @@ retry_connect_to_vm:
         con_data.is_connect_to_prev_pool = FALSE;
 
         remote_viewer_vm_changed_notify(REMOTE_VIEWER(app), vdi_session_get_current_vm_id(), con_data.ip);
-        // connect to vm depending using remote protocol
+        // connect to vm depending remote protocol
         RemoteViewerState next_app_state = APP_STATE_VDI_DIALOG;
         if (vdi_session_get_current_remote_protocol() == VDI_RDP_PROTOCOL) {
             next_app_state = rdp_viewer_start(REMOTE_VIEWER(app), vdi_session_get_vdi_username(),
-                    vdi_session_get_vdi_password(), con_data.domain, con_data.ip, 0);
+                    vdi_session_get_vdi_password(), con_data.domain, con_data.ip, 0, &con_data.rdp_settings);
 #ifdef _WIN32
         }else if (vdi_session_get_current_remote_protocol() == VDI_RDP_WINDOWS_NATIVE_PROTOCOL) {
                 launch_windows_rdp_client(vdi_session_get_vdi_username(), vdi_session_get_vdi_password(),
-                        con_data.ip, 0, con_data.domain);
+                        con_data.ip, 0, con_data.domain, &con_data.rdp_settings);
 #endif
         } else { // spice by default
             virt_viewer_app_set_window_name(app, con_data.vm_verbose_name);
@@ -354,7 +356,7 @@ retry_connect_to_vm:
     }
 
 to_exit:
-    connect_settings_data_free(&con_data);
+    connect_settings_data_clear(&con_data);
     g_clear_error(&error);
     g_object_unref(css_provider);
     return FALSE;

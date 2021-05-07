@@ -22,7 +22,8 @@
 
 void
 launch_windows_rdp_client(const gchar *usename, const gchar *password G_GNUC_UNUSED,
-                          const gchar *ip, int port G_GNUC_UNUSED, const gchar *domain)
+                          const gchar *ip, int port G_GNUC_UNUSED, const gchar *domain,
+                          const VeilRdpSettings *p_rdp_settings G_GNUC_UNUSED)
 {
 #ifdef __linux__
     (void)usename;

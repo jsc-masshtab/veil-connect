@@ -13,8 +13,10 @@
 
 #include "remote-viewer.h"
 #include "remote-viewer-util.h"
+#include "rdp_settings.h"
 
 RemoteViewerState rdp_viewer_start(RemoteViewer *app,
-        const gchar *usename, const gchar *password, gchar *domain, gchar *ip, int port);
+        const gchar *usename, const gchar *password, gchar *domain, gchar *ip, int port,
+                                   VeilRdpSettings *p_rdp_settings);
 
 #endif /* RDK_VIEWER_H */
