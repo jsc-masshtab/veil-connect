@@ -60,7 +60,7 @@ typedef struct {
     gboolean is_connecting;
 
     // credentials
-    gchar *usename;
+    gchar *user_name;
     gchar *password;
     gchar *domain;
     gchar *ip;
@@ -89,7 +89,7 @@ typedef struct {
 } ExtendedRdpContext;
 
 
-void rdp_client_set_credentials(ExtendedRdpContext *ex_rdp_context, const gchar *usename, const gchar *password,
+void rdp_client_set_credentials(ExtendedRdpContext *ex_rdp_context, const gchar *user_name, const gchar *password,
         gchar *domain, gchar *ip, int port, VeilRdpSettings *p_rdp_settings);
 void rdp_client_set_rdp_image_size(ExtendedRdpContext *ex_rdp_context,
                                          int whole_image_width, int whole_image_height);

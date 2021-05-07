@@ -120,10 +120,11 @@ static GdkRectangle set_monitor_data_and_create_rdp_viewer_window(GdkMonitor *mo
 }
 
 RemoteViewerState rdp_viewer_start(RemoteViewer *app,
-        const gchar *usename, const gchar *password, gchar *domain, gchar *ip, int port,
+        const gchar *user_name, const gchar *password, gchar *domain, gchar *ip, int port,
                                    VeilRdpSettings *p_rdp_settings)
 {
-    g_info("%s domain %s", (const char *)__func__, domain);
+    g_info("%s domain %s remote_app_name %s", (const char *)__func__,
+           domain, p_rdp_settings->remote_app_name);
     RemoteViewerState next_app_state = APP_STATE_UNDEFINED;
     GMainLoop *loop = NULL;
     // create RDP context
@@ -135,17 +136,17 @@ RemoteViewerState rdp_viewer_start(RemoteViewer *app,
     net_speedometer_set_pointer_rdp_context(app->net_speedometer, ex_rdp_context->context.rdp);
 
     // Логин в формате name@domain не нравится freerdp, поэтому отбрасываем @domain
-    gchar *corrected_usename = NULL;
-    gchar *sub_string = strchr(usename, '@');
+    gchar *corrected_user_name = NULL;
+    gchar *sub_string = strchr(user_name, '@');
     if (sub_string) {
-        int index = (int) (sub_string - usename);
-        corrected_usename = g_strndup(usename, index);
+        int index = (int) (sub_string - user_name);
+        corrected_user_name = g_strndup(user_name, index);
     } else {
-        corrected_usename = g_strdup(usename);
+        corrected_user_name = g_strdup(user_name);
     }
 
-    rdp_client_set_credentials(ex_rdp_context, corrected_usename, password, domain, ip, port, p_rdp_settings);
-    free_memory_safely(&corrected_usename);
+    rdp_client_set_credentials(ex_rdp_context, corrected_user_name, password, domain, ip, port, p_rdp_settings);
+    free_memory_safely(&corrected_user_name);
 
     // Set some presettings
     usbredir_controller_reset_tcp_usb_devices_on_next_gui_opening(TRUE);

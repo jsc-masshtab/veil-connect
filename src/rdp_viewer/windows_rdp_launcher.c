@@ -19,14 +19,20 @@
 #include "rdp_viewer.h"
 #include "remote-viewer-util.h"
 
+static void append_rdp_data(FILE *destFile, const gchar *param_name, const gchar *param_value)
+{
+    gchar *full_address = g_strdup_printf("%s:%s\n", param_name, param_value);
+    fputs(full_address, destFile);
+    g_free(full_address);
+}
 
 void
-launch_windows_rdp_client(const gchar *usename, const gchar *password G_GNUC_UNUSED,
+launch_windows_rdp_client(const gchar *user_name, const gchar *password G_GNUC_UNUSED,
                           const gchar *ip, int port G_GNUC_UNUSED, const gchar *domain,
                           const VeilRdpSettings *p_rdp_settings G_GNUC_UNUSED)
 {
 #ifdef __linux__
-    (void)usename;
+    (void)user_name;
     (void)ip;
     (void)domain;
 #elif defined _WIN32
@@ -72,17 +78,17 @@ launch_windows_rdp_client(const gchar *usename, const gchar *password G_GNUC_UNU
     }
 
     // apend unique data
-    //full address:s:192.168.7.99
-    //username:s:User1
-    gchar *full_address = g_strdup_printf("full address:s:%s\n", ip);
-    fputs(full_address, destFile);
-    g_free(full_address);
-    gchar *full_username = g_strdup_printf("username:s:%s\n", usename);
-    fputs(full_username, destFile);
-    g_free(full_username);
-    gchar *full_domain = g_strdup_printf("domain:s:%s", domain);
-    fputs(full_domain, destFile);
-    g_free(full_domain);
+    append_rdp_data(destFile, "full address:s", ip);
+    append_rdp_data(destFile, "username:s", user_name);
+    append_rdp_data(destFile, "domain:s", domain);
+
+    if (p_rdp_settings->is_remote_app) {
+        append_rdp_data(destFile, "remoteapplicationmode:i", "1");
+        append_rdp_data(destFile,"remoteapplicationprogram:s", p_rdp_settings->remote_app_name);
+        append_rdp_data(destFile,"remoteapplicationcmdline:s", p_rdp_settings->remote_app_options);
+    } else {
+        append_rdp_data(destFile, "remoteapplicationmode:i", "0");
+    }
 
     /* Close files to release resources */
     fclose(sourceFile);

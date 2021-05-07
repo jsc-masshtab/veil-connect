@@ -571,7 +571,7 @@ RdpWindowData *rdp_viewer_window_create(ExtendedRdpContext *ex_rdp_context, int 
     GtkWidget *rdp_viewer_window = rdp_window_data->rdp_viewer_window =
             GTK_WIDGET(gtk_builder_get_object(builder, "viewer"));
     gchar *title = g_strdup_printf("ВМ: %s     Пользователь: %s    %s", vdi_session_get_current_vm_name(),
-            ex_rdp_context->usename, APPLICATION_NAME_WITH_SPACES);
+            ex_rdp_context->user_name, APPLICATION_NAME_WITH_SPACES);
     gtk_window_set_title(GTK_WINDOW(rdp_viewer_window), title);
     //gtk_window_set_deletable(GTK_WINDOW(rdp_viewer_window), FALSE);
     free_memory_safely(&title);

@@ -78,7 +78,7 @@ static GArray *rdp_client_create_params_array(ExtendedRdpContext* ex)
             g_strdup_printf("/v:%s", ex->ip);
     add_rdp_param(rdp_params_dyn_array, full_adress);
     add_rdp_param(rdp_params_dyn_array, g_strdup_printf("/d:%s", ex->domain));
-    add_rdp_param(rdp_params_dyn_array, g_strdup_printf("/u:%s", ex->usename));
+    add_rdp_param(rdp_params_dyn_array, g_strdup_printf("/u:%s", ex->user_name));
     add_rdp_param(rdp_params_dyn_array, g_strdup_printf("/p:%s", ex->password)); // ex->password
     add_rdp_param(rdp_params_dyn_array, g_strdup_printf("/w:%i", ex->whole_image_width));
     add_rdp_param(rdp_params_dyn_array, g_strdup_printf("/h:%i", ex->whole_image_height));
@@ -173,10 +173,10 @@ static void rdp_client_destroy_params_array(GArray *rdp_params_dyn_array)
 }
 
 void rdp_client_set_credentials(ExtendedRdpContext *ex_rdp_context,
-                                const gchar *usename, const gchar *password, gchar *domain,
+                                const gchar *user_name, const gchar *password, gchar *domain,
                                 gchar *ip, int port, VeilRdpSettings *p_rdp_settings)
 {
-    ex_rdp_context->usename = g_strdup(usename);
+    ex_rdp_context->user_name = g_strdup(user_name);
     ex_rdp_context->password = g_strdup(password);
     ex_rdp_context->domain = g_strdup(domain);
     ex_rdp_context->ip = g_strdup(ip);
@@ -209,7 +209,7 @@ void* rdp_client_routine(ExtendedRdpContext *ex_contect)
     // rdp params
     GArray *rdp_params_dyn_array = rdp_client_create_params_array(ex_contect);
 
-    g_info("%s ex_contect->usename %s", (const char *)__func__, ex_contect->usename);
+    g_info("%s ex_contect->user_name %s", (const char *)__func__, ex_contect->user_name);
     g_info("%s ex_contect->domain %s", (const char *)__func__, ex_contect->domain);
     // /v:192.168.20.104 /u:solomin /p:5555 -clipboard /sound:rate:44100,channel:2 /cert-ignore
 
@@ -628,7 +628,7 @@ static void rdp_client_free(freerdp* instance G_GNUC_UNUSED, rdpContext* context
     // some clean.
     ExtendedRdpContext* ex_rdp_context = (ExtendedRdpContext*)context;
 
-    free_memory_safely(&ex_rdp_context->usename);
+    free_memory_safely(&ex_rdp_context->user_name);
     free_memory_safely(&ex_rdp_context->password);
     free_memory_safely(&ex_rdp_context->domain);
     free_memory_safely(&ex_rdp_context->ip);
