@@ -274,8 +274,7 @@ static void on_vdi_session_get_vm_from_pool_finished(GObject *source_object G_GN
         if (vdi_vm_data->farm_array && vdi_vm_data->farm_array->len > 0 &&
                 (protocol == VDI_RDP_PROTOCOL || protocol == VDI_RDP_WINDOWS_NATIVE_PROTOCOL)) {
 
-            AppSelectorResult selector_res =
-                    vdi_app_selector_start(vdi_vm_data->farm_array, GTK_WINDOW(self->window));
+            AppSelectorResult selector_res = vdi_app_selector_start(vdi_vm_data, GTK_WINDOW(self->window));
             rdp_settings_clear(&self->p_conn_data->rdp_settings);
             self->p_conn_data->rdp_settings = selector_res.rdp_settings;
 

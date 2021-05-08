@@ -25,7 +25,7 @@ typedef struct{
 
 } AppSelectorResult;
 
-AppSelectorResult vdi_app_selector_start(GArray *farm_array, GtkWindow *parent);
+AppSelectorResult vdi_app_selector_start(VdiVmData *p_vdi_vm_data, GtkWindow *parent);
 
 //void vdi_app_selector_free_selector_result(AppSelectorResult *selector_result);
 

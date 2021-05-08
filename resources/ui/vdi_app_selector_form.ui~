@@ -71,7 +71,6 @@
         </child>
         <child>
           <object class="GtkScrolledWindow">
-            <property name="name">main-window-list</property>
             <property name="visible">True</property>
             <property name="can_focus">True</property>
             <property name="shadow_type">in</property>

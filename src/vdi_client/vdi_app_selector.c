@@ -62,6 +62,7 @@ static void vdi_app_selector_on_icon_btn_clicked(GtkButton *btn, VdiAppSelector 
 
 static void vdi_app_selector_setup_icon_btn(VdiAppSelector *self, GtkWidget *btn, const gchar *app_alias)
 {
+    gtk_widget_set_name(btn, "app_select_btn");
     gtk_widget_set_size_request(btn, 100, 120);
     gtk_flow_box_insert(GTK_FLOW_BOX(self->gtk_flow_box), btn, 0);
 
@@ -122,19 +123,26 @@ static void on_ws_cmd_received(gpointer data G_GNUC_UNUSED, const gchar *cmd, Vd
     }
 }
 
-AppSelectorResult vdi_app_selector_start(GArray *farm_array, GtkWindow *parent)
+AppSelectorResult vdi_app_selector_start(VdiVmData *p_vdi_vm_data, GtkWindow *parent)
 {
     VdiAppSelector *self = calloc(1, sizeof(VdiAppSelector));
     self->selector_result.result_type = APP_SELECTOR_RESULT_NONE;
+    GArray *farm_array = p_vdi_vm_data->farm_array;
 
     self->builder = remote_viewer_util_load_ui("vdi_app_selector_form.ui");
     self->window = GTK_WIDGET(gtk_builder_get_object(self->builder, "main_window"));
     self->main_box = GTK_WIDGET(gtk_builder_get_object(self->builder, "main_box"));
 
+    gtk_label_set_text(GTK_LABEL(gtk_builder_get_object(self->builder, "rds_name")),
+                       p_vdi_vm_data->vm_verbose_name);
+    gtk_label_set_text(GTK_LABEL(gtk_builder_get_object(self->builder, "rds_address")),
+                       p_vdi_vm_data->vm_host);
+
     self->gtk_flow_box = gtk_flow_box_new();
     gtk_flow_box_set_max_children_per_line(GTK_FLOW_BOX(self->gtk_flow_box), 10);
     gtk_flow_box_set_selection_mode (GTK_FLOW_BOX(self->gtk_flow_box), GTK_SELECTION_NONE);
     gtk_flow_box_set_column_spacing (GTK_FLOW_BOX(self->gtk_flow_box), 6);
+    gtk_flow_box_set_row_spacing (GTK_FLOW_BOX(self->gtk_flow_box), 6);
     gtk_box_pack_start(GTK_BOX(self->main_box), self->gtk_flow_box, FALSE, TRUE, 0);
 
     // Заполнить приложения для выбора пользователем

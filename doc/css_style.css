@@ -43,6 +43,7 @@
      min-height: 25px;
      border: 0;
      border-radius: 3px;
+
      background: white;
      padding-left: 12px;
      border: 1px solid #c1bfbf;
@@ -154,7 +155,7 @@
      transition: all 500ms;
 }
 
-#main-window-box {
+#main-window-box, main_box{
      background: white;
      font-family: Arial, Helvetica, sans-serif;
 }
@@ -246,6 +247,20 @@
 
 #vdi_pool_widget_image {
      background: white;
-     border: 0;
+     border: 0px;
      padding: 20px 10px;
+}
+
+#app_selector_header_label {
+       color: black;
+       background: white;
+}
+
+#app_select_btn {
+     color: black;
+     background: white;
+}
+
+#message_main_view{
+     background: #dff0e3;
 }
