@@ -52,6 +52,7 @@ static const struct keyComboDef keyCombos[] = {
     { { RDP_SCANCODE_LCONTROL, RDP_SCANCODE_LMENU, RDP_SCANCODE_F12, GDK_KEY_VoidSymbol }, "Ctrl+Alt+F12", NULL},
     { { RDP_SCANCODE_PRINTSCREEN, GDK_KEY_VoidSymbol }, "_PrintScreen", NULL},
     { { RDP_SCANCODE_LMENU, RDP_SCANCODE_F4, GDK_KEY_VoidSymbol }, "Alt+F_4", NULL},
+    { { RDP_SCANCODE_LMENU, RDP_SCANCODE_TAB, GDK_KEY_VoidSymbol }, "Alt+Tab", NULL},
 };
 
 #ifdef G_OS_WIN32
