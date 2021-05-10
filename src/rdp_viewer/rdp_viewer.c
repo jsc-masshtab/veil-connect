@@ -123,8 +123,7 @@ RemoteViewerState rdp_viewer_start(RemoteViewer *app,
         const gchar *user_name, const gchar *password, gchar *domain, gchar *ip, int port,
                                    VeilRdpSettings *p_rdp_settings)
 {
-    g_info("%s domain %s remote_app_name %s", (const char *)__func__,
-           domain, p_rdp_settings->remote_app_name);
+    g_info("%s domain %s ip %s", (const char *)__func__, domain, ip);
     RemoteViewerState next_app_state = APP_STATE_UNDEFINED;
     GMainLoop *loop = NULL;
     // create RDP context
