@@ -54,6 +54,7 @@ static void add_rdp_param(GArray *rdp_params_dyn_array, gchar *rdp_param)
     g_array_append_val(rdp_params_dyn_array, rdp_param);
 }
 
+// Прочитать из ini параметр и передать в freerdp настройки
 static void rdp_client_read_str_rdp_param_from_ini_and_add(GArray *rdp_params_dyn_array,
         const gchar *ini_key, const gchar *rdp_param_name, const gchar *default_rdp_param_value)
 {
@@ -156,6 +157,10 @@ static GArray *rdp_client_create_params_array(ExtendedRdpContext* ex)
 
         g_strfreev(rdp_args_array);
     }
+
+    // network type
+    rdp_client_read_str_rdp_param_from_ini_and_add(rdp_params_dyn_array, "rdp_network_type",
+            "/network", "auto");
 
     // null terminating arg
     add_rdp_param(rdp_params_dyn_array, NULL);

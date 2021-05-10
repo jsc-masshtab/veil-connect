@@ -56,6 +56,8 @@ typedef struct{
     GtkWidget *remote_app_name_entry;
     GtkWidget *remote_app_options_entry;
 
+    GtkWidget *rdp_network_type_combobox;
+
     // Service
     GtkWidget *btn_archive_logs;
     GtkWidget *log_location_label;
@@ -559,6 +561,12 @@ fill_connect_settings_gui(ConnectSettingsDialogData *dialog_data, ConnectSetting
         g_free(remote_app_options);
     }
 
+    gchar *rdp_network_type = read_str_from_ini_file("RDPSettings", "rdp_network_type");
+    if (rdp_network_type) {
+        gtk_combo_box_set_active_id(GTK_COMBO_BOX(dialog_data->rdp_network_type_combobox), rdp_network_type);
+        g_free(rdp_network_type);
+    }
+
     // Service settings
     gchar *cur_url = app_updater_get_windows_releases_url(dialog_data->p_remote_viewer->app_updater);
     gchar *windows_updates_url = read_str_from_ini_file_default("ServiceSettings",
@@ -644,6 +652,10 @@ save_data_to_ini_file(ConnectSettingsDialogData *dialog_data)
             gtk_entry_get_text(GTK_ENTRY(dialog_data->remote_app_name_entry)));
     write_str_to_ini_file("RDPSettings", "remote_app_options",
                           gtk_entry_get_text(GTK_ENTRY(dialog_data->remote_app_options_entry)));
+// gtk_combo_box_set_active_id
+    const gchar *rdp_network_type =
+            gtk_combo_box_get_active_id(GTK_COMBO_BOX(dialog_data->rdp_network_type_combobox));
+    write_str_to_ini_file("RDPSettings", "rdp_network_type", rdp_network_type);
 
     // Service settings
     write_str_to_ini_file("ServiceSettings", "windows_updates_url",
@@ -704,6 +716,7 @@ GtkResponseType remote_viewer_start_settings_dialog(RemoteViewer *p_remote_viewe
     dialog_data.remote_app_check_btn = get_widget_from_builder(dialog_data.builder, "remote_app_check_btn");
     dialog_data.remote_app_name_entry = get_widget_from_builder(dialog_data.builder, "remote_app_name_entry");
     dialog_data.remote_app_options_entry = get_widget_from_builder(dialog_data.builder, "remote_app_options_entry");
+    dialog_data.rdp_network_type_combobox = get_widget_from_builder(dialog_data.builder, "rdp_network_type_combobox");
 
     // Service functions
     dialog_data.btn_archive_logs = get_widget_from_builder(dialog_data.builder, "btn_archive_logs");
