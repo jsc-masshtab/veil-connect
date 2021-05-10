@@ -86,7 +86,6 @@ static GArray *rdp_client_create_params_array(ExtendedRdpContext* ex)
     add_rdp_param(rdp_params_dyn_array, g_strdup("/cert-ignore"));
     add_rdp_param(rdp_params_dyn_array, g_strdup("/sound:rate:44100,channel:2"));
     add_rdp_param(rdp_params_dyn_array, g_strdup("/smartcard"));
-    add_rdp_param(rdp_params_dyn_array, g_strdup("+fonts"));
     add_rdp_param(rdp_params_dyn_array, g_strdup("/relax-order-checks"));
     if (!vdi_session_is_shared_clipboard_permitted())
         add_rdp_param(rdp_params_dyn_array, g_strdup("-clipboard"));
@@ -159,8 +158,23 @@ static GArray *rdp_client_create_params_array(ExtendedRdpContext* ex)
     }
 
     // network type
-    rdp_client_read_str_rdp_param_from_ini_and_add(rdp_params_dyn_array, "rdp_network_type",
+    gboolean is_rdp_network_assigned = read_int_from_ini_file("RDPSettings", "is_rdp_network_assigned", 0);
+    if (is_rdp_network_assigned)
+        rdp_client_read_str_rdp_param_from_ini_and_add(rdp_params_dyn_array, "rdp_network_type",
             "/network", "auto");
+
+    // additional graphics settings
+    gboolean disable_rdp_decorations = read_int_from_ini_file("RDPSettings", "disable_rdp_decorations", 0);
+    if (disable_rdp_decorations)
+        add_rdp_param(rdp_params_dyn_array, g_strdup("-decorations"));
+    gboolean disable_rdp_fonts = read_int_from_ini_file("RDPSettings", "disable_rdp_fonts", 0);
+    if (disable_rdp_fonts)
+        add_rdp_param(rdp_params_dyn_array, g_strdup("-fonts"));
+    else
+        add_rdp_param(rdp_params_dyn_array, g_strdup("+fonts"));
+    gboolean disable_rdp_themes = read_int_from_ini_file("RDPSettings", "disable_rdp_themes", 0);
+    if (disable_rdp_themes)
+        add_rdp_param(rdp_params_dyn_array, g_strdup("-themes"));
 
     // null terminating arg
     add_rdp_param(rdp_params_dyn_array, NULL);

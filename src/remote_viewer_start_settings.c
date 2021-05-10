@@ -56,7 +56,12 @@ typedef struct{
     GtkWidget *remote_app_name_entry;
     GtkWidget *remote_app_options_entry;
 
+    GtkWidget *rdp_network_check_btn;
     GtkWidget *rdp_network_type_combobox;
+
+    GtkWidget *rdp_decorations_check_btn;
+    GtkWidget *rdp_fonts_check_btn;
+    GtkWidget *rdp_themes_check_btn;
 
     // Service
     GtkWidget *btn_archive_logs;
@@ -193,6 +198,14 @@ on_h264_used_check_btn_toggled(GtkToggleButton *h264_used_check_btn, gpointer us
     ConnectSettingsDialogData *dialog_data = (ConnectSettingsDialogData *)user_data;
     gboolean is_h264_used_check_btn_toggled = gtk_toggle_button_get_active(h264_used_check_btn);
     gtk_widget_set_sensitive(dialog_data->rdp_h264_codec_combobox, is_h264_used_check_btn_toggled);
+}
+
+static void
+on_rdp_network_check_btn_toggled(GtkToggleButton *rdp_network_check_btn, gpointer user_data)
+{
+    ConnectSettingsDialogData *dialog_data = (ConnectSettingsDialogData *)user_data;
+    gboolean is_rdp_network_check_btn_toggled = gtk_toggle_button_get_active(rdp_network_check_btn);
+    gtk_widget_set_sensitive(dialog_data->rdp_network_type_combobox, is_rdp_network_check_btn_toggled);
 }
 
 static void
@@ -561,11 +574,23 @@ fill_connect_settings_gui(ConnectSettingsDialogData *dialog_data, ConnectSetting
         g_free(remote_app_options);
     }
 
-    gchar *rdp_network_type = read_str_from_ini_file("RDPSettings", "rdp_network_type");
-    if (rdp_network_type) {
-        gtk_combo_box_set_active_id(GTK_COMBO_BOX(dialog_data->rdp_network_type_combobox), rdp_network_type);
-        g_free(rdp_network_type);
+    gboolean is_rdp_network_assigned = read_int_from_ini_file("RDPSettings", "is_rdp_network_assigned", 0);
+    gtk_toggle_button_set_active((GtkToggleButton *)dialog_data->rdp_network_check_btn, is_rdp_network_assigned);
+    gtk_widget_set_sensitive(dialog_data->rdp_network_type_combobox, is_rdp_network_assigned);
+    if (is_rdp_network_assigned) {
+        gchar *rdp_network_type = read_str_from_ini_file("RDPSettings", "rdp_network_type");
+        if (rdp_network_type) {
+            gtk_combo_box_set_active_id(GTK_COMBO_BOX(dialog_data->rdp_network_type_combobox), rdp_network_type);
+            g_free(rdp_network_type);
+        }
     }
+
+    gboolean rdp_decorations = read_int_from_ini_file("RDPSettings", "disable_rdp_decorations", 0);
+    gtk_toggle_button_set_active((GtkToggleButton *)dialog_data->rdp_decorations_check_btn, rdp_decorations);
+    gboolean rdp_fonts = read_int_from_ini_file("RDPSettings", "disable_rdp_fonts", 0);
+    gtk_toggle_button_set_active((GtkToggleButton *)dialog_data->rdp_fonts_check_btn, rdp_fonts);
+    gboolean rdp_themes = read_int_from_ini_file("RDPSettings", "disable_rdp_themes", 0);
+    gtk_toggle_button_set_active((GtkToggleButton *)dialog_data->rdp_themes_check_btn, rdp_themes);
 
     // Service settings
     gchar *cur_url = app_updater_get_windows_releases_url(dialog_data->p_remote_viewer->app_updater);
@@ -652,10 +677,20 @@ save_data_to_ini_file(ConnectSettingsDialogData *dialog_data)
             gtk_entry_get_text(GTK_ENTRY(dialog_data->remote_app_name_entry)));
     write_str_to_ini_file("RDPSettings", "remote_app_options",
                           gtk_entry_get_text(GTK_ENTRY(dialog_data->remote_app_options_entry)));
-// gtk_combo_box_set_active_id
+
+    gboolean is_rdp_network_assigned = gtk_toggle_button_get_active((GtkToggleButton *)
+            dialog_data->rdp_network_check_btn);
+    write_int_to_ini_file("RDPSettings", "is_rdp_network_assigned", is_rdp_network_assigned);
     const gchar *rdp_network_type =
             gtk_combo_box_get_active_id(GTK_COMBO_BOX(dialog_data->rdp_network_type_combobox));
     write_str_to_ini_file("RDPSettings", "rdp_network_type", rdp_network_type);
+
+    gboolean rdp_decorations = gtk_toggle_button_get_active((GtkToggleButton *)dialog_data->rdp_decorations_check_btn);
+    write_int_to_ini_file("RDPSettings", "disable_rdp_decorations", rdp_decorations);
+    gboolean rdp_fonts = gtk_toggle_button_get_active((GtkToggleButton *)dialog_data->rdp_fonts_check_btn);
+    write_int_to_ini_file("RDPSettings", "disable_rdp_fonts", rdp_fonts);
+    gboolean rdp_themes = gtk_toggle_button_get_active((GtkToggleButton *)dialog_data->rdp_themes_check_btn);
+    write_int_to_ini_file("RDPSettings", "disable_rdp_themes", rdp_themes);
 
     // Service settings
     write_str_to_ini_file("ServiceSettings", "windows_updates_url",
@@ -716,7 +751,13 @@ GtkResponseType remote_viewer_start_settings_dialog(RemoteViewer *p_remote_viewe
     dialog_data.remote_app_check_btn = get_widget_from_builder(dialog_data.builder, "remote_app_check_btn");
     dialog_data.remote_app_name_entry = get_widget_from_builder(dialog_data.builder, "remote_app_name_entry");
     dialog_data.remote_app_options_entry = get_widget_from_builder(dialog_data.builder, "remote_app_options_entry");
+
+    dialog_data.rdp_network_check_btn = get_widget_from_builder(dialog_data.builder, "rdp_network_check_btn");
     dialog_data.rdp_network_type_combobox = get_widget_from_builder(dialog_data.builder, "rdp_network_type_combobox");
+
+    dialog_data.rdp_decorations_check_btn = get_widget_from_builder(dialog_data.builder, "rdp_decorations_check_btn");
+    dialog_data.rdp_fonts_check_btn = get_widget_from_builder(dialog_data.builder, "rdp_fonts_check_btn");
+    dialog_data.rdp_themes_check_btn = get_widget_from_builder(dialog_data.builder, "rdp_themes_check_btn");
 
     // Service functions
     dialog_data.btn_archive_logs = get_widget_from_builder(dialog_data.builder, "btn_archive_logs");
@@ -748,8 +789,10 @@ GtkResponseType remote_viewer_start_settings_dialog(RemoteViewer *p_remote_viewe
     g_signal_connect(dialog_data.bt_cancel, "clicked", G_CALLBACK(cancel_button_clicked_cb), &dialog_data);
     g_signal_connect(dialog_data.bt_ok, "clicked", G_CALLBACK(ok_button_clicked_cb), &dialog_data);
     g_signal_connect(dialog_data.port_entry, "insert-text", G_CALLBACK(on_insert_text_event), NULL);
-    g_signal_connect(dialog_data.is_h264_used_check_btn, "toggled", G_CALLBACK(on_h264_used_check_btn_toggled),
-            &dialog_data);
+    g_signal_connect(dialog_data.is_h264_used_check_btn, "toggled",
+            G_CALLBACK(on_h264_used_check_btn_toggled), &dialog_data);
+    g_signal_connect(dialog_data.rdp_network_check_btn, "toggled",
+            G_CALLBACK(on_rdp_network_check_btn_toggled), &dialog_data);
     g_signal_connect(dialog_data.btn_add_remote_folder, "clicked",
                      G_CALLBACK(btn_add_remote_folder_clicked_cb), &dialog_data);
     g_signal_connect(dialog_data.btn_remove_remote_folder, "clicked",

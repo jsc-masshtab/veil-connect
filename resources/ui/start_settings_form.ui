@@ -324,6 +324,7 @@
                         <property name="visible">True</property>
                         <property name="can_focus">True</property>
                         <property name="receives_default">False</property>
+                        <property name="halign">start</property>
                         <property name="draw_indicator">True</property>
                       </object>
                       <packing>
@@ -438,11 +439,11 @@
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
                         <child>
-                          <object class="GtkGrid" id="grid_1">
+                          <object class="GtkGrid">
                             <property name="visible">True</property>
                             <property name="can_focus">False</property>
-                            <property name="row_spacing">9</property>
-                            <property name="column_spacing">6</property>
+                            <property name="row_spacing">3</property>
+                            <property name="column_spacing">3</property>
                             <property name="row_homogeneous">True</property>
                             <property name="column_homogeneous">True</property>
                             <child>
@@ -461,6 +462,7 @@
                                 <property name="can_focus">False</property>
                                 <property name="tooltip_text" translatable="yes">Перечислите папки через точку с запятой, либо выберите их с помощью селектора</property>
                                 <property name="halign">end</property>
+                                <property name="margin_right">10</property>
                                 <property name="label" translatable="yes">Перенаправляемые папки</property>
                               </object>
                               <packing>
@@ -631,6 +633,7 @@
                                 <property name="can_focus">False</property>
                                 <property name="tooltip_text" translatable="yes">Частота обновления изображения</property>
                                 <property name="halign">end</property>
+                                <property name="margin_right">10</property>
                                 <property name="label" translatable="yes">FPS</property>
                               </object>
                               <packing>
@@ -662,6 +665,7 @@
                                 <property name="visible">True</property>
                                 <property name="can_focus">False</property>
                                 <property name="halign">end</property>
+                                <property name="margin_right">10</property>
                                 <property name="label" translatable="yes">Формат изображения</property>
                                 <property name="justify">right</property>
                               </object>
@@ -701,21 +705,9 @@
                               </packing>
                             </child>
                             <child>
-                              <object class="GtkLabel">
-                                <property name="visible">True</property>
-                                <property name="can_focus">False</property>
-                                <property name="tooltip_text" translatable="yes">Сообщить RDP серверу в какой сети происходит подключение</property>
-                                <property name="halign">end</property>
-                                <property name="label" translatable="yes">Тип сетевого подключения</property>
-                              </object>
-                              <packing>
-                                <property name="left_attach">0</property>
-                                <property name="top_attach">5</property>
-                              </packing>
-                            </child>
-                            <child>
                               <object class="GtkComboBoxText" id="rdp_network_type_combobox">
                                 <property name="visible">True</property>
+                                <property name="sensitive">False</property>
                                 <property name="can_focus">False</property>
                                 <property name="active">6</property>
                                 <items>
@@ -732,6 +724,72 @@
                                 <property name="left_attach">1</property>
                                 <property name="top_attach">5</property>
                               </packing>
+                            </child>
+                            <child>
+                              <object class="GtkCheckButton" id="rdp_decorations_check_btn">
+                                <property name="label" translatable="yes">Отключить декорации окон</property>
+                                <property name="visible">True</property>
+                                <property name="can_focus">True</property>
+                                <property name="receives_default">False</property>
+                                <property name="halign">start</property>
+                                <property name="draw_indicator">True</property>
+                              </object>
+                              <packing>
+                                <property name="left_attach">0</property>
+                                <property name="top_attach">11</property>
+                              </packing>
+                            </child>
+                            <child>
+                              <object class="GtkCheckButton" id="rdp_fonts_check_btn">
+                                <property name="label" translatable="yes">Отключить гладкие шрифты</property>
+                                <property name="visible">True</property>
+                                <property name="can_focus">True</property>
+                                <property name="receives_default">False</property>
+                                <property name="halign">start</property>
+                                <property name="draw_indicator">True</property>
+                              </object>
+                              <packing>
+                                <property name="left_attach">0</property>
+                                <property name="top_attach">12</property>
+                              </packing>
+                            </child>
+                            <child>
+                              <object class="GtkCheckButton" id="rdp_themes_check_btn">
+                                <property name="label" translatable="yes">Отключить Windows темы</property>
+                                <property name="visible">True</property>
+                                <property name="can_focus">True</property>
+                                <property name="receives_default">False</property>
+                                <property name="halign">start</property>
+                                <property name="draw_indicator">True</property>
+                              </object>
+                              <packing>
+                                <property name="left_attach">0</property>
+                                <property name="top_attach">13</property>
+                              </packing>
+                            </child>
+                            <child>
+                              <object class="GtkCheckButton" id="rdp_network_check_btn">
+                                <property name="label" translatable="yes">Указать тип сетевого 
+подключения</property>
+                                <property name="visible">True</property>
+                                <property name="can_focus">True</property>
+                                <property name="receives_default">False</property>
+                                <property name="tooltip_text" translatable="yes">Сервер RDP будет адаптировать настройки и режимы работы  самостоятельно в зависимости от выбранного типа подключения</property>
+                                <property name="draw_indicator">True</property>
+                              </object>
+                              <packing>
+                                <property name="left_attach">0</property>
+                                <property name="top_attach">5</property>
+                              </packing>
+                            </child>
+                            <child>
+                              <placeholder/>
+                            </child>
+                            <child>
+                              <placeholder/>
+                            </child>
+                            <child>
+                              <placeholder/>
                             </child>
                             <child>
                               <placeholder/>
@@ -861,6 +919,7 @@
                         <property name="can_focus">True</property>
                         <property name="receives_default">False</property>
                         <property name="tooltip_text" translatable="yes">Режим, в котором подключение будет производиться не к VDI серверу, а напрямую к удаленной машине</property>
+                        <property name="halign">start</property>
                         <property name="draw_indicator">True</property>
                       </object>
                       <packing>
