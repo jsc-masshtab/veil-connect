@@ -467,22 +467,22 @@ app_updater_get_windows_updates_task(GTask    *task G_GNUC_UNUSED,
     argv[1] = NULL;
 
     GError *error = NULL;
-    if (g_spawn_sync(NULL,
+    GPid child_pid;
+    if (g_spawn_async(NULL,
                      argv,
                      NULL,
-                     G_SPAWN_DEFAULT, //G_SPAWN_DO_NOT_REAP_CHILD,
+                     G_SPAWN_DO_NOT_REAP_CHILD,
                      NULL,
                      NULL,
-                     NULL,
-                     NULL,
-                     NULL,
+                     &child_pid,
                      &error)
             ) {
         g_info("installer successfully spawned"); // last_version
-        gchar *msg = g_strdup_printf("Процесс установки версии %s завершился. Перезапустите приложение.",
+        gchar *msg = g_strdup_printf("Процесс установки версии %s начался. Завершаем приложение.",
                                      last_version);
         set_status_msg(self, msg);
         g_free(msg);
+        exit(0);
     } else {
         g_info("installer spawning failed");
         set_status_msg(self, "Не удалось запустить процесс установки новой версии ПО.");
