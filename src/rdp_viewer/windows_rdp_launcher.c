@@ -10,7 +10,7 @@
 #include <gio/gio.h>
 #include <gtk/gtk.h>
 
-#ifdef _WIN32
+#ifdef G_OS_WIN32
 #include <windows.h>
 #include <stdio.h>
 #include <tchar.h>
@@ -19,12 +19,14 @@
 #include "rdp_viewer.h"
 #include "remote-viewer-util.h"
 
+#ifdef _WIN32
 static void append_rdp_data(FILE *destFile, const gchar *param_name, const gchar *param_value)
 {
     gchar *full_address = g_strdup_printf("%s:%s\n", param_name, param_value);
     fputs(full_address, destFile);
     g_free(full_address);
 }
+#endif
 
 void
 launch_windows_rdp_client(const gchar *user_name, const gchar *password G_GNUC_UNUSED,
