@@ -360,6 +360,7 @@ on_app_updater_status_changed(gpointer data G_GNUC_UNUSED,
 
             GtkTextBuffer *main_text_view_buffer = gtk_text_view_get_buffer(GTK_TEXT_VIEW(main_text_view));
             // output of the last process
+            g_info("%s last_process_output: %s", (const char *)__func__, last_process_output);
             gtk_text_buffer_set_text(main_text_view_buffer, last_process_output, -1);
 
             gtk_window_set_transient_for(GTK_WINDOW(text_msg_dialog), GTK_WINDOW(dialog_data->window));
