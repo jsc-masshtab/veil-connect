@@ -1,6 +1,5 @@
 screen mode id:i:2
 use multimon:i:1
-username:s:User1
 desktopwidth:i:1366
 desktopheight:i:768
 session bpp:i:15
@@ -22,7 +21,6 @@ disable menu anims:i:1
 disable themes:i:0
 disable cursor setting:i:0
 bitmapcachepersistenable:i:1
-full address:s:192.168.7.99
 audiomode:i:0
 redirectprinters:i:1
 redirectcomports:i:0
@@ -31,14 +29,13 @@ redirectclipboard:i:1
 redirectposdevices:i:0
 autoreconnection enabled:i:1
 authentication level:i:0
-prompt for credentials:i:0
+prompt for credentials:i:1
 negotiate security layer:i:1
-remoteapplicationmode:i:0
 alternate shell:s:
 shell working directory:s:
 gatewayhostname:s:
 gatewayusagemethod:i:4
-gatewaycredentialssource:i:4
+gatewaycredentialssource:i:0
 gatewayprofileusagemethod:i:0
 promptcredentialonce:i:0
 gatewaybrokeringtype:i:0

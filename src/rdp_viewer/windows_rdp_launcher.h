@@ -11,7 +11,9 @@
 
 #include <gtk/gtk.h>
 
-void launch_windows_rdp_client(const gchar *usename, const gchar *password, const gchar *ip, int port,
-   const gchar *domain);
+#include "rdp_settings.h"
+
+void launch_windows_rdp_client(const gchar *user_name, const gchar *password, const gchar *ip, int port,
+   const gchar *domain, const VeilRdpSettings *p_rdp_settings);
 
 #endif // WINDOWS_RDP_LAUNCHER_H

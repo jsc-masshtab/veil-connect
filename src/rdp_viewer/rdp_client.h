@@ -60,11 +60,13 @@ typedef struct {
     gboolean is_connecting;
 
     // credentials
-    gchar *usename;
+    gchar *user_name;
     gchar *password;
     gchar *domain;
     gchar *ip;
     int port;
+    // additional settings
+    VeilRdpSettings *p_rdp_settings; // указатель на данные. Не владеет этими данными
 
     // UpdateImageCallback update_image_callback; // callback for updating image in the main thread
     UpdateCursorCallback update_cursor_callback; // callback for updating cursor in the main thread
@@ -87,8 +89,8 @@ typedef struct {
 } ExtendedRdpContext;
 
 
-void rdp_client_set_credentials(ExtendedRdpContext *ex_rdp_context,
-                                     const gchar *usename, const gchar *password, gchar *domain, gchar *ip, int port);
+void rdp_client_set_credentials(ExtendedRdpContext *ex_rdp_context, const gchar *user_name, const gchar *password,
+        gchar *domain, gchar *ip, int port, VeilRdpSettings *p_rdp_settings);
 void rdp_client_set_rdp_image_size(ExtendedRdpContext *ex_rdp_context,
                                          int whole_image_width, int whole_image_height);
 

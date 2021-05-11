@@ -11,6 +11,7 @@
 
 #include "vdi_session.h"
 #include "remote-viewer-util.h"
+#include "rdp_settings.h"
 
 typedef struct{
 
@@ -29,6 +30,9 @@ typedef struct{
     VdiVmRemoteProtocol remote_protocol_type;
 
     gchar *vm_verbose_name;
+
+    // RDP specific
+    VeilRdpSettings rdp_settings;
 
 } ConnectSettingsData;
 

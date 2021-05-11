@@ -52,6 +52,7 @@ static const struct keyComboDef keyCombos[] = {
     { { RDP_SCANCODE_LCONTROL, RDP_SCANCODE_LMENU, RDP_SCANCODE_F12, GDK_KEY_VoidSymbol }, "Ctrl+Alt+F12", NULL},
     { { RDP_SCANCODE_PRINTSCREEN, GDK_KEY_VoidSymbol }, "_PrintScreen", NULL},
     { { RDP_SCANCODE_LMENU, RDP_SCANCODE_F4, GDK_KEY_VoidSymbol }, "Alt+F_4", NULL},
+    { { RDP_SCANCODE_LMENU, RDP_SCANCODE_TAB, GDK_KEY_VoidSymbol }, "Alt+Tab", NULL},
 };
 
 #ifdef G_OS_WIN32
@@ -303,6 +304,11 @@ static void rdp_viewer_item_menu_usb_activated(GtkWidget *menu G_GNUC_UNUSED, gp
                         "Проброс USB не поддерживается на текущей ОС");
     return;
 #endif
+    // Не реализовано для RDS
+    if (vdi_session_get_current_pool_type() == VDI_POOL_TYPE_RDS) {
+        show_msg_box_dialog(GTK_WINDOW(rdp_window_data->rdp_viewer_window), "Проброс USB не реализован для RDS пула");
+        return;
+    }
 
     // Работает только в связке с veil
     if (opt_manual_mode)
@@ -566,7 +572,7 @@ RdpWindowData *rdp_viewer_window_create(ExtendedRdpContext *ex_rdp_context, int 
     GtkWidget *rdp_viewer_window = rdp_window_data->rdp_viewer_window =
             GTK_WIDGET(gtk_builder_get_object(builder, "viewer"));
     gchar *title = g_strdup_printf("ВМ: %s     Пользователь: %s    %s", vdi_session_get_current_vm_name(),
-            ex_rdp_context->usename, APPLICATION_NAME_WITH_SPACES);
+            ex_rdp_context->user_name, APPLICATION_NAME_WITH_SPACES);
     gtk_window_set_title(GTK_WINDOW(rdp_viewer_window), title);
     //gtk_window_set_deletable(GTK_WINDOW(rdp_viewer_window), FALSE);
     free_memory_safely(&title);

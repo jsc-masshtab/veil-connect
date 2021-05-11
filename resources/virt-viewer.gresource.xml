@@ -14,6 +14,7 @@
     <file>ui/ask_pass_form.ui</file>
     <file>ui/text_msg_form.ui</file>
     <file>ui/vdi_messenger_from.ui</file>
+    <file>ui/vdi_app_selector_form.ui</file>
     <file alias="icons/24x24/virt-viewer-usb.png">icons/24x24/virt-viewer-usb.png</file>
     <file alias="icons/content/img/veil-32x32.png">icons/content/img/veil-32x32.png</file>
     <file alias="icons/content/img/other_icon.png">icons/content/img/other_icon.png</file>

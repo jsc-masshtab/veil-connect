@@ -923,10 +923,10 @@ H264_CODEC_TYPE get_default_h264_codec()
 
 const gchar *util_get_os_name()
 {
-#ifdef _WIN32
-    return "Windows 32-bit";
-#elif _WIN64
+#ifdef _WIN64
     return "Windows 64-bit";
+#elif _WIN32
+    return "Windows 32-bit";
 #elif __APPLE__ || __MACH__
     return "Mac OSX";
 #elif __linux__

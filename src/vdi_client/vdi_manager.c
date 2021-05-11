@@ -12,6 +12,7 @@
 #include <libsoup/soup-session.h>
 
 #include "vdi_manager.h"
+#include "vdi_app_selector.h"
 #include "remote-viewer-util.h"
 #include "vdi_ws_client.h"
 #include "vdi_pool_widget.h"
@@ -136,7 +137,7 @@ static void register_pool(VdiManager *self, const gchar *pool_id, const gchar *p
     // add element
     VdiPoolWidget vdi_pool_widget = build_pool_widget(pool_id, pool_name, os_type, status,
                                                       conn_types_json_array, self->gtk_flow_box);
-    g_array_append_val (self->pool_widgets_array, vdi_pool_widget);
+    g_array_append_val(self->pool_widgets_array, vdi_pool_widget);
     // connect start button to callback
     vdi_pool_widget.btn_click_sig_hadle = g_signal_connect(vdi_pool_widget.vm_start_button,
             "clicked", G_CALLBACK(on_vm_start_button_clicked), self);
@@ -231,6 +232,13 @@ static void on_vdi_session_get_vdi_pool_data_finished(GObject *source_object G_G
         g_free(ptr_res);
 }
 
+static void stop_event_loop_and_go_to_vm(VdiManager *self)
+{
+    self->ci.response = TRUE;
+    self->ci.next_app_state = APP_STATE_REMOTE_VM;
+    shutdown_loop(self->ci.loop);
+}
+
 // callback which is invoked when vm start request finished
 static void on_vdi_session_get_vm_from_pool_finished(GObject *source_object G_GNUC_UNUSED,
                                          GAsyncResult *res, VdiManager *self)
@@ -250,12 +258,7 @@ static void on_vdi_session_get_vm_from_pool_finished(GObject *source_object G_GN
 
     VdiVmData *vdi_vm_data = (VdiVmData *)ptr_res;
 
-    if (vdi_vm_data->server_reply_type != SERVER_REPLY_TYPE_DATA) {
-        const gchar *user_message = (strlen_safely(vdi_vm_data->message) != 0) ?
-                vdi_vm_data->message : "Не удалось получить вм из пула";
-        set_vdi_client_state(self, VDI_RECEIVED_RESPONSE, user_message, TRUE);
-
-    } else {
+    if (vdi_vm_data->server_reply_type == SERVER_REPLY_TYPE_DATA) {
         // save to settings file the last pool we connected to
         write_str_to_ini_file("RemoteViewerConnect", "last_pool_id", vdi_session_get_current_pool_id());
 
@@ -266,10 +269,26 @@ static void on_vdi_session_get_vm_from_pool_finished(GObject *source_object G_GN
         //
         set_vdi_client_state(self, VDI_RECEIVED_RESPONSE, "Получена вм из пула", FALSE);
 
-        //stop event loop
-        self->ci.response = TRUE;
-        self->ci.next_app_state = APP_STATE_REMOTE_VM;
-        shutdown_loop(self->ci.loop);
+        // Если существует список приложений и если протокол RDP, то показываем окно выбора приложений
+        VdiVmRemoteProtocol protocol = vdi_session_get_current_remote_protocol();
+        if (vdi_vm_data->farm_array && vdi_vm_data->farm_array->len > 0 &&
+                (protocol == VDI_RDP_PROTOCOL || protocol == VDI_RDP_WINDOWS_NATIVE_PROTOCOL)) {
+
+            AppSelectorResult selector_res = vdi_app_selector_start(vdi_vm_data, GTK_WINDOW(self->window));
+            rdp_settings_clear(&self->p_conn_data->rdp_settings);
+            self->p_conn_data->rdp_settings = selector_res.rdp_settings;
+
+            if (selector_res.result_type != APP_SELECTOR_RESULT_NONE) {
+                stop_event_loop_and_go_to_vm(self); //stop event loop
+            }
+        } else {
+            stop_event_loop_and_go_to_vm(self); //stop event loop
+        }
+
+    } else {
+        const gchar *user_message = (strlen_safely(vdi_vm_data->message) != 0) ?
+                                    vdi_vm_data->message : "Не удалось получить вм из пула";
+        set_vdi_client_state(self, VDI_RECEIVED_RESPONSE, user_message, TRUE);
     }
     //
     vdi_api_session_free_vdi_vm_data(vdi_vm_data);
