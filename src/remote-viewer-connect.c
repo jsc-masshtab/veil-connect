@@ -6,6 +6,8 @@
  * Author: http://mashtab.org/
  */
 
+#include <freerdp/version.h>
+
 #include <config.h>
 
 #include "settingsfile.h"
@@ -93,7 +95,7 @@ set_auth_dialog_state(AuthDialogState auth_dialog_state, RemoteViewerConnData *c
     }
     }
 }
-// header-label
+
 static void
 set_data_from_gui_in_outer_pointers(RemoteViewerConnData *ci)
 {
@@ -377,6 +379,10 @@ remote_viewer_connect_dialog(RemoteViewer *remote_viewer, ConnectSettingsData *c
     ci.connect_spinner = GTK_WIDGET(gtk_builder_get_object(builder, "connect-spinner"));
     ci.message_display_label = GTK_WIDGET(gtk_builder_get_object(builder, "message-display-label"));
     ci.header_label = GTK_WIDGET(gtk_builder_get_object(builder, "header-label"));
+    g_autofree gchar *header_label_tooltip_text = NULL;
+    header_label_tooltip_text = g_strdup_printf("Freerdp version: %s Application built: %s %s",
+            FREERDP_VERSION_FULL, __DATE__, __TIME__);
+    gtk_widget_set_tooltip_text(ci.header_label, header_label_tooltip_text);
     gtk_label_set_text(GTK_LABEL(ci.header_label), VERSION);
     ci.new_version_available_image = GTK_WIDGET(gtk_builder_get_object(builder, "new-version-available-image"));
 
