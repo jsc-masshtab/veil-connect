@@ -732,7 +732,6 @@ virt_viewer_app_set_window_subtitle(VirtViewerApp *app,
 static void
 set_title(VirtViewerApp *app, VirtViewerWindow *window, gint number)
 {
-    VirtViewerDisplay *display = virt_viewer_window_get_display(window);
     virt_viewer_app_set_window_subtitle(app, window, number);
 }
 

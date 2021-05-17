@@ -15,6 +15,8 @@
 #include "remote-viewer-util.h"
 #include "settingsfile.h"
 
+#include "usb_selector_widget.h"
+
 #include "remote_viewer_start_settings.h"
 
 extern gboolean opt_manual_mode;
@@ -62,6 +64,10 @@ typedef struct{
     GtkWidget *rdp_decorations_check_btn;
     GtkWidget *rdp_fonts_check_btn;
     GtkWidget *rdp_themes_check_btn;
+
+    GtkWidget *select_usb_btn;
+
+    UsbSelectorWidget *usb_selector_widget;
 
     // Service
     GtkWidget *btn_archive_logs;
@@ -442,6 +448,12 @@ btn_open_doc_clicked_cb()
 }
 
 static void
+on_select_usb_btn_clicked_cb(GtkButton *button G_GNUC_UNUSED, ConnectSettingsDialogData *dialog_data)
+{
+    usb_selector_widget_show_and_start_loop(dialog_data->usb_selector_widget, GTK_WINDOW(dialog_data->window));
+}
+
+static void
 on_direct_connect_mode_check_btn_toggled(GtkToggleButton *check_btn, gpointer user_data)
 {
     g_info("%s", (const char*)__func__);
@@ -593,6 +605,10 @@ fill_connect_settings_gui(ConnectSettingsDialogData *dialog_data, ConnectSetting
     gboolean rdp_themes = read_int_from_ini_file("RDPSettings", "disable_rdp_themes", 0);
     gtk_toggle_button_set_active((GtkToggleButton *)dialog_data->rdp_themes_check_btn, rdp_themes);
 
+    gchar *usb_devices = read_str_from_ini_file("RDPSettings", "usb_devices");
+    usb_selector_widget_set_selected_usb_str(dialog_data->usb_selector_widget, usb_devices);
+    g_free(usb_devices);
+
     // Service settings
     gchar *cur_url = app_updater_get_windows_releases_url(dialog_data->p_remote_viewer->app_updater);
     gchar *windows_updates_url = read_str_from_ini_file_default("ServiceSettings",
@@ -693,6 +709,14 @@ save_data_to_ini_file(ConnectSettingsDialogData *dialog_data)
     gboolean rdp_themes = gtk_toggle_button_get_active((GtkToggleButton *)dialog_data->rdp_themes_check_btn);
     write_int_to_ini_file("RDPSettings", "disable_rdp_themes", rdp_themes);
 
+    gchar *usb_devices = usb_selector_widget_get_selected_usb_str(dialog_data->usb_selector_widget);
+    if (usb_devices) {
+        write_str_to_ini_file("RDPSettings", "usb_devices", usb_devices);
+        g_free(usb_devices);
+    } else {
+        write_str_to_ini_file("RDPSettings", "usb_devices", "");
+    }
+
     // Service settings
     write_str_to_ini_file("ServiceSettings", "windows_updates_url",
                           gtk_entry_get_text(GTK_ENTRY(dialog_data->windows_updates_url_entry)));
@@ -760,6 +784,13 @@ GtkResponseType remote_viewer_start_settings_dialog(RemoteViewer *p_remote_viewe
     dialog_data.rdp_fonts_check_btn = get_widget_from_builder(dialog_data.builder, "rdp_fonts_check_btn");
     dialog_data.rdp_themes_check_btn = get_widget_from_builder(dialog_data.builder, "rdp_themes_check_btn");
 
+    dialog_data.select_usb_btn = get_widget_from_builder(dialog_data.builder, "select_usb_btn");
+
+    dialog_data.usb_selector_widget = usb_selector_widget_new();
+    gtk_widget_destroy(dialog_data.usb_selector_widget->tk_address_entry);
+    gtk_widget_destroy(dialog_data.usb_selector_widget->tk_address_header);
+    usb_selector_widget_enable_auto_toggle(dialog_data.usb_selector_widget);
+
     // Service functions
     dialog_data.btn_archive_logs = get_widget_from_builder(dialog_data.builder, "btn_archive_logs");
     dialog_data.log_location_label = get_widget_from_builder(dialog_data.builder, "log_location_label");
@@ -806,6 +837,7 @@ GtkResponseType remote_viewer_start_settings_dialog(RemoteViewer *p_remote_viewe
                      &dialog_data);
     g_signal_connect(dialog_data.btn_open_doc, "clicked", G_CALLBACK(btn_open_doc_clicked_cb),
                      &dialog_data);
+    g_signal_connect(dialog_data.select_usb_btn, "clicked", G_CALLBACK(on_select_usb_btn_clicked_cb), &dialog_data);
     dialog_data.on_direct_connect_mode_check_btn_toggled_id =
             g_signal_connect(dialog_data.direct_connect_mode_check_btn, "toggled",
             G_CALLBACK(on_direct_connect_mode_check_btn_toggled), &dialog_data);
@@ -839,6 +871,7 @@ GtkResponseType remote_viewer_start_settings_dialog(RemoteViewer *p_remote_viewe
     g_signal_handler_disconnect(p_remote_viewer->app_updater, state_hdle);
 
     // clear
+    usb_selector_widget_free(dialog_data.usb_selector_widget);
     g_object_unref(dialog_data.builder);
     gtk_widget_destroy(dialog_data.window);
 

@@ -176,6 +176,11 @@ static GArray *rdp_client_create_params_array(ExtendedRdpContext* ex)
     if (disable_rdp_themes)
         add_rdp_param(rdp_params_dyn_array, g_strdup("-themes"));
 
+    // USB for RemoteFX
+    if(vdi_session_is_usb_redir_permitted()) {
+        rdp_client_read_str_rdp_param_from_ini_and_add(rdp_params_dyn_array, "usb_devices", "/usb:addr", NULL);
+    }
+
     // null terminating arg
     add_rdp_param(rdp_params_dyn_array, NULL);
 

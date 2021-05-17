@@ -10,7 +10,7 @@
     <file>ui/virt-viewer-file-transfer-dialog.ui</file>
     <file>ui/vdi_manager_form.ui</file>
     <file>ui/start_settings_form.ui</file>
-    <file>ui/usb_tcp_redir_form.ui</file>
+    <file>ui/usb_selector_form.ui</file>
     <file>ui/ask_pass_form.ui</file>
     <file>ui/text_msg_form.ui</file>
     <file>ui/vdi_messenger_from.ui</file>

@@ -306,8 +306,8 @@ static void rdp_viewer_item_menu_usb_activated(GtkWidget *menu G_GNUC_UNUSED, gp
 #endif
     // Не реализовано для RDS
     if (vdi_session_get_current_pool_type() == VDI_POOL_TYPE_RDS) {
-        show_msg_box_dialog(GTK_WINDOW(rdp_window_data->rdp_viewer_window), "Проброс USB не реализован для RDS пула");
-        return;
+        //show_msg_box_dialog(GTK_WINDOW(rdp_window_data->rdp_viewer_window), "Проброс USB не реализован для RDS пула");
+        //return;
     }
 
     // Работает только в связке с veil
