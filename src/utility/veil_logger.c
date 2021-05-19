@@ -50,21 +50,21 @@ void veil_logger_setup()
     gchar *bt_file_name = g_build_filename(cur_log_path, "backtrace.txt", NULL);
     convert_string_from_utf8_to_locale(&bt_file_name);
     install_crash_handler(bt_file_name);
+    g_free(bt_file_name);
 
+#ifdef NDEBUG // logging errors  in release mode
     //error output
     gchar *stderr_file_name = g_build_filename(cur_log_path, "stderr.txt", NULL);
     convert_string_from_utf8_to_locale(&stderr_file_name);
     err_file_desc = freopen(stderr_file_name, "w", stderr);
+    g_free(stderr_file_name);
 
     //stdout output
     gchar *stdout_file_name = g_build_filename(cur_log_path, "stdout.txt", NULL);
     convert_string_from_utf8_to_locale(&stdout_file_name);
     out_file_desc = freopen(stdout_file_name, "w", stdout);
-
-    // free memory
-    g_free(bt_file_name);
-    g_free(stderr_file_name);
     g_free(stdout_file_name);
+#endif
 }
 
 void veil_logger_free()

@@ -71,16 +71,20 @@ static BOOL xf_Pointer_Set(rdpContext* context, const rdpPointer* pointer)
         return TRUE;
     }
 
+    //g_info("%s g_mutex_lock(&ex_rdp_context->cursor_mutex);", (const char *)__func__);
     g_mutex_lock(&ex_rdp_context->cursor_mutex);
     if (ex_rdp_context->gdk_cursor)
         g_object_unref(ex_rdp_context->gdk_cursor);
-    ex_rdp_context->gdk_cursor = gdk_cursor_new_from_pixbuf(display, pix_buff, (gint)pointer->xPos, (gint)pointer->yPos);
+    ex_rdp_context->gdk_cursor = gdk_cursor_new_from_pixbuf(display, pix_buff,
+            (gint)pointer->xPos, (gint)pointer->yPos);
     g_mutex_unlock(&ex_rdp_context->cursor_mutex);
+    //g_info("%s g_mutex_unlock(&ex_rdp_context->cursor_mutex);", (const char *)__func__);
 
     g_object_unref(pix_buff);
 
     // invoke callback to set cursor in main (gui) thread.
-    g_idle_add((GSourceFunc)ex_rdp_context->update_cursor_callback, context);
+    ex_rdp_context->cursor_update_timeout_id =
+            g_idle_add((GSourceFunc)ex_rdp_context->update_cursor_callback, context);
     return TRUE;
 }
 

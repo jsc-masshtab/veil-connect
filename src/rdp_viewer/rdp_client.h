@@ -70,6 +70,7 @@ typedef struct {
 
     // UpdateImageCallback update_image_callback; // callback for updating image in the main thread
     UpdateCursorCallback update_cursor_callback; // callback for updating cursor in the main thread
+    guint cursor_update_timeout_id;
 
     // rail
     RailClientContext* rail;
@@ -86,8 +87,18 @@ typedef struct {
 
     RemoteViewer *app;
 
+    //GAsyncQueue *display_update_queue; // очередь для обновления изображений
+    guint display_update_timeout_id;
+    GMutex invalid_region_mutex;
+    gboolean invalid_region_has_data;
+    GdkRectangle invalid_region;
+
 } ExtendedRdpContext;
 
+
+ExtendedRdpContext* create_rdp_context(UpdateCursorCallback update_cursor_callback,
+                                       GSourceFunc update_images_func);
+void destroy_rdp_context(ExtendedRdpContext* ex_rdp_context);
 
 void rdp_client_set_credentials(ExtendedRdpContext *ex_rdp_context, const gchar *user_name, const gchar *password,
         gchar *domain, gchar *ip, int port, VeilRdpSettings *p_rdp_settings);

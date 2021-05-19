@@ -382,9 +382,7 @@ static void rdp_display_draw_text_message(cairo_t* context, const gchar *msg, do
 static gboolean rdp_display_event_on_draw(GtkWidget* widget G_GNUC_UNUSED, cairo_t* context, gpointer user_data)
 {
     //g_info("%s START\n", (const char *)__func__);
-
     RdpWindowData *rdp_window_data = (RdpWindowData *)user_data;
-    rdp_window_data->is_rdp_display_being_redrawed = TRUE;
 
     ExtendedRdpContext *ex_rdp_contect = rdp_window_data->ex_rdp_context;
 
@@ -394,10 +392,8 @@ static gboolean rdp_display_event_on_draw(GtkWidget* widget G_GNUC_UNUSED, cairo
             g_mutex_lock(&ex_rdp_contect->primary_buffer_mutex);
 
             if (ex_rdp_contect->surface) {
-
                 //gint64 start = g_get_monotonic_time();
                 //cairo_push_group(context);
-
                 cairo_set_source_surface(context, ex_rdp_contect->surface, -rdp_window_data->monitor_geometry.x,
                                          -rdp_window_data->monitor_geometry.y);
 
@@ -429,7 +425,6 @@ static gboolean rdp_display_event_on_draw(GtkWidget* widget G_GNUC_UNUSED, cairo
         }
     }
 
-    rdp_window_data->is_rdp_display_being_redrawed = FALSE;
     return TRUE;
 }
 

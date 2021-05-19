@@ -32,9 +32,8 @@
 int
 main(int argc, char **argv)
 {
-#ifdef NDEBUG // logging errors and traceback in release mode
     veil_logger_setup();
-#endif
+
     // disable stdout buffering
     setbuf(stdout, NULL);
 

@@ -146,6 +146,8 @@ list(APPEND SRC_CODE
         src/usb_redirection/usbredir_dialog.c
         src/usb_redirection/usbredir_util.h
         src/usb_redirection/usbredir_util.c
+        src/usb_redirection/usb_selector_widget.h
+        src/usb_redirection/usb_selector_widget.c
 )
 if (UNIX)
 list(APPEND SRC_CODE

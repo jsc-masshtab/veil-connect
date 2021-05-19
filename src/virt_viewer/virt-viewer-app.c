@@ -724,30 +724,27 @@ virt_viewer_app_set_window_subtitle(VirtViewerApp *app,
         } else
             subtitle = g_strdup_printf("%s   Номер дисплея: %d", title, nth + 1);
     }
-
+    g_info("%s: %i subtitle: %s", (const char*)__func__, nth, subtitle);
     g_object_set(window, "subtitle", subtitle, NULL);
     g_free(subtitle);
 }
 
 static void
-set_title(gpointer value,
-          gpointer user_data)
+set_title(VirtViewerApp *app, VirtViewerWindow *window, gint number)
 {
-    VirtViewerApp *app = user_data;
-    VirtViewerWindow *window = value;
-    VirtViewerDisplay *display = virt_viewer_window_get_display(window);
-
-    if (!display)
-        return;
-
-    virt_viewer_app_set_window_subtitle(app, window,
-                                        virt_viewer_display_get_nth(display));
+    virt_viewer_app_set_window_subtitle(app, window, number);
 }
 
 static void
 virt_viewer_app_set_all_window_subtitles(VirtViewerApp *app)
 {
-    g_list_foreach(app->priv->windows, set_title, app);
+    GList *l;
+    GList *windows = app->priv->windows;
+    guint i = 0;
+    for (l = windows; l != NULL; l = l->next) {
+        set_title(app, l->data, i);
+        i++;
+    }
 }
 
 static void update_title(gpointer value,

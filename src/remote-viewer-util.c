@@ -783,6 +783,14 @@ void update_string_safely(gchar **string_ptr, const gchar *new_string)
     }
 }
 
+void g_source_remove_safely(guint *timeout_id)
+{
+    if (*timeout_id) {
+        g_source_remove(*timeout_id);
+        *timeout_id = 0;
+    }
+}
+
 const gchar* determine_http_protocol_by_port(int port)
 {
     const int https_port = 443;

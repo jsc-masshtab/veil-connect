@@ -142,7 +142,7 @@ static gboolean state_changed(AppUpdater *self)
 
 static void set_status_msg(AppUpdater *self, const gchar *status_msg)
 {
-    g_info("set_status_msg: %s", status_msg);
+    g_info("%s: %s", (const char *)__func__, status_msg);
     g_mutex_lock(&self->priv_members_mutex);
     update_string_safely(&self->_cur_status_msg, status_msg);
     gdk_threads_add_idle((GSourceFunc)status_msg_changed, self);
@@ -281,11 +281,28 @@ app_updater_get_linux_updates_task(GTask    *task G_GNUC_UNUSED,
     free_memory_safely(&self->_last_standard_error);
     g_mutex_unlock(&self->priv_members_mutex);
 
+    // check if update script exists
+    if (!g_file_test("update_script.sh", G_FILE_TEST_EXISTS)) {
+        set_status_msg(self, "Отсутствует файл скрипт обновления update_script.sh!\n"
+                             "Попробуйте переустановить приложение");
+        goto clear_mark;
+    }
+
     // Проверка пароля
     set_status_msg(self, "Проверка sudo пароля.");
     command_line = g_strdup_printf("./update_script.sh %s %s", "check_sudo_pass", self->_admin_password);
-    g_spawn_command_line_sync(command_line, &standard_output, &standard_error, &self->_last_exit_status, NULL);
-    if (!strstr(standard_output, "success_pass")) {
+    GError *error = NULL;
+    g_spawn_command_line_sync(command_line, &standard_output, &standard_error, &self->_last_exit_status, &error);
+
+    if (error) {
+        gchar *msg = g_strdup_printf("Не удалось проверить пароль.\n%s", error->message);
+        set_status_msg(self, msg);
+        g_free(msg);
+        g_error_free(error);
+        goto clear_mark;
+    }
+
+    if (standard_output && !strstr(standard_output, "success_pass")) {
         set_status_msg(self, "Неправильный пароль.");
         goto clear_mark;
     }
