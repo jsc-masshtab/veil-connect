@@ -49,6 +49,60 @@
 #define TAG CLIENT_TAG(PROGRAMM_NAME)
 #define CONN_TRY_NUMBER 2
 
+//static gint64 prev = 0;
+static void rdp_client_demand_image_update(ExtendedRdpContext* ex_context, int x, int y, int width, int height)
+{
+    //gint64 cur = g_get_monotonic_time();
+    //g_info("PUSH time %lli", cur - prev);
+    //prev = cur;
+
+    //if (ex_context->display_update_queue) {
+        //GdkRectangle *update_region = malloc(sizeof(GdkRectangle)); // freed when popped from queue
+        //update_region->x = x;
+        //update_region->y = y;
+        //update_region->width = width;
+        //update_region->height = height;
+        //gint q_len = g_async_queue_length(ex_context->display_update_queue);
+        //g_info("send q_len: %i", q_len);
+        //g_async_queue_push(ex_context->display_update_queue, update_region);
+    //}
+
+    // Формируем область которую нужно перерисовать в главном потоке
+    g_mutex_lock(&ex_context->invalid_region_mutex);
+
+    if (!ex_context->invalid_region_has_data) {
+        ex_context->invalid_region.x = x;
+        ex_context->invalid_region.y = y;
+        ex_context->invalid_region.width = width;
+        ex_context->invalid_region.height = height;
+
+        ex_context->invalid_region_has_data = TRUE;
+    } else {
+        // Сдвиг влево
+        int left_x_delta = ex_context->invalid_region.x - x;
+        if (left_x_delta > 0) {
+            ex_context->invalid_region.x -= left_x_delta;
+            ex_context->invalid_region.width += left_x_delta;
+        }
+        // Сдвиг наверх
+        int up_y_delta = ex_context->invalid_region.y - y;
+        if (up_y_delta > 0) {
+            ex_context->invalid_region.y -= up_y_delta;
+            ex_context->invalid_region.height += up_y_delta;
+        }
+        // Сдвиг вправо
+        int right_x_delta = (x + width) - (ex_context->invalid_region.x + ex_context->invalid_region.width);
+        if ( right_x_delta > 0 )
+            ex_context->invalid_region.width += right_x_delta;
+        // Сдвиг вниз
+        int bottom_y_delta = (y + height) - (ex_context->invalid_region.y + ex_context->invalid_region.height);
+        if ( bottom_y_delta > 0 )
+            ex_context->invalid_region.height += bottom_y_delta;
+    }
+
+    g_mutex_unlock(&ex_context->invalid_region_mutex);
+}
+
 static void add_rdp_param(GArray *rdp_params_dyn_array, gchar *rdp_param)
 {
     g_array_append_val(rdp_params_dyn_array, rdp_param);
@@ -196,6 +250,55 @@ static void rdp_client_destroy_params_array(GArray *rdp_params_dyn_array)
     g_array_free(rdp_params_dyn_array, TRUE);
 }
 
+ExtendedRdpContext* create_rdp_context(UpdateCursorCallback update_cursor_callback,
+                                              GSourceFunc update_images_func)
+{
+    RDP_CLIENT_ENTRY_POINTS clientEntryPoints;
+    rdp_client_entry(&clientEntryPoints);
+    rdpContext* context = freerdp_client_context_new(&clientEntryPoints);
+
+    ExtendedRdpContext* ex_rdp_context = (ExtendedRdpContext*)context;
+    ex_rdp_context->is_running = FALSE;
+    //ex_rdp_context->update_image_callback = (UpdateImageCallback)update_image_callback;
+    ex_rdp_context->update_cursor_callback = update_cursor_callback;
+    ex_rdp_context->test_int = 777; // temp
+    g_mutex_init(&ex_rdp_context->cursor_mutex);
+
+    // setup display updating queue. В очередь из потока поступают сообщения о необходимости
+    // обновить изображение
+    //ex_rdp_context->display_update_queue = g_async_queue_new();
+    g_mutex_init(&ex_rdp_context->invalid_region_mutex);
+    // get desired fps from ini file
+    UINT32 rdp_fps = CLAMP(read_int_from_ini_file("RDPSettings", "rdp_fps", 30), 1, 60);
+    guint redraw_timeout = 1000 / rdp_fps;
+    ex_rdp_context->display_update_timeout_id = g_timeout_add(redraw_timeout, update_images_func, ex_rdp_context);
+
+    return ex_rdp_context;
+}
+
+void destroy_rdp_context(ExtendedRdpContext* ex_rdp_context)
+{
+    if (ex_rdp_context) {
+        // stopping RDP routine
+        rdp_client_stop_routine_thread(ex_rdp_context);
+
+        // stop image updating
+        g_source_remove_safely(&ex_rdp_context->display_update_timeout_id);
+        //g_async_queue_unref(ex_rdp_context->display_update_queue);
+        //ex_rdp_context->display_update_queue = NULL;
+
+        // stop cursor updating
+        g_source_remove_safely(&ex_rdp_context->cursor_update_timeout_id);
+
+        wair_for_mutex_and_clear(&ex_rdp_context->invalid_region_mutex);
+        wair_for_mutex_and_clear(&ex_rdp_context->cursor_mutex);
+
+        g_info("%s: context free now: %i", (const char *)__func__, ex_rdp_context->test_int);
+        freerdp_client_context_free((rdpContext*)ex_rdp_context);
+        ex_rdp_context = NULL;
+    }
+}
+
 void rdp_client_set_credentials(ExtendedRdpContext *ex_rdp_context,
                                 const gchar *user_name, const gchar *password, gchar *domain,
                                 gchar *ip, int port, VeilRdpSettings *p_rdp_settings)
@@ -319,6 +422,7 @@ void* rdp_client_routine(ExtendedRdpContext *ex_contect)
 end:
     g_info("%s: g_mutex_unlock", (const char *)__func__);
     ex_contect->is_running = FALSE;
+    rdp_client_demand_image_update(ex_contect, 0, 0, ex_contect->whole_image_width, ex_contect->whole_image_height);
     return NULL;
 }
 
@@ -362,51 +466,41 @@ void rdp_client_stop_routine_thread(ExtendedRdpContext *ex_rdp_context)
 //}
 
 /* This function is called whenever a new frame starts.
- * It can be used to reset invalidated areas. */
+*/
 static BOOL rdp_begin_paint(rdpContext* context)
 {
     //g_info("%s\n", (const char *)__func__);
     rdpGdi* gdi = context->gdi;
     gdi->primary->hdc->hwnd->invalid->null = TRUE;
 
-    // Lock mutex to protect buffer
-    //ExtendedRdpContext* ex = (ExtendedRdpContext*)context;
-
-    //g_mutex_lock(&ex->primary_buffer_mutex);
     return TRUE;
 }
 
-/* This function is called when the library completed composing a new
- * frame. Read out the changed areas and blit them to your output device.
- * The image buffer will have the format specified by gdi_init
+/* This function is called when the library completed composing a new frame.
  */
 static BOOL rdp_end_paint(rdpContext* context)
 {
     //g_info("%s\n", (const char *)__func__);
-
     rdpGdi* gdi = context->gdi;
-    //ExtendedRdpContext* ex = (ExtendedRdpContext*)context;
+    ExtendedRdpContext* ex_context = (ExtendedRdpContext*)context;
 
     if (gdi->primary->hdc->hwnd->invalid->null) {
-        //g_mutex_unlock(&ex->primary_buffer_mutex);
         return TRUE;
     }
 
     if (gdi->primary->hdc->hwnd->ninvalid < 1) {
-        //g_mutex_unlock(&ex->primary_buffer_mutex);
         return TRUE;
     }
 
-//   g_info("STATS: %i %i %i %i \n", gdi->primary->hdc->hwnd->invalid->x,
-//           gdi->primary->hdc->hwnd->invalid->y,
-//           gdi->primary->hdc->hwnd->invalid->w,
-//           gdi->primary->hdc->hwnd->invalid->h);
-
+    rdp_client_demand_image_update(ex_context,
+            gdi->primary->hdc->hwnd->invalid->x,
+            gdi->primary->hdc->hwnd->invalid->y,
+            gdi->primary->hdc->hwnd->invalid->w,
+            gdi->primary->hdc->hwnd->invalid->h);
 
     gdi->primary->hdc->hwnd->invalid->null = TRUE;
     gdi->primary->hdc->hwnd->ninvalid = 0;
 
-    //g_mutex_unlock(&ex->primary_buffer_mutex);
     return TRUE;
 }
 

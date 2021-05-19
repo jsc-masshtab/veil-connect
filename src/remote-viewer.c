@@ -169,36 +169,6 @@ void remote_viewer_free_resources(RemoteViewer *self)
     vdi_session_static_destroy();
 }
 
-static void
-remote_viewer_recent_add(gchar *uri, const gchar *mime_type)
-{
-    GtkRecentManager *recent;
-    GtkRecentData meta = {
-        .app_name     = (char*)"remote-viewer",
-        .app_exec     = (char*)"remote-viewer %u",
-        .mime_type    = (char*)mime_type,
-    };
-
-    if (uri == NULL)
-        return;
-
-    recent = gtk_recent_manager_get_default();
-    meta.display_name = uri;
-    if (!gtk_recent_manager_add_full(recent, uri, &meta))
-        g_warning("Recent item couldn't be added");
-}
-
-static void
-remote_viewer_session_connected(VirtViewerSession *session,
-                                VirtViewerApp *self G_GNUC_UNUSED)
-{
-    gchar *uri = virt_viewer_session_get_uri(session);
-    const gchar *mime = virt_viewer_session_mime_type(session);
-
-    remote_viewer_recent_add(uri, mime);
-    g_free(uri);
-}
-
 static void set_spice_session_data(VirtViewerApp *app, gchar *ip, int port, gchar *user, gchar *password)
 {
     g_info("%s port %i\n", (const char *)__func__, port);
@@ -279,9 +249,6 @@ retry_connect_to_vm:
             virt_viewer_app_simple_message_dialog(app, _("Unable to connect: %s"), error->message);
             goto to_exit;
         }
-        g_signal_connect(virt_viewer_app_get_session(app), "session-connected",
-                         G_CALLBACK(remote_viewer_session_connected), app);
-
         // Коннект к машине/*
         if (!virt_viewer_app_initial_connect(app, &error)) {
             if (error == NULL) {

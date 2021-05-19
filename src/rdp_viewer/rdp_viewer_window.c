@@ -250,15 +250,6 @@ gboolean rdp_viewer_window_on_state_event(GtkWidget *widget G_GNUC_UNUSED, GdkEv
     return FALSE;
 }
 
-static gboolean gtk_update(gpointer user_data)
-{
-    RdpWindowData *rdp_window_data = (RdpWindowData *)user_data;
-    if (!rdp_window_data->is_rdp_display_being_redrawed)
-        gtk_widget_queue_draw(rdp_window_data->rdp_display);
-
-    return TRUE;
-}
-
 static void rdp_viewer_item_product_site_activated(GtkWidget *menu G_GNUC_UNUSED, gpointer userdata G_GNUC_UNUSED)
 {
     gtk_show_uri_on_window(NULL, VEIL_PRODUCT_SITE, GDK_CURRENT_TIME, NULL);
@@ -304,12 +295,6 @@ static void rdp_viewer_item_menu_usb_activated(GtkWidget *menu G_GNUC_UNUSED, gp
                         "Проброс USB не поддерживается на текущей ОС");
     return;
 #endif
-    // Не реализовано для RDS
-    if (vdi_session_get_current_pool_type() == VDI_POOL_TYPE_RDS) {
-        //show_msg_box_dialog(GTK_WINDOW(rdp_window_data->rdp_viewer_window), "Проброс USB не реализован для RDS пула");
-        //return;
-    }
-
     // Работает только в связке с veil
     if (opt_manual_mode)
         return;
@@ -589,7 +574,11 @@ RdpWindowData *rdp_viewer_window_create(ExtendedRdpContext *ex_rdp_context, int 
 
     // usb menu is not required for rdp
     GtkWidget *menu_usb = GTK_WIDGET(gtk_builder_get_object(builder, "menu-file-usb-device-selection"));
-    g_signal_connect(menu_usb, "activate", G_CALLBACK(rdp_viewer_item_menu_usb_activated), rdp_window_data);
+    // Для RDS пула используется возможности freerdp для перенаправления USB (RemoteFX)
+    if (vdi_session_get_current_pool_type() == VDI_POOL_TYPE_RDS)
+        gtk_widget_set_sensitive(menu_usb, FALSE);
+    else
+        g_signal_connect(menu_usb, "activate", G_CALLBACK(rdp_viewer_item_menu_usb_activated), rdp_window_data);
 
     // remove inapropriate items from settings menu
     gtk_widget_destroy(GTK_WIDGET(gtk_builder_get_object(builder, "menu-file-smartcard-insert")));
@@ -652,11 +641,6 @@ RdpWindowData *rdp_viewer_window_create(ExtendedRdpContext *ex_rdp_context, int 
     rdp_viewer_window_set_monitor_data(rdp_window_data, geometry);
     // show
     gtk_widget_show_all(rdp_viewer_window);
-    // get desired fps from ini file
-    UINT32 rdp_fps = CLAMP(read_int_from_ini_file("RDPSettings", "rdp_fps", 30), 1, 60);
-    guint redraw_timeout = 1000 / rdp_fps;
-    rdp_window_data->g_timeout_id = g_timeout_add(redraw_timeout, (GSourceFunc)gtk_update, rdp_window_data);
-    //gtk_widget_add_tick_callback(rdp_display, gtk_update, context, NULL);
 
     return rdp_window_data;
 }
@@ -670,7 +654,7 @@ void rdp_viewer_window_destroy(RdpWindowData *rdp_window_data)
     g_signal_handler_disconnect(get_vdi_session_static(), rdp_window_data->ws_cmd_received_handle);
     if (rdp_window_data->usb_redir_finished_handle)
         g_signal_handler_disconnect(usbredir_controller_get_static(), rdp_window_data->usb_redir_finished_handle);
-    g_source_remove(rdp_window_data->g_timeout_id);
+
     g_object_unref(rdp_window_data->builder);
     gtk_widget_destroy(rdp_window_data->overlay_toolbar);
     gtk_widget_destroy(rdp_window_data->rdp_viewer_window);

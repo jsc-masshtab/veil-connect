@@ -30,12 +30,9 @@
 #define MAX_MONITOR_AMOUNT 3
 #define MAC_PANEL_HEIGHT 90 // Высота панели на маке
 
-static gboolean is_rdp_context_created = FALSE;
 
-static gboolean update_cursor_callback(rdpContext* context)
+static gboolean rdp_viewer_update_cursor(rdpContext* context)
 {
-    if (!is_rdp_context_created)
-        return TRUE;
     ExtendedRdpContext* ex_rdp_context = (ExtendedRdpContext*)context;
     if (!ex_rdp_context || !ex_rdp_context->is_running)
         return TRUE;
@@ -51,43 +48,54 @@ static gboolean update_cursor_callback(rdpContext* context)
     //g_info("%s ex_pointer->test_int: ", (const char *)__func__);
     g_mutex_unlock(&ex_rdp_context->cursor_mutex);
 
-    return FALSE;
+    ex_rdp_context->cursor_update_timeout_id = 0;
+    return G_SOURCE_REMOVE;
 }
 
-static ExtendedRdpContext* create_rdp_context()
+//static gint64 prev = 0;
+// Постоянно проверяем есть ли в очереди сообщения об необходимости обновить картинку
+static gboolean rdp_viewer_update_images(gpointer user_data)
 {
-    RDP_CLIENT_ENTRY_POINTS clientEntryPoints;
-    rdp_client_entry(&clientEntryPoints);
-    rdpContext* context = freerdp_client_context_new(&clientEntryPoints);
+    ExtendedRdpContext* ex_rdp_context = (ExtendedRdpContext *)user_data;
+    //if (!ex_rdp_context->display_update_queue)
+    //    return G_SOURCE_CONTINUE;
 
+    // get region grom queue
+    //GdkRectangle *update_region = (GdkRectangle *)g_async_queue_try_pop(ex_rdp_context->display_update_queue);
+    //if (update_region && update_region->width >= 0 && update_region->height >= 0) {
 
-    ExtendedRdpContext* ex_rdp_context = (ExtendedRdpContext*)context;
-    ex_rdp_context->is_running = FALSE;
-    //ex_rdp_context->update_image_callback = (UpdateImageCallback)update_image_callback;
-    ex_rdp_context->update_cursor_callback = (UpdateCursorCallback)update_cursor_callback;
-    ex_rdp_context->test_int = 777; // temp
-    g_mutex_init(&ex_rdp_context->cursor_mutex);
+        //gint64 cur = g_get_monotonic_time();
+        //g_info("POP time %lli", cur - prev);
+        //prev = cur;
 
-    is_rdp_context_created = TRUE;
+        //gint q_len = g_async_queue_length(ex_rdp_context->display_update_queue);
+        //g_info("UDATE: %i %i %i %i     q_len: %i", update_region->x, update_region->y,
+        //       update_region->width, update_region->height, q_len);
 
-    return ex_rdp_context;
-}
+        // invalidate regions
+    g_mutex_lock(&ex_rdp_context->invalid_region_mutex);
 
-static void destroy_rdp_context(ExtendedRdpContext* ex_rdp_context)
-{
-    if (ex_rdp_context) {
+    if (ex_rdp_context->invalid_region_has_data) {
+        //g_info("UDATE: %i %i %i %i  ", ex_rdp_context->invalid_region.x, ex_rdp_context->invalid_region.y,
+        //       ex_rdp_context->invalid_region.width, ex_rdp_context->invalid_region.height);
 
-        // stopping RDP routine
-        rdp_client_stop_routine_thread(ex_rdp_context);
+        for (guint i = 0; i < ex_rdp_context->rdp_windows_array->len; ++i) {
+            RdpWindowData *rdp_window_data = g_array_index(ex_rdp_context->rdp_windows_array, RdpWindowData *, i);
+            gtk_widget_queue_draw_area(rdp_window_data->rdp_display,
+                                       ex_rdp_context->invalid_region.x - rdp_window_data->monitor_geometry.x,
+                                       ex_rdp_context->invalid_region.y - rdp_window_data->monitor_geometry.y,
+                                       ex_rdp_context->invalid_region.width, ex_rdp_context->invalid_region.height);
+            //gtk_widget_queue_draw(rdp_window_data->rdp_display);
+        }
 
-        wair_for_mutex_and_clear(&ex_rdp_context->cursor_mutex);
-
-        g_info("%s: context free now: %i", (const char *)__func__, ex_rdp_context->test_int);
-        freerdp_client_context_free((rdpContext*)ex_rdp_context);
-        ex_rdp_context = NULL;
+        ex_rdp_context->invalid_region_has_data = FALSE;
     }
+    g_mutex_unlock(&ex_rdp_context->invalid_region_mutex);
 
-    is_rdp_context_created = FALSE;
+        //free(update_region);
+    //}
+
+    return G_SOURCE_CONTINUE;
 }
 
 // set_monitor_data_and_create_rdp_viewer_window. Returns monitor geometry
@@ -127,7 +135,8 @@ RemoteViewerState rdp_viewer_start(RemoteViewer *app,
     RemoteViewerState next_app_state = APP_STATE_UNDEFINED;
     GMainLoop *loop = NULL;
     // create RDP context
-    ExtendedRdpContext *ex_rdp_context = create_rdp_context();
+    ExtendedRdpContext *ex_rdp_context = create_rdp_context((UpdateCursorCallback)rdp_viewer_update_cursor,
+                                                            (GSourceFunc)rdp_viewer_update_images);
     ex_rdp_context->p_loop = &loop;
     ex_rdp_context->next_app_state_p = &next_app_state;
     ex_rdp_context->app = app;
@@ -204,19 +213,19 @@ RemoteViewerState rdp_viewer_start(RemoteViewer *app,
 #ifdef __APPLE__
     monitor_height = monitor_height - MAC_PANEL_HEIGHT;
 #endif
-    // Notify if folders redir is forbidden
-    gchar *shared_folders_str = read_str_from_ini_file("RDPSettings", "rdp_shared_folders");
-    if (strlen_safely(shared_folders_str) && !vdi_session_is_folders_redir_permitted()) {
-        show_msg_box_dialog(NULL, "Проброс папок запрещен администратором");
-    }
-    free_memory_safely(&shared_folders_str);
-
     // Set image size which we will receive from Server
     const int max_image_width = 5120;//2560; 5120
     const int max_image_height = 2500; // 1440
     int image_width = MIN(max_image_width, total_monitor_width);
     int image_height = MIN(max_image_height, monitor_height);
     rdp_client_set_rdp_image_size(ex_rdp_context, image_width, image_height);
+
+    // Notify if folders redir is forbidden
+    gchar *shared_folders_str = read_str_from_ini_file("RDPSettings", "rdp_shared_folders");
+    if (strlen_safely(shared_folders_str) && !vdi_session_is_folders_redir_permitted()) {
+        show_msg_box_dialog(NULL, "Проброс папок запрещен администратором");
+    }
+    free_memory_safely(&shared_folders_str);
 
     // launch RDP routine in thread
     rdp_client_start_routine_thread(ex_rdp_context);
@@ -230,7 +239,6 @@ RemoteViewerState rdp_viewer_start(RemoteViewer *app,
 
     // deinit all
     destroy_rdp_context(ex_rdp_context);
-
     // destroy rdp windows
     guint i;
     for (i = 0; i < rdp_windows_array->len; ++i) {

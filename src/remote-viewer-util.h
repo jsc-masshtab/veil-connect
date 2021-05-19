@@ -112,6 +112,8 @@ size_t strlen_safely(const gchar *str);
 
 void update_string_safely(gchar **string_ptr, const gchar *new_string);
 
+void g_source_remove_safely(guint *timeout_id);
+
 const gchar* determine_http_protocol_by_port(int port);
 
 // enable spice debug cursor

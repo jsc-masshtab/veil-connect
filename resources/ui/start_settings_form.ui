@@ -522,7 +522,8 @@
                               <object class="GtkLabel">
                                 <property name="visible">True</property>
                                 <property name="can_focus">False</property>
-                                <property name="tooltip_text" translatable="yes">Частота обновления изображения</property>
+                                <property name="tooltip_text" translatable="yes">Частота обновления изображения (1-60).
+Перерисовываются только изменившиеся участки</property>
                                 <property name="halign">end</property>
                                 <property name="margin_right">10</property>
                                 <property name="label" translatable="yes">FPS</property>
@@ -682,7 +683,7 @@
                                 <property name="can_focus">True</property>
                                 <property name="receives_default">True</property>
                                 <property name="tooltip_text" translatable="yes">Перенаправление USB устройств (веб камеры, микрофоны).
-Для работы необходима поддержка RemoteFX на стороне удаленной машины.
+Для работы необходимы поддержка RemoteFX на стороне удаленной машины и разрешение на открытие USB на текущем клиенте.
 Перенаправление flash накопителей не поддерживается: используйте перенаправление папок.</property>
                               </object>
                               <packing>

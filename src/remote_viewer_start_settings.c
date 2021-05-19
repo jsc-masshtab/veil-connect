@@ -95,7 +95,7 @@ typedef struct{
 
 // D режиме по умолчанию подключение к VDI серверу. В ручном режиме прямое подключение к ВМ
 static void update_gui_according_to_cur_connect_mode(ConnectSettingsDialogData *dialog_data,
-        gboolean _opt_manual_mode)
+                                                     gboolean _opt_manual_mode)
 {
     gtk_widget_set_sensitive(dialog_data->ldap_check_btn, !_opt_manual_mode);
     gtk_widget_set_sensitive(dialog_data->conn_to_prev_pool_checkbutton, !_opt_manual_mode);
@@ -186,7 +186,7 @@ fill_p_conn_data_from_gui(ConnectSettingsData *p_conn_data, ConnectSettingsDialo
 // Перехватывается событие ввода текста. Игнорируется, если есть нецифры
 static void
 on_insert_text_event(GtkEditable *editable, const gchar *text, gint length,
-        gint *position G_GNUC_UNUSED, gpointer data G_GNUC_UNUSED)
+                     gint *position G_GNUC_UNUSED, gpointer data G_GNUC_UNUSED)
 {
     int i;
 
@@ -251,13 +251,13 @@ btn_add_remote_folder_clicked_cb(GtkButton *button G_GNUC_UNUSED, ConnectSetting
 {
     // get folder name
     GtkWidget *dialog = gtk_file_chooser_dialog_new ("Open File",
-                                          GTK_WINDOW(dialog_data->window),
-                                          GTK_FILE_CHOOSER_ACTION_SELECT_FOLDER,
-                                          "Отмена",
-                                          GTK_RESPONSE_CANCEL,
-                                          "Выбрать",
-                                          GTK_RESPONSE_ACCEPT,
-                                          NULL);
+                                                     GTK_WINDOW(dialog_data->window),
+                                                     GTK_FILE_CHOOSER_ACTION_SELECT_FOLDER,
+                                                     "Отмена",
+                                                     GTK_RESPONSE_CANCEL,
+                                                     "Выбрать",
+                                                     GTK_RESPONSE_ACCEPT,
+                                                     NULL);
 
     gint res = gtk_dialog_run (GTK_DIALOG (dialog));
 
@@ -473,20 +473,20 @@ ok_button_clicked_cb(GtkButton *button G_GNUC_UNUSED, ConnectSettingsDialogData 
     // fill p_conn_data from gui
     gboolean is_success = fill_p_conn_data_from_gui(dialog_data->p_conn_data, dialog_data);
 
-   /* // Check some RDP settings
-    const gchar *shared_folders_str = gtk_entry_get_text(GTK_ENTRY(dialog_data->rdp_shared_folders_entry));
-    gchar **shared_folders_array = g_strsplit(shared_folders_str, ";", 10);
+    /* // Check some RDP settings
+     const gchar *shared_folders_str = gtk_entry_get_text(GTK_ENTRY(dialog_data->rdp_shared_folders_entry));
+     gchar **shared_folders_array = g_strsplit(shared_folders_str, ";", 10);
 
-    gchar **shared_folder;
-    for (shared_folder = shared_folders_array; *shared_folder; shared_folder++) {
-        // Подсвечиваем поле красным, если обнаружили некорректный путь
-        if(g_access(*shared_folder, R_OK) != 0) {
-            make_entry_red(dialog_data->rdp_shared_folders_entry);
-            is_success = FALSE;
-            break;
-        }
-    }
-    g_strfreev(shared_folders_array);*/
+     gchar **shared_folder;
+     for (shared_folder = shared_folders_array; *shared_folder; shared_folder++) {
+         // Подсвечиваем поле красным, если обнаружили некорректный путь
+         if(g_access(*shared_folder, R_OK) != 0) {
+             make_entry_red(dialog_data->rdp_shared_folders_entry);
+             is_success = FALSE;
+             break;
+         }
+     }
+     g_strfreev(shared_folders_array);*/
 
     // Close the window if settings are ok
     if (is_success) {
@@ -535,7 +535,7 @@ fill_connect_settings_gui(ConnectSettingsDialogData *dialog_data, ConnectSetting
     gboolean is_spice_client_cursor_visible =
             read_int_from_ini_file("SpiceSettings", "is_spice_client_cursor_visible", FALSE);
     gtk_toggle_button_set_active((GtkToggleButton*)dialog_data->client_cursor_visible_checkbutton,
-                                     is_spice_client_cursor_visible);
+                                 is_spice_client_cursor_visible);
 
     /// RDP settings
     gchar *rdp_pixel_format_str = read_str_from_ini_file("RDPSettings", "rdp_pixel_format");
@@ -555,11 +555,11 @@ fill_connect_settings_gui(ConnectSettingsDialogData *dialog_data, ConnectSetting
         if (rdp_h264_codec) {
             g_strstrip(rdp_h264_codec);
             gtk_combo_box_set_active(GTK_COMBO_BOX(dialog_data->rdp_h264_codec_combobox),
-                    string_to_h264_codec(rdp_h264_codec));
+                                     string_to_h264_codec(rdp_h264_codec));
             free_memory_safely(&rdp_h264_codec);
         } else {
             gtk_combo_box_set_active(GTK_COMBO_BOX(dialog_data->rdp_h264_codec_combobox),
-                    (gint)get_default_h264_codec());
+                                     (gint)get_default_h264_codec());
         }
     }
 
@@ -691,12 +691,12 @@ save_data_to_ini_file(ConnectSettingsDialogData *dialog_data)
     gboolean is_remote_app = gtk_toggle_button_get_active((GtkToggleButton *)dialog_data->remote_app_check_btn);
     write_int_to_ini_file("RDPSettings", "is_remote_app", is_remote_app);
     write_str_to_ini_file("RDPSettings", "remote_app_name",
-            gtk_entry_get_text(GTK_ENTRY(dialog_data->remote_app_name_entry)));
+                          gtk_entry_get_text(GTK_ENTRY(dialog_data->remote_app_name_entry)));
     write_str_to_ini_file("RDPSettings", "remote_app_options",
                           gtk_entry_get_text(GTK_ENTRY(dialog_data->remote_app_options_entry)));
 
     gboolean is_rdp_network_assigned = gtk_toggle_button_get_active((GtkToggleButton *)
-            dialog_data->rdp_network_check_btn);
+                                                                            dialog_data->rdp_network_check_btn);
     write_int_to_ini_file("RDPSettings", "is_rdp_network_assigned", is_rdp_network_assigned);
     const gchar *rdp_network_type =
             gtk_combo_box_get_active_id(GTK_COMBO_BOX(dialog_data->rdp_network_type_combobox));
@@ -822,9 +822,9 @@ GtkResponseType remote_viewer_start_settings_dialog(RemoteViewer *p_remote_viewe
     g_signal_connect(dialog_data.bt_ok, "clicked", G_CALLBACK(ok_button_clicked_cb), &dialog_data);
     g_signal_connect(dialog_data.port_entry, "insert-text", G_CALLBACK(on_insert_text_event), NULL);
     g_signal_connect(dialog_data.is_h264_used_check_btn, "toggled",
-            G_CALLBACK(on_h264_used_check_btn_toggled), &dialog_data);
+                     G_CALLBACK(on_h264_used_check_btn_toggled), &dialog_data);
     g_signal_connect(dialog_data.rdp_network_check_btn, "toggled",
-            G_CALLBACK(on_rdp_network_check_btn_toggled), &dialog_data);
+                     G_CALLBACK(on_rdp_network_check_btn_toggled), &dialog_data);
     g_signal_connect(dialog_data.btn_add_remote_folder, "clicked",
                      G_CALLBACK(btn_add_remote_folder_clicked_cb), &dialog_data);
     g_signal_connect(dialog_data.btn_remove_remote_folder, "clicked",
@@ -840,12 +840,12 @@ GtkResponseType remote_viewer_start_settings_dialog(RemoteViewer *p_remote_viewe
     g_signal_connect(dialog_data.select_usb_btn, "clicked", G_CALLBACK(on_select_usb_btn_clicked_cb), &dialog_data);
     dialog_data.on_direct_connect_mode_check_btn_toggled_id =
             g_signal_connect(dialog_data.direct_connect_mode_check_btn, "toggled",
-            G_CALLBACK(on_direct_connect_mode_check_btn_toggled), &dialog_data);
+                             G_CALLBACK(on_direct_connect_mode_check_btn_toggled), &dialog_data);
 
     gulong st_msg_hdle = g_signal_connect(p_remote_viewer->app_updater, "status-msg-changed",
-                     G_CALLBACK(on_app_updater_status_msg_changed),&dialog_data);
+                                          G_CALLBACK(on_app_updater_status_msg_changed),&dialog_data);
     gulong state_hdle = g_signal_connect(p_remote_viewer->app_updater, "state-changed",
-                     G_CALLBACK(on_app_updater_status_changed),&dialog_data);
+                                         G_CALLBACK(on_app_updater_status_changed),&dialog_data);
 
     // read from file
     fill_p_conn_data_from_ini_file(p_conn_data);
