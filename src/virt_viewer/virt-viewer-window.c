@@ -353,7 +353,7 @@ virt_viewer_window_init (VirtViewerWindow *self)
 
     gtk_widget_set_sensitive(GTK_WIDGET(gtk_builder_get_object(self->priv->builder, "menu-send")), FALSE);
     gtk_widget_set_sensitive(GTK_WIDGET(gtk_builder_get_object(self->priv->builder, "menu-view-zoom")), FALSE);
-    gtk_widget_set_sensitive(GTK_WIDGET(gtk_builder_get_object(self->priv->builder, "menu-file-screenshot")), FALSE);
+    //gtk_widget_set_sensitive(GTK_WIDGET(gtk_builder_get_object(self->priv->builder, "menu-file-screenshot")), FALSE);
     gtk_widget_set_sensitive(GTK_WIDGET(gtk_builder_get_object(self->priv->builder, "menu-preferences")), FALSE);
 
     gboolean is_spice_client_cursor_visible = read_int_from_ini_file(
@@ -1435,8 +1435,8 @@ virt_viewer_window_set_menus_sensitive(VirtViewerWindow *self, gboolean sensitiv
     menu = GTK_WIDGET(gtk_builder_get_object(priv->builder, "menu-preferences"));
     gtk_widget_set_sensitive(menu, sensitive);
 
-    menu = GTK_WIDGET(gtk_builder_get_object(priv->builder, "menu-file-screenshot"));
-    gtk_widget_set_sensitive(menu, sensitive);
+    //menu = GTK_WIDGET(gtk_builder_get_object(priv->builder, "menu-file-screenshot"));
+    //gtk_widget_set_sensitive(menu, sensitive);
 
     menu = GTK_WIDGET(gtk_builder_get_object(priv->builder, "menu-view-zoom"));
     gtk_widget_set_sensitive(menu, sensitive);
@@ -1461,7 +1461,7 @@ display_show_hint(VirtViewerDisplay *display,
         virt_viewer_window_set_zoom_level(self, self->priv->zoomlevel);
     }
 
-    gtk_widget_set_sensitive(GTK_WIDGET(gtk_builder_get_object(self->priv->builder, "menu-file-screenshot")), hint);
+    //gtk_widget_set_sensitive(GTK_WIDGET(gtk_builder_get_object(self->priv->builder, "menu-file-screenshot")), hint);
 }
 static gboolean
 window_key_pressed (GtkWidget *widget G_GNUC_UNUSED,

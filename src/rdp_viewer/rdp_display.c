@@ -250,6 +250,10 @@ static void rdp_viewer_handle_key_event(GdkEventKey *event, ExtendedRdpContext* 
             break;
     }
 #endif
+    // Игнорируем принтскрин по просьбе сверху
+    if (rdp_scancode == RDP_SCANCODE_PRINTSCREEN || rdp_scancode == 84) // 84  - on windows
+        return;
+
     BOOL is_success = freerdp_input_send_keyboard_event_ex(input, down, rdp_scancode);
     (void) is_success;
 
