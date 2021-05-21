@@ -448,7 +448,7 @@ void rdp_client_stop_routine_thread(ExtendedRdpContext *ex_rdp_context)
     // что приложение закроется
     rdpContext *context = (rdpContext *) ex_rdp_context;
     if (context->settings->RemoteApplicationMode) {
-        rdp_viewer_window_send_key_shortcut(context, 15); // 15 - index in keyCombos
+        rdp_viewer_window_send_key_shortcut(context, 14); // 14 - index in keyCombos
     }
 
     //g_info("%s: abort now: %i", (const char *)__func__, ex_rdp_context->test_int);
