@@ -14,10 +14,10 @@ then
 elif [ $1 == "apt_install" ]
 then
   echo $2 | sudo -S apt-get --yes install $3
-elif [ $1 == "yum_update" ]
+elif [ $1 == "yum_makecache" ]
 then
   echo $2 | sudo -S yum -y makecache
-elif [ $1 == "yum_install" ]
+elif [ $1 == "yum_update" ]
 then
   echo $2 | sudo -S yum -y update $3
 elif [ $1 == "check_sudo_pass" ]
