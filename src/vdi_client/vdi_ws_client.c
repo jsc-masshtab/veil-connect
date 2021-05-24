@@ -294,10 +294,7 @@ void vdi_ws_client_send_vm_changed(VdiWsClient *ws_vdi_client, const gchar *vm_i
 
     json_builder_end_object(builder);
 
-    JsonGenerator *gen = json_generator_new();
-    JsonNode * root = json_builder_get_root(builder);
-    json_generator_set_root(gen, root);
-    gchar *tk_data = json_generator_to_data(gen, NULL);
+    gchar *tk_data = json_generate_from_builder(builder);
     g_info("%s: %s", (const char *)__func__, tk_data);
 
     // Send
@@ -305,8 +302,6 @@ void vdi_ws_client_send_vm_changed(VdiWsClient *ws_vdi_client, const gchar *vm_i
 
     // Free
     g_free(tk_data);
-    json_node_free(root);
-    g_object_unref(gen);
     g_object_unref(builder);
 }
 
@@ -329,23 +324,44 @@ void vdi_ws_client_send_rdp_network_stats(VdiWsClient *ws_vdi_client, guint64 rd
     if (!ws_vdi_client->ws_conn)
         return;
 
-    g_autofree gchar *tk_data = NULL;
-    tk_data = g_strdup_printf("{"
-                              "\"msg_type\": \"UPDATED\","
-                              "\"event\": \"network_stats\","
-                              "\"connection_type\": \"RDP\","
+    JsonBuilder *builder = json_builder_new();
+    json_builder_begin_object(builder);
 
-                              "\"read_speed\": %lu,"
-                              "\"write_speed\": %lu,"
+    json_builder_set_member_name(builder, "msg_type");
+    json_builder_add_string_value(builder, "UPDATED");
 
-                              "\"min_rtt\": %i,"
-                              "\"avg_rtt\": %i,"
-                              "\"max_rtt\": %i,"
-                              "\"loss_percentage\": %i"
-                              "}", rdp_read_speed, rdp_write_speed,
-                              (int)min_rtt, (int)avg_rtt, (int)max_rtt, loss_percentage);
+    json_builder_set_member_name(builder, "event");
+    json_builder_add_string_value(builder, "network_stats");
 
+    json_builder_set_member_name(builder, "connection_type");
+    json_builder_add_string_value(builder, "RDP");
+
+    json_builder_set_member_name(builder, "read_speed");
+    json_builder_add_int_value(builder, rdp_read_speed);
+
+    json_builder_set_member_name(builder, "write_speed");
+    json_builder_add_int_value(builder, rdp_write_speed);
+
+    json_builder_set_member_name(builder, "min_rtt");
+    json_builder_add_double_value(builder, min_rtt);
+
+    json_builder_set_member_name(builder, "avg_rtt");
+    json_builder_add_double_value(builder, avg_rtt);
+
+    json_builder_set_member_name(builder, "max_rtt");
+    json_builder_add_double_value(builder, max_rtt);
+
+    json_builder_set_member_name(builder, "loss_percentage");
+    json_builder_add_int_value(builder, loss_percentage);
+
+    json_builder_end_object(builder);
+
+    gchar *tk_data = json_generate_from_builder(builder);
     vdi_ws_client_send_text(ws_vdi_client, tk_data);
+
+    // Free
+    g_free(tk_data);
+    g_object_unref(builder);
 }
 
 void vdi_ws_client_send_spice_network_stats(VdiWsClient *ws_vdi_client,
@@ -355,36 +371,60 @@ void vdi_ws_client_send_spice_network_stats(VdiWsClient *ws_vdi_client,
     if (!ws_vdi_client->ws_conn)
         return;
 
-    g_autofree gchar *tk_data = NULL;
-    tk_data = g_strdup_printf("{"
-                              "\"msg_type\": \"UPDATED\","
-                              "\"event\": \"network_stats\","
-                              "\"connection_type\": \"SPICE\","
+    JsonBuilder *builder = json_builder_new();
+    json_builder_begin_object(builder);
 
-                              "\"inputs\": %lu,"
-                              "\"webdav\": %lu,"
-                              "\"cursor\": %lu,"
-                              "\"display\": %lu,"
-                              "\"record\": %lu,"
-                              "\"playback\": %lu,"
-                              "\"main\": %lu,"
+    json_builder_set_member_name(builder, "msg_type");
+    json_builder_add_string_value(builder, "UPDATED");
 
-                              "\"total\": %lu,"
+    json_builder_set_member_name(builder, "event");
+    json_builder_add_string_value(builder, "network_stats");
 
-                              "\"min_rtt\": %i,"
-                              "\"avg_rtt\": %i,"
-                              "\"max_rtt\": %i,"
-                              "\"loss_percentage\": %i"
-                              "}",
-                              spice_speeds->bytes_inputs,
-                              spice_speeds->bytes_webdav,
-                              spice_speeds->bytes_cursor,
-                              spice_speeds->bytes_display,
-                              spice_speeds->bytes_record,
-                              spice_speeds->bytes_playback,
-                              spice_speeds->bytes_main,
-                              total_read_speed,
-                              (int)min_rtt, (int)avg_rtt, (int)max_rtt, loss_percentage);
+    json_builder_set_member_name(builder, "connection_type");
+    json_builder_add_string_value(builder, "SPICE");
 
+    json_builder_set_member_name(builder, "inputs");
+    json_builder_add_int_value(builder, spice_speeds->bytes_inputs);
+
+    json_builder_set_member_name(builder, "webdav");
+    json_builder_add_int_value(builder, spice_speeds->bytes_webdav);
+
+    json_builder_set_member_name(builder, "cursor");
+    json_builder_add_int_value(builder, spice_speeds->bytes_cursor);
+
+    json_builder_set_member_name(builder, "display");
+    json_builder_add_int_value(builder, spice_speeds->bytes_display);
+
+    json_builder_set_member_name(builder, "record");
+    json_builder_add_int_value(builder, spice_speeds->bytes_record);
+
+    json_builder_set_member_name(builder, "playback");
+    json_builder_add_int_value(builder, spice_speeds->bytes_playback);
+
+    json_builder_set_member_name(builder, "main");
+    json_builder_add_int_value(builder, spice_speeds->bytes_main);
+
+    json_builder_set_member_name(builder, "total");
+    json_builder_add_int_value(builder, total_read_speed);
+
+    json_builder_set_member_name(builder, "min_rtt");
+    json_builder_add_double_value(builder, min_rtt);
+
+    json_builder_set_member_name(builder, "avg_rtt");
+    json_builder_add_double_value(builder, avg_rtt);
+
+    json_builder_set_member_name(builder, "max_rtt");
+    json_builder_add_double_value(builder, max_rtt);
+
+    json_builder_set_member_name(builder, "loss_percentage");
+    json_builder_add_int_value(builder, loss_percentage);
+
+    json_builder_end_object(builder);
+
+    gchar *tk_data = json_generate_from_builder(builder);
     vdi_ws_client_send_text(ws_vdi_client, tk_data);
+
+    // Free
+    g_free(tk_data);
+    g_object_unref(builder);
 }

@@ -122,3 +122,20 @@ gchar *string_to_json_value(const gchar *string)
         json_str_rep = g_strdup("null");
     return json_str_rep;
 }
+
+/*
+ * Generate json string. Must be freed
+ */
+gchar *json_generate_from_builder(JsonBuilder *builder)
+{
+    JsonGenerator *gen = json_generator_new();
+    JsonNode * root = json_builder_get_root(builder);
+    json_generator_set_root(gen, root);
+
+    gchar *json_string = json_generator_to_data(gen, NULL);
+
+    json_node_free(root);
+    g_object_unref(gen);
+
+    return json_string;
+}

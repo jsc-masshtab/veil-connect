@@ -1239,19 +1239,19 @@ void virt_viewer_session_spice_get_stats(VirtViewerSessionSpice *self, SpiceRead
 
         // Каналов одного типа может быть больше одного, поэтому суммируем (+=)
         if (channel_type == SPICE_CHANNEL_INPUTS)
-            spice_read_bytes->bytes_inputs += total_read_bytes;
+            spice_read_bytes->bytes_inputs = total_read_bytes;
         else if (channel_type == SPICE_CHANNEL_WEBDAV)
-            spice_read_bytes->bytes_webdav += total_read_bytes;
+            spice_read_bytes->bytes_webdav = total_read_bytes;
         else if (channel_type == SPICE_CHANNEL_CURSOR)
-            spice_read_bytes->bytes_cursor += total_read_bytes;
+            spice_read_bytes->bytes_cursor = total_read_bytes;
         else if (channel_type == SPICE_CHANNEL_DISPLAY)
-            spice_read_bytes->bytes_display += total_read_bytes;
+            spice_read_bytes->bytes_display = total_read_bytes;
         else if (channel_type == SPICE_CHANNEL_RECORD)
-            spice_read_bytes->bytes_record += total_read_bytes;
+            spice_read_bytes->bytes_record = total_read_bytes;
         else if (channel_type == SPICE_CHANNEL_PLAYBACK)
-            spice_read_bytes->bytes_playback += total_read_bytes;
+            spice_read_bytes->bytes_playback = total_read_bytes;
         else if (channel_type == SPICE_CHANNEL_MAIN)
-            spice_read_bytes->bytes_main += total_read_bytes;
+            spice_read_bytes->bytes_main = total_read_bytes;
     }
     g_list_free(list);
     // g_info("!!! spice_read_bytes->bytes_display: %lu", spice_read_bytes->bytes_display);

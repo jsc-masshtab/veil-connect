@@ -32,4 +32,6 @@ JsonObject *jsonhandler_get_data_or_errors_object(JsonParser *parser, const gcha
 
 gchar *string_to_json_value(const gchar *string);
 
+gchar *json_generate_from_builder(JsonBuilder *builder);
+
 #endif //THIN_CLIENT_VEIL_JSONHANDLER_H
