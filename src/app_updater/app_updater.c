@@ -168,7 +168,7 @@ static gboolean app_updater_check_linux_updates(AppUpdater *self,
                                             GMatchInfo **match_info)
 {
     if (self->_linux_distro == LINUX_DISTRO_DEBIAN_LIKE)
-        *command_line = g_strdup_printf("apt list --upgradable | grep %s", PACKAGE);
+        *command_line = g_strdup_printf("apt list --upgradable");
     else if (self->_linux_distro == LINUX_DISTRO_CENTOS_LIKE)
         *command_line = g_strdup_printf("yum check-update | grep %s", PACKAGE);
     else
@@ -321,7 +321,7 @@ app_updater_get_linux_updates_task(GTask    *task G_GNUC_UNUSED,
     if (self->_linux_distro == LINUX_DISTRO_DEBIAN_LIKE)
         command_line = g_strdup_printf("./update_script.sh %s %s", "apt_update", self->_admin_password);
     else if (self->_linux_distro == LINUX_DISTRO_CENTOS_LIKE)
-        command_line = g_strdup_printf("./update_script.sh %s %s", "yum_update", self->_admin_password);
+        command_line = g_strdup_printf("./update_script.sh %s %s", "yum_makecache", self->_admin_password);
 
     g_spawn_command_line_sync(command_line, &standard_output, &standard_error, &self->_last_exit_status, NULL);
     g_info("1App update standard_output: %s", standard_output);
@@ -349,7 +349,7 @@ app_updater_get_linux_updates_task(GTask    *task G_GNUC_UNUSED,
     if (self->_linux_distro == LINUX_DISTRO_DEBIAN_LIKE)
         command_line = g_strdup_printf("./update_script.sh %s %s %s", "apt_install", self->_admin_password, PACKAGE);
     else if (self->_linux_distro == LINUX_DISTRO_CENTOS_LIKE)
-        command_line = g_strdup_printf("./update_script.sh %s %s %s", "yum_install", self->_admin_password, PACKAGE);
+        command_line = g_strdup_printf("./update_script.sh %s %s %s", "yum_update", self->_admin_password, PACKAGE);
     g_mutex_unlock(&self->priv_members_mutex);
 
     gboolean cmd_success = g_spawn_command_line_sync(command_line, &standard_output, &standard_error,

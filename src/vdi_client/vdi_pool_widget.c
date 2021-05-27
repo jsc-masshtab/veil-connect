@@ -11,22 +11,6 @@
 
 #define MAX_PROTOCOLS_NUMBER 32 // for sanity check
 
-static void vdi_pool_widget_check_protocol_available_and_add(
-        JsonArray *conn_types_json_array, VdiVmRemoteProtocol protocol,
-        GtkWidget *combobox_remote_protocol)
-{
-    guint protocols_number = MIN(json_array_get_length(conn_types_json_array), MAX_PROTOCOLS_NUMBER);
-    for(int i = 0; i < (int)protocols_number; ++i) {
-
-        const gchar *protocol_name = json_array_get_string_element(conn_types_json_array, (guint)i);
-        //
-        if (g_strcmp0(protocol_name, vdi_session_remote_protocol_to_str(protocol)) == 0) {
-            gtk_combo_box_text_append_text((GtkComboBoxText*)combobox_remote_protocol, protocol_name);
-            return;
-        }
-    }
-}
-
 VdiPoolWidget build_pool_widget(const gchar *pool_id, const gchar *pool_name,
                                 const gchar *os_type, const gchar *status, JsonArray *conn_types_json_array,
                                 GtkWidget *gtk_flow_box)
@@ -71,20 +55,22 @@ VdiPoolWidget build_pool_widget(const gchar *pool_id, const gchar *pool_name,
 
     // combobox_remote_protocol
     vdi_pool_widget.combobox_remote_protocol = gtk_combo_box_text_new();
-    gtk_box_pack_start((GtkBox *)vdi_pool_widget.gtk_box, vdi_pool_widget.combobox_remote_protocol,
-                       TRUE, TRUE, 0);
+    gtk_box_pack_start((GtkBox *)vdi_pool_widget.gtk_box, vdi_pool_widget.combobox_remote_protocol, TRUE, TRUE, 0);
+
     //fill combobox_remote_protocol
-    vdi_pool_widget_check_protocol_available_and_add(conn_types_json_array, VDI_SPICE_PROTOCOL,
-            vdi_pool_widget.combobox_remote_protocol);
-    vdi_pool_widget_check_protocol_available_and_add(conn_types_json_array, VDI_SPICE_DIRECT_PROTOCOL,
-                                                     vdi_pool_widget.combobox_remote_protocol);
-    vdi_pool_widget_check_protocol_available_and_add(conn_types_json_array, VDI_RDP_PROTOCOL,
-                                                     vdi_pool_widget.combobox_remote_protocol);
+    guint protocols_number = MIN(json_array_get_length(conn_types_json_array), MAX_PROTOCOLS_NUMBER);
+    for (int i = 0; i < (int) protocols_number; ++i) {
+        const gchar *protocol_name = json_array_get_string_element(conn_types_json_array, (guint) i);
+        if (g_strcmp0(protocol_name, vdi_session_remote_protocol_to_str(VDI_SPICE_PROTOCOL)) == 0
+            || g_strcmp0(protocol_name, vdi_session_remote_protocol_to_str(VDI_SPICE_DIRECT_PROTOCOL)) == 0
+            || g_strcmp0(protocol_name, vdi_session_remote_protocol_to_str(VDI_RDP_PROTOCOL)) == 0
 #ifdef _WIN32
-    vdi_pool_widget_check_protocol_available_and_add(conn_types_json_array, VDI_RDP_WINDOWS_NATIVE_PROTOCOL,
-                                                     vdi_pool_widget.combobox_remote_protocol);
+            || g_strcmp0(protocol_name, vdi_session_remote_protocol_to_str(VDI_RDP_WINDOWS_NATIVE_PROTOCOL)) == 0
 #endif
-    gtk_combo_box_set_active((GtkComboBox*)vdi_pool_widget.combobox_remote_protocol, 0);
+                )
+            gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(vdi_pool_widget.combobox_remote_protocol), protocol_name);
+    }
+    gtk_combo_box_set_active(GTK_COMBO_BOX(vdi_pool_widget.combobox_remote_protocol), 0);
 
     // vm start button
     vdi_pool_widget.vm_start_button = gtk_button_new_with_label(pool_name);

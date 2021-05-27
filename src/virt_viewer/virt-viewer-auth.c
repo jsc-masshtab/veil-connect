@@ -64,7 +64,8 @@ virt_viewer_auth_collect_credentials(GtkWindow *window,
 
     dialog = GTK_WIDGET(gtk_builder_get_object(creds, "auth"));
     gtk_dialog_set_default_response(GTK_DIALOG(dialog), GTK_RESPONSE_OK);
-    gtk_window_set_transient_for(GTK_WINDOW(dialog), window);
+    if (window)
+        gtk_window_set_transient_for(GTK_WINDOW(dialog), window);
 
     labelMessage = GTK_WIDGET(gtk_builder_get_object(creds, "message"));
     credUsername = GTK_WIDGET(gtk_builder_get_object(creds, "cred-username"));
@@ -106,8 +107,10 @@ virt_viewer_auth_collect_credentials(GtkWindow *window,
             g_free(*username);
             *username = g_strdup(gtk_entry_get_text(GTK_ENTRY(credUsername)));
         }
-        if (password)
+        if (password) {
+            g_free(*password);
             *password = g_strdup(gtk_entry_get_text(GTK_ENTRY(credPassword)));
+        }
     }
 
     gtk_widget_destroy(GTK_WIDGET(dialog));

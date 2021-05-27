@@ -270,12 +270,12 @@ static void on_vdi_session_get_vm_from_pool_finished(GObject *source_object G_GN
         set_vdi_client_state(self, VDI_RECEIVED_RESPONSE, "Получена вм из пула", FALSE);
 
         // Если существует список приложений и если протокол RDP, то показываем окно выбора приложений
+        rdp_settings_clear(&self->p_conn_data->rdp_settings);
         VdiVmRemoteProtocol protocol = vdi_session_get_current_remote_protocol();
         if (vdi_vm_data->farm_array && vdi_vm_data->farm_array->len > 0 &&
                 (protocol == VDI_RDP_PROTOCOL || protocol == VDI_RDP_WINDOWS_NATIVE_PROTOCOL)) {
 
             AppSelectorResult selector_res = vdi_app_selector_start(vdi_vm_data, GTK_WINDOW(self->window));
-            rdp_settings_clear(&self->p_conn_data->rdp_settings);
             self->p_conn_data->rdp_settings = selector_res.rdp_settings;
 
             if (selector_res.result_type != APP_SELECTOR_RESULT_NONE) {

@@ -36,16 +36,6 @@
                         <property name="can_focus">False</property>
                         <property name="accel_group">accelgroup</property>
                         <child>
-                          <object class="GtkMenuItem" id="menu-file-screenshot">
-                            <property name="use_action_appearance">False</property>
-                            <property name="visible">True</property>
-                            <property name="can_focus">False</property>
-                            <property name="label" translatable="yes">_Скриншот</property>
-                            <property name="use_underline">True</property>
-                            <signal name="activate" handler="virt_viewer_window_menu_file_screenshot" swapped="no"/>
-                          </object>
-                        </child>
-                        <child>
                           <object class="GtkMenuItem" id="menu-file-smartcard-insert">
                             <property name="use_action_appearance">False</property>
                             <property name="can_focus">False</property>

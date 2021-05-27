@@ -55,11 +55,9 @@ static void* net_speedometer_ping_job_linux(NetSpeedometer *self)
 
         // reset data
         self->min_rtt = self->max_rtt = self->avg_rtt = 0;
-        self->loss_percentage = 100;
+        self->loss_percentage = 0;
         // parse
         if (cmd_res) {
-            //g_info("TEST PING: %s", standard_output);
-
             /// rtt min/avg/max parsing
             GRegex *regex = g_regex_new("(\\d+.\\d+)/(\\d+.\\d+)/(\\d+.\\d+)/(\\d+.\\d+)",
                     G_REGEX_MULTILINE, 0, NULL);
@@ -98,22 +96,31 @@ static void* net_speedometer_ping_job_linux(NetSpeedometer *self)
             g_regex_match(regex, standard_output, 0, &match_info);
             is_success = g_match_info_matches(match_info);
             //g_info("IS SUC: %i", is_success);
+            int loss_parse_error_code = 0;
             if (is_success) {
-
                 g_autofree gchar *ping_loss_data_str = NULL;
                 ping_loss_data_str = g_match_info_fetch(match_info, 0);
 
                 if (ping_loss_data_str) {
-                    //g_info("ping_loss_data_str: %s", ping_loss_data_str);
                     gchar **ping_loss_array = g_strsplit(ping_loss_data_str, "%", 2);
                     if (g_strv_length(ping_loss_array) > 1) {
                         self->loss_percentage = atoi(ping_loss_array[0]);
                         //g_info("Cur loss: %i", self->loss_percentage);
+                    } else {
+                        loss_parse_error_code = 1;
                     }
-
                     g_strfreev(ping_loss_array);
+                } else {
+                    loss_parse_error_code = 2;
                 }
+            } else {
+                loss_parse_error_code = 3;
             }
+            // Ошибки быть не должно. Если пристутствует, значит ping выдал неожидаемый std output
+            if (loss_parse_error_code)
+                g_warning("%s: Cant parse packet loss from ping output. Error code: %i\n%s",
+                        (const char *)__func__, loss_parse_error_code, standard_output);
+
 
             if(match_info)
                 g_match_info_free(match_info);

@@ -133,7 +133,7 @@
 #define PACKAGE_URL ""
 
 /* Define to the version of this package. */
-#define PACKAGE_VERSION "1.6.1"
+#define PACKAGE_VERSION "1.6.2"
 
 /* OS ID for this build */
 /* #undef REMOTE_VIEWER_OS_ID */
@@ -155,4 +155,4 @@
 
 /*Product links*/
 #define VEIL_PRODUCT_SITE "https://mashtab.org/files/vdi/index.html"
-#define VEIL_CONNECT_DOC_SITE "https://veil.mashtab.org/docs/vdi/connect/veil_connect/"
+#define VEIL_CONNECT_DOC_SITE "https://veil.mashtab.org/vdi-docs/connect/veil_connect/"

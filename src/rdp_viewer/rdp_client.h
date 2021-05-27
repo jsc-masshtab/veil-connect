@@ -59,13 +59,7 @@ typedef struct {
     gboolean is_reconnecting; // is reconnect going on
     gboolean is_connecting;
 
-    // credentials
-    gchar *user_name;
-    gchar *password;
-    gchar *domain;
-    gchar *ip;
-    int port;
-    // additional settings
+    // RDP settings
     VeilRdpSettings *p_rdp_settings; // указатель на данные. Не владеет этими данными
 
     // UpdateImageCallback update_image_callback; // callback for updating image in the main thread
@@ -100,8 +94,7 @@ ExtendedRdpContext* create_rdp_context(UpdateCursorCallback update_cursor_callba
                                        GSourceFunc update_images_func);
 void destroy_rdp_context(ExtendedRdpContext* ex_rdp_context);
 
-void rdp_client_set_credentials(ExtendedRdpContext *ex_rdp_context, const gchar *user_name, const gchar *password,
-        gchar *domain, gchar *ip, int port, VeilRdpSettings *p_rdp_settings);
+void rdp_client_set_settings(ExtendedRdpContext *ex_rdp_context, VeilRdpSettings *p_rdp_settings);
 void rdp_client_set_rdp_image_size(ExtendedRdpContext *ex_rdp_context,
                                          int whole_image_width, int whole_image_height);
 

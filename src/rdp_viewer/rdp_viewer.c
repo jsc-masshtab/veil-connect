@@ -15,6 +15,8 @@
 #include <freerdp/locale/keyboard.h>
 #include <freerdp/scancode.h>
 
+#include "virt-viewer-auth.h"
+
 #include "rdp_viewer.h"
 #include "rdp_client.h"
 #include "rdp_viewer_window.h"
@@ -127,12 +129,29 @@ static GdkRectangle set_monitor_data_and_create_rdp_viewer_window(GdkMonitor *mo
     return geometry;
 }
 
-RemoteViewerState rdp_viewer_start(RemoteViewer *app,
-        const gchar *user_name, const gchar *password, gchar *domain, gchar *ip, int port,
-                                   VeilRdpSettings *p_rdp_settings)
+static gboolean rdp_viewer_ask_for_credentials_if_required(VeilRdpSettings *p_rdp_settings)
 {
-    g_info("%s domain %s ip %s", (const char *)__func__, domain, ip);
+    if (p_rdp_settings->user_name == NULL || p_rdp_settings->password == NULL)
+        return virt_viewer_auth_collect_credentials(NULL,
+                                               "RDP", p_rdp_settings->ip,
+                                               &p_rdp_settings->user_name, &p_rdp_settings->password);
+    else
+        return TRUE;
+}
+
+RemoteViewerState rdp_viewer_start(RemoteViewer *app, VeilRdpSettings *p_rdp_settings)
+{
+    g_info("%s domain %s ip %s", (const char *)__func__, p_rdp_settings->domain, p_rdp_settings->ip);
+
     RemoteViewerState next_app_state = APP_STATE_UNDEFINED;
+    if (p_rdp_settings == NULL)
+        return next_app_state;
+
+    // Если имя и пароль по какой-либо причине отсутствуют, то предлагаем пользователю их ввести.
+    gboolean ret = rdp_viewer_ask_for_credentials_if_required(p_rdp_settings);
+    if (!ret)
+        return APP_STATE_AUTH_DIALOG;
+
     GMainLoop *loop = NULL;
     // create RDP context
     ExtendedRdpContext *ex_rdp_context = create_rdp_context((UpdateCursorCallback)rdp_viewer_update_cursor,
@@ -143,26 +162,11 @@ RemoteViewerState rdp_viewer_start(RemoteViewer *app,
     // set pointer for statistics accumulation
     net_speedometer_set_pointer_rdp_context(app->net_speedometer, ex_rdp_context->context.rdp);
 
-    // Логин в формате name@domain не нравится freerdp, поэтому отбрасываем @domain
-    gchar *corrected_user_name = NULL;
-    gchar *sub_string = strchr(user_name, '@');
-    if (sub_string) {
-        int index = (int) (sub_string - user_name);
-        corrected_user_name = g_strndup(user_name, index);
-    } else {
-        corrected_user_name = g_strdup(user_name);
-    }
-
-    rdp_client_set_credentials(ex_rdp_context, corrected_user_name, password, domain, ip, port, p_rdp_settings);
-    free_memory_safely(&corrected_user_name);
+    rdp_client_set_settings(ex_rdp_context, p_rdp_settings);
 
     // Set some presettings
     usbredir_controller_reset_tcp_usb_devices_on_next_gui_opening(TRUE);
-    // printers
-    gboolean redirect_printers = read_int_from_ini_file("RDPSettings", "redirect_printers", FALSE);
-    ex_rdp_context->context.instance->settings->RedirectPrinters = (BOOL)redirect_printers;
-    // get ini config data
-    gboolean is_multimon = read_int_from_ini_file("RDPSettings", "is_multimon", 0);
+
     // determine monitor info
     GdkDisplay *display = gdk_display_get_default();
     int total_monitor_width = 0; // Во freerdp нет мультимониторности. Единственный способ ее эмулиовать -
@@ -177,7 +181,7 @@ RemoteViewerState rdp_viewer_start(RemoteViewer *app,
     // create rdp viewer windows
     rdpSettings *settings = ex_rdp_context->context.settings;
     // Create windows for every monitor
-    if (is_multimon) {
+    if (p_rdp_settings->is_multimon) {
         int monitor_number = MIN(gdk_display_get_n_monitors(display), MAX_MONITOR_AMOUNT);
 
         // set monitor data for rdp client

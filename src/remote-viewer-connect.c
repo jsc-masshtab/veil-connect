@@ -167,6 +167,7 @@ on_vdi_session_get_vm_from_pool_finished(GObject *source_object G_GNUC_UNUSED,
         free_memory_safely(&ci->p_conn_data->user);
         update_string_safely(&ci->p_conn_data->password, vdi_vm_data->vm_password);
         update_string_safely(&ci->p_conn_data->vm_verbose_name, vdi_vm_data->vm_verbose_name);
+        rdp_settings_clear(&ci->p_conn_data->rdp_settings);
 
         shutdown_loop(ci->loop);
     }
