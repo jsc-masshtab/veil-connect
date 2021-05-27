@@ -335,6 +335,8 @@ rdp_viewer_window_menu_close_window(GtkWidget *menu G_GNUC_UNUSED, gpointer user
 {
     g_info("%s", (const char *)__func__);
     RdpWindowData *rdp_window_data = (RdpWindowData *)userdata;
+    if (rdp_window_data->ex_rdp_context->is_connecting)
+        return;
     rdp_viewer_window_stop(rdp_window_data, APP_STATE_EXITING);
 }
 
@@ -343,7 +345,7 @@ rdp_viewer_window_menu_switch_off(GtkWidget *menu G_GNUC_UNUSED, gpointer userda
 {
     g_info("%s", (const char *)__func__);
     RdpWindowData *rdp_window_data = (RdpWindowData *)userdata;
-    if (rdp_window_data->ex_rdp_context->is_connecting) // обход проблемы отмены во время стадии коннекта
+    if (rdp_window_data->ex_rdp_context->is_connecting) // из-за проблемы невозможности отмены стадии коннекта
         return;
 
     rdp_viewer_window_stop(rdp_window_data, APP_STATE_VDI_DIALOG);
@@ -556,9 +558,8 @@ RdpWindowData *rdp_viewer_window_create(ExtendedRdpContext *ex_rdp_context, int 
     GtkWidget *rdp_viewer_window = rdp_window_data->rdp_viewer_window =
             GTK_WIDGET(gtk_builder_get_object(builder, "viewer"));
     gchar *title = g_strdup_printf("ВМ: %s     Пользователь: %s    %s", vdi_session_get_current_vm_name(),
-            ex_rdp_context->user_name, APPLICATION_NAME_WITH_SPACES);
+            ex_rdp_context->p_rdp_settings->user_name, APPLICATION_NAME_WITH_SPACES);
     gtk_window_set_title(GTK_WINDOW(rdp_viewer_window), title);
-    //gtk_window_set_deletable(GTK_WINDOW(rdp_viewer_window), FALSE);
     free_memory_safely(&title);
 
     gtk_widget_add_events(rdp_viewer_window, GDK_KEY_PRESS_MASK | GDK_KEY_RELEASE_MASK | GDK_FOCUS_CHANGE_MASK);

@@ -25,7 +25,7 @@
 
 #include "config.h"
 
-#include "virt-viewer-session.h"
+//#include "virt-viewer-session.h"
 
 gboolean virt_viewer_auth_collect_credentials(GtkWindow *window,
                                               const char *type,

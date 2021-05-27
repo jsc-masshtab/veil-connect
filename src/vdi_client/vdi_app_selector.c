@@ -50,11 +50,11 @@ static void vdi_app_selector_on_icon_btn_clicked(GtkButton *btn, VdiAppSelector 
     if (strlen_safely(app_alias) != 0) { // пользователь выбрал приложение
         self->selector_result.result_type = APP_SELECTOR_RESULT_APP;
         self->selector_result.rdp_settings.is_remote_app = TRUE;
-        self->selector_result.rdp_settings.remote_app_name = g_strdup_printf("||%s", app_alias);
+        self->selector_result.rdp_settings.remote_app_program = g_strdup_printf("||%s", app_alias);
     } else { // пользователь выбрал обычное подключение к рабочему столу
         self->selector_result.result_type = APP_SELECTOR_RESULT_DESKTOP;
         self->selector_result.rdp_settings.is_remote_app = FALSE;
-        self->selector_result.rdp_settings.remote_app_name = NULL;
+        self->selector_result.rdp_settings.remote_app_program = NULL;
     }
 
     shutdown_loop(self->loop);
@@ -185,7 +185,9 @@ AppSelectorResult vdi_app_selector_start(VdiVmData *p_vdi_vm_data, GtkWindow *pa
     g_signal_handler_disconnect(get_vdi_session_static(), ws_cmd_received_handle);
     g_object_unref(self->builder);
     gtk_widget_destroy(self->window);
+
+    AppSelectorResult selector_result = self->selector_result;
     free(self);
 
-    return self->selector_result;
+    return selector_result;
 }

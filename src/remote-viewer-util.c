@@ -997,6 +997,20 @@ void show_msg_box_dialog(GtkWindow *parent, const gchar *message)
     gtk_widget_destroy(dialog_msg);
 }
 
+void remove_char(char *str, char character)
+{
+    if (!str)
+        return;
+
+    char *dst;
+    for (dst = str; *str != '\0'; str++) {
+        *dst = *str;
+        if (*dst != character)
+            dst++;
+    }
+    *dst = '\0';
+}
+
 /*
  * Local variables:
  *  c-indent-level: 4

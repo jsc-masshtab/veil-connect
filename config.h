@@ -155,4 +155,4 @@
 
 /*Product links*/
 #define VEIL_PRODUCT_SITE "https://mashtab.org/files/vdi/index.html"
-#define VEIL_CONNECT_DOC_SITE "https://veil.mashtab.org/docs/vdi/connect/veil_connect/"
+#define VEIL_CONNECT_DOC_SITE "https://veil.mashtab.org/vdi-docs/connect/veil_connect/"

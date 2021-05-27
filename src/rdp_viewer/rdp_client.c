@@ -49,24 +49,9 @@
 #define TAG CLIENT_TAG(PROGRAMM_NAME)
 #define CONN_TRY_NUMBER 2
 
-//static gint64 prev = 0;
+
 static void rdp_client_demand_image_update(ExtendedRdpContext* ex_context, int x, int y, int width, int height)
 {
-    //gint64 cur = g_get_monotonic_time();
-    //g_info("PUSH time %lli", cur - prev);
-    //prev = cur;
-
-    //if (ex_context->display_update_queue) {
-        //GdkRectangle *update_region = malloc(sizeof(GdkRectangle)); // freed when popped from queue
-        //update_region->x = x;
-        //update_region->y = y;
-        //update_region->width = width;
-        //update_region->height = height;
-        //gint q_len = g_async_queue_length(ex_context->display_update_queue);
-        //g_info("send q_len: %i", q_len);
-        //g_async_queue_push(ex_context->display_update_queue, update_region);
-    //}
-
     // Формируем область которую нужно перерисовать в главном потоке
     g_mutex_lock(&ex_context->invalid_region_mutex);
 
@@ -105,11 +90,14 @@ static void rdp_client_demand_image_update(ExtendedRdpContext* ex_context, int x
 
 static void add_rdp_param(GArray *rdp_params_dyn_array, gchar *rdp_param)
 {
+    if (rdp_param == NULL)
+        return;
+
     g_array_append_val(rdp_params_dyn_array, rdp_param);
 }
 
 // Прочитать из ini параметр и передать в freerdp настройки
-static void rdp_client_read_str_rdp_param_from_ini_and_add(GArray *rdp_params_dyn_array,
+static void rdp_client_add_str_param_from_ini(GArray *rdp_params_dyn_array,
         const gchar *ini_key, const gchar *rdp_param_name, const gchar *default_rdp_param_value)
 {
     gchar *ini_param = read_str_from_ini_file("RDPSettings", ini_key);
@@ -122,6 +110,24 @@ static void rdp_client_read_str_rdp_param_from_ini_and_add(GArray *rdp_params_dy
     }
 }
 
+static gchar * rdp_client_get_corrected_user_name(ExtendedRdpContext* ex)
+{
+    if (ex->p_rdp_settings->user_name == NULL)
+        return NULL;
+
+    // Логин в формате name@domain не нравится freerdp, поэтому отбрасываем @domain
+    gchar *corrected_user_name = NULL;
+    gchar *sub_string = strchr(ex->p_rdp_settings->user_name, '@');
+    if (sub_string) {
+        int index = (int) (sub_string - ex->p_rdp_settings->user_name);
+        corrected_user_name = g_strndup(ex->p_rdp_settings->user_name, index);
+    } else {
+        corrected_user_name = g_strdup(ex->p_rdp_settings->user_name);
+    }
+
+    return corrected_user_name;
+}
+
 static GArray *rdp_client_create_params_array(ExtendedRdpContext* ex)
 {
     g_info("%s W: %i x H:%i", (const char*)__func__, ex->whole_image_width, ex->whole_image_height);
@@ -129,17 +135,20 @@ static GArray *rdp_client_create_params_array(ExtendedRdpContext* ex)
     GArray *rdp_params_dyn_array = g_array_new(FALSE, FALSE, sizeof(gchar *));
 
     add_rdp_param(rdp_params_dyn_array, g_strdup(PROGRAMM_NAME));
-    gchar *full_adress = ex->port != 0 ? g_strdup_printf("/v:%s:%i", ex->ip, ex->port) :
-            g_strdup_printf("/v:%s", ex->ip);
+    gchar *full_adress = ex->p_rdp_settings->port != 0 ?
+            g_strdup_printf("/v:%s:%i", ex->p_rdp_settings->ip, ex->p_rdp_settings->port) :
+            g_strdup_printf("/v:%s", ex->p_rdp_settings->ip);
     add_rdp_param(rdp_params_dyn_array, full_adress);
-    add_rdp_param(rdp_params_dyn_array, g_strdup_printf("/d:%s", ex->domain));
-    add_rdp_param(rdp_params_dyn_array, g_strdup_printf("/u:%s", ex->user_name));
-    add_rdp_param(rdp_params_dyn_array, g_strdup_printf("/p:%s", ex->password)); // ex->password
+    if (ex->p_rdp_settings->domain)
+        add_rdp_param(rdp_params_dyn_array, g_strdup_printf("/d:%s", ex->p_rdp_settings->domain));
+    g_autofree gchar *corrected_user_name = NULL;
+    corrected_user_name = rdp_client_get_corrected_user_name(ex);
+    add_rdp_param(rdp_params_dyn_array, g_strdup_printf("/u:%s", corrected_user_name));
+    add_rdp_param(rdp_params_dyn_array, g_strdup_printf("/p:%s", ex->p_rdp_settings->password));
     add_rdp_param(rdp_params_dyn_array, g_strdup_printf("/w:%i", ex->whole_image_width));
     add_rdp_param(rdp_params_dyn_array, g_strdup_printf("/h:%i", ex->whole_image_height));
     add_rdp_param(rdp_params_dyn_array, g_strdup("/cert-ignore"));
     add_rdp_param(rdp_params_dyn_array, g_strdup("/sound:rate:44100,channel:2"));
-    add_rdp_param(rdp_params_dyn_array, g_strdup("/smartcard"));
     add_rdp_param(rdp_params_dyn_array, g_strdup("/relax-order-checks"));
     if (!vdi_session_is_shared_clipboard_permitted())
         add_rdp_param(rdp_params_dyn_array, g_strdup("-clipboard"));
@@ -147,11 +156,21 @@ static GArray *rdp_client_create_params_array(ExtendedRdpContext* ex)
 #elif _WIN32
     add_rdp_param(rdp_params_dyn_array, g_strdup("+glyph-cache"));
 #endif
+    if (ex->p_rdp_settings->redirectsmartcards)
+        add_rdp_param(rdp_params_dyn_array, g_strdup("/smartcard"));
+    if (ex->p_rdp_settings->redirectprinters)
+        add_rdp_param(rdp_params_dyn_array, g_strdup("/printer"));
+
+    if (ex->p_rdp_settings->alternate_shell)
+        add_rdp_param(rdp_params_dyn_array, g_strdup_printf("/shell:%s", ex->p_rdp_settings->alternate_shell));
+
+    if (ex->p_rdp_settings->allow_desktop_composition)
+        add_rdp_param(rdp_params_dyn_array, g_strdup("+aero"));
 
     // /gfx-h264:AVC444
     gboolean is_rdp_h264_used = read_int_from_ini_file("RDPSettings", "is_rdp_h264_used", TRUE);
     if (is_rdp_h264_used)
-        rdp_client_read_str_rdp_param_from_ini_and_add(rdp_params_dyn_array, "rdp_h264_codec", "/gfx-h264",
+        rdp_client_add_str_param_from_ini(rdp_params_dyn_array, "rdp_h264_codec", "/gfx-h264",
                                                        h264_codec_to_string(get_default_h264_codec()));
     // drives (folders)
     gchar *shared_folders_str = read_str_from_ini_file("RDPSettings", "rdp_shared_folders");
@@ -183,18 +202,9 @@ static GArray *rdp_client_create_params_array(ExtendedRdpContext* ex)
     free_memory_safely(&shared_folders_str);
 
     // remote app. Сначала смотрим есть ли в переданных настройках, иначе - есть ли в ini
-    if(ex->p_rdp_settings && ex->p_rdp_settings->is_remote_app) {
-        add_rdp_param(rdp_params_dyn_array, g_strdup_printf("/app:%s", ex->p_rdp_settings->remote_app_name));
+    if(ex->p_rdp_settings->is_remote_app) {
+        add_rdp_param(rdp_params_dyn_array, g_strdup_printf("/app:%s", ex->p_rdp_settings->remote_app_program));
         add_rdp_param(rdp_params_dyn_array, g_strdup_printf("/app-cmd:%s", ex->p_rdp_settings->remote_app_options));
-
-    }  else {
-        gboolean is_remote_app = read_int_from_ini_file("RDPSettings", "is_remote_app", 0);
-        if (is_remote_app) {
-            rdp_client_read_str_rdp_param_from_ini_and_add(rdp_params_dyn_array, "remote_app_name",
-                                                           "/app", NULL);
-            rdp_client_read_str_rdp_param_from_ini_and_add(rdp_params_dyn_array, "remote_app_options",
-                                                           "/app-cmd", NULL);
-        }
     }
 
     // rdp_args     custom from ini file
@@ -214,25 +224,20 @@ static GArray *rdp_client_create_params_array(ExtendedRdpContext* ex)
     // network type
     gboolean is_rdp_network_assigned = read_int_from_ini_file("RDPSettings", "is_rdp_network_assigned", 0);
     if (is_rdp_network_assigned)
-        rdp_client_read_str_rdp_param_from_ini_and_add(rdp_params_dyn_array, "rdp_network_type",
-            "/network", "auto");
+        rdp_client_add_str_param_from_ini(rdp_params_dyn_array, "rdp_network_type", "/network", "auto");
 
     // additional graphics settings
     gboolean disable_rdp_decorations = read_int_from_ini_file("RDPSettings", "disable_rdp_decorations", 0);
     if (disable_rdp_decorations)
         add_rdp_param(rdp_params_dyn_array, g_strdup("-decorations"));
-    gboolean disable_rdp_fonts = read_int_from_ini_file("RDPSettings", "disable_rdp_fonts", 0);
-    if (disable_rdp_fonts)
-        add_rdp_param(rdp_params_dyn_array, g_strdup("-fonts"));
-    else
-        add_rdp_param(rdp_params_dyn_array, g_strdup("+fonts"));
-    gboolean disable_rdp_themes = read_int_from_ini_file("RDPSettings", "disable_rdp_themes", 0);
-    if (disable_rdp_themes)
+    gchar *fonts = ex->p_rdp_settings->disable_rdp_fonts ? g_strdup("-fonts") : g_strdup("+fonts");
+    add_rdp_param(rdp_params_dyn_array, fonts);
+    if (ex->p_rdp_settings->disable_rdp_themes)
         add_rdp_param(rdp_params_dyn_array, g_strdup("-themes"));
 
     // USB for RemoteFX
     if(vdi_session_is_usb_redir_permitted()) {
-        rdp_client_read_str_rdp_param_from_ini_and_add(rdp_params_dyn_array, "usb_devices", "/usb:addr", NULL);
+        rdp_client_add_str_param_from_ini(rdp_params_dyn_array, "usb_devices", "/usb:addr", NULL);
     }
 
     // null terminating arg
@@ -299,16 +304,8 @@ void destroy_rdp_context(ExtendedRdpContext* ex_rdp_context)
     }
 }
 
-void rdp_client_set_credentials(ExtendedRdpContext *ex_rdp_context,
-                                const gchar *user_name, const gchar *password, gchar *domain,
-                                gchar *ip, int port, VeilRdpSettings *p_rdp_settings)
+void rdp_client_set_settings(ExtendedRdpContext *ex_rdp_context, VeilRdpSettings *p_rdp_settings)
 {
-    ex_rdp_context->user_name = g_strdup(user_name);
-    ex_rdp_context->password = g_strdup(password);
-    ex_rdp_context->domain = g_strdup(domain);
-    ex_rdp_context->ip = g_strdup(ip);
-    ex_rdp_context->port = port;
-
     ex_rdp_context->p_rdp_settings = p_rdp_settings;
 }
 
@@ -336,8 +333,8 @@ void* rdp_client_routine(ExtendedRdpContext *ex_contect)
     // rdp params
     GArray *rdp_params_dyn_array = rdp_client_create_params_array(ex_contect);
 
-    g_info("%s ex_contect->user_name %s", (const char *)__func__, ex_contect->user_name);
-    g_info("%s ex_contect->domain %s", (const char *)__func__, ex_contect->domain);
+    g_info("%s ex_contect->user_name %s", (const char *)__func__, ex_contect->p_rdp_settings->user_name);
+    g_info("%s ex_contect->domain %s", (const char *)__func__, ex_contect->p_rdp_settings->domain);
     // /v:192.168.20.104 /u:solomin /p:5555 -clipboard /sound:rate:44100,channel:2 /cert-ignore
 
     gchar** argv = malloc(rdp_params_dyn_array->len * sizeof(gchar*));
@@ -745,11 +742,6 @@ static void rdp_client_free(freerdp* instance G_GNUC_UNUSED, rdpContext* context
 
     // some clean.
     ExtendedRdpContext* ex_rdp_context = (ExtendedRdpContext*)context;
-
-    free_memory_safely(&ex_rdp_context->user_name);
-    free_memory_safely(&ex_rdp_context->password);
-    free_memory_safely(&ex_rdp_context->domain);
-    free_memory_safely(&ex_rdp_context->ip);
 
     wair_for_mutex_and_clear(&ex_rdp_context->primary_buffer_mutex);
 }

@@ -22,21 +22,21 @@
 #ifdef _WIN32
 static void append_rdp_data(FILE *destFile, const gchar *param_name, const gchar *param_value)
 {
+    if (param_value == NULL)
+        return;
+
     gchar *full_address = g_strdup_printf("%s:%s\n", param_name, param_value);
     fputs(full_address, destFile);
     g_free(full_address);
 }
 #endif
 
+
 void
-launch_windows_rdp_client(const gchar *user_name, const gchar *password G_GNUC_UNUSED,
-                          const gchar *ip, int port G_GNUC_UNUSED, const gchar *domain,
-                          const VeilRdpSettings *p_rdp_settings G_GNUC_UNUSED)
+launch_windows_rdp_client(const VeilRdpSettings *p_rdp_settings)
 {
 #ifdef __linux__
-    (void)user_name;
-    (void)ip;
-    (void)domain;
+    (void)p_rdp_settings;
 #elif defined _WIN32
     //create rdp file based on template
     //open template for reading and take its content
@@ -80,13 +80,13 @@ launch_windows_rdp_client(const gchar *user_name, const gchar *password G_GNUC_U
     }
 
     // apend unique data
-    append_rdp_data(destFile, "full address:s", ip);
-    append_rdp_data(destFile, "username:s", user_name);
-    append_rdp_data(destFile, "domain:s", domain);
+    append_rdp_data(destFile, "full address:s", p_rdp_settings->ip);
+    append_rdp_data(destFile, "username:s", p_rdp_settings->user_name);
+    append_rdp_data(destFile, "domain:s", p_rdp_settings->domain);
 
     if (p_rdp_settings->is_remote_app) {
         append_rdp_data(destFile, "remoteapplicationmode:i", "1");
-        append_rdp_data(destFile,"remoteapplicationprogram:s", p_rdp_settings->remote_app_name);
+        append_rdp_data(destFile,"remoteapplicationprogram:s", p_rdp_settings->remote_app_program);
         append_rdp_data(destFile,"remoteapplicationcmdline:s", p_rdp_settings->remote_app_options);
     } else {
         append_rdp_data(destFile, "remoteapplicationmode:i", "0");

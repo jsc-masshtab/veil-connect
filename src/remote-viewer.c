@@ -13,6 +13,7 @@
 #include <glib/gi18n.h>
 #include <libxml/uri.h>
 
+#include "settingsfile.h"
 #include "virt-viewer-session-spice.h"
 #include "virt-viewer-app.h"
 #include "virt-viewer-auth.h"
@@ -235,8 +236,17 @@ retry_connect_to_vm:
     /// instant connect attempt
     if (opt_manual_mode) {
         if (vdi_session_get_current_remote_protocol() == VDI_RDP_PROTOCOL) {
-            RemoteViewerState app_state = rdp_viewer_start(REMOTE_VIEWER(app),
-                    con_data.user, con_data.password, con_data.domain, con_data.ip, con_data.port, NULL);
+            // Либо берем данные ГУИ, либо парсим rdp файл
+            gboolean read_from_std_rdp_file = read_int_from_ini_file("RDPSettings", "use_rdp_file", 0);
+            if (read_from_std_rdp_file) {
+                rdp_settings_read_standard_file(&con_data.rdp_settings, NULL);
+            } else {
+                rdp_settings_read_ini_file(&con_data.rdp_settings, TRUE);
+                rdp_settings_set_connect_data(&con_data.rdp_settings, con_data.user, con_data.password,
+                        con_data.domain, con_data.ip, con_data.port);
+            }
+
+            RemoteViewerState app_state = rdp_viewer_start(REMOTE_VIEWER(app), &con_data.rdp_settings);
             if (app_state == APP_STATE_AUTH_DIALOG)
                 goto retry_auth;
             else if (app_state == APP_STATE_EXITING)
@@ -294,12 +304,18 @@ retry_connect_to_vm:
         // connect to vm depending remote protocol
         RemoteViewerState next_app_state = APP_STATE_VDI_DIALOG;
         if (vdi_session_get_current_remote_protocol() == VDI_RDP_PROTOCOL) {
-            next_app_state = rdp_viewer_start(REMOTE_VIEWER(app), vdi_session_get_vdi_username(),
-                    vdi_session_get_vdi_password(), con_data.domain, con_data.ip, 0, &con_data.rdp_settings);
+            // Читаем из ini настройки remote_app только если они еще не установлены ранее (они могут быть получены от
+            // RDS пула, например)
+            rdp_settings_read_ini_file(&con_data.rdp_settings, !con_data.rdp_settings.is_remote_app);
+            rdp_settings_set_connect_data(&con_data.rdp_settings, vdi_session_get_vdi_username(),
+                            vdi_session_get_vdi_password(), con_data.domain, con_data.ip, 0);
+            next_app_state = rdp_viewer_start(REMOTE_VIEWER(app), &con_data.rdp_settings);
 #ifdef _WIN32
         }else if (vdi_session_get_current_remote_protocol() == VDI_RDP_WINDOWS_NATIVE_PROTOCOL) {
-                launch_windows_rdp_client(vdi_session_get_vdi_username(), vdi_session_get_vdi_password(),
-                        con_data.ip, 0, con_data.domain, &con_data.rdp_settings);
+            rdp_settings_read_ini_file(&con_data.rdp_settings, !con_data.rdp_settings.is_remote_app);
+            rdp_settings_set_connect_data(&con_data.rdp_settings, vdi_session_get_vdi_username(),
+                                          vdi_session_get_vdi_password(), con_data.domain, con_data.ip, 0);
+            launch_windows_rdp_client(&con_data.rdp_settings);
 #endif
         } else { // spice by default
             virt_viewer_app_set_window_name(app, con_data.vm_verbose_name);
