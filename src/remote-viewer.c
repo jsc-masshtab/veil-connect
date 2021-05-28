@@ -39,7 +39,7 @@ struct _RemoteViewerPrivate {
     gpointer reserved;
 };
 
-G_DEFINE_TYPE (RemoteViewer, remote_viewer, VIRT_VIEWER_TYPE_APP)
+G_DEFINE_TYPE (RemoteViewer, remote_viewer, GTK_TYPE_APPLICATION)
 #define GET_PRIVATE(o)                                                        \
     (G_TYPE_INSTANCE_GET_PRIVATE ((o), REMOTE_VIEWER_TYPE, RemoteViewerPrivate))
 
@@ -50,8 +50,32 @@ enum RemoteViewerProperties {
 #endif
 };
 
-static gboolean remote_viewer_start(VirtViewerApp *app, GError **error, RemoteViewerState remoteViewerState);
+static void remote_viewer_start(RemoteViewer *self, RemoteViewerState remoteViewerState);
 
+static GtkCssProvider *setup_css()
+{
+    GtkCssProvider *cssProvider = gtk_css_provider_new();
+    gtk_css_provider_load_from_path(cssProvider, "css_style.css", NULL);
+    gtk_style_context_add_provider_for_screen(gdk_screen_get_default(),
+                                              GTK_STYLE_PROVIDER(cssProvider),
+                                              GTK_STYLE_PROVIDER_PRIORITY_USER);
+    return cssProvider;
+}
+
+static void
+remote_viewer_startup(GApplication *app)
+{
+    G_APPLICATION_CLASS(remote_viewer_parent_class)->startup(app);
+
+    RemoteViewer *self = REMOTE_VIEWER(app);
+    virt_viewer_app_setup(self->virt_viewer_obj);
+
+    GtkCssProvider *css_provider = setup_css(); // CSS setup
+    remote_viewer_start(self, APP_STATE_AUTH_DIALOG);
+    g_object_unref(css_provider);
+
+    g_application_quit(app);
+}
 
 static void
 remote_viewer_dispose(GObject *object)
@@ -64,9 +88,6 @@ static void
 remote_viewer_finalize(GObject *object)
 {
     g_info("%s", (const char*)__func__);
-    RemoteViewer *self = REMOTE_VIEWER(object);
-    g_object_unref(self->app_updater);
-
     G_OBJECT_CLASS(remote_viewer_parent_class)->finalize(object);
 }
 
@@ -114,17 +135,17 @@ static void
 remote_viewer_class_init(RemoteViewerClass *klass)
 {
     GObjectClass *object_class = G_OBJECT_CLASS (klass);
-    VirtViewerAppClass *app_class = VIRT_VIEWER_APP_CLASS (klass);
     GApplicationClass *g_app_class = G_APPLICATION_CLASS(klass);
 
     g_type_class_add_private (klass, sizeof (RemoteViewerPrivate));
+
+    g_app_class->startup = remote_viewer_startup;
+    g_app_class->command_line = NULL; /* inhibit GApplication default handler */
 
     object_class->dispose = remote_viewer_dispose;
     object_class->finalize = remote_viewer_finalize;
 
     g_app_class->local_command_line = remote_viewer_local_command_line;
-
-    app_class->start = remote_viewer_start;
 }
 
 static void
@@ -133,8 +154,13 @@ remote_viewer_init(RemoteViewer *self)
     g_info("%s", (const char*)__func__);
     self->priv = GET_PRIVATE(self);
 
+    // virt-viewer
+    self->virt_viewer_obj = virt_viewer_app_new();
+    virt_viewer_app_set_app_pointer(self->virt_viewer_obj, GTK_APPLICATION(self));
+
+    // network stats monitor
     self->net_speedometer = net_speedometer_new();
-    net_speedometer_set_pointer_to_virt_viewer_app(self->net_speedometer, VIRT_VIEWER_APP(self));
+    net_speedometer_set_pointer_to_virt_viewer_app(self->net_speedometer, self->virt_viewer_obj);
 
     // app updater entity
     self->app_updater = app_updater_new();
@@ -158,6 +184,7 @@ remote_viewer_new(void)
 
 void remote_viewer_free_resources(RemoteViewer *self)
 {
+    g_object_unref(self->virt_viewer_obj);
     g_object_unref(self->net_speedometer);
     g_object_unref(self->app_updater);
     if (self->vdi_manager)
@@ -170,6 +197,7 @@ void remote_viewer_free_resources(RemoteViewer *self)
     vdi_session_static_destroy();
 }
 
+// akward method
 static void set_spice_session_data(VirtViewerApp *app, gchar *ip, int port, gchar *user, gchar *password)
 {
     g_info("%s port %i\n", (const char *)__func__, port);
@@ -181,16 +209,6 @@ static void set_spice_session_data(VirtViewerApp *app, gchar *ip, int port, gcha
     g_free(guri);
 
     virt_viewer_session_spice_set_credentials(user, password);
-}
-
-static GtkCssProvider * setup_css()
-{
-    GtkCssProvider *cssProvider = gtk_css_provider_new();
-    gtk_css_provider_load_from_path(cssProvider, "css_style.css", NULL);
-    gtk_style_context_add_provider_for_screen(gdk_screen_get_default(),
-                                              GTK_STYLE_PROVIDER(cssProvider),
-                                              GTK_STYLE_PROVIDER_PRIORITY_USER);
-    return cssProvider;
 }
 
 static void connect_settings_data_clear(ConnectSettingsData *connect_settings_data)
@@ -211,21 +229,18 @@ static void remote_viewer_vm_changed_notify(RemoteViewer *self, const gchar *vm_
     net_speedometer_update_vm_ip(self->net_speedometer, vm_ip);
 }
 
-static gboolean
-remote_viewer_start(VirtViewerApp *app, GError **err G_GNUC_UNUSED, RemoteViewerState remoteViewerState G_GNUC_UNUSED)
+static void
+remote_viewer_start(RemoteViewer *self, RemoteViewerState remoteViewerState G_GNUC_UNUSED)
 {
-    g_return_val_if_fail(REMOTE_VIEWER_IS(app), FALSE);
-    GError *error = NULL;
     ConnectSettingsData con_data = {};
-    GtkCssProvider *css_provider = setup_css(); // CSS setup
     //create veil messenger
-    REMOTE_VIEWER(app)->veil_messenger = veil_messenger_new();
+    self->veil_messenger = veil_messenger_new();
     // remote connect dialog
 retry_auth:
     {
-        veil_messenger_hide(REMOTE_VIEWER(app)->veil_messenger);
+        veil_messenger_hide(self->veil_messenger);
         // Забираем из ui адрес и порт
-        GtkResponseType dialog_window_response = remote_viewer_connect_dialog(REMOTE_VIEWER(app), &con_data);
+        GtkResponseType dialog_window_response = remote_viewer_connect_dialog(self, &con_data);
         if (dialog_window_response == GTK_RESPONSE_CLOSE)
             goto to_exit;
     }
@@ -246,36 +261,17 @@ retry_connect_to_vm:
                         con_data.domain, con_data.ip, con_data.port);
             }
 
-            RemoteViewerState app_state = rdp_viewer_start(REMOTE_VIEWER(app), &con_data.rdp_settings);
+            RemoteViewerState app_state = rdp_viewer_start(self, &con_data.rdp_settings);
             if (app_state == APP_STATE_AUTH_DIALOG)
                 goto retry_auth;
             else if (app_state == APP_STATE_EXITING)
                 goto to_exit;
 
         } else { // spice by default
-        set_spice_session_data(app, con_data.ip, con_data.port, con_data.user, con_data.password);
-        // Создание сессии
-        if (!virt_viewer_app_create_session(app, "spice", &error)) {
-            virt_viewer_app_simple_message_dialog(app, _("Unable to connect: %s"), error->message);
-            goto to_exit;
-        }
-        // Коннект к машине/*
-        if (!virt_viewer_app_initial_connect(app, &error)) {
-            if (error == NULL) {
-                g_set_error_literal(&error, VIRT_VIEWER_ERROR, VIRT_VIEWER_ERROR_FAILED,
-                                    _("Failed to initiate connection"));
-            }
-
-            virt_viewer_app_simple_message_dialog(app, _("Unable to connect: %s"), error->message);
-            goto to_exit;
-        }
-
-        virt_viewer_app_set_hide_windows_on_disconnect(app, TRUE);
-        VIRT_VIEWER_APP_CLASS(remote_viewer_parent_class)->start(app, NULL, APP_STATE_AUTH_DIALOG);
-        virt_viewer_app_start_loop(app);
-
+        set_spice_session_data(self->virt_viewer_obj, con_data.ip, con_data.port, con_data.user, con_data.password);
+        virt_viewer_app_instant_start(self->virt_viewer_obj);
         // go back to auth or quit
-        if (virt_viewer_app_is_quitting(app))
+        if (virt_viewer_app_is_quitting(self->virt_viewer_obj))
             goto to_exit;
         else
             goto retry_auth;
@@ -284,23 +280,23 @@ retry_connect_to_vm:
     } else {
         // remember username
         if (con_data.user)
-            g_object_set(app, "username", con_data.user, NULL);
+            g_object_set(self->virt_viewer_obj, "username", con_data.user, NULL);
 
         //Если is_connect_to_prev_pool true, то подключение к пред. запомненому пулу,
         // минуя vdi manager window
         if (!con_data.is_connect_to_prev_pool) {
             // show VDI manager window
-            if (REMOTE_VIEWER(app)->vdi_manager == NULL)
-                REMOTE_VIEWER(app)->vdi_manager = vdi_manager_new();
-            RemoteViewerState next_app_state = vdi_manager_dialog(REMOTE_VIEWER(app)->vdi_manager, &con_data);
+            if (self->vdi_manager == NULL)
+                self->vdi_manager = vdi_manager_new();
+            RemoteViewerState next_app_state = vdi_manager_dialog(self->vdi_manager, &con_data);
             if (next_app_state == APP_STATE_AUTH_DIALOG)
                 goto retry_auth;
             else if (next_app_state == APP_STATE_EXITING)
                 goto to_exit;
         }
-        con_data.is_connect_to_prev_pool = FALSE;
+        con_data.is_connect_to_prev_pool = FALSE; // reset the flag
 
-        remote_viewer_vm_changed_notify(REMOTE_VIEWER(app), vdi_session_get_current_vm_id(), con_data.ip);
+        remote_viewer_vm_changed_notify(self, vdi_session_get_current_vm_id(), con_data.ip);
         // connect to vm depending remote protocol
         RemoteViewerState next_app_state = APP_STATE_VDI_DIALOG;
         if (vdi_session_get_current_remote_protocol() == VDI_RDP_PROTOCOL) {
@@ -309,7 +305,7 @@ retry_connect_to_vm:
             rdp_settings_read_ini_file(&con_data.rdp_settings, !con_data.rdp_settings.is_remote_app);
             rdp_settings_set_connect_data(&con_data.rdp_settings, vdi_session_get_vdi_username(),
                             vdi_session_get_vdi_password(), con_data.domain, con_data.ip, 0);
-            next_app_state = rdp_viewer_start(REMOTE_VIEWER(app), &con_data.rdp_settings);
+            next_app_state = rdp_viewer_start(self, &con_data.rdp_settings);
 #ifdef _WIN32
         }else if (vdi_session_get_current_remote_protocol() == VDI_RDP_WINDOWS_NATIVE_PROTOCOL) {
             rdp_settings_read_ini_file(&con_data.rdp_settings, !con_data.rdp_settings.is_remote_app);
@@ -318,18 +314,13 @@ retry_connect_to_vm:
             launch_windows_rdp_client(&con_data.rdp_settings);
 #endif
         } else { // spice by default
-            virt_viewer_app_set_window_name(app, con_data.vm_verbose_name);
-            set_spice_session_data(app, con_data.ip, con_data.port, con_data.user, con_data.password);
-            // start connect attempt timer
-            virt_viewer_app_set_hide_windows_on_disconnect(app, TRUE);
-            virt_viewer_app_start_reconnect_poll(app);
-            // Показывается окно virt viewer // virt_viewer_app_default_start
-            VIRT_VIEWER_APP_CLASS(remote_viewer_parent_class)->start(app, NULL, APP_STATE_AUTH_DIALOG);
-            virt_viewer_app_start_loop(app);
-            next_app_state = virt_viewer_get_next_app_state(app);
+            set_spice_session_data(self->virt_viewer_obj, con_data.ip, con_data.port, con_data.user, con_data.password);
+            virt_viewer_app_set_window_name(self->virt_viewer_obj, con_data.vm_verbose_name);
+            virt_viewer_app_start_connect_attempts(self->virt_viewer_obj);
+            next_app_state = virt_viewer_get_next_app_state(self->virt_viewer_obj);
         }
 
-        remote_viewer_vm_changed_notify(REMOTE_VIEWER(app), NULL, NULL);
+        remote_viewer_vm_changed_notify(self, NULL, NULL);
         if (next_app_state == APP_STATE_EXITING)
             goto to_exit;
         else if (next_app_state == APP_STATE_AUTH_DIALOG)
@@ -340,7 +331,4 @@ retry_connect_to_vm:
 
 to_exit:
     connect_settings_data_clear(&con_data);
-    g_clear_error(&error);
-    g_object_unref(css_provider);
-    return FALSE;
 }

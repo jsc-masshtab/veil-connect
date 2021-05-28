@@ -68,6 +68,14 @@
 #define RECONNECT_TIMEOUT 3000
 
 gboolean doDebug = FALSE;
+gboolean opt_manual_mode = FALSE;
+static int opt_zoom = NORMAL_ZOOM_LEVEL;
+static gchar *opt_hotkeys = NULL;
+static gboolean opt_verbose = FALSE;
+// static gboolean opt_debug = FALSE;
+static gboolean opt_fullscreen = FALSE;
+static gboolean opt_kiosk = FALSE;
+static gboolean opt_kiosk_quit = FALSE;
 
 /* Signal handlers for about dialog */
 void virt_viewer_app_about_close(GtkWidget *dialog, VirtViewerApp *self);
@@ -109,7 +117,6 @@ static void virt_viewer_app_set_fullscreen(VirtViewerApp *self, gboolean fullscr
 static void virt_viewer_app_update_menu_displays(VirtViewerApp *self);
 static void virt_viewer_update_smartcard_accels(VirtViewerApp *self);
 
-
 struct _VirtViewerAppPrivate {
     VirtViewerWindow *main_window;
     GtkWidget *main_notebook;
@@ -124,7 +131,6 @@ struct _VirtViewerAppPrivate {
     gboolean verbose;
     gboolean enable_accel;
     gboolean authretry;
-    gboolean started;
     gboolean fullscreen;
     gboolean attach;
     gboolean quitting;
@@ -168,7 +174,7 @@ struct _VirtViewerAppPrivate {
 };
 
 
-G_DEFINE_ABSTRACT_TYPE(VirtViewerApp, virt_viewer_app, GTK_TYPE_APPLICATION)
+G_DEFINE_TYPE(VirtViewerApp, virt_viewer_app, G_TYPE_OBJECT)
 #define GET_PRIVATE(o)                                                        \
     (G_TYPE_INSTANCE_GET_PRIVATE ((o), VIRT_VIEWER_TYPE_APP, VirtViewerAppPrivate))
 
@@ -187,23 +193,6 @@ enum {
     PROP_UUID,
     PROP_USERNAME
 };
-
-//void
-//virt_viewer_app_set_debug(gboolean debug)
-//{
-//    if (debug) {
-//        const gchar *doms = g_getenv("G_MESSAGES_DEBUG");
-//        if (!doms) {
-//            g_setenv("G_MESSAGES_DEBUG", G_LOG_DOMAIN, 1);
-//        } else if (!g_str_equal(doms, "all") &&
-//                   !strstr(doms, G_LOG_DOMAIN)) {
-//            gchar *newdoms = g_strdup_printf("%s %s", doms, G_LOG_DOMAIN);
-//            g_setenv("G_MESSAGES_DEBUG", newdoms, 1);
-//            g_free(newdoms);
-//        }
-//    }
-//    doDebug = debug;
-//}
 
 static GtkWidget*
 virt_viewer_app_make_message_dialog(VirtViewerApp *self,
@@ -270,8 +259,6 @@ virt_viewer_app_quit(VirtViewerApp *self)
             return;
         }
     }
-
-    g_application_quit(G_APPLICATION(self));
 }
 
 static gint
@@ -863,7 +850,8 @@ virt_viewer_app_window_new(VirtViewerApp *self, gint nth)
 
     w = virt_viewer_window_get_window(window);
     g_object_set_data(G_OBJECT(w), "virt-viewer-window", window);
-    gtk_application_add_window(GTK_APPLICATION(self), w);
+
+    gtk_application_add_window(self->application_p, w);
 
     if (self->priv->fullscreen)
         app_window_try_fullscreen(self, window, nth);
@@ -1396,6 +1384,48 @@ void virt_viewer_app_start_loop(VirtViewerApp *self)
     create_loop_and_launch(&self->priv->virt_viewer_loop);
 }
 
+/*
+ * Производиться разовая попытка соединения
+ */
+void virt_viewer_app_instant_start(VirtViewerApp *self)
+{
+    GError *error = NULL;
+    // Создание сессии
+    if (!virt_viewer_app_create_session(self, "spice", &error)) {
+        virt_viewer_app_simple_message_dialog(self, _("Unable to connect: %s"), error->message);
+        g_clear_error(&error);
+        return;
+    }
+    // Коннект к машине/*
+    if (!virt_viewer_app_initial_connect(self, &error)) {
+        if (error == NULL) {
+            g_set_error_literal(&error, VIRT_VIEWER_ERROR, VIRT_VIEWER_ERROR_FAILED,
+                                _("Failed to initiate connection"));
+        }
+
+        virt_viewer_app_simple_message_dialog(self, _("Unable to connect: %s"), error->message);
+        g_clear_error(&error);
+        return;
+    }
+
+    virt_viewer_app_set_hide_windows_on_disconnect(self, TRUE);
+    virt_viewer_app_show_main_window(self);
+    virt_viewer_app_start_loop(self);
+}
+
+/*
+ * Начинаются попытки соединения с необльшим интервалом.
+ */
+void virt_viewer_app_start_connect_attempts(VirtViewerApp *self)
+{
+    // start connect attempt timer
+    virt_viewer_app_set_hide_windows_on_disconnect(self, TRUE);
+    virt_viewer_app_start_reconnect_poll(self);
+    // Показывается окно virt viewer
+    virt_viewer_app_show_main_window(self);
+    virt_viewer_app_start_loop(self);
+}
+
 void virt_viewer_app_hide_and_deactivate(VirtViewerApp *self)
 {
     // turn off polling if its in process
@@ -1429,7 +1459,6 @@ virt_viewer_app_deactivate(VirtViewerApp *self, gboolean connect_error)
 
         priv->connected = FALSE;
         priv->active = FALSE;
-        priv->started = FALSE;
         priv->grabbed = FALSE;
         virt_viewer_app_update_title(self);
 
@@ -1486,9 +1515,6 @@ virt_viewer_app_disconnected(VirtViewerSession *session G_GNUC_UNUSED, const gch
         else if (priv->cancelled)
             priv->authretry = TRUE;
     }
-
-    if (priv->quitting)
-        g_application_quit(G_APPLICATION(self));
 
     if (!priv->is_polling && connect_error) {
         GtkWidget *dialog = virt_viewer_app_make_message_dialog(self,
@@ -1547,6 +1573,58 @@ static void virt_viewer_app_usb_failed(VirtViewerSession *session G_GNUC_UNUSED,
                                        VirtViewerApp *self)
 {
     virt_viewer_app_simple_message_dialog(self, _("USB redirection error: %s"), msg);
+}
+
+static void
+virt_viewer_set_insert_smartcard_accel(VirtViewerApp *self,
+                                       guint accel_key,
+                                       GdkModifierType accel_mods)
+{
+    VirtViewerAppPrivate *priv = self->priv;
+
+    priv->insert_smartcard_accel_key = accel_key;
+    priv->insert_smartcard_accel_mods = accel_mods;
+}
+
+static void
+virt_viewer_set_remove_smartcard_accel(VirtViewerApp *self,
+                                       guint accel_key,
+                                       GdkModifierType accel_mods)
+{
+    VirtViewerAppPrivate *priv = self->priv;
+
+    priv->remove_smartcard_accel_key = accel_key;
+    priv->remove_smartcard_accel_mods = accel_mods;
+}
+
+static void
+virt_viewer_update_smartcard_accels(VirtViewerApp *self)
+{
+    gboolean sw_smartcard;
+    VirtViewerAppPrivate *priv = self->priv;
+
+    if (self->priv->session != NULL) {
+        g_object_get(G_OBJECT(self->priv->session),
+                     "software-smartcard-reader", &sw_smartcard,
+                     NULL);
+    } else {
+        sw_smartcard = FALSE;
+    }
+    if (sw_smartcard) {
+        g_debug("enabling smartcard shortcuts");
+        gtk_accel_map_change_entry("<virt-viewer>/file/smartcard-insert",
+                                   priv->insert_smartcard_accel_key,
+                                   priv->insert_smartcard_accel_mods,
+                                   TRUE);
+        gtk_accel_map_change_entry("<virt-viewer>/file/smartcard-remove",
+                                   priv->remove_smartcard_accel_key,
+                                   priv->remove_smartcard_accel_mods,
+                                   TRUE);
+    } else {
+        g_debug("disabling smartcard shortcuts");
+        gtk_accel_map_change_entry("<virt-viewer>/file/smartcard-insert", 0, 0, TRUE);
+        gtk_accel_map_change_entry("<virt-viewer>/file/smartcard-remove", 0, 0, TRUE);
+    }
 }
 
 static void
@@ -1745,128 +1823,19 @@ virt_viewer_app_dispose (GObject *object)
     G_OBJECT_CLASS (virt_viewer_app_parent_class)->dispose (object);
 }
 
-static gboolean
-virt_viewer_app_default_start(VirtViewerApp *self, GError **error G_GNUC_UNUSED,
-        RemoteViewerState remoteViewerState G_GNUC_UNUSED)
+VirtViewerApp *virt_viewer_app_new()
 {
-    virt_viewer_window_show(self->priv->main_window);
-    return TRUE;
+    VirtViewerApp *virt_viewer = VIRT_VIEWER_APP( g_object_new( VIRT_VIEWER_TYPE_APP, NULL ) );
+    return virt_viewer;
 }
 
-gboolean virt_viewer_app_start(VirtViewerApp *self, GError **error, RemoteViewerState remoteViewerState)
+void virt_viewer_app_set_app_pointer(VirtViewerApp *self, GtkApplication *application)
 {
-    VirtViewerAppClass *klass;
-
-    g_return_val_if_fail(VIRT_VIEWER_IS_APP(self), FALSE);
-    klass = VIRT_VIEWER_APP_GET_CLASS(self);
-
-    g_return_val_if_fail(!self->priv->started, TRUE);
-
-    self->priv->next_app_state = APP_STATE_VDI_DIALOG;
-
-    self->priv->started = klass->start(self, error, remoteViewerState);
-    return self->priv->started;
+    self->application_p = application;
 }
 
-gboolean opt_manual_mode = FALSE;
-
-static int opt_zoom = NORMAL_ZOOM_LEVEL;
-static gchar *opt_hotkeys = NULL;
-static gboolean opt_verbose = FALSE;
-// static gboolean opt_debug = FALSE;
-static gboolean opt_fullscreen = FALSE;
-static gboolean opt_kiosk = FALSE;
-static gboolean opt_kiosk_quit = FALSE;
-
-static void
-title_maybe_changed(VirtViewerApp *self, GParamSpec* pspec G_GNUC_UNUSED, gpointer user_data G_GNUC_UNUSED)
+void virt_viewer_app_setup(VirtViewerApp *self)
 {
-    virt_viewer_app_set_all_window_subtitles(self);
-}
-
-static void
-virt_viewer_app_init(VirtViewerApp *self)
-{
-    GError *error = NULL;
-    GError *error2  = NULL;
-    self->priv = GET_PRIVATE(self);
-    self->priv->next_app_state = APP_STATE_VDI_DIALOG;
-
-    GdkPixbuf *gdkPixbuf =
-            gdk_pixbuf_new_from_resource(VIRT_VIEWER_RESOURCE_PREFIX"/icons/content/img/veil-32x32.png", &error2);
-    if (!error2)
-        gtk_window_set_default_icon(gdkPixbuf);
-
-    self->priv->displays = g_hash_table_new_full(g_direct_hash, g_direct_equal, NULL, g_object_unref);
-
-    g_clear_error(&error);
-    g_clear_error(&error2);
-
-    g_signal_connect(self, "notify::guest-name", G_CALLBACK(title_maybe_changed), NULL);
-    g_signal_connect(self, "notify::title", G_CALLBACK(title_maybe_changed), NULL);
-    g_signal_connect(self, "notify::guri", G_CALLBACK(title_maybe_changed), NULL);
-}
-
-static void
-virt_viewer_set_insert_smartcard_accel(VirtViewerApp *self,
-                                       guint accel_key,
-                                       GdkModifierType accel_mods)
-{
-    VirtViewerAppPrivate *priv = self->priv;
-
-    priv->insert_smartcard_accel_key = accel_key;
-    priv->insert_smartcard_accel_mods = accel_mods;
-}
-
-static void
-virt_viewer_set_remove_smartcard_accel(VirtViewerApp *self,
-                                       guint accel_key,
-                                       GdkModifierType accel_mods)
-{
-    VirtViewerAppPrivate *priv = self->priv;
-
-    priv->remove_smartcard_accel_key = accel_key;
-    priv->remove_smartcard_accel_mods = accel_mods;
-}
-
-static void
-virt_viewer_update_smartcard_accels(VirtViewerApp *self)
-{
-    gboolean sw_smartcard;
-    VirtViewerAppPrivate *priv = self->priv;
-
-    if (self->priv->session != NULL) {
-        g_object_get(G_OBJECT(self->priv->session),
-                     "software-smartcard-reader", &sw_smartcard,
-                     NULL);
-    } else {
-        sw_smartcard = FALSE;
-    }
-    if (sw_smartcard) {
-        g_debug("enabling smartcard shortcuts");
-        gtk_accel_map_change_entry("<virt-viewer>/file/smartcard-insert",
-                                   priv->insert_smartcard_accel_key,
-                                   priv->insert_smartcard_accel_mods,
-                                   TRUE);
-        gtk_accel_map_change_entry("<virt-viewer>/file/smartcard-remove",
-                                   priv->remove_smartcard_accel_key,
-                                   priv->remove_smartcard_accel_mods,
-                                   TRUE);
-    } else {
-        g_debug("disabling smartcard shortcuts");
-        gtk_accel_map_change_entry("<virt-viewer>/file/smartcard-insert", 0, 0, TRUE);
-        gtk_accel_map_change_entry("<virt-viewer>/file/smartcard-remove", 0, 0, TRUE);
-    }
-}
-
-static void
-virt_viewer_app_on_application_startup(GApplication *app)
-{
-    VirtViewerApp *self = VIRT_VIEWER_APP(app);
-    GError *error = NULL;
-
-    G_APPLICATION_CLASS(virt_viewer_app_parent_class)->startup(app);
-
     self->priv->resource = virt_viewer_get_resource();
 
     //virt_viewer_app_set_debug(opt_debug);virt_viewer_app_set_debug
@@ -1898,22 +1867,47 @@ virt_viewer_app_on_application_startup(GApplication *app)
     gtk_accel_map_add_entry("<virt-viewer>/view/zoom-out", GDK_KEY_minus, GDK_CONTROL_MASK);
     gtk_accel_map_add_entry("<virt-viewer>/view/zoom-in", GDK_KEY_plus, GDK_CONTROL_MASK);
     gtk_accel_map_add_entry("<virt-viewer>/send/secure-attention", GDK_KEY_End, GDK_CONTROL_MASK | GDK_MOD1_MASK);
+}
 
-    if (!virt_viewer_app_start(self, &error, APP_STATE_AUTH_DIALOG)) {
-        if (error && !g_error_matches(error, VIRT_VIEWER_ERROR, VIRT_VIEWER_ERROR_CANCELLED))
-            virt_viewer_app_simple_message_dialog(self, error->message);
+gboolean virt_viewer_app_show_main_window(VirtViewerApp *self)
+{
+    virt_viewer_window_show(self->priv->main_window);
+    return TRUE;
+}
 
-        g_clear_error(&error);
-        g_application_quit(app);
-        return;
-    }
+static void
+title_maybe_changed(VirtViewerApp *self, GParamSpec* pspec G_GNUC_UNUSED, gpointer user_data G_GNUC_UNUSED)
+{
+    virt_viewer_app_set_all_window_subtitles(self);
+}
+
+static void
+virt_viewer_app_init(VirtViewerApp *self)
+{
+    GError *error = NULL;
+    GError *error2  = NULL;
+    self->priv = GET_PRIVATE(self);
+    self->priv->next_app_state = APP_STATE_VDI_DIALOG;
+
+    GdkPixbuf *gdkPixbuf =
+            gdk_pixbuf_new_from_resource(VIRT_VIEWER_RESOURCE_PREFIX"/icons/content/img/veil-32x32.png", &error2);
+    if (!error2)
+        gtk_window_set_default_icon(gdkPixbuf);
+
+    self->priv->displays = g_hash_table_new_full(g_direct_hash, g_direct_equal, NULL, g_object_unref);
+
+    g_clear_error(&error);
+    g_clear_error(&error2);
+
+    g_signal_connect(self, "notify::guest-name", G_CALLBACK(title_maybe_changed), NULL);
+    g_signal_connect(self, "notify::title", G_CALLBACK(title_maybe_changed), NULL);
+    g_signal_connect(self, "notify::guri", G_CALLBACK(title_maybe_changed), NULL);
 }
 
 static void
 virt_viewer_app_class_init (VirtViewerAppClass *klass)
 {
     GObjectClass *object_class = G_OBJECT_CLASS (klass);
-    GApplicationClass *g_app_class = G_APPLICATION_CLASS(klass);
 
     g_type_class_add_private (klass, sizeof (VirtViewerAppPrivate));
 
@@ -1921,10 +1915,6 @@ virt_viewer_app_class_init (VirtViewerAppClass *klass)
     object_class->set_property = virt_viewer_app_set_property;
     object_class->dispose = virt_viewer_app_dispose;
 
-    g_app_class->startup = virt_viewer_app_on_application_startup;
-    g_app_class->command_line = NULL; /* inhibit GApplication default handler */
-
-    klass->start = virt_viewer_app_default_start;
     klass->initial_connect = virt_viewer_app_default_initial_connect;
     klass->activate = virt_viewer_app_default_activate;
     klass->deactivated = virt_viewer_app_default_deactivated;
@@ -2044,6 +2034,8 @@ virt_viewer_app_class_init (VirtViewerAppClass *klass)
                                                         G_PARAM_READABLE |
                                                         G_PARAM_WRITABLE |
                                                         G_PARAM_STATIC_STRINGS));
+
+    // signals
 }
 
 void
