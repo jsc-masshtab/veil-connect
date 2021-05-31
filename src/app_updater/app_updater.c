@@ -479,24 +479,28 @@ app_updater_get_windows_updates_task(GTask    *task G_GNUC_UNUSED,
     // Launch  installer if downloaded
     set_status_msg(self, "Установка новой версии ПО.");
 
-    gchar **argv = malloc(2 * sizeof(gchar *));
-    argv[0] = full_file_name;
-    argv[1] = NULL;
+    STARTUPINFO si;
+    PROCESS_INFORMATION pi;
 
-    GError *error = NULL;
-    GPid child_pid;
-    if (g_spawn_async(NULL,
-                     argv,
-                     NULL,
-                     G_SPAWN_DO_NOT_REAP_CHILD,
-                     NULL,
-                     NULL,
-                     &child_pid,
-                     &error)
-            ) {
-        g_info("installer successfully spawned"); // last_version
+    ZeroMemory( &si, sizeof(si) );
+    si.cb = sizeof(si);
+    ZeroMemory( &pi, sizeof(pi) );
+
+    // Start the child process.
+    if( CreateProcess( NULL,   // No module name (use command line)
+                        full_file_name,        // Command line
+                        NULL,           // Process handle not inheritable
+                        NULL,           // Thread handle not inheritable
+                        FALSE,          // Set handle inheritance to FALSE
+                        DETACHED_PROCESS,
+                        NULL,           // Use parent's environment block
+                        NULL,           // Use parent's starting directory
+                        &si,            // Pointer to STARTUPINFO structure
+                        &pi )           // Pointer to PROCESS_INFORMATION structure
+            )
+    {
         gchar *msg = g_strdup_printf("Процесс установки версии %s начался. Завершаем приложение.",
-                                     last_version);
+                                         last_version);
         set_status_msg(self, msg);
         g_free(msg);
         exit(0);
@@ -504,10 +508,6 @@ app_updater_get_windows_updates_task(GTask    *task G_GNUC_UNUSED,
         g_info("installer spawning failed");
         set_status_msg(self, "Не удалось запустить процесс установки новой версии ПО.");
     }
-    free(argv);
-    if (error)
-        g_info("%s %s", (const char *) __func__, error->message);
-    g_clear_error(&error);
 
     // clear
     clear_mark:
