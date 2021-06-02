@@ -857,7 +857,7 @@ virt_viewer_window_enable_modifiers(VirtViewerWindow *self)
                                     self);
     for (i = 0; i < G_N_ELEMENTS(keypad_action_entries); i++) {
         gchar *detailed_name = g_strdup_printf("win.%s", keypad_action_entries[i].name);
-        gtk_application_set_accels_for_action(GTK_APPLICATION(priv->app),
+        gtk_application_set_accels_for_action(GTK_APPLICATION(priv->app->application_p),
                                               detailed_name,
                                               keypad_action_accels[i]);
         g_free(detailed_name);
@@ -1112,7 +1112,7 @@ G_MODULE_EXPORT void
 virt_viewer_window_menu_dialog_with_admin(GtkWidget *menu G_GNUC_UNUSED, VirtViewerWindow *self)
 {
     g_info("%s", (const char *)__func__);
-    VeilMessenger *veil_messenger = REMOTE_VIEWER(self->priv->app)->veil_messenger;
+    VeilMessenger *veil_messenger = REMOTE_VIEWER(self->priv->app->application_p)->veil_messenger;
     veil_messenger_show_on_top(veil_messenger);
 }
 

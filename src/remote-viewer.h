@@ -28,8 +28,11 @@ G_BEGIN_DECLS
 typedef struct _RemoteViewerPrivate RemoteViewerPrivate;
 
 typedef struct {
-    VirtViewerApp parent;
+    GtkApplication parent;
+
     RemoteViewerPrivate *priv;
+
+    VirtViewerApp *virt_viewer_obj;
     AppUpdater *app_updater;
     VdiManager *vdi_manager;
     VeilMessenger *veil_messenger;
@@ -38,12 +41,12 @@ typedef struct {
 } RemoteViewer;
 
 typedef struct {
-    VirtViewerAppClass parent_class;
+    GtkApplicationClass parent_class;
 } RemoteViewerClass;
 
-GType remote_viewer_get_type (void);
+GType remote_viewer_get_type(void);
 
-RemoteViewer *remote_viewer_new (void);
+RemoteViewer *remote_viewer_new(void);
 void remote_viewer_free_resources(RemoteViewer *self);
 
 G_END_DECLS

@@ -18,6 +18,8 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
  * Author: Daniel P. Berrange <berrange@redhat.com>
+ *
+ * Updated by: http://mashtab.org/
  */
 
 #ifndef VIRT_VIEWER_APP_H
@@ -40,15 +42,15 @@ G_BEGIN_DECLS
 typedef struct _VirtViewerAppPrivate VirtViewerAppPrivate;
 
 typedef struct {
-    GtkApplication parent;
+    GObject parent;
     VirtViewerAppPrivate *priv;
+    GtkApplication *application_p; // pointer to current application instance
 } VirtViewerApp;
 
 typedef struct {
-    GtkApplicationClass parent_class;
+    GObjectClass parent_class;
 
     /*< private >*/
-    gboolean (*start) (VirtViewerApp *self, GError **error, RemoteViewerState remoteViewerState);
     gboolean (*initial_connect) (VirtViewerApp *self, GError **error);
     gboolean (*activate) (VirtViewerApp *self, GError **error);
     void (*deactivated) (VirtViewerApp *self, gboolean connect_error);
@@ -58,8 +60,11 @@ typedef struct {
 
 GType virt_viewer_app_get_type (void);
 
-//void virt_viewer_app_set_debug(gboolean debug);
-gboolean virt_viewer_app_start(VirtViewerApp *app, GError **error, RemoteViewerState remoteViewerState);
+VirtViewerApp *virt_viewer_app_new(void);
+void virt_viewer_app_set_app_pointer(VirtViewerApp *self, GtkApplication *application);
+
+void virt_viewer_app_setup(VirtViewerApp *self);
+gboolean virt_viewer_app_show_main_window(VirtViewerApp *self);
 void virt_viewer_app_maybe_quit(VirtViewerApp *self, VirtViewerWindow *window);
 VirtViewerWindow* virt_viewer_app_get_main_window(VirtViewerApp *self);
 void virt_viewer_app_trace(VirtViewerApp *self, const char *fmt, ...);
@@ -121,6 +126,10 @@ RemoteViewerState virt_viewer_get_next_app_state(VirtViewerApp *self);
 void virt_viewer_app_enable_auto_clipboard(VirtViewerApp *self, gboolean enabled);
 
 void virt_viewer_app_start_loop(VirtViewerApp *self);
+
+void virt_viewer_app_instant_start(VirtViewerApp *self);
+void virt_viewer_app_start_connect_attempts(VirtViewerApp *self);
+
 G_END_DECLS
 
 #endif /* VIRT_VIEWER_APP_H */
