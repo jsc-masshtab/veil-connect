@@ -186,8 +186,10 @@ static void
 on_h264_used_check_btn_toggled(GtkToggleButton *h264_used_check_btn, gpointer user_data)
 {
     ConnectSettingsDialogData *dialog_data = (ConnectSettingsDialogData *)user_data;
-    gboolean is_h264_used_check_btn_toggled = gtk_toggle_button_get_active(h264_used_check_btn);
-    gtk_widget_set_sensitive(dialog_data->rdp_h264_codec_combobox, is_h264_used_check_btn_toggled);
+    if (dialog_data->rdp_h264_codec_combobox) {
+        gboolean is_h264_used_check_btn_toggled = gtk_toggle_button_get_active(h264_used_check_btn);
+        gtk_widget_set_sensitive(dialog_data->rdp_h264_codec_combobox, is_h264_used_check_btn_toggled);
+    }
 }
 
 static void
@@ -563,18 +565,21 @@ fill_connect_settings_gui(ConnectSettingsDialogData *dialog_data, ConnectSetting
 
     gboolean is_rdp_h264_used = read_int_from_ini_file("RDPSettings", "is_rdp_h264_used", TRUE);
     gtk_toggle_button_set_active((GtkToggleButton *)dialog_data->is_h264_used_check_btn, is_rdp_h264_used);
-    gtk_widget_set_sensitive(dialog_data->rdp_h264_codec_combobox, is_rdp_h264_used);
 
-    if (is_rdp_h264_used) {
-        gchar *rdp_h264_codec = read_str_from_ini_file("RDPSettings", "rdp_h264_codec");
-        if (rdp_h264_codec) {
-            g_strstrip(rdp_h264_codec);
-            gtk_combo_box_set_active(GTK_COMBO_BOX(dialog_data->rdp_h264_codec_combobox),
-                                     string_to_h264_codec(rdp_h264_codec));
-            free_memory_safely(&rdp_h264_codec);
-        } else {
-            gtk_combo_box_set_active(GTK_COMBO_BOX(dialog_data->rdp_h264_codec_combobox),
-                                     (gint)get_default_h264_codec());
+    if (dialog_data->rdp_h264_codec_combobox) {
+        gtk_widget_set_sensitive(dialog_data->rdp_h264_codec_combobox, is_rdp_h264_used);
+
+        if (is_rdp_h264_used) {
+            gchar *rdp_h264_codec = read_str_from_ini_file("RDPSettings", "rdp_h264_codec");
+            if (rdp_h264_codec) {
+                g_strstrip(rdp_h264_codec);
+                gtk_combo_box_set_active(GTK_COMBO_BOX(dialog_data->rdp_h264_codec_combobox),
+                                         string_to_h264_codec(rdp_h264_codec));
+                free_memory_safely(&rdp_h264_codec);
+            } else {
+                gtk_combo_box_set_active(GTK_COMBO_BOX(dialog_data->rdp_h264_codec_combobox),
+                                         (gint) get_default_h264_codec());
+            }
         }
     }
 
@@ -698,10 +703,12 @@ save_data_to_ini_file(ConnectSettingsDialogData *dialog_data)
     gboolean is_rdp_h264_used = gtk_toggle_button_get_active((GtkToggleButton *)dialog_data->is_h264_used_check_btn);
     write_int_to_ini_file("RDPSettings", "is_rdp_h264_used", is_rdp_h264_used);
 
-    gchar *rdp_h264_codec_str =
-            gtk_combo_box_text_get_active_text(GTK_COMBO_BOX_TEXT(dialog_data->rdp_h264_codec_combobox));
-    write_str_to_ini_file("RDPSettings", "rdp_h264_codec", rdp_h264_codec_str);
-    free_memory_safely(&rdp_h264_codec_str);
+    if (dialog_data->rdp_h264_codec_combobox) {
+        gchar *rdp_h264_codec_str =
+                gtk_combo_box_text_get_active_text(GTK_COMBO_BOX_TEXT(dialog_data->rdp_h264_codec_combobox));
+        write_str_to_ini_file("RDPSettings", "rdp_h264_codec", rdp_h264_codec_str);
+        free_memory_safely(&rdp_h264_codec_str);
+    }
 
     const gchar *shared_folders_str = gtk_entry_get_text(GTK_ENTRY(dialog_data->rdp_shared_folders_entry));
     // Пользовать мог ввести путь с виндусятскими разделителями, поэтому на всякий случай заменяем
@@ -798,7 +805,10 @@ GtkResponseType remote_viewer_start_settings_dialog(RemoteViewer *p_remote_viewe
 
     dialog_data.is_h264_used_check_btn = get_widget_from_builder(dialog_data.builder, "is_h264_used_check_btn");
     dialog_data.rdp_h264_codec_combobox = get_widget_from_builder(dialog_data.builder, "rdp_h264_codec_combobox");
-
+#ifdef _WIN32 // На Windows не даем выбора кодека, так как работает только 1 (AVC420)
+    gtk_widget_destroy(dialog_data.rdp_h264_codec_combobox);
+    dialog_data.rdp_h264_codec_combobox = NULL;
+#endif
     dialog_data.rdp_shared_folders_entry = get_widget_from_builder(dialog_data.builder, "rdp_shared_folders_entry");
 
     dialog_data.btn_add_remote_folder = get_widget_from_builder(dialog_data.builder, "btn_add_remote_folder");

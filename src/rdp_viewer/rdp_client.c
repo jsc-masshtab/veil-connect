@@ -170,8 +170,12 @@ static GArray *rdp_client_create_params_array(ExtendedRdpContext* ex)
     // /gfx-h264:AVC444
     gboolean is_rdp_h264_used = read_int_from_ini_file("RDPSettings", "is_rdp_h264_used", TRUE);
     if (is_rdp_h264_used)
+#ifdef _WIN32 // На windows удалось успешно использовать только AVC420
+        add_rdp_param(rdp_params_dyn_array, g_strdup("/gfx-h264:AVC420"));
+#else
         rdp_client_add_str_param_from_ini(rdp_params_dyn_array, "rdp_h264_codec", "/gfx-h264",
                                                        h264_codec_to_string(get_default_h264_codec()));
+#endif
     // drives (folders)
     gchar *shared_folders_str = read_str_from_ini_file("RDPSettings", "rdp_shared_folders");
 
