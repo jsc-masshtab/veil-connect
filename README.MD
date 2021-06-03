@@ -1,4 +1,6 @@
 # VeiL Connect
+Тонкий клиен VeiL VDI
+
 ## Таблица соответствия сборок с ОС
 
 | ОС                 | Пакет   |
@@ -89,13 +91,18 @@ pacman -S mingw64/mingw-w64-x86_64-libusb
 
 - Собрать freerdp
 
-  - Скачать freerdp https://github.com/FreeRDP/FreeRDP/releases/latest распаковать.
+- Скачать freerdp https://github.com/FreeRDP/FreeRDP/releases/latest распаковать.
   Freerdp на Windows возможно собрать только с помощью нативного компилятора (visual C) 
 
-  - Поставить visual studio https://visualstudio.microsoft.com/ru/downloads/ .
-Файл FreeRDP.sln открыть в студии. Выбрать режим Release и собрать. В папке freerdp
+- Поставить visual studio https://visualstudio.microsoft.com/ru/downloads/ .
+  
+- Выполнить в корне freerdp команду:
+  ```
+  cmake .
+  ```
+- Файл FreeRDP.sln открыть в студии. Выбрать режим Release и собрать. В папке freerdp
 будет создана папка Release с собранными библиотеками.
-  - В файле CmaleLists.txt в переменной FREERDP_PATH указать путь к папке freerdp
+- В файле CmaleLists.txt в переменной FREERDP_PATH указать путь к папке freerdp
  
 - Собрать Veil Connect
 
@@ -107,7 +114,7 @@ xcode-select --install
 ```
 
 - Установить macports следуя инструкциям https://www.macports.org/install.php
-- Установить xquartz  https://www.xquartz.org/ :
+- Установить xquartz  https://www.xquartz.org/
 ```
   sudo /opt/local/bin/port -v install xorg-server
 ```
@@ -124,3 +131,5 @@ sudo /opt/local/bin/port install hiredis
 
 - Собрать Veil Connect
 
+## Структурная схема
+![Alt text](doc/diagram.svg)
