@@ -1,5 +1,4 @@
 screen mode id:i:2
-use multimon:i:1
 desktopwidth:i:1366
 desktopheight:i:768
 session bpp:i:15
@@ -14,17 +13,13 @@ bandwidthautodetect:i:1
 displayconnectionbar:i:1
 enableworkspacereconnect:i:0
 disable wallpaper:i:0
-allow font smoothing:i:0
 allow desktop composition:i:0
 disable full window drag:i:1
 disable menu anims:i:1
-disable themes:i:0
 disable cursor setting:i:0
 bitmapcachepersistenable:i:1
 audiomode:i:0
-redirectprinters:i:1
 redirectcomports:i:0
-redirectsmartcards:i:1
 redirectclipboard:i:1
 redirectposdevices:i:0
 autoreconnection enabled:i:1

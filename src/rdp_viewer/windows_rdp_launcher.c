@@ -92,6 +92,13 @@ launch_windows_rdp_client(const VeilRdpSettings *p_rdp_settings)
         append_rdp_data(destFile, "remoteapplicationmode:i", "0");
     }
 
+    append_rdp_data(destFile, "use multimon:i", p_rdp_settings->is_multimon ? "1" : "0");
+    append_rdp_data(destFile, "redirectsmartcards:i", p_rdp_settings->redirectsmartcards ? "1" : "0");
+    append_rdp_data(destFile, "redirectprinters:i", p_rdp_settings->redirectprinters ? "1" : "0");
+    append_rdp_data(destFile, "allow font smoothing:i",
+                    p_rdp_settings->disable_rdp_fonts ? "0" : "1");
+    append_rdp_data(destFile, "disable themes:i", p_rdp_settings->disable_rdp_themes ? "1" : "0");
+
     /* Close files to release resources */
     fclose(sourceFile);
     fclose(destFile);
