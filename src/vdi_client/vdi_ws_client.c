@@ -68,9 +68,11 @@ static void vdi_ws_client_on_message(SoupWebsocketConnection *ws_conn G_GNUC_UNU
             // команда от администратора  VeiL VDI
             const gchar *cmd = json_object_get_string_member_safely(root_object, "cmd");
             // Если пришла команда отключиться, то не делаем попытки рекконекта
-            if (g_strcmp0(cmd, "DISCONNECT") == 0)
+            if (g_strcmp0(cmd, "DISCONNECT") == 0) {
+                vdi_session_logout();
                 vdi_ws_client->reconnect_if_conn_lost = FALSE;
-            vdi_session_ws_cmd_received_notify(cmd);
+                vdi_session_ws_cmd_received_notify(cmd);
+            }
         } else if (g_strcmp0(msg_type, "text_msg") == 0) {
             // текстовое сообщение от администратора  VeiL VDI
             const gchar *sender_name = json_object_get_string_member_safely(root_object, "sender_name");
