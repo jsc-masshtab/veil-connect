@@ -34,7 +34,7 @@ typedef enum
 
 // functions declarations
 static void set_vdi_client_state(VdiManager *self, VdiClientState vdi_client_state,
-        const gchar *message, gboolean error_message);
+        const gchar *message, gboolean is_error_message);
 static void refresh_vdi_pool_data_async(VdiManager *self);
 static void unregister_all_pools(VdiManager *self);
 static void register_pool(VdiManager *self, const gchar *pool_id, const gchar *pool_name, const gchar *os_type,
@@ -56,7 +56,7 @@ static void vdi_manager_finalize(GObject *object);
 
 // Set GUI state
 static void set_vdi_client_state(VdiManager *self, VdiClientState vdi_client_state,
-        const gchar *message, gboolean error_message)
+        const gchar *message, gboolean is_error_message)
 {
     gboolean controls_blocked = FALSE;
 
@@ -91,17 +91,21 @@ static void set_vdi_client_state(VdiManager *self, VdiClientState vdi_client_sta
     if (self->button_quit)
         gtk_widget_set_sensitive(self->button_quit, controls_blocked);
 
-    // message
     if (self->status_label) {
+        // message
+        g_autofree gchar *trimmed_msg = NULL;
+        trimmed_msg = g_strndup(message, 140);
 
-        if (error_message) {
-            gchar *final_message = g_strdup_printf("<span color=\"red\">%s</span>", message);
+        if (is_error_message) {
+            gchar *final_message = g_strdup_printf("<span color=\"red\">%s</span>", trimmed_msg);
             gtk_label_set_markup(GTK_LABEL (self->status_label), final_message);
             g_free(final_message);
 
         } else {
-            gtk_label_set_text(GTK_LABEL(self->status_label), message);
+            gtk_label_set_text(GTK_LABEL(self->status_label), trimmed_msg);
         }
+        // tooltip
+        gtk_widget_set_tooltip_text(self->status_label, message);
     }
 }
 // start asynchronous task to get vm data from vdi
@@ -250,7 +254,7 @@ static void on_vdi_session_get_vm_from_pool_finished(GObject *source_object G_GN
 
     GError *error = NULL;
     gpointer  ptr_res =  g_task_propagate_pointer (G_TASK (res), &error); // take ownership
-    if(ptr_res == NULL){
+    if (ptr_res == NULL) {
         g_info("%s : FAIL", (const char *)__func__);
         set_vdi_client_state(self, VDI_RECEIVED_RESPONSE, "Не удалось получить вм из пула", TRUE);
         return;
@@ -387,8 +391,8 @@ static void on_vm_start_button_clicked(GtkButton *button, VdiManager *self)
     g_info("%s remote_protocol %s", (const char *)__func__, vdi_session_remote_protocol_to_str(remote_protocol));
     vdi_session_set_current_remote_protocol(remote_protocol);
     // execute task
-    execute_async_task(vdi_session_get_vm_from_pool_task, (GAsyncReadyCallback)on_vdi_session_get_vm_from_pool_finished,
-            NULL, self);
+    execute_async_task(vdi_session_get_vm_from_pool_task,
+            (GAsyncReadyCallback)on_vdi_session_get_vm_from_pool_finished, NULL, self);
 }
 
 static void
