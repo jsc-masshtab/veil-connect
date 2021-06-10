@@ -125,7 +125,8 @@ VdiSession *vdi_session_new()
     vdi_session->current_controller_address = NULL;
 
     vdi_session->user_permissions = (USER_PERMISSION_NO_PERMISSIONS | USER_PERMISSION_USB_REDIR |
-            USER_PERMISSION_FOLDERS_REDIR | USER_PERMISSION_SHARED_CLIPBOARD);
+            USER_PERMISSION_FOLDERS_REDIR | USER_PERMISSION_SHARED_CLIPBOARD_CLIENT_TO_GUEST |
+            USER_PERMISSION_SHARED_CLIPBOARD_GUEST_TO_CLIENT);
 
     memset(&vdi_session->redis_client, 0, sizeof(RedisClient));
 
@@ -245,9 +246,17 @@ static gchar *vdi_session_auth_request()
         case SERVER_REPLY_TYPE_ERROR:
         case SERVER_REPLY_TYPE_UNKNOWN:
         default: {
+            gchar *reply_msg;
+
             const gchar *message = json_object_get_string_member_safely(reply_json_object, "message");
-            g_info("%s : Unable to get token. %s", (const char *)__func__, message);
-            gchar *reply_msg = g_strdup(message ? message : msg->reason_phrase);
+            g_info("%s : Unable to get token. %s %s", (const char *)__func__, message, msg->reason_phrase);
+            if (message != NULL && strlen_safely(message) != 0)
+                reply_msg = g_strdup(message);
+            else if (msg->reason_phrase != NULL && strlen_safely(msg->reason_phrase) != 0)
+                reply_msg = g_strdup(msg->reason_phrase);
+            else
+                reply_msg = g_strdup("Не удалось авторизоваться");
+
             g_object_unref(msg);
             g_object_unref(parser);
             return reply_msg;
@@ -484,27 +493,35 @@ void vdi_session_set_permissions(JsonArray *user_permissions_array)
         else if (g_strcmp0(permission, "FOLDERS_REDIR") == 0)
             get_vdi_session_static()->user_permissions =
                     (get_vdi_session_static()->user_permissions | USER_PERMISSION_FOLDERS_REDIR);
-        else if (g_strcmp0(permission, "SHARED_CLIPBOARD") == 0)
+        else if (g_strcmp0(permission, "SHARED_CLIPBOARD_CLIENT_TO_GUEST") == 0)
             get_vdi_session_static()->user_permissions =
-                    (get_vdi_session_static()->user_permissions | USER_PERMISSION_SHARED_CLIPBOARD);
+                    (get_vdi_session_static()->user_permissions | USER_PERMISSION_SHARED_CLIPBOARD_CLIENT_TO_GUEST);
+        else if (g_strcmp0(permission, "SHARED_CLIPBOARD_GUEST_TO_CLIENT") == 0)
+            get_vdi_session_static()->user_permissions =
+                    (get_vdi_session_static()->user_permissions | USER_PERMISSION_SHARED_CLIPBOARD_GUEST_TO_CLIENT);
     }
 
     g_info("get_vdi_session_static()->user_permissions: %i", get_vdi_session_static()->user_permissions);
 }
 
-gboolean vdi_session_is_usb_redir_permitted(void)
+gboolean vdi_session_is_usb_redir_permitted()
 {
     return (get_vdi_session_static()->user_permissions & USER_PERMISSION_USB_REDIR);
 }
 
-gboolean vdi_session_is_folders_redir_permitted(void)
+gboolean vdi_session_is_folders_redir_permitted()
 {
     return (get_vdi_session_static()->user_permissions & USER_PERMISSION_FOLDERS_REDIR);
 }
-
-gboolean vdi_session_is_shared_clipboard_permitted(void)
+// Разрешен ли буфер в направлении клиент - ВМ
+gboolean vdi_session_is_shared_clipboard_c_to_g_permitted()
 {
-    return (get_vdi_session_static()->user_permissions & USER_PERMISSION_SHARED_CLIPBOARD);
+    return (get_vdi_session_static()->user_permissions & USER_PERMISSION_SHARED_CLIPBOARD_CLIENT_TO_GUEST);
+}
+// Разрешен ли буфер в направлении ВМ - клиент
+gboolean vdi_session_is_shared_clipboard_g_to_c_permitted()
+{
+    return (get_vdi_session_static()->user_permissions & USER_PERMISSION_SHARED_CLIPBOARD_GUEST_TO_CLIENT);
 }
 
 gchar *vdi_session_api_call(const char *method, const char *uri_string, const gchar *body_str, int *resp_code)

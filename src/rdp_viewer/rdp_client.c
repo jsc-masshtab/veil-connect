@@ -150,8 +150,6 @@ static GArray *rdp_client_create_params_array(ExtendedRdpContext* ex)
     add_rdp_param(rdp_params_dyn_array, g_strdup("/cert-ignore"));
     add_rdp_param(rdp_params_dyn_array, g_strdup("/sound:rate:44100,channel:2"));
     add_rdp_param(rdp_params_dyn_array, g_strdup("/relax-order-checks"));
-    if (!vdi_session_is_shared_clipboard_permitted())
-        add_rdp_param(rdp_params_dyn_array, g_strdup("-clipboard"));
 #ifdef __linux__
 #elif _WIN32
     add_rdp_param(rdp_params_dyn_array, g_strdup("+glyph-cache"));

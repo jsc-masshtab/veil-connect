@@ -2583,7 +2583,7 @@ virt_viewer_connect_timer(VirtViewerApp *self)
         return TRUE;
 
     // session options
-    virt_viewer_app_enable_auto_clipboard(self, vdi_session_is_shared_clipboard_permitted());
+    //virt_viewer_app_enable_auto_clipboard(self, vdi_session_is_shared_clipboard_permitted());
 
     is_connected = virt_viewer_app_initial_connect(self, NULL);
 

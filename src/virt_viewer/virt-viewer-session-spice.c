@@ -143,22 +143,37 @@ virt_viewer_session_spice_set_property(GObject *object, guint property_id,
 }
 
 static void
+clipboard_owner_change(GtkClipboard *clipboard G_GNUC_UNUSED,
+                       GdkEventOwnerChange *event G_GNUC_UNUSED,
+                       gpointer user_data)
+{
+    VirtViewerSessionSpice *self = (VirtViewerSessionSpice *)user_data;
+    spice_gtk_session_copy_to_guest(self->priv->gtk_session);
+}
+
+static void
 virt_viewer_session_spice_dispose(GObject *obj)
 {
-    VirtViewerSessionSpice *spice = VIRT_VIEWER_SESSION_SPICE(obj);
+    VirtViewerSessionSpice *self = VIRT_VIEWER_SESSION_SPICE(obj);
 
-    if (spice->priv->session) {
-        spice_session_disconnect(spice->priv->session);
-        g_object_unref(spice->priv->session);
-        spice->priv->session = NULL;
+    // Отсоединяем обработчики сигнала
+    GtkClipboard *clipboard = gtk_clipboard_get(GDK_SELECTION_CLIPBOARD);
+    GtkClipboard *clipboard_primary = gtk_clipboard_get(GDK_SELECTION_PRIMARY);
+    g_signal_handlers_disconnect_by_func(G_OBJECT(clipboard), G_CALLBACK(clipboard_owner_change), self);
+    g_signal_handlers_disconnect_by_func(G_OBJECT(clipboard_primary), G_CALLBACK(clipboard_owner_change), self);
+
+    if (self->priv->session) {
+        spice_session_disconnect(self->priv->session);
+        g_object_unref(self->priv->session);
+        self->priv->session = NULL;
     }
 
-    spice->priv->audio = NULL;
+    self->priv->audio = NULL;
 
-    g_clear_object(&spice->priv->main_window);
-    if (spice->priv->file_transfer_dialog) {
-        gtk_widget_destroy(GTK_WIDGET(spice->priv->file_transfer_dialog));
-        spice->priv->file_transfer_dialog = NULL;
+    g_clear_object(&self->priv->main_window);
+    if (self->priv->file_transfer_dialog) {
+        gtk_widget_destroy(GTK_WIDGET(self->priv->file_transfer_dialog));
+        self->priv->file_transfer_dialog = NULL;
     }
 
     G_OBJECT_CLASS(virt_viewer_session_spice_parent_class)->dispose(obj);
@@ -401,7 +416,16 @@ create_spice_session(VirtViewerSessionSpice *self)
     spice_set_session_option(self->priv->session);
 
     self->priv->gtk_session = spice_gtk_session_get(self->priv->session);
-    g_object_set(self->priv->gtk_session, "auto-clipboard", TRUE, NULL);
+    g_object_set(self->priv->gtk_session, "auto-clipboard", FALSE, NULL);
+    if (vdi_session_is_shared_clipboard_c_to_g_permitted()) {
+        // По сигналу owner-change копируем содержимое буфера обмена на ВМ
+        GtkClipboard *clipboard = gtk_clipboard_get(GDK_SELECTION_CLIPBOARD);
+        g_signal_connect(G_OBJECT(clipboard), "owner-change",
+                         G_CALLBACK(clipboard_owner_change), self);
+        GtkClipboard *clipboard_primary = gtk_clipboard_get(GDK_SELECTION_PRIMARY);
+        g_signal_connect(G_OBJECT(clipboard_primary), "owner-change",
+                         G_CALLBACK(clipboard_owner_change), self);
+    }
 
     virt_viewer_signal_connect_object(self->priv->session, "channel-new",
                                       G_CALLBACK(virt_viewer_session_spice_channel_new), self, 0);
@@ -452,7 +476,6 @@ create_spice_session(VirtViewerSessionSpice *self)
     g_object_bind_property(self->priv->session, "share-dir-ro",
                            self, "share-folder-ro",
                            G_BINDING_BIDIRECTIONAL|G_BINDING_SYNC_CREATE);
-
 }
 
 static void
@@ -479,7 +502,6 @@ virt_viewer_session_spice_close(VirtViewerSession *session)
 
     g_object_remove_weak_pointer(G_OBJECT(self), (gpointer*)&self);
 
-    /* FIXME: version 0.7 of spice-gtk allows reuse of session */
     create_spice_session(self);
 }
 
@@ -972,11 +994,20 @@ on_new_file_transfer(SpiceMainChannel *channel G_GNUC_UNUSED,
 }
 
 static gboolean
+clipboard_grab(SpiceMainChannel *main G_GNUC_UNUSED, guint selection G_GNUC_UNUSED,
+                               guint32* types G_GNUC_UNUSED, guint32 ntypes G_GNUC_UNUSED,
+                               gpointer user_data G_GNUC_UNUSED)
+{
+    VirtViewerSessionSpice *self = (VirtViewerSessionSpice *)user_data;
+    spice_gtk_session_paste_from_guest(self->priv->gtk_session);
+    return TRUE;
+}
+
+static gboolean
 on_clipboard_from_client_to_vm(SpiceMainChannel *main G_GNUC_UNUSED, guint selection G_GNUC_UNUSED,
                                   guint type, gpointer user_data G_GNUC_UNUSED)
 {
     if (type == VD_AGENT_CLIPBOARD_UTF8_TEXT) {
-        //g_info("on_clipboard_from_client_to_vm");
         GtkClipboard *gtk_clipboard = gtk_clipboard_get(GDK_SELECTION_CLIPBOARD);
         gchar *text = gtk_clipboard_wait_for_text(gtk_clipboard);
         logger_save_clipboard_data(text, strlen_safely(text), CLIPBOARD_LOGGER_FROM_CLIENT_TO_VM);
@@ -991,7 +1022,6 @@ on_clipboard_got_from_vm(SpiceMainChannel *main G_GNUC_UNUSED, guint selection G
                                      gpointer user_data G_GNUC_UNUSED)
 {
     if (type == VD_AGENT_CLIPBOARD_UTF8_TEXT) {
-        //g_info("on_clipboard_got_from_guest %s", data);
         logger_save_clipboard_data((const gchar *)data, size, CLIPBOARD_LOGGER_FROM_VM_TO_CLIENT);
     }
 }
@@ -1030,6 +1060,12 @@ virt_viewer_session_spice_channel_new(SpiceSession *s,
                                           G_CALLBACK(agent_connected_changed), self, 0);
         virt_viewer_signal_connect_object(channel, "new-file-transfer",
                                           G_CALLBACK(on_new_file_transfer), self, 0);
+
+        // Передаем содержимое буфера обмена с ВМ на клиент, если разрешено администратором
+        if (vdi_session_is_shared_clipboard_g_to_c_permitted()) {
+            virt_viewer_signal_connect_object(channel, "main-clipboard-selection-grab",
+                                              G_CALLBACK(clipboard_grab), self, 0);
+        }
         virt_viewer_signal_connect_object(channel, "main-clipboard-selection-request",
                                           G_CALLBACK(on_clipboard_from_client_to_vm), self, 0);
         virt_viewer_signal_connect_object(channel, "main-clipboard-selection",

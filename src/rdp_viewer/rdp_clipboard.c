@@ -494,44 +494,46 @@ static UINT rdp_cliprdr_server_format_list(CliprdrClientContext* context, const 
 
     RdpClipboard *clipboard = (RdpClipboard*)context->custom;
 
-    GtkTargetList *list = gtk_target_list_new(NULL, 0); // will be freed in callback
+    if (vdi_session_is_shared_clipboard_g_to_c_permitted()) { // Проверяем разрешение от админа
+        GtkTargetList *list = gtk_target_list_new(NULL, 0); // will be freed in callback
 
-    for (UINT32 i = 0; i < formatList->numFormats; i++) {
-        CLIPRDR_FORMAT *format = &formatList->formats[i];
-        if (format->formatId == CF_UNICODETEXT) {
-            GdkAtom atom = gdk_atom_intern("UTF8_STRING", TRUE);
-            gtk_target_list_add(list, atom, 0, CF_UNICODETEXT);
-        } else if (format->formatId == CF_TEXT) {
-            GdkAtom atom = gdk_atom_intern("TEXT", TRUE);
-            gtk_target_list_add(list, atom, 0, CF_TEXT);
-        } else if (format->formatId == CF_DIB) {
-            GdkAtom atom = gdk_atom_intern("image/bmp", TRUE);
-            gtk_target_list_add(list, atom, 0, CF_DIB);
-        } else if (format->formatId == CF_DIBV5) {
-            GdkAtom atom = gdk_atom_intern("image/bmp", TRUE);
-            gtk_target_list_add(list, atom, 0, CF_DIBV5);
-        } else if (format->formatId == CB_FORMAT_JPEG) {
-            GdkAtom atom = gdk_atom_intern("image/jpeg", TRUE);
-            gtk_target_list_add(list, atom, 0, CB_FORMAT_JPEG);
-        } else if (format->formatId == CB_FORMAT_PNG) {
-            GdkAtom atom = gdk_atom_intern("image/png", TRUE);
-            gtk_target_list_add(list, atom, 0, CB_FORMAT_PNG);
-        } else if (format->formatId == CB_FORMAT_HTML) {
-            GdkAtom atom = gdk_atom_intern("text/html", TRUE);
-            gtk_target_list_add(list, atom, 0, CB_FORMAT_HTML);
+        for (UINT32 i = 0; i < formatList->numFormats; i++) {
+            CLIPRDR_FORMAT *format = &formatList->formats[i];
+            if (format->formatId == CF_UNICODETEXT) {
+                GdkAtom atom = gdk_atom_intern("UTF8_STRING", TRUE);
+                gtk_target_list_add(list, atom, 0, CF_UNICODETEXT);
+            } else if (format->formatId == CF_TEXT) {
+                GdkAtom atom = gdk_atom_intern("TEXT", TRUE);
+                gtk_target_list_add(list, atom, 0, CF_TEXT);
+            } else if (format->formatId == CF_DIB) {
+                GdkAtom atom = gdk_atom_intern("image/bmp", TRUE);
+                gtk_target_list_add(list, atom, 0, CF_DIB);
+            } else if (format->formatId == CF_DIBV5) {
+                GdkAtom atom = gdk_atom_intern("image/bmp", TRUE);
+                gtk_target_list_add(list, atom, 0, CF_DIBV5);
+            } else if (format->formatId == CB_FORMAT_JPEG) {
+                GdkAtom atom = gdk_atom_intern("image/jpeg", TRUE);
+                gtk_target_list_add(list, atom, 0, CB_FORMAT_JPEG);
+            } else if (format->formatId == CB_FORMAT_PNG) {
+                GdkAtom atom = gdk_atom_intern("image/png", TRUE);
+                gtk_target_list_add(list, atom, 0, CB_FORMAT_PNG);
+            } else if (format->formatId == CB_FORMAT_HTML) {
+                GdkAtom atom = gdk_atom_intern("text/html", TRUE);
+                gtk_target_list_add(list, atom, 0, CB_FORMAT_HTML);
+            }
         }
+
+        // Schedule to execute in the main thread
+        RdpClipboardEventData *rdp_clipboard_event_data = calloc(1, sizeof(RdpClipboardEventData)); // will be freed
+        // in callback
+        rdp_clipboard_event_data->rdp_clipboard_event_type = RDP_CLIPBOARD_SET_DATA;
+        rdp_clipboard_event_data->target_list = list;
+
+        rdp_clipboard_event_data->ex_context = clipboard->ex_context;
+        rdp_clipboard_event_data->clipboard = clipboard;
+
+        g_idle_add((GSourceFunc) rdp_cliprdr_event_process, rdp_clipboard_event_data);
     }
-
-    // Schedule to execute in the main thread
-    RdpClipboardEventData *rdp_clipboard_event_data = calloc(1, sizeof(RdpClipboardEventData)); // will be freed
-    // in callback
-    rdp_clipboard_event_data->rdp_clipboard_event_type = RDP_CLIPBOARD_SET_DATA;
-    rdp_clipboard_event_data->target_list = list;
-
-    rdp_clipboard_event_data->ex_context = clipboard->ex_context;
-    rdp_clipboard_event_data->clipboard = clipboard;
-
-    g_idle_add((GSourceFunc)rdp_cliprdr_event_process, rdp_clipboard_event_data);
 
     /* Send FormatListResponse to server */
     CLIPRDR_FORMAT_LIST_RESPONSE formatListResponse;
@@ -744,12 +746,14 @@ void rdp_cliprdr_init(ExtendedRdpContext *ex_context, CliprdrClientContext *clip
     cliprdr->ServerFormatDataRequest = rdp_cliprdr_server_format_data_request;
     cliprdr->ServerFormatDataResponse = rdp_cliprdr_server_format_data_response;
 
-    // clipboard monitor. Copy event on client
-    GtkClipboard *gtkClipboard = get_gtk_clipboard(ex_context);
-    g_info("%s",(const char*)__func__);
-    if (gtkClipboard)
-        clipboard->clipboard_handler = g_signal_connect(gtkClipboard, "owner-change",
-                                                        G_CALLBACK(rdp_event_on_clipboard), clipboard);
+    if (vdi_session_is_shared_clipboard_c_to_g_permitted()) {
+        // clipboard monitor. Copy event on client
+        GtkClipboard *gtkClipboard = get_gtk_clipboard(ex_context);
+        g_info("%s", (const char *) __func__);
+        if (gtkClipboard)
+            clipboard->clipboard_handler = g_signal_connect(gtkClipboard, "owner-change",
+                                                            G_CALLBACK(rdp_event_on_clipboard), clipboard);
+    }
 }
 
 void rdp_cliprdr_uninit(ExtendedRdpContext *ex_context, CliprdrClientContext* cliprdr)
