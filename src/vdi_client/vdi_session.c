@@ -499,6 +499,12 @@ void vdi_session_set_permissions(JsonArray *user_permissions_array)
         else if (g_strcmp0(permission, "SHARED_CLIPBOARD_GUEST_TO_CLIENT") == 0)
             get_vdi_session_static()->user_permissions =
                     (get_vdi_session_static()->user_permissions | USER_PERMISSION_SHARED_CLIPBOARD_GUEST_TO_CLIENT);
+        else if (g_strcmp0(permission, "SHARED_CLIPBOARD") == 0) { // Для поддержки пред. версий сервера (<= 3.0.0)
+            get_vdi_session_static()->user_permissions =
+                    (get_vdi_session_static()->user_permissions | USER_PERMISSION_SHARED_CLIPBOARD_CLIENT_TO_GUEST);
+            get_vdi_session_static()->user_permissions =
+                    (get_vdi_session_static()->user_permissions | USER_PERMISSION_SHARED_CLIPBOARD_GUEST_TO_CLIENT);
+        }
     }
 
     g_info("get_vdi_session_static()->user_permissions: %i", get_vdi_session_static()->user_permissions);
