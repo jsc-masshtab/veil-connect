@@ -179,7 +179,7 @@ static void* net_speedometer_ping_job_win(NetSpeedometer *self)
 
         // reset data
         self->min_rtt = self->max_rtt = self->avg_rtt = 0;
-        self->loss_percentage = 100;
+        self->loss_percentage = 0;
         if (cmd_res && contents) {
             //fprintf(stdout, "standard_output: %s \n", standard_output);
 
@@ -217,9 +217,7 @@ static void* net_speedometer_ping_job_win(NetSpeedometer *self)
             }
 
             // calculate loss
-            if (p_sent == 0)
-                self->loss_percentage = 100;
-            else
+            if (p_sent != 0)
                 self->loss_percentage = (int) (1.0 - (float)p_recv / (float)p_sent) * 100;
 
             g_regex_unref(regex);
