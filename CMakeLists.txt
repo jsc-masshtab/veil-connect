@@ -211,7 +211,7 @@ if (WIN32)
     else(BUILD_x32) # 64bit
         message(STATUS "Using 64bit dependencies")
         SET(LIBS_INCLUDE_PATH C:/msys32/mingw64/include/)
-        SET(FREERDP_PATH C:/job/FreeRDP-2.2.0/)
+        SET(FREERDP_PATH C:/job/FreeRDP-2.3.2/)
         SET(HIREDIS_PATH C:/job/hiredis-mingw/)
     endif(BUILD_x32)
 

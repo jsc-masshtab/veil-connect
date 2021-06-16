@@ -91,10 +91,15 @@ static void vdi_ws_client_on_message(SoupWebsocketConnection *ws_conn G_GNUC_UNU
     }
 }
 
-static void vdi_ws_client_on_close(SoupWebsocketConnection *ws_conn G_GNUC_UNUSED, VdiWsClient *vdi_ws_client)
+static void vdi_ws_client_on_close(SoupWebsocketConnection *ws_conn, VdiWsClient *vdi_ws_client)
 {
     gushort close_code = soup_websocket_connection_get_close_code(ws_conn);
-    g_info("WebSocket connection closed: close_code: %i\n", close_code);
+    g_info("WebSocket connection closed: close_code: %i", close_code);
+
+    if (vdi_ws_client_get_conn_state(vdi_ws_client) == SOUP_WEBSOCKET_STATE_CLOSED) {
+        const char *close_data = soup_websocket_connection_get_close_data(ws_conn);
+        g_info("WebSocket close data: %s", close_data);
+    }
     vdi_session_ws_conn_change_notify(FALSE);
     vdi_ws_client_ws_reconnect_if_allowed(vdi_ws_client);
 }
