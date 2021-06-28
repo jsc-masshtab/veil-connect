@@ -25,6 +25,6 @@
 
 //} RdpDisplayData;
 
-GtkWidget *rdp_display_create(RdpWindowData *rdp_window_data, ExtendedRdpContext *ex_rdp_context);
+GtkWidget *rdp_display_create(RdpWindowData *rdp_window_data);
 
 #endif // RDP_DISPLAY_H

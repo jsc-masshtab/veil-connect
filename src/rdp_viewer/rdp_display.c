@@ -53,13 +53,6 @@
 #define ERRCONNECT_NO_OR_MISSING_CREDENTIALS 0x0000001B
 #endif
 
-
-//static gboolean fuzzy_compare(double number_1, double number_2)
-//{
-//    const double epsilon = 0.00001;
-//    return fabs(number_1 - number_2) < epsilon;
-//}
-
 static const gchar *error_to_str(UINT32 rdp_error)
 {
     if (rdp_error == WRONG_FREERDP_ARGUMENTS)
@@ -181,111 +174,14 @@ static void rdp_display_translate_mouse_pos(UINT16 *rdp_x_p, UINT16 *rdp_y_p,
     *rdp_y_p = (UINT16) (gtk_y - ex_rdp_context->im_origin_y + rdp_window_data->monitor_geometry.y); // * scale_f
 }
 
-static void rdp_viewer_handle_key_event(GdkEventKey *event, ExtendedRdpContext* tf, gboolean down)
-{
-    if (!tf || !tf->is_running)
-        return;
-    rdpInput *input = tf->context.input;
-
-#ifdef G_OS_UNIX
-    DWORD rdp_scancode = freerdp_keyboard_get_rdp_scancode_from_x11_keycode(event->hardware_keycode);
-#elif _WIN32
-    DWORD rdp_scancode = 0;
-    switch (event->keyval) {
-        // keys with special treatment
-        case GDK_KEY_Control_L:
-            rdp_scancode = RDP_SCANCODE_LCONTROL;
-            break;
-        case GDK_KEY_Control_R:
-            rdp_scancode = RDP_SCANCODE_RCONTROL;
-            break;
-        case GDK_KEY_Shift_L:
-            rdp_scancode = RDP_SCANCODE_LSHIFT;
-            break;
-        case GDK_KEY_Shift_R:
-            rdp_scancode = RDP_SCANCODE_RSHIFT;
-            break;
-        case GDK_KEY_Alt_L:
-            rdp_scancode = RDP_SCANCODE_LMENU;
-            break;
-        case GDK_KEY_Alt_R:
-            rdp_scancode = RDP_SCANCODE_RMENU;
-            break;
-        case GDK_KEY_Left:
-            rdp_scancode = RDP_SCANCODE_LEFT;
-            break;
-        case GDK_KEY_Up:
-            rdp_scancode = RDP_SCANCODE_UP;
-            break;
-        case GDK_KEY_Right:
-            rdp_scancode = RDP_SCANCODE_RIGHT;
-            break;
-        case GDK_KEY_Down:
-            rdp_scancode = RDP_SCANCODE_DOWN;
-            break;
-        case GDK_KEY_Insert:
-            rdp_scancode = RDP_SCANCODE_INSERT;
-            break;
-        case GDK_KEY_Home:
-            rdp_scancode = RDP_SCANCODE_HOME;
-            break;
-        case GDK_KEY_End:
-            rdp_scancode = RDP_SCANCODE_END;
-            break;
-        case GDK_KEY_Delete:
-            rdp_scancode = RDP_SCANCODE_DELETE;
-            break;
-        case GDK_KEY_Prior:
-            rdp_scancode = RDP_SCANCODE_PRIOR;
-            break;
-        case GDK_KEY_Next:
-            rdp_scancode = RDP_SCANCODE_NEXT;
-            break;
-        case GDK_KEY_KP_Divide:
-            rdp_scancode = RDP_SCANCODE_DIVIDE;
-            break;
-        default:
-            // other keys
-            rdp_scancode = GetVirtualScanCodeFromVirtualKeyCode(event->hardware_keycode, 4);
-            break;
-    }
-#endif
-    // Игнорируем принтскрин по просьбе сверху
-    if (rdp_scancode == RDP_SCANCODE_PRINTSCREEN || rdp_scancode == 84) // 84  - on windows
-        return;
-
-    BOOL is_success = freerdp_input_send_keyboard_event_ex(input, down, rdp_scancode);
-    (void) is_success;
-
-    //g_info("%s: hardkey: 0x%X scancode: 0x%X keyval: 0x%X down: %i\n", (const char *) __func__,
-    //       event->hardware_keycode, rdp_scancode, event->keyval, down);
-}
-
-static gboolean rdp_display_key_pressed(GtkWidget *widget G_GNUC_UNUSED, GdkEventKey *event, gpointer user_data)
-{
-    vdi_ws_client_send_user_gui(vdi_session_get_ws_client()); // notify server
-
-    ExtendedRdpContext* tf = (ExtendedRdpContext*)user_data;
-    rdp_viewer_handle_key_event(event, tf, TRUE);
-    return TRUE;
-}
-
-static gboolean rdp_display_key_released(GtkWidget *widget G_GNUC_UNUSED, GdkEventKey *event, gpointer user_data)
-{
-    ExtendedRdpContext* tf = (ExtendedRdpContext*)user_data;
-    rdp_viewer_handle_key_event(event, tf, FALSE);
-
-    return TRUE;
-}
-
 static gboolean rdp_display_mouse_moved(GtkWidget *widget G_GNUC_UNUSED, GdkEventMotion *event, gpointer user_data)
 {
     RdpWindowData *rdp_window_data = (RdpWindowData *)user_data;
-    ExtendedRdpContext* ex_contect = rdp_window_data->ex_rdp_context;
-    if (!ex_contect || !ex_contect->is_running)
+    ExtendedRdpContext* ex_rdp_context = rdp_window_data->ex_rdp_context;
+    if (!ex_rdp_context || !ex_rdp_context->is_running)
         return TRUE;
 
-    rdpContext* rdp_contect = (rdpContext*)ex_contect;
+    rdpContext* rdp_contect = (rdpContext*)ex_rdp_context;
     rdpInput *input = rdp_contect->input;
 
     UINT16 x, y;
@@ -301,11 +197,11 @@ static void rdp_viewer_handle_mouse_btn_event(GtkWidget *widget G_GNUC_UNUSED, G
         gpointer user_data, UINT16 additional_flags)
 {
     RdpWindowData *rdp_window_data = (RdpWindowData *)user_data;
-    ExtendedRdpContext* ex_rdp_contect = rdp_window_data->ex_rdp_context;
-    if (!ex_rdp_contect || !ex_rdp_contect->is_running)
+    ExtendedRdpContext* ex_rdp_context = rdp_window_data->ex_rdp_context;
+    if (!ex_rdp_context || !ex_rdp_context->is_running)
         return;
 
-    rdpContext* context = (rdpContext*)ex_rdp_contect;
+    rdpContext* context = (rdpContext*)ex_rdp_context;
     rdpInput *input = context->input;
 
     UINT16 button = 0;
@@ -387,17 +283,17 @@ static gboolean rdp_display_event_on_draw(GtkWidget* widget G_GNUC_UNUSED, cairo
     //g_info("%s START\n", (const char *)__func__);
     RdpWindowData *rdp_window_data = (RdpWindowData *)user_data;
 
-    ExtendedRdpContext *ex_rdp_contect = rdp_window_data->ex_rdp_context;
+    ExtendedRdpContext *ex_rdp_context = rdp_window_data->ex_rdp_context;
 
-    if (ex_rdp_contect) {
+    if (ex_rdp_context) {
 
-        if (ex_rdp_contect->is_running) {
-            g_mutex_lock(&ex_rdp_contect->primary_buffer_mutex);
+        if (ex_rdp_context->is_running) {
+            g_mutex_lock(&ex_rdp_context->primary_buffer_mutex);
 
-            if (ex_rdp_contect->surface) {
+            if (ex_rdp_context->surface) {
                 //gint64 start = g_get_monotonic_time();
                 //cairo_push_group(context);
-                cairo_set_source_surface(context, ex_rdp_contect->surface, -rdp_window_data->monitor_geometry.x,
+                cairo_set_source_surface(context, ex_rdp_context->surface, -rdp_window_data->monitor_geometry.x,
                                          -rdp_window_data->monitor_geometry.y);
 
                 cairo_set_operator(context, CAIRO_OPERATOR_OVER);     // Ignore alpha channel from FreeRDP
@@ -411,17 +307,17 @@ static gboolean rdp_display_event_on_draw(GtkWidget* widget G_GNUC_UNUSED, cairo
                 rdp_display_draw_text_message(context, "Ожидаем подключение", 50);
             }
 
-            g_mutex_unlock(&ex_rdp_contect->primary_buffer_mutex);
+            g_mutex_unlock(&ex_rdp_context->primary_buffer_mutex);
         } else {
             /* Draw text */
             gchar *msg = g_strdup_printf(("Нет соединения. Код: 0x%X %s"),
-                                         ex_rdp_contect->last_rdp_error, error_to_str(ex_rdp_contect->last_rdp_error));
+                                         ex_rdp_context->last_rdp_error, error_to_str(ex_rdp_context->last_rdp_error));
             rdp_display_draw_text_message(context, msg, 50);
             g_free(msg);
 
-            if (ex_rdp_contect->rail_rdp_error != RAIL_EXEC_S_OK) {
-                msg = g_strdup_printf("Remote application error. 0x%X  %s", ex_rdp_contect->rail_rdp_error,
-                        rail_error_to_string(ex_rdp_contect->rail_rdp_error));
+            if (ex_rdp_context->rail_rdp_error != RAIL_EXEC_S_OK) {
+                msg = g_strdup_printf("Remote application error. 0x%X  %s", ex_rdp_context->rail_rdp_error,
+                        rail_error_to_string(ex_rdp_context->rail_rdp_error));
                 rdp_display_draw_text_message(context, msg, 100);
                 g_free(msg);
             }
@@ -431,16 +327,12 @@ static gboolean rdp_display_event_on_draw(GtkWidget* widget G_GNUC_UNUSED, cairo
     return TRUE;
 }
 
-GtkWidget *rdp_display_create(RdpWindowData *rdp_window_data, ExtendedRdpContext *ex_rdp_context)
+GtkWidget *rdp_display_create(RdpWindowData *rdp_window_data)
 {
     GtkWidget *rdp_display = gtk_drawing_area_new();
 
     gtk_widget_add_events(rdp_display, GDK_POINTER_MOTION_MASK | GDK_BUTTON_PRESS_MASK | GDK_BUTTON_RELEASE_MASK |
                           GDK_SCROLL_MASK | GDK_SMOOTH_SCROLL_MASK | GDK_KEY_PRESS_MASK | GDK_KEY_RELEASE_MASK);
-
-    GtkWidget *rdp_viewer_window = rdp_window_data->rdp_viewer_window;
-    g_signal_connect(rdp_viewer_window, "key-press-event", G_CALLBACK(rdp_display_key_pressed), ex_rdp_context);
-    g_signal_connect(rdp_viewer_window, "key-release-event", G_CALLBACK(rdp_display_key_released), ex_rdp_context);
 
     g_signal_connect(rdp_display, "motion-notify-event",G_CALLBACK (rdp_display_mouse_moved), rdp_window_data);
     g_signal_connect(rdp_display, "button-press-event",G_CALLBACK (rdp_display_mouse_btn_pressed), rdp_window_data);

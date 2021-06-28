@@ -6,6 +6,9 @@
  * Author: http://mashtab.org/
  */
 
+#include <freerdp/locale/keyboard.h>
+#include <freerdp/scancode.h>
+
 #include "rdp_viewer_window.h"
 
 #ifdef _WIN32
@@ -544,6 +547,103 @@ rdp_viewer_window_usb_redir_task_finished(gpointer source G_GNUC_UNUSED, int cod
     show_msg_box_dialog(GTK_WINDOW(rdp_window_data->rdp_viewer_window), msg);
 }
 
+static void rdp_viewer_window_handle_key_event(GdkEventKey *event, ExtendedRdpContext* tf, gboolean down)
+{
+    if (!tf || !tf->is_running)
+        return;
+    rdpInput *input = tf->context.input;
+
+#ifdef G_OS_UNIX
+    DWORD rdp_scancode = freerdp_keyboard_get_rdp_scancode_from_x11_keycode(event->hardware_keycode);
+#elif _WIN32
+    DWORD rdp_scancode = 0;
+    switch (event->keyval) {
+        // keys with special treatment
+        case GDK_KEY_Control_L:
+            rdp_scancode = RDP_SCANCODE_LCONTROL;
+            break;
+        case GDK_KEY_Control_R:
+            rdp_scancode = RDP_SCANCODE_RCONTROL;
+            break;
+        case GDK_KEY_Shift_L:
+            rdp_scancode = RDP_SCANCODE_LSHIFT;
+            break;
+        case GDK_KEY_Shift_R:
+            rdp_scancode = RDP_SCANCODE_RSHIFT;
+            break;
+        case GDK_KEY_Alt_L:
+            rdp_scancode = RDP_SCANCODE_LMENU;
+            break;
+        case GDK_KEY_Alt_R:
+            rdp_scancode = RDP_SCANCODE_RMENU;
+            break;
+        case GDK_KEY_Left:
+            rdp_scancode = RDP_SCANCODE_LEFT;
+            break;
+        case GDK_KEY_Up:
+            rdp_scancode = RDP_SCANCODE_UP;
+            break;
+        case GDK_KEY_Right:
+            rdp_scancode = RDP_SCANCODE_RIGHT;
+            break;
+        case GDK_KEY_Down:
+            rdp_scancode = RDP_SCANCODE_DOWN;
+            break;
+        case GDK_KEY_Insert:
+            rdp_scancode = RDP_SCANCODE_INSERT;
+            break;
+        case GDK_KEY_Home:
+            rdp_scancode = RDP_SCANCODE_HOME;
+            break;
+        case GDK_KEY_End:
+            rdp_scancode = RDP_SCANCODE_END;
+            break;
+        case GDK_KEY_Delete:
+            rdp_scancode = RDP_SCANCODE_DELETE;
+            break;
+        case GDK_KEY_Prior:
+            rdp_scancode = RDP_SCANCODE_PRIOR;
+            break;
+        case GDK_KEY_Next:
+            rdp_scancode = RDP_SCANCODE_NEXT;
+            break;
+        case GDK_KEY_KP_Divide:
+            rdp_scancode = RDP_SCANCODE_DIVIDE;
+            break;
+        default:
+            // other keys
+            rdp_scancode = GetVirtualScanCodeFromVirtualKeyCode(event->hardware_keycode, 4);
+            break;
+    }
+#endif
+    // Игнорируем принтскрин по просьбе сверху
+    if (rdp_scancode == RDP_SCANCODE_PRINTSCREEN || rdp_scancode == 84) // 84  - on windows
+        return;
+
+    BOOL is_success = freerdp_input_send_keyboard_event_ex(input, down, rdp_scancode);
+    (void) is_success;
+
+    //g_info("%s: hardkey: 0x%X scancode: 0x%X keyval: 0x%X down: %i\n", (const char *) __func__,
+    //       event->hardware_keycode, rdp_scancode, event->keyval, down);
+}
+
+static gboolean rdp_viewer_window_key_pressed(GtkWidget *widget G_GNUC_UNUSED, GdkEventKey *event, gpointer user_data)
+{
+    vdi_ws_client_send_user_gui(vdi_session_get_ws_client()); // notify server
+
+    ExtendedRdpContext* tf = (ExtendedRdpContext*)user_data;
+    rdp_viewer_window_handle_key_event(event, tf, TRUE);
+    return TRUE;
+}
+
+static gboolean rdp_viewer_window_key_released(GtkWidget *widget G_GNUC_UNUSED, GdkEventKey *event, gpointer user_data)
+{
+    ExtendedRdpContext* tf = (ExtendedRdpContext*)user_data;
+    rdp_viewer_window_handle_key_event(event, tf, FALSE);
+
+    return TRUE;
+}
+
 RdpWindowData *rdp_viewer_window_create(ExtendedRdpContext *ex_rdp_context, int index, GdkRectangle geometry)
 {
     RdpWindowData *rdp_window_data = malloc(sizeof(RdpWindowData));
@@ -621,6 +721,9 @@ RdpWindowData *rdp_viewer_window_create(ExtendedRdpContext *ex_rdp_context, int 
     g_signal_connect(item_tk_doc, "activate", G_CALLBACK(rdp_viewer_item_tk_doc_activated), NULL);
     g_signal_connect(item_dialog_with_admin, "activate",
             G_CALLBACK(rdp_viewer_item_dialog_with_admin_activated), ex_rdp_context);
+    g_signal_connect(rdp_viewer_window, "key-press-event", G_CALLBACK(rdp_viewer_window_key_pressed), ex_rdp_context);
+    g_signal_connect(rdp_viewer_window, "key-release-event",
+            G_CALLBACK(rdp_viewer_window_key_released), ex_rdp_context);
 
     // other signals
     rdp_window_data->vm_changed_handle = g_signal_connect(get_vdi_session_static(), "vm-changed",
@@ -633,7 +736,7 @@ RdpWindowData *rdp_viewer_window_create(ExtendedRdpContext *ex_rdp_context, int 
                 "usb-redir-finished", G_CALLBACK(rdp_viewer_window_usb_redir_task_finished), rdp_window_data);
 
     // create RDP display and add to scrolled window
-    rdp_window_data->rdp_display = rdp_display_create(rdp_window_data, ex_rdp_context);
+    rdp_window_data->rdp_display = rdp_display_create(rdp_window_data);
     gtk_widget_set_size_request(rdp_window_data->rdp_display, geometry.width, geometry.height);
 
     GtkWidget *scrolled_window = gtk_scrolled_window_new(NULL, NULL);
