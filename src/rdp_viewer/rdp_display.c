@@ -267,7 +267,6 @@ static gboolean rdp_display_key_pressed(GtkWidget *widget G_GNUC_UNUSED, GdkEven
 
     ExtendedRdpContext* tf = (ExtendedRdpContext*)user_data;
     rdp_viewer_handle_key_event(event, tf, TRUE);
-
     return TRUE;
 }
 
