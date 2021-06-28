@@ -449,8 +449,5 @@ GtkWidget *rdp_display_create(RdpWindowData *rdp_window_data, ExtendedRdpContext
     g_signal_connect(rdp_display, "scroll-event",G_CALLBACK (rdp_display_wheel_scrolled), rdp_window_data);
     g_signal_connect(rdp_display, "draw", G_CALLBACK(rdp_display_event_on_draw), rdp_window_data);
 
-    //GtkClipboard *gtkClipboard = gtk_widget_get_clipboard(rdp_display, GDK_SELECTION_CLIPBOARD);
-    //g_signal_connect(gtkClipboard, "owner-change", G_CALLBACK(rdp_event_on_clipboard), clipboard);
-
     return rdp_display;
 }

@@ -733,8 +733,7 @@
                                 <property name="homogeneous">True</property>
                                 <child>
                                   <object class="GtkCheckButton" id="use_rdp_file_check_btn">
-                                    <property name="label" translatable="yes">Файл настроек 
-RDP</property>
+                                    <property name="label" translatable="yes">RDP файл</property>
                                     <property name="visible">True</property>
                                     <property name="can_focus">True</property>
                                     <property name="receives_default">False</property>
