@@ -10,6 +10,7 @@
 #define RDP_VIEWER_WINDOW_H
 
 #include "rdp_client.h"
+#include "rdp_display.h"
 
 #include <gtk/gtk.h>
 
@@ -25,7 +26,7 @@ typedef struct{
     VirtViewerTimedRevealer *revealer;
     GtkWidget *top_menu;
 
-    GtkWidget *rdp_display;
+    RdpDisplay *rdp_display;
 
     // monitor data
     int monitor_index;

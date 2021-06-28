@@ -17,14 +17,28 @@
 #include <freerdp/utils/signal.h>
 
 #include "rdp_client.h"
-#include "rdp_viewer_window.h"
 
-//typedef struct{
-//    RdpWindowData *rdp_window_data;
-//    ExtendedRdpContext *ex_rdp_context;
 
-//} RdpDisplayData;
+#define TYPE_RDP_DISPLAY  (rdp_display_get_type ())
+#define RDP_DISPLAY(obj)  (G_TYPE_CHECK_INSTANCE_CAST ((obj), TYPE_RDP_DISPLAY, RdpDisplay))
 
-GtkWidget *rdp_display_create(RdpWindowData *rdp_window_data);
+
+typedef struct
+{
+    GtkDrawingArea parent_instance;
+
+    ExtendedRdpContext *ex_context; // weak ref (not owning)
+    GdkRectangle geometry;
+
+} RdpDisplay;
+
+typedef struct
+{
+    GtkDrawingAreaClass parent_class;
+} RdpDisplayClass;
+
+GType rdp_display_get_type(void) G_GNUC_CONST;
+
+RdpDisplay *rdp_display_new(ExtendedRdpContext *ex_context, GdkRectangle geometry);
 
 #endif // RDP_DISPLAY_H

@@ -43,7 +43,7 @@ static gboolean rdp_viewer_update_cursor(rdpContext* context)
 
     for (guint i = 0; i < ex_rdp_context->rdp_windows_array->len; ++i) {
         RdpWindowData *rdp_window_data = g_array_index(ex_rdp_context->rdp_windows_array, RdpWindowData *, i);
-        GdkWindow *parent_window = gtk_widget_get_parent_window(rdp_window_data->rdp_display);
+        GdkWindow *parent_window = gtk_widget_get_parent_window(GTK_WIDGET(rdp_window_data->rdp_display));
         gdk_window_set_cursor(parent_window,  ex_rdp_context->gdk_cursor);
     }
 
@@ -59,22 +59,8 @@ static gboolean rdp_viewer_update_cursor(rdpContext* context)
 static gboolean rdp_viewer_update_images(gpointer user_data)
 {
     ExtendedRdpContext* ex_rdp_context = (ExtendedRdpContext *)user_data;
-    //if (!ex_rdp_context->display_update_queue)
-    //    return G_SOURCE_CONTINUE;
 
-    // get region grom queue
-    //GdkRectangle *update_region = (GdkRectangle *)g_async_queue_try_pop(ex_rdp_context->display_update_queue);
-    //if (update_region && update_region->width >= 0 && update_region->height >= 0) {
-
-        //gint64 cur = g_get_monotonic_time();
-        //g_info("POP time %lli", cur - prev);
-        //prev = cur;
-
-        //gint q_len = g_async_queue_length(ex_rdp_context->display_update_queue);
-        //g_info("UDATE: %i %i %i %i     q_len: %i", update_region->x, update_region->y,
-        //       update_region->width, update_region->height, q_len);
-
-        // invalidate regions
+    // invalidate regions
     g_mutex_lock(&ex_rdp_context->invalid_region_mutex);
 
     if (ex_rdp_context->invalid_region_has_data) {
@@ -83,11 +69,10 @@ static gboolean rdp_viewer_update_images(gpointer user_data)
 
         for (guint i = 0; i < ex_rdp_context->rdp_windows_array->len; ++i) {
             RdpWindowData *rdp_window_data = g_array_index(ex_rdp_context->rdp_windows_array, RdpWindowData *, i);
-            gtk_widget_queue_draw_area(rdp_window_data->rdp_display,
+            gtk_widget_queue_draw_area(GTK_WIDGET(rdp_window_data->rdp_display),
                                        ex_rdp_context->invalid_region.x - rdp_window_data->monitor_geometry.x,
                                        ex_rdp_context->invalid_region.y - rdp_window_data->monitor_geometry.y,
                                        ex_rdp_context->invalid_region.width, ex_rdp_context->invalid_region.height);
-            //gtk_widget_queue_draw(rdp_window_data->rdp_display);
         }
 
         ex_rdp_context->invalid_region_has_data = FALSE;

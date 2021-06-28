@@ -736,11 +736,11 @@ RdpWindowData *rdp_viewer_window_create(ExtendedRdpContext *ex_rdp_context, int 
                 "usb-redir-finished", G_CALLBACK(rdp_viewer_window_usb_redir_task_finished), rdp_window_data);
 
     // create RDP display and add to scrolled window
-    rdp_window_data->rdp_display = rdp_display_create(rdp_window_data);
-    gtk_widget_set_size_request(rdp_window_data->rdp_display, geometry.width, geometry.height);
+    rdp_window_data->rdp_display = rdp_display_new(ex_rdp_context, geometry);
+    gtk_widget_set_size_request(GTK_WIDGET(rdp_window_data->rdp_display), geometry.width, geometry.height);
 
     GtkWidget *scrolled_window = gtk_scrolled_window_new(NULL, NULL);
-    gtk_container_add(GTK_CONTAINER(scrolled_window), rdp_window_data->rdp_display);
+    gtk_container_add(GTK_CONTAINER(scrolled_window), GTK_WIDGET(rdp_window_data->rdp_display));
 
     GtkWidget *vbox = GTK_WIDGET(gtk_builder_get_object(builder, "viewer-box"));
     gtk_box_pack_end(GTK_BOX(vbox), scrolled_window, TRUE, TRUE, 0);
