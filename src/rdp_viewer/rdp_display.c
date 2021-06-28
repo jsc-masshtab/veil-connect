@@ -262,7 +262,7 @@ static gboolean rdp_display_wheel_scrolled(GtkWidget *widget G_GNUC_UNUSED, GdkE
     rdpInput *input = context->input;
     //g_info("%s event->delta_y %f event->delta_x %f\n", (const char *)__func__, event->delta_y, event->delta_x);
 
-    int rotationUnits = 0x0078;
+    const int rotationUnits = 0x0078;
     UINT16 x, y;
     rdp_display_translate_mouse_pos(rdp_display, &x, &y, event->x, event->y);
     if ( event->delta_y > 0.5)
