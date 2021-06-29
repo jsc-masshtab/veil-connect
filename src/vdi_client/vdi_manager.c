@@ -213,7 +213,7 @@ static void on_vdi_session_get_vdi_pool_data_finished(GObject *source_object G_G
     guint json_arrayLength = MIN(json_array_get_length(json_array), MAX_POOL_NUMBER);
     g_info("Number of vm pools: %i", json_arrayLength);
 
-    for(int i = (int)json_arrayLength - 1; i >= 0; --i){
+    for (int i = (int)json_arrayLength - 1; i >= 0; --i) {
 
         JsonObject *object = json_array_get_object_element(json_array, (guint)i);
 

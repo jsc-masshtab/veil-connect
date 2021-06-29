@@ -193,11 +193,13 @@ void vdi_ws_client_start(VdiWsClient *vdi_ws_client, const gchar *vdi_ip, int vd
     //g_array_append_val(query_params_dyn_array, rdp_param);
 
     g_autofree gchar *base_query_pars = NULL;
+    g_autofree gchar *token = NULL;
+    token = vdi_session_get_token();
     base_query_pars = g_strdup_printf("?token=%s&"
                                       "is_conn_init_by_user=%i&"
                                       "veil_connect_version=%s&"
                                       "tk_os=%s",
-                                      vdi_session_get_token(),
+                                      token,
                                       vdi_ws_client->is_connect_initiated_by_user,
                                       VERSION,
                                       util_get_os_name());

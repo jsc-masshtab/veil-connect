@@ -116,7 +116,8 @@ VdiSession *vdi_session_new()
 
     vdi_session->api_url = NULL;
     vdi_session->auth_url = NULL;
-    vdi_session->jwt = NULL;
+
+    atomic_string_init(&vdi_session->jwt);
 
     vdi_session->pool_type = VDI_POOL_TYPE_UNKNOWN;
     vdi_session->current_pool_id = NULL;
@@ -144,7 +145,8 @@ static void free_session_memory()
 
     free_memory_safely(&vdi_session_static->api_url);
     free_memory_safely(&vdi_session_static->auth_url);
-    free_memory_safely(&vdi_session_static->jwt);
+
+    atomic_string_set(&vdi_session_static->jwt, NULL);
 
     free_memory_safely(&vdi_session_static->current_pool_id);
     free_memory_safely(&vdi_session_static->current_vm_id);
@@ -155,10 +157,12 @@ static void free_session_memory()
 static void setup_header_for_vdi_session_api_call(SoupMessage *msg)
 {
     soup_message_headers_clear(msg->request_headers);
-    gchar *authHeader = g_strdup_printf("jwt %s", vdi_session_static->jwt);
+    g_autofree gchar *jwt_str = NULL;
+    jwt_str = atomic_string_get(&vdi_session_static->jwt);
+    gchar *auth_header = g_strdup_printf("jwt %s", jwt_str);
     //g_info("%s %s\n", (const char *)__func__, authHeader);
-    soup_message_headers_append(msg->request_headers, "Authorization", authHeader);
-    g_free(authHeader);
+    soup_message_headers_append(msg->request_headers, "Authorization", auth_header);
+    g_free(auth_header);
     soup_message_headers_append(msg->request_headers, "Content-Type", "application/json");
     soup_message_headers_append(msg->request_headers, "User-Agent", "thin-client");
 }
@@ -234,8 +238,8 @@ static gchar *vdi_session_auth_request()
 
     switch (server_reply_type) {
         case SERVER_REPLY_TYPE_DATA: {
-            free_memory_safely(&vdi_session_static->jwt);
-            vdi_session_static->jwt = g_strdup(json_object_get_string_member_safely(reply_json_object, "access_token"));
+            const gchar *jwt_str = json_object_get_string_member_safely(reply_json_object, "access_token");
+            atomic_string_set(&vdi_session_static->jwt, jwt_str);
             // В основном потоке вызывается на смену токена
             g_timeout_add(500, (GSourceFunc)vdi_api_session_restart_vdi_ws_client, NULL);
 
@@ -319,6 +323,7 @@ void vdi_session_static_destroy()
     vdi_session_logout();
 
     // free memory
+    atomic_string_deinit(&vdi_session_static->jwt);
     g_object_unref(vdi_session_static->soup_session);
     free_session_memory();
     g_object_unref(vdi_session_static);
@@ -364,9 +369,9 @@ const gchar *vdi_session_get_vdi_password(void)
     return vdi_session_static->vdi_password;
 }
 
-const gchar *vdi_session_get_token(void)
+gchar *vdi_session_get_token(void)
 {
-    return vdi_session_static->jwt;
+    return atomic_string_get(&vdi_session_static->jwt);
 }
 
 void vdi_session_cancell_pending_requests()
@@ -538,43 +543,39 @@ gchar *vdi_session_api_call(const char *method, const char *uri_string, const gc
         return response_body_str;
 
     // get the token if we dont have it
-    if (vdi_session_static->jwt == NULL) {
+    g_autofree gchar *jwt_str = NULL;
+    jwt_str = atomic_string_get(&vdi_session_static->jwt);
+    if (jwt_str == NULL) {
         gchar *reply_msg = vdi_session_auth_request();
         g_free(reply_msg);
+        // Return if couldn't get the token
+        g_autofree gchar *jwt_str_updated = NULL;
+        jwt_str_updated = atomic_string_get(&vdi_session_static->jwt);
+        if (jwt_str_updated == NULL) {
+            g_warning("%s :Token is NULL. Cant get token", (const char *)__func__);
+            return response_body_str;
+        }
     }
 
+    // create msg
     SoupMessage *msg = soup_message_new(method, uri_string);
     if (msg == NULL) // this may happen according to doc
         return response_body_str;
-
     // set header
     setup_header_for_vdi_session_api_call(msg);
     // set body
     if(body_str)
-        soup_message_set_request(msg, "application/json",
-                SOUP_MEMORY_COPY, body_str, strlen_safely(body_str));
+        soup_message_set_request(msg, "application/json", SOUP_MEMORY_COPY, body_str, strlen_safely(body_str));
 
-    // start attempts
-    const int max_attempt_count = 2;
-    for(int attempt_count = 0; attempt_count < max_attempt_count; attempt_count++) {
-        // send request.
-        send_message(msg);
-        g_info("msg->status_code: %i", msg->status_code);
-        //g_info("msg->response_body: %s", msg->response_body->data);
+    // send request.
+    send_message(msg);
+    g_info("vdi_session_api_call: msg->status_code: %i", msg->status_code);
+    //g_info("msg->response_body: %s", msg->response_body->data);
+    //if (msg->status_code == AUTH_FAIL_RESPONSE) {
+    //    // request to go to the auth gui (like browsers do) ?
+    //}
 
-        // При первой попытке если AUTH_FAIL_RESPONSE, то пробуем обновить токен и повторить
-        if (msg->status_code == AUTH_FAIL_RESPONSE && attempt_count == 0) {
-            gchar *reply_msg = vdi_session_auth_request();
-            g_free(reply_msg);
-            gchar *auth_header = g_strdup_printf("jwt %s", vdi_session_static->jwt);
-            soup_message_headers_replace(msg->request_headers, "Authorization", auth_header);
-            g_free(auth_header);
-            continue;
-        }
-
-        response_body_str = g_strdup(msg->response_body->data); // json_string_with_data. memory allocation!
-        break;
-    }
+    response_body_str = g_strdup(msg->response_body->data); // json_string_with_data. memory allocation!
 
     g_object_unref(msg);
 
@@ -589,11 +590,13 @@ void vdi_session_log_in_task(GTask       *task,
                    GCancellable  *cancellable G_GNUC_UNUSED)
 {
     // get token
-    free_memory_safely(&vdi_session_static->jwt);
+    atomic_string_set(&vdi_session_static->jwt, NULL);
     gchar *reply_msg = vdi_session_auth_request();
 
-    // register for licensing
-    if (vdi_session_static->jwt)
+    // register for licensing.  Для поддержки предыдущих версий VDI. Редис не доступен из вне с версии VDI 3.1.1
+    g_autofree gchar *jwt_str = NULL;
+    jwt_str = atomic_string_get(&vdi_session_static->jwt);
+    if (jwt_str)
         vdi_api_session_register_for_license();
 
     g_task_return_pointer(task, reply_msg, NULL); // reply_msg is freed in task callback
@@ -831,7 +834,9 @@ gboolean vdi_session_logout(void)
     vdi_session_cancell_pending_requests();
 
     g_info("%s", (const char *)__func__);
-    if (vdi_session_static->jwt) {
+    g_autofree gchar *jwt_str = NULL;
+    jwt_str = atomic_string_get(&vdi_session_static->jwt);
+    if (jwt_str) {
         gchar *url_str = g_strdup_printf("%s/logout", vdi_session_static->api_url);
 
         SoupMessage *msg = soup_message_new("POST", url_str);
@@ -853,8 +858,8 @@ gboolean vdi_session_logout(void)
             g_object_unref(msg);
 
             if (res_code == OK_RESPONSE) {
-                // logout was succesfull so we can foget the token
-                free_memory_safely(&vdi_session_static->jwt);
+                // logout was successful so we can forget the token
+                atomic_string_set(&vdi_session_static->jwt, NULL);
                 return TRUE;
             }
             else

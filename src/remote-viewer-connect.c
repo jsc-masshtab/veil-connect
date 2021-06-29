@@ -189,7 +189,9 @@ on_vdi_session_log_in_finished(GObject *source_object G_GNUC_UNUSED,
 
     set_auth_dialog_state(AUTH_GUI_DEFAULT_STATE, ci);
 
-    if (vdi_session_get_token()) {
+    g_autofree gchar *token = NULL;
+    token = vdi_session_get_token();
+    if (token) {
         ci->dialog_window_response = GTK_RESPONSE_OK;
         set_data_from_gui_in_outer_pointers(ci);
 

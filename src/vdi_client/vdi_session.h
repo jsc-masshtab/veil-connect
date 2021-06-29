@@ -20,6 +20,7 @@
 #include "vdi_ws_client.h"
 #include "async.h"
 #include "jsonhandler.h"
+#include "atomic_string.h"
 
 #define HTTP_RESPONSE_TIOMEOUT 20
 
@@ -142,8 +143,8 @@ struct _VdiSession
 
     gchar *api_url;
     gchar *auth_url;
-    gchar *jwt;
     gboolean is_ldap;
+    AtomicString jwt;
 
     // data about current pool and vm
     VdiPoolType pool_type;
@@ -193,8 +194,8 @@ int vdi_session_get_vdi_port(void);
 const gchar *vdi_session_get_vdi_username(void);
 // get password
 const gchar *vdi_session_get_vdi_password(void);
-//get current token
-const gchar *vdi_session_get_token(void);
+//get copy of the current token. memory must be freed
+gchar *vdi_session_get_token(void);
 
 // cancell pending requests
 void vdi_session_cancell_pending_requests(void);
