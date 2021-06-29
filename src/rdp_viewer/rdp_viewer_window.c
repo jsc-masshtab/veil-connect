@@ -644,6 +644,16 @@ static gboolean rdp_viewer_window_key_released(GtkWidget *widget G_GNUC_UNUSED, 
     return TRUE;
 }
 
+static void rdp_viewer_window_show(RdpWindowData *rdp_window_data, GdkRectangle geometry)
+{
+    g_info("%s W: %u x H:%u x:%i y:%i", (const char *)__func__,
+           geometry.width, geometry.height, geometry.x, geometry.y);
+
+    gtk_window_resize(GTK_WINDOW(rdp_window_data->rdp_viewer_window), geometry.width, geometry.height);
+    gtk_window_move(GTK_WINDOW(rdp_window_data->rdp_viewer_window), geometry.x, geometry.y);
+    gtk_widget_show_all(rdp_window_data->rdp_viewer_window);
+}
+
 RdpWindowData *rdp_viewer_window_create(ExtendedRdpContext *ex_rdp_context, int index, GdkRectangle geometry)
 {
     RdpWindowData *rdp_window_data = malloc(sizeof(RdpWindowData));
@@ -745,10 +755,8 @@ RdpWindowData *rdp_viewer_window_create(ExtendedRdpContext *ex_rdp_context, int 
     GtkWidget *vbox = GTK_WIDGET(gtk_builder_get_object(builder, "viewer-box"));
     gtk_box_pack_end(GTK_BOX(vbox), scrolled_window, TRUE, TRUE, 0);
 
-    // set monitor data for rdp viewer window
-    rdp_viewer_window_set_monitor_data(rdp_window_data, geometry);
-    // show
-    gtk_widget_show_all(rdp_viewer_window);
+    // position the window and show
+    rdp_viewer_window_show(rdp_window_data, geometry);
 
     return rdp_window_data;
 }
@@ -767,19 +775,6 @@ void rdp_viewer_window_destroy(RdpWindowData *rdp_window_data)
     gtk_widget_destroy(rdp_window_data->overlay_toolbar);
     gtk_widget_destroy(rdp_window_data->rdp_viewer_window);
     free(rdp_window_data);
-}
-
-void rdp_viewer_window_set_monitor_data(RdpWindowData *rdp_window_data, GdkRectangle geometry)
-{
-    g_info("%s W: %u x H:%u x:%i y:%i", (const char *)__func__,
-            geometry.width, geometry.height, geometry.x, geometry.y);
-    rdp_window_data->monitor_geometry = geometry;
-
-    gtk_window_resize(GTK_WINDOW(rdp_window_data->rdp_viewer_window),
-                      rdp_window_data->monitor_geometry.width, rdp_window_data->monitor_geometry.height);
-    gtk_window_move(GTK_WINDOW(rdp_window_data->rdp_viewer_window),
-                      rdp_window_data->monitor_geometry.x, rdp_window_data->monitor_geometry.y);
-    //gtk_window_set_position(GTK_WINDOW(rdp_window_data->rdp_viewer_window), GTK_WIN_POS_CENTER);
 }
 
 void rdp_viewer_window_stop(RdpWindowData *rdp_window_data, RemoteViewerState next_app_state)

@@ -62,15 +62,18 @@ static gboolean rdp_viewer_update_images(gpointer user_data)
     g_mutex_lock(&ex_rdp_context->invalid_region_mutex);
 
     if (ex_rdp_context->invalid_region_has_data) {
-        g_info("UDATE: %i %i %i %i  ", ex_rdp_context->invalid_region.x, ex_rdp_context->invalid_region.y,
-               ex_rdp_context->invalid_region.width, ex_rdp_context->invalid_region.height);
-
+        //g_info("UDATE: %i %i %i %i  ", ex_rdp_context->invalid_region.x, ex_rdp_context->invalid_region.y,
+        //       ex_rdp_context->invalid_region.width, ex_rdp_context->invalid_region.height);
         for (guint i = 0; i < ex_rdp_context->rdp_windows_array->len; ++i) {
             RdpWindowData *rdp_window_data = g_array_index(ex_rdp_context->rdp_windows_array, RdpWindowData *, i);
-            gtk_widget_queue_draw_area(GTK_WIDGET(rdp_window_data->rdp_display),
-                                       ex_rdp_context->invalid_region.x - rdp_window_data->monitor_geometry.x,
-                                       ex_rdp_context->invalid_region.y - rdp_window_data->monitor_geometry.y,
-                                       ex_rdp_context->invalid_region.width, ex_rdp_context->invalid_region.height);
+            RdpDisplay *rdp_display = rdp_window_data->rdp_display;
+            if (rdp_display) {
+                gtk_widget_queue_draw_area(GTK_WIDGET(rdp_display),
+                                           ex_rdp_context->invalid_region.x - rdp_display->geometry.x,
+                                           ex_rdp_context->invalid_region.y - rdp_display->geometry.y,
+                                           ex_rdp_context->invalid_region.width,
+                                           ex_rdp_context->invalid_region.height);
+            }
         }
 
         ex_rdp_context->invalid_region_has_data = FALSE;
@@ -192,7 +195,6 @@ RemoteViewerState rdp_viewer_start(RemoteViewer *app, VeilRdpSettings *p_rdp_set
         RdpWindowData *rdp_window_data = g_array_index(rdp_windows_array, RdpWindowData *, 0);
 
         // Это необходимо, чтобы не было отступа при рисовании картинки или получени позиции мыши
-        rdp_window_data->monitor_geometry.x = rdp_window_data->monitor_geometry.y = 0;
         rdp_window_data->rdp_display->geometry.x = rdp_window_data->rdp_display->geometry.y = 0;
     }
 #ifdef __APPLE__
