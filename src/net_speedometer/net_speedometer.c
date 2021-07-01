@@ -272,8 +272,8 @@ static gboolean net_speedometer_check_stats(NetSpeedometer *self)
         self->nw.rdp_write_bytes = 0;
     }
 #else
-    self->rdp_read_speed = 0;
-    self->rdp_write_speed = 0;
+    self->nw.rdp_read_speed = 0;
+    self->nw.rdp_write_speed = 0;
 #endif
     // Spice
     if (self->p_virt_viewer_app && virt_viewer_app_is_active(self->p_virt_viewer_app)) {
