@@ -499,7 +499,8 @@ gboolean virt_viewer_session_open_fd(VirtViewerSession *session, int fd)
     return VIRT_VIEWER_SESSION_GET_CLASS(session)->open_fd(session, fd);
 }
 
-gboolean virt_viewer_session_open_host(VirtViewerSession *session, const gchar *host, const gchar *port, const gchar *tlsport)
+gboolean virt_viewer_session_open_host(VirtViewerSession *session,
+        const gchar *host, const gchar *port, const gchar *tlsport)
 {
     VirtViewerSessionClass *klass;
 

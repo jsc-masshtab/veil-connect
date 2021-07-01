@@ -158,10 +158,6 @@ remote_viewer_init(RemoteViewer *self)
     self->virt_viewer_obj = virt_viewer_app_new();
     virt_viewer_app_set_app_pointer(self->virt_viewer_obj, GTK_APPLICATION(self));
 
-    // network stats monitor
-    self->net_speedometer = net_speedometer_new();
-    net_speedometer_set_pointer_to_virt_viewer_app(self->net_speedometer, self->virt_viewer_obj);
-
     // app updater entity
     self->app_updater = app_updater_new();
 
@@ -185,7 +181,6 @@ remote_viewer_new(void)
 void remote_viewer_free_resources(RemoteViewer *self)
 {
     g_object_unref(self->virt_viewer_obj);
-    g_object_unref(self->net_speedometer);
     g_object_unref(self->app_updater);
     if (self->vdi_manager)
         g_object_unref(self->vdi_manager);
@@ -195,20 +190,6 @@ void remote_viewer_free_resources(RemoteViewer *self)
 
     usbredir_controller_deinit_static();
     vdi_session_static_destroy();
-}
-
-// akward method
-static void set_spice_session_data(VirtViewerApp *app, gchar *ip, int port, gchar *user, gchar *password)
-{
-    g_info("%s port %i\n", (const char *)__func__, port);
-    g_info("%s user %s\n", (const char *)__func__, user);
-
-    gchar *guri = g_strdup_printf("spice://%s:%i", ip, port);
-    g_strstrip(guri);
-    g_object_set(app, "guri", guri, NULL);
-    g_free(guri);
-
-    virt_viewer_session_spice_set_credentials(user, password);
 }
 
 static void connect_settings_data_clear(ConnectSettingsData *connect_settings_data)
@@ -223,12 +204,6 @@ static void connect_settings_data_clear(ConnectSettingsData *connect_settings_da
     rdp_settings_clear(&connect_settings_data->rdp_settings);
 }
 
-static void remote_viewer_vm_changed_notify(RemoteViewer *self, const gchar *vm_id, const gchar *vm_ip)
-{
-    vdi_ws_client_send_vm_changed(vdi_session_get_ws_client(), vm_id);
-    net_speedometer_update_vm_ip(self->net_speedometer, vm_ip);
-}
-
 static void
 remote_viewer_start(RemoteViewer *self, RemoteViewerState remoteViewerState G_GNUC_UNUSED)
 {
@@ -237,19 +212,20 @@ remote_viewer_start(RemoteViewer *self, RemoteViewerState remoteViewerState G_GN
     self->veil_messenger = veil_messenger_new();
     // remote connect dialog
 retry_auth:
-    {
-        veil_messenger_hide(self->veil_messenger);
-        // Забираем из ui адрес и порт
-        GtkResponseType dialog_window_response = remote_viewer_connect_dialog(self, &con_data);
-        if (dialog_window_response == GTK_RESPONSE_CLOSE)
-            goto to_exit;
-    }
+
+    veil_messenger_hide(self->veil_messenger);
+    // Забираем из ui адрес и порт
+    GtkResponseType dialog_window_response = remote_viewer_connect_dialog(self, &con_data);
+    if (dialog_window_response == GTK_RESPONSE_CLOSE)
+        goto to_exit;
+
     // После такого как забрали адресс с логином и паролем действуем в зависимости от opt_manual_mode
     // 1) в мануальном режиме сразу подключаемся к удаленноиу раб столу
     // 2) В дефолтном режиме вызываем vdi manager. В нем пользователь выберет машину для подключения
 retry_connect_to_vm:
     /// instant connect attempt
     if (opt_manual_mode) {
+        RemoteViewerState app_state = APP_STATE_AUTH_DIALOG;
         if (vdi_session_get_current_remote_protocol() == VDI_RDP_PROTOCOL) {
             // Либо берем данные ГУИ, либо парсим rdp файл
             gboolean read_from_std_rdp_file = read_int_from_ini_file("RDPSettings", "use_rdp_file", 0);
@@ -261,21 +237,23 @@ retry_connect_to_vm:
                         con_data.domain, con_data.ip, con_data.port);
             }
 
-            RemoteViewerState app_state = rdp_viewer_start(self, &con_data.rdp_settings);
-            if (app_state == APP_STATE_AUTH_DIALOG)
-                goto retry_auth;
-            else if (app_state == APP_STATE_EXITING)
-                goto to_exit;
+            app_state = rdp_viewer_start(self, &con_data.rdp_settings);
 
         } else { // spice by default
-        set_spice_session_data(self->virt_viewer_obj, con_data.ip, con_data.port, con_data.user, con_data.password);
-        virt_viewer_app_instant_start(self->virt_viewer_obj);
-        // go back to auth or quit
-        if (virt_viewer_app_is_quitting(self->virt_viewer_obj))
-            goto to_exit;
-        else
+            virt_viewer_app_set_spice_session_data(self->virt_viewer_obj, con_data.ip, con_data.port,
+                    con_data.user, con_data.password);
+            virt_viewer_app_instant_start(self->virt_viewer_obj);
+            // go back to auth or quit
+            if (virt_viewer_app_is_quitting(self->virt_viewer_obj))
+                app_state = APP_STATE_EXITING;
+            else
+                app_state = APP_STATE_AUTH_DIALOG;
+        }
+
+        if (app_state == APP_STATE_AUTH_DIALOG)
             goto retry_auth;
-    }
+        else if (app_state == APP_STATE_EXITING)
+            goto to_exit;
     /// VDI connect mode
     } else {
         // remember username
@@ -296,7 +274,7 @@ retry_connect_to_vm:
         }
         con_data.is_connect_to_prev_pool = FALSE; // reset the flag
 
-        remote_viewer_vm_changed_notify(self, vdi_session_get_current_vm_id(), con_data.ip);
+        vdi_ws_client_send_vm_changed(vdi_session_get_ws_client(), vdi_session_get_current_vm_id());
         // connect to vm depending remote protocol
         RemoteViewerState next_app_state = APP_STATE_VDI_DIALOG;
         if (vdi_session_get_current_remote_protocol() == VDI_RDP_PROTOCOL) {
@@ -307,20 +285,22 @@ retry_connect_to_vm:
                             vdi_session_get_vdi_password(), con_data.domain, con_data.ip, 0);
             next_app_state = rdp_viewer_start(self, &con_data.rdp_settings);
 #ifdef _WIN32
-        }else if (vdi_session_get_current_remote_protocol() == VDI_RDP_WINDOWS_NATIVE_PROTOCOL) {
+        } else if (vdi_session_get_current_remote_protocol() == VDI_RDP_WINDOWS_NATIVE_PROTOCOL) {
             rdp_settings_read_ini_file(&con_data.rdp_settings, !con_data.rdp_settings.is_remote_app);
             rdp_settings_set_connect_data(&con_data.rdp_settings, vdi_session_get_vdi_username(),
                                           vdi_session_get_vdi_password(), con_data.domain, con_data.ip, 0);
             launch_windows_rdp_client(&con_data.rdp_settings);
 #endif
         } else { // spice by default
-            set_spice_session_data(self->virt_viewer_obj, con_data.ip, con_data.port, con_data.user, con_data.password);
+            virt_viewer_app_set_spice_session_data(self->virt_viewer_obj, con_data.ip, con_data.port,
+                    con_data.user, con_data.password);
             virt_viewer_app_set_window_name(self->virt_viewer_obj, con_data.vm_verbose_name);
             virt_viewer_app_start_connect_attempts(self->virt_viewer_obj);
             next_app_state = virt_viewer_get_next_app_state(self->virt_viewer_obj);
         }
 
-        remote_viewer_vm_changed_notify(self, NULL, NULL);
+        vdi_ws_client_send_vm_changed(vdi_session_get_ws_client(), NULL);
+
         if (next_app_state == APP_STATE_EXITING)
             goto to_exit;
         else if (next_app_state == APP_STATE_AUTH_DIALOG)

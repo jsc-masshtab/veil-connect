@@ -15,6 +15,7 @@
 #include <gtk/gtk.h>
 
 #include "remote-viewer-timed-revealer.h"
+#include "conn_info_dialog.h"
 
 typedef struct{
     GMainLoop **loop_p;
@@ -27,6 +28,8 @@ typedef struct{
     GtkWidget *top_menu;
 
     RdpDisplay *rdp_display;
+
+    ConnInfoDialog *conn_info_dialog;
 
     // monitor data
     int monitor_index;

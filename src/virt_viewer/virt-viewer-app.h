@@ -29,6 +29,8 @@
 #include <gtk/gtk.h>
 #include "virt-viewer-window.h"
 #include "remote-viewer-util.h"
+#include "vdi_session.h"
+#include "net_speedometer.h"
 
 G_BEGIN_DECLS
 
@@ -40,12 +42,14 @@ G_BEGIN_DECLS
 #define VIRT_VIEWER_APP_GET_CLASS(obj) (G_TYPE_INSTANCE_GET_CLASS ((obj), VIRT_VIEWER_TYPE_APP, VirtViewerAppClass))
 
 typedef struct _VirtViewerAppPrivate VirtViewerAppPrivate;
+typedef struct _VirtViewerApp VirtViewerApp;
 
-typedef struct {
+struct _VirtViewerApp {
     GObject parent;
     VirtViewerAppPrivate *priv;
     GtkApplication *application_p; // pointer to current application instance
-} VirtViewerApp;
+    NetSpeedometer *net_speedometer;
+};
 
 typedef struct {
     GObjectClass parent_class;
@@ -62,6 +66,8 @@ GType virt_viewer_app_get_type (void);
 
 VirtViewerApp *virt_viewer_app_new(void);
 void virt_viewer_app_set_app_pointer(VirtViewerApp *self, GtkApplication *application);
+void virt_viewer_app_set_spice_session_data(VirtViewerApp *self, const gchar *ip, int port,
+                                            const gchar *user, const gchar *password);
 
 void virt_viewer_app_setup(VirtViewerApp *self);
 gboolean virt_viewer_app_show_main_window(VirtViewerApp *self);
@@ -129,6 +135,7 @@ void virt_viewer_app_start_loop(VirtViewerApp *self);
 
 void virt_viewer_app_instant_start(VirtViewerApp *self);
 void virt_viewer_app_start_connect_attempts(VirtViewerApp *self);
+
 
 G_END_DECLS
 

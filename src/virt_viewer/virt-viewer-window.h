@@ -27,6 +27,7 @@
 #include <glib-object.h>
 #include "virt-viewer-notebook.h"
 #include "virt-viewer-display.h"
+#include "net_speedometer.h"
 
 G_BEGIN_DECLS
 
@@ -81,6 +82,8 @@ void virt_viewer_window_enter_fullscreen(VirtViewerWindow *self, gint monitor);
 GtkMenuItem *virt_viewer_window_get_menu_displays(VirtViewerWindow *self);
 GtkBuilder* virt_viewer_window_get_builder(VirtViewerWindow *window);
 void virt_viewer_window_set_kiosk(VirtViewerWindow *self, gboolean enabled);
+void virt_viewer_window_update_network_stats(VirtViewerWindow *self, NetworkStatsData *nw_data);
+void virt_viewer_window_update_vm_conn_time(VirtViewerWindow *self, const gchar *time);
 
 G_END_DECLS
 

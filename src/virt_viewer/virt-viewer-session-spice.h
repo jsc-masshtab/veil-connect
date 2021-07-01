@@ -68,8 +68,6 @@ GType virt_viewer_session_spice_get_type(void);
 VirtViewerSession* virt_viewer_session_spice_new(VirtViewerApp *app, GtkWindow *main_window);
 SpiceMainChannel* virt_viewer_session_spice_get_main_channel(VirtViewerSessionSpice *self);
 
-void virt_viewer_session_spice_set_credentials(gchar *username, gchar *password);
-
 void virt_viewer_session_spice_enable_auto_clipboard(VirtViewerSessionSpice *self, gboolean enabled);
 
 void virt_viewer_session_spice_get_stats(VirtViewerSessionSpice *self, SpiceReadBytes *spice_read_bytes);

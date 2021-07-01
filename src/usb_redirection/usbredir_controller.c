@@ -210,7 +210,8 @@ static void usbredir_controller_task_finished(GObject *source_object G_GNUC_UNUS
             g_info("%s", error->message);
         g_clear_error(&error);
 
-        g_signal_emit_by_name(usbredir_controller_static, "ws-cmd-received", USB_REDIR_FINISH_FAIL, error_msg, 0, 0);
+        g_signal_emit_by_name(usbredir_controller_static, "usb-redir-finished",
+                USB_REDIR_FINISH_FAIL, error_msg, 0, 0);
         return;
     }
 

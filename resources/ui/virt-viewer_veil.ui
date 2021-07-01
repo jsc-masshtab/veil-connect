@@ -362,7 +362,7 @@
                             <property name="use_action_appearance">False</property>
                             <property name="visible">True</property>
                             <property name="can_focus">False</property>
-                            <property name="label" translatable="yes">_Официальная страница ECP Veil</property>
+                            <property name="label" translatable="yes">_Официальная страница ECP VeiL</property>
                             <property name="use_underline">True</property>
                             <signal name="activate" handler="virt_viewer_window_menu_help_guest_details" swapped="no"/>
                           </object>
@@ -374,6 +374,15 @@
                             <property name="label" translatable="yes">_Документация</property>
                             <property name="use_underline">True</property>
                             <signal name="activate" handler="virt_viewer_window_menu_help_tk_doc" swapped="no"/>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="GtkMenuItem" id="menu_connection_info">
+                            <property name="visible">True</property>
+                            <property name="can_focus">False</property>
+                            <property name="label" translatable="yes">_Информация о соединении</property>
+                            <property name="use_underline">True</property>
+                            <signal name="activate" handler="virt_viewer_window_menu_connection_info" swapped="no"/>
                           </object>
                         </child>
                         <child>

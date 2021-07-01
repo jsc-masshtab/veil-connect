@@ -31,6 +31,8 @@ typedef struct{
 
     gint reconnect_event_source_id;
 
+    gchar *conn_time;
+
 } VdiWsClient;
 
 
@@ -38,6 +40,8 @@ void vdi_ws_client_start(VdiWsClient *ws_vdi_client, const gchar *vdi_ip, int vd
 void vdi_ws_client_stop(VdiWsClient *ws_vdi_client);
 
 SoupWebsocketState vdi_ws_client_get_conn_state(VdiWsClient *ws_vdi_client);
+
+const gchar *vdi_ws_client_get_conn_time(VdiWsClient *ws_vdi_client);
 
 // Сообщить  vdi серверу что произошло подключение кв вм/либо отключение от вм
 // vm_id == NULL отключение от вм

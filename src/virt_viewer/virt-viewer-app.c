@@ -1218,6 +1218,8 @@ virt_viewer_app_default_activate(VirtViewerApp *self, GError **error)
                             _("Display can only be attached through libvirt with --attach"));
    }
 
+
+
     return FALSE;
 }
 
@@ -1426,6 +1428,17 @@ void virt_viewer_app_start_connect_attempts(VirtViewerApp *self)
     virt_viewer_app_start_loop(self);
 }
 
+/*
+ *  Каллбэк, обработчика сигнала об обновлении сетевой статистики
+ */
+static void virt_viewer_app_stats_data_updated(gpointer data G_GNUC_UNUSED, VdiVmRemoteProtocol protocol G_GNUC_UNUSED,
+                                        NetworkStatsData *nw_data, VirtViewerApp *self)
+{
+    for (GList *l = self->priv->windows; l; l = l->next) {
+        virt_viewer_window_update_network_stats(VIRT_VIEWER_WINDOW(l->data), nw_data);
+    }
+}
+
 void virt_viewer_app_hide_and_deactivate(VirtViewerApp *self)
 {
     // turn off polling if its in process
@@ -1492,6 +1505,13 @@ virt_viewer_app_connected(VirtViewerSession *session G_GNUC_UNUSED,
         virt_viewer_app_show_status(self, "");
     else
         virt_viewer_app_show_status(self, _("Connected to graphic server"));
+
+    // remember conn time
+    g_autofree gchar *cur_time = NULL;
+    cur_time = get_current_readable_time();
+    for (GList *l = self->priv->windows; l; l = l->next) {
+        virt_viewer_window_update_vm_conn_time(VIRT_VIEWER_WINDOW(l->data), cur_time);
+    }
 }
 
 static void
@@ -1779,6 +1799,8 @@ virt_viewer_app_dispose (GObject *object)
     VirtViewerApp *self = VIRT_VIEWER_APP(object);
     VirtViewerAppPrivate *priv = self->priv;
 
+    g_object_unref(self->net_speedometer);
+
     if (priv->preferences)
         gtk_widget_destroy(priv->preferences);
     priv->preferences = NULL;
@@ -1834,6 +1856,28 @@ void virt_viewer_app_set_app_pointer(VirtViewerApp *self, GtkApplication *applic
     self->application_p = application;
 }
 
+void virt_viewer_app_set_spice_session_data(VirtViewerApp *self, const gchar *ip, int port,
+                                            const gchar *user, const gchar *password)
+{
+    g_info("%s port %i\n", (const char *)__func__, port);
+    g_info("%s user %s\n", (const char *)__func__, user);
+
+    gchar *guri = g_strdup_printf("spice://%s:%i", ip, port);
+    g_strstrip(guri);
+    g_object_set(self, "guri", guri, NULL);
+    g_free(guri);
+
+    //VirtViewerSessionSpice *spice_session =
+    //        VIRT_VIEWER_SESSION_SPICE(virt_viewer_app_get_session(self));
+    //virt_viewer_session_spice_set_credentials(spice_session, user, password);
+    // remember credentials
+    g_object_set_data_full(G_OBJECT(self), "username", g_strdup(user), (GDestroyNotify) g_free);
+    g_object_set_data_full(G_OBJECT(self), "password", g_strdup(password), (GDestroyNotify) g_free);
+
+    // update ip in network speedometer
+    net_speedometer_update_vm_ip(self->net_speedometer, ip);
+}
+
 void virt_viewer_app_setup(VirtViewerApp *self)
 {
     self->priv->resource = virt_viewer_get_resource();
@@ -1884,20 +1928,24 @@ title_maybe_changed(VirtViewerApp *self, GParamSpec* pspec G_GNUC_UNUSED, gpoint
 static void
 virt_viewer_app_init(VirtViewerApp *self)
 {
-    GError *error = NULL;
-    GError *error2  = NULL;
+    GError *error  = NULL;
     self->priv = GET_PRIVATE(self);
     self->priv->next_app_state = APP_STATE_VDI_DIALOG;
 
     GdkPixbuf *gdkPixbuf =
-            gdk_pixbuf_new_from_resource(VIRT_VIEWER_RESOURCE_PREFIX"/icons/content/img/veil-32x32.png", &error2);
-    if (!error2)
+            gdk_pixbuf_new_from_resource(VIRT_VIEWER_RESOURCE_PREFIX"/icons/content/img/veil-32x32.png", &error);
+    if (!error)
         gtk_window_set_default_icon(gdkPixbuf);
 
     self->priv->displays = g_hash_table_new_full(g_direct_hash, g_direct_equal, NULL, g_object_unref);
 
     g_clear_error(&error);
-    g_clear_error(&error2);
+
+    // network stats monitor
+    self->net_speedometer = net_speedometer_new();
+    net_speedometer_set_pointer_to_virt_viewer_app(self->net_speedometer, self);
+    g_signal_connect(self->net_speedometer, "stats-data-updated",
+                     G_CALLBACK(virt_viewer_app_stats_data_updated), self);
 
     g_signal_connect(self, "notify::guest-name", G_CALLBACK(title_maybe_changed), NULL);
     g_signal_connect(self, "notify::title", G_CALLBACK(title_maybe_changed), NULL);

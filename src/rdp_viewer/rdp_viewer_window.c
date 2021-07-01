@@ -269,6 +269,12 @@ static void rdp_viewer_item_dialog_with_admin_activated(GtkWidget *menu G_GNUC_U
     veil_messenger_show_on_top(veil_messenger);
 }
 
+static void rdp_viewer_item_menu_connection_info_activated(GtkWidget *menu G_GNUC_UNUSED,
+                                                           RdpWindowData *rdp_window_data)
+{
+    conn_info_dialog_show(rdp_window_data->conn_info_dialog, GTK_WINDOW(rdp_window_data->rdp_viewer_window));
+}
+
 static void on_vm_status_changed(gpointer data G_GNUC_UNUSED, int power_state, RdpWindowData *rdp_window_data)
 {
     set_vm_power_state_on_label(
@@ -710,8 +716,6 @@ RdpWindowData *rdp_viewer_window_create(ExtendedRdpContext *ex_rdp_context, int 
     gtk_widget_destroy(GTK_WIDGET(gtk_builder_get_object(builder, "menu-displays")));
     gtk_widget_destroy(GTK_WIDGET(gtk_builder_get_object(builder, "menu-view-release-cursor")));
     GtkWidget *item_fullscreen = GTK_WIDGET(gtk_builder_get_object(builder, "menu-view-fullscreen"));
-    g_signal_connect(item_fullscreen, "activate", G_CALLBACK(rdp_viewer_item_fullscreen_activate_request),
-            rdp_window_data);
 
     // shortcuts
     GtkWidget *menu_send = GTK_WIDGET(gtk_builder_get_object(builder, "menu-send"));
@@ -724,13 +728,20 @@ RdpWindowData *rdp_viewer_window_create(ExtendedRdpContext *ex_rdp_context, int 
     GtkWidget *item_about = GTK_WIDGET(gtk_builder_get_object(builder, "imagemenuitem10"));
     GtkWidget *item_tk_doc = GTK_WIDGET(gtk_builder_get_object(builder, "menu-tk-doc"));
     GtkWidget *item_dialog_with_admin = GTK_WIDGET(gtk_builder_get_object(builder, "menu_dialog_with_admin"));
+    GtkWidget *item_menu_connection_info = GTK_WIDGET(gtk_builder_get_object(builder, "menu_connection_info"));
 
+    rdp_window_data->conn_info_dialog = conn_info_dialog_create();
+
+    g_signal_connect(item_fullscreen, "activate", G_CALLBACK(rdp_viewer_item_fullscreen_activate_request),
+                     rdp_window_data);
     g_signal_connect(item_product_site, "activate",
                      G_CALLBACK(rdp_viewer_item_product_site_activated), rdp_viewer_window);
     g_signal_connect(item_about, "activate", G_CALLBACK(rdp_viewer_item_about_activated), NULL);
     g_signal_connect(item_tk_doc, "activate", G_CALLBACK(rdp_viewer_item_tk_doc_activated), NULL);
     g_signal_connect(item_dialog_with_admin, "activate",
             G_CALLBACK(rdp_viewer_item_dialog_with_admin_activated), ex_rdp_context);
+    g_signal_connect(item_menu_connection_info, "activate",
+            G_CALLBACK(rdp_viewer_item_menu_connection_info_activated), rdp_window_data);
     g_signal_connect(rdp_viewer_window, "key-press-event", G_CALLBACK(rdp_viewer_window_key_pressed), ex_rdp_context);
     g_signal_connect(rdp_viewer_window, "key-release-event",
             G_CALLBACK(rdp_viewer_window_key_released), ex_rdp_context);
@@ -770,6 +781,8 @@ void rdp_viewer_window_destroy(RdpWindowData *rdp_window_data)
     g_signal_handler_disconnect(get_vdi_session_static(), rdp_window_data->ws_cmd_received_handle);
     if (rdp_window_data->usb_redir_finished_handle)
         g_signal_handler_disconnect(usbredir_controller_get_static(), rdp_window_data->usb_redir_finished_handle);
+
+    conn_info_dialog_destroy(rdp_window_data->conn_info_dialog);
 
     g_object_unref(rdp_window_data->builder);
     gtk_widget_destroy(rdp_window_data->overlay_toolbar);

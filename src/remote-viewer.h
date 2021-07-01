@@ -36,7 +36,6 @@ typedef struct {
     AppUpdater *app_updater;
     VdiManager *vdi_manager;
     VeilMessenger *veil_messenger;
-    NetSpeedometer *net_speedometer;
 
 } RemoteViewer;
 

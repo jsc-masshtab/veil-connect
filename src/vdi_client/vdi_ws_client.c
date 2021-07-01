@@ -133,6 +133,11 @@ static void vdi_ws_client_on_connection(SoupSession *session, GAsyncResult *res,
         g_signal_connect(vdi_ws_client->ws_conn, "message", G_CALLBACK(vdi_ws_client_on_message), vdi_ws_client);
         g_signal_connect(vdi_ws_client->ws_conn, "closed", G_CALLBACK(vdi_ws_client_on_close), vdi_ws_client);
         //g_signal_connect(vdi_ws_client->ws_conn, "pong", G_CALLBACK(vdi_ws_client_on_pong), NULL);
+
+        // remember conn time
+
+        free_memory_safely(&vdi_ws_client->conn_time);
+        vdi_ws_client->conn_time = get_current_readable_time();
     }
     // notify gui
     vdi_session_ws_conn_change_notify(error == NULL);
@@ -258,6 +263,8 @@ void vdi_ws_client_stop(VdiWsClient *vdi_ws_client)
 
     free_memory_safely(&vdi_ws_client->vdi_url);
 
+    free_memory_safely(&vdi_ws_client->conn_time);
+
     vdi_ws_client->is_running = FALSE;
     vdi_ws_client->reconnect_if_conn_lost = FALSE;
     g_info("%s", (const char *)__func__);
@@ -269,6 +276,11 @@ SoupWebsocketState vdi_ws_client_get_conn_state(VdiWsClient *ws_vdi_client)
         return soup_websocket_connection_get_state(ws_vdi_client->ws_conn);
     else
         return SOUP_WEBSOCKET_STATE_CLOSED;
+}
+
+const gchar *vdi_ws_client_get_conn_time(VdiWsClient *ws_vdi_client)
+{
+    return ws_vdi_client->conn_time;
 }
 
 void vdi_ws_client_send_vm_changed(VdiWsClient *ws_vdi_client, const gchar *vm_id)

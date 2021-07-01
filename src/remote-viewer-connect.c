@@ -194,7 +194,6 @@ on_vdi_session_log_in_finished(GObject *source_object G_GNUC_UNUSED,
     if (token) {
         ci->dialog_window_response = GTK_RESPONSE_OK;
         set_data_from_gui_in_outer_pointers(ci);
-
         shutdown_loop(ci->loop);
     } else {
         set_message_to_info_label(GTK_LABEL(ci->message_display_label), reply_msg);

@@ -38,6 +38,8 @@ list(APPEND SRC_CODE
         src/remote_viewer_start_settings.c
         src/about_dialog.h
         src/about_dialog.c
+        src/conn_info_dialog.h
+        src/conn_info_dialog.c
         src/main.c
 
 # virt_viewer

@@ -32,6 +32,11 @@
 #define MAX_MONITOR_AMOUNT 3
 #define MAC_PANEL_HEIGHT 90 // Высота панели на маке
 
+typedef struct {
+    ExtendedRdpContext *ex_rdp_context;
+    NetSpeedometer *net_speedometer;
+
+}RemoteViewerData;
 
 static gboolean rdp_viewer_update_cursor(rdpContext* context)
 {
@@ -122,10 +127,21 @@ static gboolean rdp_viewer_ask_for_credentials_if_required(VeilRdpSettings *p_rd
         return TRUE;
 }
 
+static void rdp_viewer_stats_data_updated(gpointer data G_GNUC_UNUSED, VdiVmRemoteProtocol protocol,
+                                               NetworkStatsData *nw_data, ExtendedRdpContext *ex_rdp_context)
+{
+    GArray *rdp_windows_array = ex_rdp_context->rdp_windows_array;
+    for (guint i = 0; i < rdp_windows_array->len; ++i) {
+        RdpWindowData *rdp_window_data = g_array_index(rdp_windows_array, RdpWindowData *, i);
+        conn_info_dialog_update(rdp_window_data->conn_info_dialog, protocol, nw_data);
+    }
+}
+
 RemoteViewerState rdp_viewer_start(RemoteViewer *app, VeilRdpSettings *p_rdp_settings)
 {
     g_info("%s domain %s ip %s", (const char *)__func__, p_rdp_settings->domain, p_rdp_settings->ip);
 
+    RemoteViewerData self;
     RemoteViewerState next_app_state = APP_STATE_UNDEFINED;
     if (p_rdp_settings == NULL)
         return next_app_state;
@@ -137,15 +153,20 @@ RemoteViewerState rdp_viewer_start(RemoteViewer *app, VeilRdpSettings *p_rdp_set
 
     GMainLoop *loop = NULL;
     // create RDP context
-    ExtendedRdpContext *ex_rdp_context = create_rdp_context((UpdateCursorCallback)rdp_viewer_update_cursor,
+    self.ex_rdp_context = create_rdp_context((UpdateCursorCallback)rdp_viewer_update_cursor,
                                                             (GSourceFunc)rdp_viewer_update_images);
-    ex_rdp_context->p_loop = &loop;
-    ex_rdp_context->next_app_state_p = &next_app_state;
-    ex_rdp_context->app = app;
-    // set pointer for statistics accumulation
-    net_speedometer_set_pointer_rdp_context(app->net_speedometer, ex_rdp_context->context.rdp);
+    self.ex_rdp_context->p_loop = &loop;
+    self.ex_rdp_context->next_app_state_p = &next_app_state;
+    self.ex_rdp_context->app = app;
 
-    rdp_client_set_settings(ex_rdp_context, p_rdp_settings);
+    self.net_speedometer = net_speedometer_new();
+    net_speedometer_update_vm_ip(self.net_speedometer, p_rdp_settings->ip);
+    // set pointer for statistics accumulation
+    net_speedometer_set_pointer_rdp_context(self.net_speedometer, self.ex_rdp_context->context.rdp);
+    g_signal_connect(self.net_speedometer, "stats-data-updated",
+                     G_CALLBACK(rdp_viewer_stats_data_updated), self.ex_rdp_context);
+
+    rdp_client_set_settings(self.ex_rdp_context, p_rdp_settings);
 
     // Set some presettings
     usbredir_controller_reset_tcp_usb_devices_on_next_gui_opening(TRUE);
@@ -159,10 +180,10 @@ RemoteViewerState rdp_viewer_start(RemoteViewer *app, VeilRdpSettings *p_rdp_set
 
     // array which will contain rdp windows
     GArray *rdp_windows_array = g_array_new(FALSE, FALSE, sizeof(RdpWindowData *));
-    ex_rdp_context->rdp_windows_array = rdp_windows_array;
+    self.ex_rdp_context->rdp_windows_array = rdp_windows_array;
 
     // create rdp viewer windows
-    rdpSettings *settings = ex_rdp_context->context.settings;
+    rdpSettings *settings = self.ex_rdp_context->context.settings;
     // Create windows for every monitor
     if (p_rdp_settings->is_multimon) {
         int monitor_number = MIN(gdk_display_get_n_monitors(display), MAX_MONITOR_AMOUNT);
@@ -175,7 +196,7 @@ RemoteViewerState rdp_viewer_start(RemoteViewer *app, VeilRdpSettings *p_rdp_set
         for (int i = 0; i < monitor_number; ++i) {
             // get monitor data
             GdkMonitor *monitor = gdk_display_get_monitor(display, i);
-            GdkRectangle geometry = set_monitor_data_and_create_rdp_viewer_window(monitor, i, ex_rdp_context,
+            GdkRectangle geometry = set_monitor_data_and_create_rdp_viewer_window(monitor, i, self.ex_rdp_context,
                                                         &loop);
             total_monitor_width += geometry.width;
             // find smallest height
@@ -188,7 +209,7 @@ RemoteViewerState rdp_viewer_start(RemoteViewer *app, VeilRdpSettings *p_rdp_set
         settings->ForceMultimon = FALSE;
 
         GdkMonitor *primary_monitor = gdk_display_get_primary_monitor(display);
-        GdkRectangle geometry = set_monitor_data_and_create_rdp_viewer_window(primary_monitor, 0, ex_rdp_context,
+        GdkRectangle geometry = set_monitor_data_and_create_rdp_viewer_window(primary_monitor, 0, self.ex_rdp_context,
                                                           &loop);
         total_monitor_width = geometry.width;
         monitor_height = geometry.height;
@@ -205,7 +226,7 @@ RemoteViewerState rdp_viewer_start(RemoteViewer *app, VeilRdpSettings *p_rdp_set
     const int max_image_height = 2500; // 1440
     int image_width = MIN(max_image_width, total_monitor_width);
     int image_height = MIN(max_image_height, monitor_height);
-    rdp_client_set_rdp_image_size(ex_rdp_context, image_width, image_height);
+    rdp_client_set_rdp_image_size(self.ex_rdp_context, image_width, image_height);
 
     // Notify if folders redir is forbidden
     gchar *shared_folders_str = read_str_from_ini_file("RDPSettings", "rdp_shared_folders");
@@ -215,20 +236,18 @@ RemoteViewerState rdp_viewer_start(RemoteViewer *app, VeilRdpSettings *p_rdp_set
     free_memory_safely(&shared_folders_str);
 
     // launch RDP routine in thread
-    rdp_client_start_routine_thread(ex_rdp_context);
+    rdp_client_start_routine_thread(self.ex_rdp_context);
 
     // launch event loop
     create_loop_and_launch(&loop);
 
     usbredir_controller_stop_all_cur_tasks(FALSE); // stop usb tasks if there are any
 
-    net_speedometer_set_pointer_rdp_context(app->net_speedometer, NULL); // reset pointer
-
     // deinit all
-    destroy_rdp_context(ex_rdp_context);
+    g_object_unref(self.net_speedometer);
+    destroy_rdp_context(self.ex_rdp_context);
     // destroy rdp windows
-    guint i;
-    for (i = 0; i < rdp_windows_array->len; ++i) {
+    for (guint i = 0; i < rdp_windows_array->len; ++i) {
         RdpWindowData *rdp_window_data = g_array_index(rdp_windows_array, RdpWindowData *, i);
         rdp_viewer_window_destroy(rdp_window_data);
     }

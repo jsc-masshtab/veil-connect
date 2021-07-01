@@ -39,9 +39,6 @@
 #include "virt-viewer-auth.h"
 #include "veil_logger.h"
 
-static gchar *spice_session_username = NULL;
-static gchar *spice_session_password = NULL;
-
 
 G_DEFINE_TYPE (VirtViewerSessionSpice, virt_viewer_session_spice, VIRT_VIEWER_TYPE_SESSION)
 
@@ -240,9 +237,7 @@ static void
 virt_viewer_session_spice_constructed(GObject *obj)
 {
     VirtViewerSessionSpice *self = VIRT_VIEWER_SESSION_SPICE(obj);
-
     create_spice_session(self);
-
     virt_viewer_signal_connect_object(virt_viewer_session_get_app(VIRT_VIEWER_SESSION(self)),
                                       "notify::fullscreen",
                                       G_CALLBACK(property_notify_do_auto_conf),
@@ -697,7 +692,6 @@ virt_viewer_session_spice_main_channel_event(SpiceChannel *channel,
                                              VirtViewerSession *session)
 {
     VirtViewerSessionSpice *self = VIRT_VIEWER_SESSION_SPICE(session);
-    gchar *password = NULL, *user = NULL;
     gboolean ret;
     static gboolean username_required = FALSE;
 
@@ -741,25 +735,28 @@ virt_viewer_session_spice_main_channel_event(SpiceChannel *channel,
 
         self->priv->pass_try++;
 
+        g_object_get(self->priv->session, "host", &host, NULL);
+        g_free(host);
+
+        VirtViewerApp *virt_viewer_app = virt_viewer_session_get_app(session);
         /* The username is firstly pre-filled with the username of the current
          * user and in case where some authentication error happened, the
          * username entry will be prefilled with the last username used.
          * Unfortunately, we don't have a clear way to differantiate bewteen
          * invalid username and invalid password. So, in both cases the username
          * entry will be pre-filled with the username used in the previous attempt. */
-        if (username_required)
-            user = g_strdup(spice_session_username);
+        if (username_required) {
+            const gchar *username = (const gchar *)g_object_get_data(G_OBJECT(virt_viewer_app), "username");
+            g_object_set(self->priv->session, "username", username, NULL);
+        }
+        else {
+            g_object_set(self->priv->session, "username", NULL, NULL);
+        }
 
-        g_object_get(self->priv->session, "host", &host, NULL);
-
-        // set password
-        password = g_strdup(spice_session_password);
-
-        g_free(host);
+        const gchar *password = (const gchar *)g_object_get_data(G_OBJECT(virt_viewer_app), "password");
+        g_object_set(self->priv->session, "password", password, NULL);
 
         gboolean openfd;
-        g_object_set(self->priv->session, "username", user, NULL);
-        g_object_set(self->priv->session, "password", password, NULL);
         g_object_get(self->priv->session, "client-sockets", &openfd, NULL);
 
         if (openfd)
@@ -780,6 +777,8 @@ virt_viewer_session_spice_main_channel_event(SpiceChannel *channel,
             SpiceURI *proxy = spice_session_get_proxy_uri(self->priv->session);
             g_warn_if_fail(proxy != NULL);
 
+            gchar* user = NULL;
+            gchar* password = NULL;
             ret = virt_viewer_auth_collect_credentials(self->priv->main_window,
                                                        "proxy", spice_uri_get_hostname(proxy),
                                                        &user, &password);
@@ -790,6 +789,9 @@ virt_viewer_session_spice_main_channel_event(SpiceChannel *channel,
                 spice_uri_set_password(proxy, password);
                 spice_session_connect(self->priv->session);
             }
+
+            g_free(user);
+            g_free(password);
         } else {
             virt_viewer_session_spice_channel_destroy(NULL, channel, session);
         }
@@ -804,9 +806,6 @@ virt_viewer_session_spice_main_channel_event(SpiceChannel *channel,
         g_warning("unhandled spice main channel event: %d", event);
         break;
     }
-
-    if(password) g_free(password);
-    if(user) g_free(user);
 }
 
 static void remove_cb(GtkContainer   *container G_GNUC_UNUSED,
@@ -1239,15 +1238,6 @@ virt_viewer_session_spice_get_main_channel(VirtViewerSessionSpice *self)
     g_return_val_if_fail(VIRT_VIEWER_IS_SESSION_SPICE(self), NULL);
 
     return self->priv->main_channel;
-}
-
-void
-virt_viewer_session_spice_set_credentials(gchar *username, gchar *password)
-{
-    free_memory_safely(&spice_session_username);
-    free_memory_safely(&spice_session_password);
-    spice_session_username = g_strdup(username);
-    spice_session_password = g_strdup(password);
 }
 
 void virt_viewer_session_spice_enable_auto_clipboard(VirtViewerSessionSpice *self, gboolean enabled)

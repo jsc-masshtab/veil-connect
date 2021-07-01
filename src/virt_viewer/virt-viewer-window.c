@@ -47,6 +47,7 @@
 #include "vdi_session.h"
 #include "settingsfile.h"
 #include "about_dialog.h"
+#include "conn_info_dialog.h"
 
 //#include "remote-viewer-iso-list-dialog.h"
 
@@ -55,13 +56,14 @@
 // externs
 extern gboolean opt_manual_mode;
 
-/* Signal handlers for main window (move in a VirtViewerMainWindow?) */
+/* Signal handlers for main window  */
 void virt_viewer_window_menu_view_zoom_out(GtkWidget *menu, VirtViewerWindow *self);
 void virt_viewer_window_menu_view_zoom_in(GtkWidget *menu, VirtViewerWindow *self);
 void virt_viewer_window_menu_view_zoom_reset(GtkWidget *menu, VirtViewerWindow *self);
 gboolean virt_viewer_window_delete(GtkWidget *src, void *dummy, VirtViewerWindow *self);
 void virt_viewer_window_menu_file_quit(GtkWidget *src, VirtViewerWindow *self);
 void virt_viewer_window_guest_details_response(GtkDialog *dialog, gint response_id, gpointer user_data);
+void virt_viewer_window_menu_connection_info(GtkWidget *menu, VirtViewerWindow *self);
 void virt_viewer_window_menu_help_about(GtkWidget *menu, VirtViewerWindow *self);
 void virt_viewer_window_menu_help_guest_details(GtkWidget *menu, VirtViewerWindow *self);
 void virt_viewer_window_menu_help_tk_doc(GtkWidget *menu, VirtViewerWindow *self);
@@ -133,6 +135,8 @@ struct _VirtViewerWindowPrivate {
     gboolean fullscreen;
     gchar *subtitle;
     gboolean initial_zoom_set;
+
+    ConnInfoDialog *conn_info_dialog; // окно для отображения сетевой статистики
 };
 
 static void
@@ -222,6 +226,8 @@ virt_viewer_window_dispose (GObject *object)
 
     g_value_unset(&priv->accel_setting);
     priv->toolbar = NULL;
+
+    conn_info_dialog_destroy(priv->conn_info_dialog);
 
     G_OBJECT_CLASS (virt_viewer_window_parent_class)->dispose (object);
 }
@@ -407,6 +413,8 @@ virt_viewer_window_init (VirtViewerWindow *self)
     }
 
     priv->zoomlevel = NORMAL_ZOOM_LEVEL;
+
+    priv->conn_info_dialog = conn_info_dialog_create();
 }
 
 static void
@@ -1126,6 +1134,13 @@ virt_viewer_window_guest_details_response(GtkDialog *dialog,
 }
 
 G_MODULE_EXPORT void
+virt_viewer_window_menu_connection_info(GtkWidget *menu G_GNUC_UNUSED,
+                                        VirtViewerWindow *self)
+{
+    conn_info_dialog_show(self->priv->conn_info_dialog, GTK_WINDOW(self->priv->window));
+}
+
+G_MODULE_EXPORT void
 virt_viewer_window_menu_help_about(GtkWidget *menu G_GNUC_UNUSED,
                                    VirtViewerWindow *self)
 {
@@ -1664,6 +1679,16 @@ virt_viewer_window_set_kiosk(VirtViewerWindow *self, gboolean enabled)
         g_debug("disabling kiosk not implemented yet");
 }
 
+void virt_viewer_window_update_network_stats(VirtViewerWindow *self, NetworkStatsData *nw_data)
+{
+    conn_info_dialog_update(self->priv->conn_info_dialog, VDI_SPICE_PROTOCOL, nw_data);
+}
+
+void virt_viewer_window_update_vm_conn_time(VirtViewerWindow *self, const gchar *time)
+{
+    conn_info_dialog_update_vm_conn_time(self->priv->conn_info_dialog, time);
+}
+
 static void
 virt_viewer_window_get_minimal_dimensions(VirtViewerWindow *self,
                                           guint *width,
@@ -1713,6 +1738,7 @@ virt_viewer_window_get_minimal_zoom_level(VirtViewerWindow *self)
     /* make sure that the returned zoom level is in the range from MIN_ZOOM_LEVEL to NORMAL_ZOOM_LEVEL */
     return CLAMP(zoom * ZOOM_STEP, MIN_ZOOM_LEVEL, NORMAL_ZOOM_LEVEL);
 }
+
 
 /*
  * Local variables:

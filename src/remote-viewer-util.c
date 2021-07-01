@@ -1011,6 +1011,15 @@ void remove_char(char *str, char character)
     *dst = '\0';
 }
 
+gchar *get_current_readable_time()
+{
+    GDateTime *datetime = g_date_time_new_now_local();
+    gchar *time = g_date_time_format(datetime, "%Y-%m-%d   %H:%M:%S");
+    g_date_time_unref(datetime);
+
+    return time;
+}
+
 /*
  * Local variables:
  *  c-indent-level: 4
