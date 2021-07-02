@@ -13,13 +13,15 @@
 #include <tchar.h>
 #endif
 
+#include <string.h>
+
 #include <freerdp/version.h>
 
 #include "net_speedometer.h"
 #include "remote-viewer-util.h"
 
 #include "virt-viewer-session-spice.h"
-#include "virt-viewer-session-spice.h"
+
 
 G_DEFINE_TYPE( NetSpeedometer, net_speedometer, G_TYPE_OBJECT )
 

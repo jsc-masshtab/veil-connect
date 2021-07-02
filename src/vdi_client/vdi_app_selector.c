@@ -6,6 +6,8 @@
  * Author: http://mashtab.org/
  */
 
+#include <string.h>
+
 #include "vdi_session.h"
 #include "remote-viewer-util.h"
 #include "vdi_app_selector.h"

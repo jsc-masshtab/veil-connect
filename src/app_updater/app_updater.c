@@ -6,12 +6,13 @@
  * Author: http://mashtab.org/
  */
 
+#include <string.h>
+#include <stdlib.h>
+
 #include "vdi_session.h"
 #include "app_updater.h"
 #include "config.h"
 #include "settingsfile.h"
-
-#include <stdlib.h>
 
 #ifdef __linux__
 #include <sys/utsname.h>
