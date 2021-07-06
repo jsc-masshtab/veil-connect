@@ -224,13 +224,15 @@ static GArray *rdp_client_create_params_array(ExtendedRdpContext* ex)
     }
 
     // network type
-    gboolean is_rdp_network_assigned = read_int_from_ini_file("RDPSettings", "is_rdp_network_assigned", 0);
-    if (is_rdp_network_assigned)
-        rdp_client_add_str_param_from_ini(rdp_params_dyn_array, "rdp_network_type", "/network", "auto");
+    if (ex->p_rdp_settings->is_rdp_network_assigned && ex->p_rdp_settings->rdp_network_type)
+        add_rdp_param(rdp_params_dyn_array, g_strdup_printf("/network:%s", ex->p_rdp_settings->rdp_network_type));
+
+    // security protocol
+    if (ex->p_rdp_settings->is_sec_protocol_assigned && ex->p_rdp_settings->sec_protocol_type)
+        add_rdp_param(rdp_params_dyn_array, g_strdup_printf("/sec:%s", ex->p_rdp_settings->sec_protocol_type));
 
     // additional graphics settings
-    gboolean disable_rdp_decorations = read_int_from_ini_file("RDPSettings", "disable_rdp_decorations", 0);
-    if (disable_rdp_decorations)
+    if (ex->p_rdp_settings->disable_rdp_decorations)
         add_rdp_param(rdp_params_dyn_array, g_strdup("-decorations"));
     gchar *fonts = ex->p_rdp_settings->disable_rdp_fonts ? g_strdup("-fonts") : g_strdup("+fonts");
     add_rdp_param(rdp_params_dyn_array, fonts);

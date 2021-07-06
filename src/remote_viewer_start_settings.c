@@ -58,6 +58,9 @@ typedef struct{
     GtkWidget *remote_app_name_entry;
     GtkWidget *remote_app_options_entry;
 
+    GtkWidget *rdp_sec_protocol_check_btn;
+    GtkWidget *sec_type_combobox;
+
     GtkWidget *rdp_network_check_btn;
     GtkWidget *rdp_network_type_combobox;
 
@@ -190,6 +193,14 @@ on_h264_used_check_btn_toggled(GtkToggleButton *h264_used_check_btn, gpointer us
         gboolean is_h264_used_check_btn_toggled = gtk_toggle_button_get_active(h264_used_check_btn);
         gtk_widget_set_sensitive(dialog_data->rdp_h264_codec_combobox, is_h264_used_check_btn_toggled);
     }
+}
+
+static void
+on_rdp_sec_protocol_check_btn_toggled(GtkToggleButton *check_btn, gpointer user_data)
+{
+    ConnectSettingsDialogData *dialog_data = (ConnectSettingsDialogData *)user_data;
+    gboolean is_check_btn_toggled = gtk_toggle_button_get_active(check_btn);
+    gtk_widget_set_sensitive(dialog_data->sec_type_combobox, is_check_btn_toggled);
 }
 
 static void
@@ -607,6 +618,17 @@ fill_connect_settings_gui(ConnectSettingsDialogData *dialog_data, ConnectSetting
         g_free(remote_app_options);
     }
 
+    gboolean is_sec_protocol_assigned = read_int_from_ini_file("RDPSettings", "is_sec_protocol_assigned", 0);
+    gtk_toggle_button_set_active((GtkToggleButton *)dialog_data->rdp_sec_protocol_check_btn, is_sec_protocol_assigned);
+    gtk_widget_set_sensitive(dialog_data->sec_type_combobox, is_sec_protocol_assigned);
+    if (is_sec_protocol_assigned) {
+        gchar *sec_protocol_type = read_str_from_ini_file("RDPSettings", "sec_protocol_type");
+        if (sec_protocol_type) {
+            gtk_combo_box_set_active_id(GTK_COMBO_BOX(dialog_data->sec_type_combobox), sec_protocol_type);
+            g_free(sec_protocol_type);
+        }
+    }
+
     gboolean is_rdp_network_assigned = read_int_from_ini_file("RDPSettings", "is_rdp_network_assigned", 0);
     gtk_toggle_button_set_active((GtkToggleButton *)dialog_data->rdp_network_check_btn, is_rdp_network_assigned);
     gtk_widget_set_sensitive(dialog_data->rdp_network_type_combobox, is_rdp_network_assigned);
@@ -729,9 +751,16 @@ save_data_to_ini_file(ConnectSettingsDialogData *dialog_data)
                           gtk_entry_get_text(GTK_ENTRY(dialog_data->remote_app_name_entry)));
     write_str_to_ini_file("RDPSettings", "remote_app_options",
                           gtk_entry_get_text(GTK_ENTRY(dialog_data->remote_app_options_entry)));
-
+    //
+    gboolean is_sec_protocol_assigned = gtk_toggle_button_get_active((GtkToggleButton *)
+                                                                            dialog_data->rdp_sec_protocol_check_btn);
+    write_int_to_ini_file("RDPSettings", "is_sec_protocol_assigned", is_sec_protocol_assigned);
+    const gchar *sec_protocol_type =
+            gtk_combo_box_get_active_id(GTK_COMBO_BOX(dialog_data->sec_type_combobox));
+    write_str_to_ini_file("RDPSettings", "sec_protocol_type", sec_protocol_type);
+    //
     gboolean is_rdp_network_assigned = gtk_toggle_button_get_active((GtkToggleButton *)
-                                                                            dialog_data->rdp_network_check_btn);
+                                                               dialog_data->rdp_network_check_btn);
     write_int_to_ini_file("RDPSettings", "is_rdp_network_assigned", is_rdp_network_assigned);
     const gchar *rdp_network_type =
             gtk_combo_box_get_active_id(GTK_COMBO_BOX(dialog_data->rdp_network_type_combobox));
@@ -822,6 +851,10 @@ GtkResponseType remote_viewer_start_settings_dialog(RemoteViewer *p_remote_viewe
     dialog_data.remote_app_name_entry = get_widget_from_builder(dialog_data.builder, "remote_app_name_entry");
     dialog_data.remote_app_options_entry = get_widget_from_builder(dialog_data.builder, "remote_app_options_entry");
 
+    dialog_data.rdp_sec_protocol_check_btn =
+            get_widget_from_builder(dialog_data.builder, "rdp_sec_protocol_check_btn");
+    dialog_data.sec_type_combobox = get_widget_from_builder(dialog_data.builder, "sec_type_combobox");
+
     dialog_data.rdp_network_check_btn = get_widget_from_builder(dialog_data.builder, "rdp_network_check_btn");
     dialog_data.rdp_network_type_combobox = get_widget_from_builder(dialog_data.builder, "rdp_network_type_combobox");
 
@@ -871,6 +904,8 @@ GtkResponseType remote_viewer_start_settings_dialog(RemoteViewer *p_remote_viewe
     g_signal_connect(dialog_data.bt_ok, "clicked", G_CALLBACK(ok_button_clicked_cb), &dialog_data);
     g_signal_connect(dialog_data.is_h264_used_check_btn, "toggled",
                      G_CALLBACK(on_h264_used_check_btn_toggled), &dialog_data);
+    g_signal_connect(dialog_data.rdp_sec_protocol_check_btn, "toggled",
+                     G_CALLBACK(on_rdp_sec_protocol_check_btn_toggled), &dialog_data);
     g_signal_connect(dialog_data.rdp_network_check_btn, "toggled",
                      G_CALLBACK(on_rdp_network_check_btn_toggled), &dialog_data);
     g_signal_connect(dialog_data.btn_add_remote_folder, "clicked",

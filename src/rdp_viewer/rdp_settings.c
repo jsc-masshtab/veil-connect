@@ -59,8 +59,22 @@ void rdp_settings_read_ini_file(VeilRdpSettings *rdp_settings, gboolean rewrite_
 
     rdp_settings->disable_rdp_fonts = read_int_from_ini_file("RDPSettings", "disable_rdp_fonts", 0);
     rdp_settings->disable_rdp_themes = read_int_from_ini_file("RDPSettings", "disable_rdp_themes", 0);
+    rdp_settings->disable_rdp_decorations = read_int_from_ini_file("RDPSettings", "disable_rdp_decorations", 0);
 
     rdp_settings->allow_desktop_composition = read_int_from_ini_file("RDPSettings", "allow_desktop_composition", 0);
+
+
+    rdp_settings->is_rdp_network_assigned = read_int_from_ini_file("RDPSettings", "is_rdp_network_assigned", 0);
+    if (rdp_settings->is_rdp_network_assigned) {
+        update_string_safely(&rdp_settings->rdp_network_type,
+                read_str_from_ini_file("RDPSettings", "rdp_network_type"));
+    }
+
+    rdp_settings->is_sec_protocol_assigned = read_int_from_ini_file("RDPSettings", "is_sec_protocol_assigned", 0);
+    if (rdp_settings->is_sec_protocol_assigned) {
+        update_string_safely(&rdp_settings->sec_protocol_type,
+                             read_str_from_ini_file("RDPSettings", "sec_protocol_type"));
+    }
 }
 
 /*

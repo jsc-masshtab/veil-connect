@@ -167,14 +167,14 @@ static void setup_header_for_vdi_session_api_call(SoupMessage *msg)
     soup_message_headers_append(msg->request_headers, "User-Agent", "thin-client");
 }
 
-static guint send_message(SoupMessage *msg)
+static guint send_message(SoupMessage *msg, const char *uri_string)
 {
     static int count = 0;
     g_info("Send_count: %i", ++count);
 
     guint status = soup_session_send_message(vdi_session_static->soup_session, msg);
-    g_info("%s: Successfully sent. Response code: %i reason_phrase: %s",
-            (const char *)__func__, status, msg->reason_phrase);
+    g_info("%s: Response code: %i  reason_phrase: %s  uri_string: %s",
+            (const char *)__func__, status, msg->reason_phrase, uri_string);
     return status;
 }
 
@@ -217,7 +217,7 @@ static gchar *vdi_session_auth_request()
     g_free(message_body_str);
 
     // send message
-    send_message(msg);
+    send_message(msg, vdi_session_static->auth_url);
 
     // parse response
     g_info("msg->status_code %i", msg->status_code);
@@ -568,7 +568,7 @@ gchar *vdi_session_api_call(const char *method, const char *uri_string, const gc
         soup_message_set_request(msg, "application/json", SOUP_MEMORY_COPY, body_str, strlen_safely(body_str));
 
     // send request.
-    send_message(msg);
+    send_message(msg, uri_string);
     g_info("vdi_session_api_call: msg->status_code: %i", msg->status_code);
     //g_info("msg->response_body: %s", msg->response_body->data);
     //if (msg->status_code == AUTH_FAIL_RESPONSE) {
@@ -837,10 +837,10 @@ gboolean vdi_session_logout(void)
     g_autofree gchar *jwt_str = NULL;
     jwt_str = atomic_string_get(&vdi_session_static->jwt);
     if (jwt_str) {
-        gchar *url_str = g_strdup_printf("%s/logout", vdi_session_static->api_url);
+        g_autofree gchar *url_str = NULL;
+        url_str = g_strdup_printf("%s/logout", vdi_session_static->api_url);
 
         SoupMessage *msg = soup_message_new("POST", url_str);
-        g_free(url_str);
 
         if (msg == NULL) {
             g_info("%s : Cant construct logout message", (const char *)__func__);
@@ -851,7 +851,7 @@ gboolean vdi_session_logout(void)
             setup_header_for_vdi_session_api_call(msg);
             // send
             g_object_set(vdi_session_static->soup_session, "timeout", 1, NULL);
-            send_message(msg);
+            send_message(msg, url_str);
             g_object_set(vdi_session_static->soup_session, "timeout", HTTP_RESPONSE_TIOMEOUT, NULL);
 
             guint res_code = msg->status_code;
@@ -886,7 +886,7 @@ gchar *vdi_session_check_for_tk_updates(const gchar *veil_connect_url, gchar **p
     if (msg == NULL)
         goto clear_mark;
 
-    guint status = send_message(msg);
+    guint status = send_message(msg, veil_connect_url);
     if (status != OK_RESPONSE)
         goto clear_mark;
 

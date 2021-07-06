@@ -21,7 +21,6 @@ typedef struct{
     gchar *remote_app_program;
     gchar *remote_app_options;
 
-    // other
     gboolean is_multimon;
     gboolean redirectsmartcards;
     gboolean redirectprinters;
@@ -30,8 +29,15 @@ typedef struct{
 
     gboolean disable_rdp_fonts;
     gboolean disable_rdp_themes;
+    gboolean disable_rdp_decorations;
 
     gboolean allow_desktop_composition;
+
+    gboolean is_rdp_network_assigned;
+    gchar *rdp_network_type;
+
+    gboolean is_sec_protocol_assigned;
+    gchar *sec_protocol_type;
 
 } VeilRdpSettings;
 
