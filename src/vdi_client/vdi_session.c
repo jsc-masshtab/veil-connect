@@ -577,10 +577,11 @@ gchar *vdi_session_api_call(const char *method, const char *uri_string, const gc
 
     response_body_str = g_strdup(msg->response_body->data); // json_string_with_data. memory allocation!
 
-    g_object_unref(msg);
-
     if (resp_code)
         *resp_code = msg->status_code;
+
+    g_object_unref(msg);
+
     return response_body_str;
 }
 
