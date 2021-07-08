@@ -233,6 +233,46 @@ pipeline {
                     }
                 }
 
+                stage ('xenial. build') {
+                    when {
+                        beforeAgent true
+                        expression { params.XENIAL == true || params.EMBEDDED == true }
+                    }
+                    environment {
+                        DISTR = "xenial"
+                    }
+                    agent {
+                        docker {
+                            image "veil-connect-builder-xenial:${VERSION}"
+                            args '-u root:root'
+                            reuseNode true
+                            label "${AGENT}"
+                        }
+                    }
+                    steps {
+                        sh script: '''
+                            mkdir build-${DISTR}
+                            cd build-${DISTR}
+                            cmake -DCMAKE_BUILD_TYPE=Release ../
+                            make
+                            rm -rf CMakeCache.txt  CMakeFiles  Makefile  cmake_install.cmake
+
+                            # make installer
+                            cp -r ${WORKSPACE}/devops/deb ${WORKSPACE}/devops/deb-${DISTR}
+                            mkdir -p ${WORKSPACE}/devops/deb-${DISTR}/root/opt/veil-connect
+                            mkdir -p ${WORKSPACE}/devops/deb-${DISTR}/root/usr/share/applications
+                            cp -r ${WORKSPACE}/build-${DISTR}/* ${WORKSPACE}/doc/veil-connect.ico ${WORKSPACE}/devops/deb-${DISTR}/root/opt/veil-connect
+                            cp ${WORKSPACE}/doc/veil-connect.desktop ${WORKSPACE}/devops/deb-${DISTR}/root/usr/share/applications
+                            sed -i -e "s:%%VER%%:${VERSION}~${DISTR}:g" ${WORKSPACE}/devops/deb-${DISTR}/root/DEBIAN/control
+                            chmod -R 777 ${WORKSPACE}/devops/deb-${DISTR}/root
+                            chmod -R 755 ${WORKSPACE}/devops/deb-${DISTR}/root/DEBIAN
+                            chown -R root:root ${WORKSPACE}/devops/deb-${DISTR}/root
+                            cd ${WORKSPACE}/devops/deb-${DISTR}
+                            dpkg-deb -b root .
+                        '''
+                    }
+                }
+
                 stage ('bionic. build') {
                     when {
                         beforeAgent true
