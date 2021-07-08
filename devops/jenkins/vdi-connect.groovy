@@ -46,6 +46,7 @@ pipeline {
         string(      name: 'VERSION',              defaultValue: '1.6.6',           description: 'version')
         booleanParam(name: 'STRETCH',              defaultValue: true,              description: 'create DEB?')
         booleanParam(name: 'BUSTER',               defaultValue: true,              description: 'create DEB?')
+        booleanParam(name: 'XENIAL',               defaultValue: true,              description: 'create DEB?')
         booleanParam(name: 'BIONIC',               defaultValue: true,              description: 'create DEB?')
         booleanParam(name: 'FOCAL',                defaultValue: true,              description: 'create DEB?')
         booleanParam(name: 'EL7',                  defaultValue: true,              description: 'create RPM?')
@@ -85,6 +86,16 @@ pipeline {
                     }
                     steps {
                         sh "docker build -f devops/docker/Dockerfile.buster . -t veil-connect-builder-buster:${VERSION}"
+                    }
+                }
+
+                stage ('xenial. docker build') {
+                    when {
+                        beforeAgent true
+                        expression { params.XENIAL == true }
+                    }
+                    steps {
+                        sh "docker build -f devops/docker/Dockerfile.xenial . -t veil-connect-builder-xenial:${VERSION}"
                     }
                 }
 
