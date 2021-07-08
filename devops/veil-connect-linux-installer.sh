@@ -8,13 +8,14 @@ echo "Select your OS:"
 echo "
     1. Debian 9
     2. Debian 10
-    3. Ubuntu 18.04
-    4. Ubuntu 20.04
-    5. Centos 7
-    6. Centos 8
-    7. Astra Linux Orel 2.12
-    8. Astra Linux Smolensk 1.6
-    9. Alt Linux 9
+    3. Ubuntu 16.04
+    4. Ubuntu 18.04
+    5. Ubuntu 20.04
+    6. Centos 7
+    7. Centos 8
+    8. Astra Linux Orel 2.12
+    9. Astra Linux Smolensk 1.6
+    10. Alt Linux 9
 "
 
 echo "My OS is:"
@@ -30,13 +31,13 @@ case $OS in
         apt-get update && apt-get install veil-connect -y
         rm -f /etc/apt/sources.list.d/stretch-backports.list && apt-get update
         ;;
-    2|3|4)
+    2|3|4/5)
         apt-get update && apt-get install apt-transport-https wget lsb-release -y
         wget -qO - https://veil-update.mashtab.org/veil-repo-key.gpg | apt-key add -
         echo "deb [arch=amd64] $REPO_URL/apt $(lsb_release -cs) main" | tee /etc/apt/sources.list.d/veil-connect.list
         apt-get update && apt-get install veil-connect -y
         ;;
-    5|6)
+    6|7)
         tee /etc/yum.repos.d/veil-connect.repo <<EOF
 [veil-connect]
 name=VeiL Connect repository
