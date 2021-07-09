@@ -9,6 +9,7 @@
 | Astra 2.12 Orel    | bionic  |
 | Debian 9           | stretch |
 | Debian 10          | buster  |
+| Ubuntu 16.04       | xenial  |
 | Ubuntu 18.04       | bionic  |
 | Ubuntu 20.04       | focal   |
 | Centos 7           |  el7    |
@@ -29,7 +30,7 @@ cd build
 cmake -DCMAKE_BUILD_TYPE=Release ../
 make
 ```
-## Building on Debian 10 and Ubuntu 18.04 / 20.04
+## Building on Debian 10 and Ubuntu 16.04 / 18.04 / 20.04
 ```
 apt-get install libhiredis-dev libspice-client-gtk-3.0-dev libjson-glib-dev \
 libxml2-dev libsoup2.4-dev freerdp2-dev gcc cmake pkg-config libusb-1.0-0-dev \
@@ -68,7 +69,7 @@ make
 
 ## Building on Windows
 
-- Установить MSYS2, следуя инструкциям  https://www.gtk.org/docs/installations/windows
+- Установить MSYS2, следуя инструкциям https://www.gtk.org/docs/installations/windows
 
 
 - Установить GTK3. Открыть MSYS2 терминал и выполнить:
