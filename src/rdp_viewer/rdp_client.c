@@ -244,8 +244,9 @@ static GArray *rdp_client_create_params_array(ExtendedRdpContext* ex)
         rdp_client_add_str_param_from_ini(rdp_params_dyn_array, "usb_devices", "/usb:addr", NULL);
     }
 
-    // null terminating arg
-    add_rdp_param(rdp_params_dyn_array, NULL);
+    // null terminating arg (very important)
+    const gchar *zero = NULL;
+    g_array_append_val(rdp_params_dyn_array, zero);
 
     return rdp_params_dyn_array;
 }
