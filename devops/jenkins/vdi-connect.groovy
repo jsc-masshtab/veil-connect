@@ -734,6 +734,29 @@ pipeline {
                     }
                 }
 
+                stage ('xenial. deploy to repo') {
+                    when {
+                        beforeAgent true
+                        expression { params.XENIAL == true }
+                    }
+                    environment {
+                        DISTR = "xenial"
+                    }
+                    steps {
+                        sh script: '''
+                            REPO=${PRJNAME}-${DISTR}
+                            DEB=$(ls -1 ${WORKSPACE}/devops/deb-${DISTR}/*.deb)
+
+                            curl -sS -X POST -F file=@$DEB http://$APT_SRV:8008/api/files/${REPO}; echo ""
+                            curl -sS -X POST http://$APT_SRV:8008/api/repos/${REPO}/file/${REPO}?forceReplace=1
+                            JSON1="{\\"Name\\":\\"${REPO}-${DATE}\\"}"
+                            JSON2="{\\"Snapshots\\":[{\\"Component\\":\\"main\\",\\"Name\\":\\"${REPO}-\${DATE}\\"}],\\"ForceOverwrite\\":true}"
+                            curl -sS -X POST -H 'Content-Type: application/json' -d ${JSON1} http://$APT_SRV:8008/api/repos/${REPO}/snapshots
+                            curl -sS -X PUT -H 'Content-Type: application/json' -d ${JSON2} http://$APT_SRV:8008/api/publish/${PRJNAME}/${DISTR}
+                        '''
+                    }
+                }
+
                 stage ('focal. deploy to repo') {
                     when {
                         beforeAgent true
