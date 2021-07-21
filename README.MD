@@ -48,7 +48,7 @@ apt-get install libhiredis-dev \
 libspice-client-gtk-3.0-dev libjson-glib-dev libxml2-dev libsoup2.4-dev \
 gcc cmake pkg-config libusb-1.0-0-dev libusbredirparser-dev curl && \
 sed -i 's/xenial/bionic/g' /etc/apt/sources.list && apt-get update && \
-apt-get install freerdp2-dev
+apt-get install freerdp2-dev cmake libspice-client-gtk-3.0-dev 
 
 mkdir build
 cd build

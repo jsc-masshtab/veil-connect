@@ -3,8 +3,8 @@ FROM ubuntu:xenial
 # install build-deps
 RUN apt-get update && \
     DEBIAN_FRONTEND=noninteractive apt-get install -y -q libhiredis-dev \
-    libspice-client-gtk-3.0-dev libjson-glib-dev libxml2-dev libsoup2.4-dev \
-    gcc cmake pkg-config libusb-1.0-0-dev libusbredirparser-dev curl && \
+    libjson-glib-dev libxml2-dev libsoup2.4-dev \
+    gcc pkg-config libusb-1.0-0-dev libusbredirparser-dev curl && \
     sed -i 's/xenial/bionic/g' /etc/apt/sources.list && apt-get update && \
-    DEBIAN_FRONTEND=noninteractive apt-get install -y -q freerdp2-dev && \
+    DEBIAN_FRONTEND=noninteractive apt-get install -y -q freerdp2-dev cmake libspice-client-gtk-3.0-dev && \
     rm -f /var/cache/apt/archives/*.deb /var/cache/apt/archives/partial/*.deb /var/cache/apt/*.bin || true
