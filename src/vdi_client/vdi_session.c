@@ -82,6 +82,15 @@ static void vdi_session_class_init( VdiSessionClass *klass )
                  G_TYPE_NONE,
                  2,
                  G_TYPE_STRING, G_TYPE_STRING);
+
+    g_signal_new("auth-fail-detected",
+                 G_OBJECT_CLASS_TYPE(gobject_class),
+                 G_SIGNAL_RUN_FIRST,
+                 G_STRUCT_OFFSET(VdiSessionClass, auth_fail_detected),
+                 NULL, NULL,
+                 NULL,
+                 G_TYPE_NONE,
+                 0);
 }
 
 static void vdi_session_init( VdiSession *self G_GNUC_UNUSED)
@@ -349,6 +358,15 @@ void vdi_session_text_msg_received_notify(const gchar *sender_name, const gchar 
     g_signal_emit_by_name(vdi_session_static, "text-msg-received", sender_name, text);
 }
 
+// Вызывается в главном потоке при получении кода 401
+static gboolean auth_fail_detected(gpointer user_data G_GNUC_UNUSED)
+{
+    g_info("%s", (const char *)__func__);
+    vdi_ws_client_stop(&vdi_session_static->vdi_ws_client);
+    g_signal_emit_by_name(vdi_session_static, "auth-fail-detected");
+    return FALSE;
+}
+
 const gchar *vdi_session_get_vdi_ip()
 {
     return vdi_session_static->vdi_ip;
@@ -571,9 +589,11 @@ gchar *vdi_session_api_call(const char *method, const char *uri_string, const gc
     send_message(msg, uri_string);
     g_info("vdi_session_api_call: msg->status_code: %i", msg->status_code);
     //g_info("msg->response_body: %s", msg->response_body->data);
-    //if (msg->status_code == AUTH_FAIL_RESPONSE) {
-    //    // request to go to the auth gui (like browsers do) ?
-    //}
+    // Повторяем логику как в браузере - завершаем соединение и выбрасываем пользователя к форме авторизации
+    if (msg->status_code == AUTH_FAIL_RESPONSE) {
+        // request to go to the auth gui (like browsers do)
+        gdk_threads_add_idle((GSourceFunc)auth_fail_detected, NULL);
+    }
 
     response_body_str = g_strdup(msg->response_body->data); // json_string_with_data. memory allocation!
 

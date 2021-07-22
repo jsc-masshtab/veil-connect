@@ -47,6 +47,7 @@ struct _VdiManager
 
     gulong ws_conn_changed_handle;
     gulong ws_cmd_received_handle;
+    gulong auth_fail_detected;
 
     ConnectSettingsData *p_conn_data;
 };

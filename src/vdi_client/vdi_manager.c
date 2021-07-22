@@ -372,6 +372,13 @@ on_ws_cmd_received(gpointer data G_GNUC_UNUSED, const gchar *cmd, VdiManager *se
     }
 }
 
+static void
+on_auth_fail_detected(gpointer data G_GNUC_UNUSED, VdiManager *self)
+{
+    self->ci.next_app_state = APP_STATE_AUTH_DIALOG;
+    shutdown_loop(self->ci.loop);
+}
+
 // vm start button pressed callback
 static void on_vm_start_button_clicked(GtkButton *button, VdiManager *self)
 {
@@ -415,6 +422,7 @@ static void vdi_manager_finalize(GObject *object)
     VdiManager *self = VDI_MANAGER(object);
     g_signal_handler_disconnect(get_vdi_session_static(), self->ws_conn_changed_handle);
     g_signal_handler_disconnect(get_vdi_session_static(), self->ws_cmd_received_handle);
+    g_signal_handler_disconnect(get_vdi_session_static(), self->auth_fail_detected);
 
     unregister_all_pools(self);
     g_object_unref(self->builder);
@@ -465,6 +473,8 @@ static void vdi_manager_init(VdiManager *self)
                                                       "ws-conn-changed", G_CALLBACK(on_ws_conn_changed), self);
     self->ws_cmd_received_handle = g_signal_connect(get_vdi_session_static(), "ws-cmd-received",
                      G_CALLBACK(on_ws_cmd_received), self);
+    self->auth_fail_detected = g_signal_connect(get_vdi_session_static(), "auth-fail-detected",
+                                             G_CALLBACK(on_auth_fail_detected), self);
 }
 
 /////////////////////////////////// main function

@@ -137,6 +137,11 @@ struct _VirtViewerWindowPrivate {
     gboolean initial_zoom_set;
 
     ConnInfoDialog *conn_info_dialog; // окно для отображения сетевой статистики
+
+    // signal handles
+    gulong vm_changed_handle;
+    gulong ws_cmd_received_handle;
+    gulong auth_fail_detected_handle;
 };
 
 static void
@@ -228,6 +233,10 @@ virt_viewer_window_dispose (GObject *object)
     priv->toolbar = NULL;
 
     conn_info_dialog_destroy(priv->conn_info_dialog);
+
+    g_signal_handler_disconnect(get_vdi_session_static(), priv->vm_changed_handle);
+    g_signal_handler_disconnect(get_vdi_session_static(), priv->ws_cmd_received_handle);
+    g_signal_handler_disconnect(get_vdi_session_static(), priv->auth_fail_detected_handle);
 
     G_OBJECT_CLASS (virt_viewer_window_parent_class)->dispose (object);
 }
@@ -340,6 +349,12 @@ on_ws_cmd_received (gpointer data G_GNUC_UNUSED,
 }
 
 static void
+on_auth_fail_detected (gpointer data G_GNUC_UNUSED, VirtViewerWindow *self) {
+    virt_viewer_set_next_app_state(self->priv->app, APP_STATE_AUTH_DIALOG);
+    virt_viewer_app_hide_and_deactivate(self->priv->app);
+}
+
+static void
 virt_viewer_window_init (VirtViewerWindow *self)
 {
     VirtViewerWindowPrivate *priv;
@@ -389,9 +404,12 @@ virt_viewer_window_init (VirtViewerWindow *self)
                      "can-activate-accel", G_CALLBACK(can_activate_cb), self);
 
     // vdi signals
-    g_signal_connect(get_vdi_session_static(), "vm-changed", G_CALLBACK(on_vm_status_changed), self);
-    g_signal_connect(get_vdi_session_static(), "ws-cmd-received",
-            G_CALLBACK(on_ws_cmd_received), self);
+    priv->vm_changed_handle = g_signal_connect(get_vdi_session_static(),
+            "vm-changed", G_CALLBACK(on_vm_status_changed), self);
+    priv->ws_cmd_received_handle = g_signal_connect(get_vdi_session_static(),
+            "ws-cmd-received", G_CALLBACK(on_ws_cmd_received), self);
+    priv->auth_fail_detected_handle = g_signal_connect(get_vdi_session_static(),
+            "auth-fail-detected", G_CALLBACK(on_auth_fail_detected), self);
 
     vbox = GTK_WIDGET(gtk_builder_get_object(priv->builder, "viewer-box"));
     virt_viewer_window_toolbar_setup(self);
