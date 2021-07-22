@@ -288,6 +288,11 @@ static void on_ws_cmd_received(gpointer data  G_GNUC_UNUSED, const gchar *cmd, R
         rdp_viewer_window_stop(rdp_window_data, APP_STATE_AUTH_DIALOG);
 }
 
+static void on_auth_fail_detected(gpointer data G_GNUC_UNUSED, RdpWindowData *rdp_window_data)
+{
+    rdp_viewer_window_stop(rdp_window_data, APP_STATE_AUTH_DIALOG);
+}
+
 static void rdp_viewer_item_about_activated(GtkWidget *menu G_GNUC_UNUSED, gpointer userdata)
 {
     g_info("%s", (const char *)__func__);
@@ -751,6 +756,8 @@ RdpWindowData *rdp_viewer_window_create(ExtendedRdpContext *ex_rdp_context, int 
             G_CALLBACK(on_vm_status_changed), rdp_window_data);
     rdp_window_data->ws_cmd_received_handle = g_signal_connect(get_vdi_session_static(), "ws-cmd-received",
             G_CALLBACK(on_ws_cmd_received), rdp_window_data);
+    rdp_window_data->auth_fail_detected_handle = g_signal_connect(get_vdi_session_static(), "auth-fail-detected",
+            G_CALLBACK(on_auth_fail_detected), rdp_window_data);
     // Для первого окна добавляем сигнал для показа сообщения о проблеме USB
     if (rdp_window_data->monitor_index == 0)
         rdp_window_data->usb_redir_finished_handle = g_signal_connect(usbredir_controller_get_static(),
@@ -779,6 +786,7 @@ void rdp_viewer_window_destroy(RdpWindowData *rdp_window_data)
 
     g_signal_handler_disconnect(get_vdi_session_static(), rdp_window_data->vm_changed_handle);
     g_signal_handler_disconnect(get_vdi_session_static(), rdp_window_data->ws_cmd_received_handle);
+    g_signal_handler_disconnect(get_vdi_session_static(), rdp_window_data->auth_fail_detected_handle);
     if (rdp_window_data->usb_redir_finished_handle)
         g_signal_handler_disconnect(usbredir_controller_get_static(), rdp_window_data->usb_redir_finished_handle);
 

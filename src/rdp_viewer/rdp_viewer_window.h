@@ -46,6 +46,7 @@ typedef struct{
     // signal handles
     gulong vm_changed_handle;
     gulong ws_cmd_received_handle;
+    gulong auth_fail_detected_handle;
     gulong usb_redir_finished_handle;
 
 } RdpWindowData;

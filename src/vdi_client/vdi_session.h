@@ -169,6 +169,7 @@ struct _VdiSessionClass
     void (*ws_conn_changed)(VdiSession *self, int ws_connected);
     void (*ws_cmd_received)(VdiSession *self, const gchar *cmd);
     void (*text_msg_received)(VdiSession *self, const gchar *author, const gchar *text);
+    void (*auth_fail_detected)(VdiSession *self);
 };
 
 GType vdi_session_get_type( void ) G_GNUC_CONST;

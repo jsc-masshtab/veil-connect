@@ -125,6 +125,12 @@ static void on_ws_cmd_received(gpointer data G_GNUC_UNUSED, const gchar *cmd, Vd
     }
 }
 
+static void on_auth_fail_detected(gpointer data G_GNUC_UNUSED, VdiAppSelector *self)
+{
+    self->selector_result.result_type = APP_SELECTOR_RESULT_NONE;
+    shutdown_loop(self->loop);
+}
+
 AppSelectorResult vdi_app_selector_start(VdiVmData *p_vdi_vm_data, GtkWindow *parent)
 {
     VdiAppSelector *self = calloc(1, sizeof(VdiAppSelector));
@@ -174,6 +180,8 @@ AppSelectorResult vdi_app_selector_start(VdiVmData *p_vdi_vm_data, GtkWindow *pa
             G_CALLBACK(window_deleted_cb), self);
     gulong ws_cmd_received_handle = g_signal_connect(get_vdi_session_static(), "ws-cmd-received",
                                                     G_CALLBACK(on_ws_cmd_received), self);
+    gulong auth_fail_detected_handle = g_signal_connect(get_vdi_session_static(), "auth-fail-detected",
+            G_CALLBACK(on_auth_fail_detected), self);
 
     // show window
     gtk_window_set_transient_for(GTK_WINDOW(self->window), parent);
@@ -185,6 +193,7 @@ AppSelectorResult vdi_app_selector_start(VdiVmData *p_vdi_vm_data, GtkWindow *pa
 
     // free
     g_signal_handler_disconnect(get_vdi_session_static(), ws_cmd_received_handle);
+    g_signal_handler_disconnect(get_vdi_session_static(), auth_fail_detected_handle);
     g_object_unref(self->builder);
     gtk_widget_destroy(self->window);
 
