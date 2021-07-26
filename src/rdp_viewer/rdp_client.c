@@ -150,6 +150,7 @@ static GArray *rdp_client_create_params_array(ExtendedRdpContext* ex)
     add_rdp_param(rdp_params_dyn_array, g_strdup("/cert-ignore"));
     add_rdp_param(rdp_params_dyn_array, g_strdup("/sound:rate:44100,channel:2"));
     add_rdp_param(rdp_params_dyn_array, g_strdup("/relax-order-checks"));
+    add_rdp_param(rdp_params_dyn_array, g_strdup("/rfx"));
 #ifdef __linux__
 #elif _WIN32
     add_rdp_param(rdp_params_dyn_array, g_strdup("+glyph-cache"));
@@ -166,14 +167,18 @@ static GArray *rdp_client_create_params_array(ExtendedRdpContext* ex)
         add_rdp_param(rdp_params_dyn_array, g_strdup("+aero"));
 
     // /gfx-h264:AVC444
-    gboolean is_rdp_h264_used = read_int_from_ini_file("RDPSettings", "is_rdp_h264_used", TRUE);
-    if (is_rdp_h264_used)
-#ifdef _WIN32 // На windows удалось успешно использовать только AVC420
-        add_rdp_param(rdp_params_dyn_array, g_strdup("/gfx-h264:AVC420"));
-#else
-        rdp_client_add_str_param_from_ini(rdp_params_dyn_array, "rdp_h264_codec", "/gfx-h264",
-                                                       h264_codec_to_string(get_default_h264_codec()));
-#endif
+    gboolean is_rdp_vid_comp_used = read_int_from_ini_file("RDPSettings", "is_rdp_vid_comp_used", TRUE);
+    if (is_rdp_vid_comp_used) {
+        g_autofree gchar *codec = NULL;
+        codec = read_str_from_ini_file("RDPSettings", "rdp_vid_comp_codec");
+        if (codec == NULL) // Если не указан то по умолчанию AVC420
+            add_rdp_param(rdp_params_dyn_array, g_strdup("/gfx-h264:AVC420"));
+        else if (g_strcmp0(codec, "AVC420") == 0 || g_strcmp0(codec, "AVC444") == 0)
+            add_rdp_param(rdp_params_dyn_array, g_strdup_printf("/gfx-h264:%s", codec));
+        else if(g_strcmp0(codec, "RFX") == 0)
+            add_rdp_param(rdp_params_dyn_array, g_strdup("/gfx:RFX"));
+    }
+
     // drives (folders)
     gchar *shared_folders_str = read_str_from_ini_file("RDPSettings", "rdp_shared_folders");
 
@@ -240,13 +245,13 @@ static GArray *rdp_client_create_params_array(ExtendedRdpContext* ex)
         add_rdp_param(rdp_params_dyn_array, g_strdup("-themes"));
 
     // USB for RemoteFX
-    if(vdi_session_is_usb_redir_permitted()) {
-        rdp_client_add_str_param_from_ini(rdp_params_dyn_array, "usb_devices", "/usb:addr", NULL);
+    if (vdi_session_is_usb_redir_permitted()) {
+        g_autofree gchar *usb_devices_str = NULL;
+        usb_devices_str = read_str_from_ini_file("RDPSettings", "usb_devices");
+        if (strlen_safely(usb_devices_str)) {
+            add_rdp_param(rdp_params_dyn_array, g_strdup_printf("/usb:addr:%s", usb_devices_str));
+        }
     }
-
-    // null terminating arg (very important)
-    const gchar *zero = NULL;
-    g_array_append_val(rdp_params_dyn_array, zero);
 
     return rdp_params_dyn_array;
 }
@@ -340,15 +345,15 @@ void* rdp_client_routine(ExtendedRdpContext *ex_contect)
 
     g_info("%s ex_contect->user_name %s", (const char *)__func__, ex_contect->p_rdp_settings->user_name);
     g_info("%s ex_contect->domain %s", (const char *)__func__, ex_contect->p_rdp_settings->domain);
-    // /v:192.168.20.104 /u:solomin /p:5555 -clipboard /sound:rate:44100,channel:2 /cert-ignore
-
-    gchar** argv = malloc(rdp_params_dyn_array->len * sizeof(gchar*));
+    // + 1 к размеру для завершающего NULL
+    gchar** argv = malloc((rdp_params_dyn_array->len + 1) * sizeof(gchar*));
     for (guint i = 0; i < rdp_params_dyn_array->len; ++i) {
         argv[i] = g_array_index(rdp_params_dyn_array, gchar*, i);
         g_info("%i RDP arg: %s", i, argv[i]);
     }
+    argv[rdp_params_dyn_array->len] = NULL; // Завершающий NULL
 
-    int argc = rdp_params_dyn_array->len - 1;
+    int argc = (int)rdp_params_dyn_array->len;
 
     // set rdp params
     status = freerdp_client_settings_parse_command_line(context->settings, argc, argv, TRUE);

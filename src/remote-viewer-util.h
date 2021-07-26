@@ -34,12 +34,6 @@ typedef enum
 } RemoteViewerState;
 
 typedef enum{
-    H264_CODEC_AVC420,
-    H264_CODEC_AVC444
-} H264_CODEC_TYPE;
-
-
-typedef enum{
     VM_POWER_STATE_OFF = 1,
     VM_POWER_STATE_PAUSED = 2,
     VM_POWER_STATE_ON = 3
@@ -136,10 +130,6 @@ gchar *get_windows_app_data_location(void);
 gchar *get_windows_app_temp_location(void);
 
 const gchar *get_cur_ini_param_group(void);
-
-const gchar *h264_codec_to_string(H264_CODEC_TYPE codec);
-H264_CODEC_TYPE string_to_h264_codec(const gchar *str);
-H264_CODEC_TYPE get_default_h264_codec(void);
 
 //void gtk_combo_box_text_set_active_text(GtkComboBoxText *combo_box, const gchar *text);
 
