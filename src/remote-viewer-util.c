@@ -904,31 +904,6 @@ const gchar *get_cur_ini_param_group()
 //    gtk_tree_model_get(model, &iter, text_column, &text, -1);
 //}
 
-const gchar *h264_codec_to_string(H264_CODEC_TYPE codec)
-{
-    if (codec == H264_CODEC_AVC444)
-        return "AVC444";
-    else
-        return "AVC420";
-}
-
-H264_CODEC_TYPE string_to_h264_codec(const gchar *str)
-{
-    if (g_strcmp0(str, "AVC444") == 0)
-        return H264_CODEC_AVC444;
-    else
-        return H264_CODEC_AVC420;
-}
-
-H264_CODEC_TYPE get_default_h264_codec()
-{
-#ifdef _WIN32
-    return H264_CODEC_AVC420;
-#else
-    return H264_CODEC_AVC444;
-#endif
-}
-
 const gchar *util_get_os_name()
 {
 #ifdef _WIN64

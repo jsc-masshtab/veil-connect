@@ -382,7 +382,7 @@ remote_viewer_connect_dialog(RemoteViewer *remote_viewer, ConnectSettingsData *c
     ci.message_display_label = GTK_WIDGET(gtk_builder_get_object(builder, "message-display-label"));
     ci.header_label = GTK_WIDGET(gtk_builder_get_object(builder, "header-label"));
     g_autofree gchar *header_label_tooltip_text = NULL;
-    header_label_tooltip_text = g_strdup_printf("Freerdp version: %s Application built: %s %s",
+    header_label_tooltip_text = g_strdup_printf("Built with freerdp version: %s Application build date: %s %s",
             FREERDP_VERSION_FULL, __DATE__, __TIME__);
     gtk_widget_set_tooltip_text(ci.header_label, header_label_tooltip_text);
     gtk_label_set_text(GTK_LABEL(ci.header_label), VERSION);
