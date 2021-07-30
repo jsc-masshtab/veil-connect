@@ -445,9 +445,9 @@
                                 <property name="can_focus">False</property>
                                 <property name="active">0</property>
                                 <items>
+                                  <item id="RFX" translatable="yes">RemoteFX</item>
                                   <item id="AVC420" translatable="yes">AVC420</item>
                                   <item id="AVC444" translatable="yes">AVC444</item>
-                                  <item id="RFX" translatable="yes">RemoteFX</item>
                                 </items>
                               </object>
                               <packing>

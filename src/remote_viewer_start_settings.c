@@ -829,7 +829,7 @@ GtkResponseType remote_viewer_start_settings_dialog(RemoteViewer *p_remote_viewe
             get_widget_from_builder(dialog_data.builder, "is_rdp_vid_comp_used_check_btn");
     dialog_data.rdp_codec_combobox = get_widget_from_builder(dialog_data.builder, "rdp_codec_combobox");
 #ifdef _WIN32 // На Windows не работает AVC444
-    gtk_combo_box_text_remove(GTK_COMBO_BOX_TEXT(dialog_data.rdp_codec_combobox), 1);
+    gtk_combo_box_text_remove(GTK_COMBO_BOX_TEXT(dialog_data.rdp_codec_combobox), 2);
 #endif
     dialog_data.rdp_shared_folders_entry = get_widget_from_builder(dialog_data.builder, "rdp_shared_folders_entry");
 
