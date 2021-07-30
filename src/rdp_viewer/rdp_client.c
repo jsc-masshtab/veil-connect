@@ -171,12 +171,10 @@ static GArray *rdp_client_create_params_array(ExtendedRdpContext* ex)
     if (is_rdp_vid_comp_used) {
         g_autofree gchar *codec = NULL;
         codec = read_str_from_ini_file("RDPSettings", "rdp_vid_comp_codec");
-        if (codec == NULL) // Если не указан то по умолчанию AVC420
-            add_rdp_param(rdp_params_dyn_array, g_strdup("/gfx-h264:AVC420"));
+        if (codec == NULL || g_strcmp0(codec, "RFX") == 0) // Если не указан то по умолчанию RFX
+            add_rdp_param(rdp_params_dyn_array, g_strdup("/gfx:RFX"));
         else if (g_strcmp0(codec, "AVC420") == 0 || g_strcmp0(codec, "AVC444") == 0)
             add_rdp_param(rdp_params_dyn_array, g_strdup_printf("/gfx-h264:%s", codec));
-        else if(g_strcmp0(codec, "RFX") == 0)
-            add_rdp_param(rdp_params_dyn_array, g_strdup("/gfx:RFX"));
     }
 
     // drives (folders)
