@@ -9,7 +9,6 @@
 | Astra 2.12 Orel    | bionic  |
 | Debian 9           | stretch |
 | Debian 10          | buster  |
-| Ubuntu 16.04       | xenial  |
 | Ubuntu 18.04       | bionic  |
 | Ubuntu 20.04       | focal   |
 | Centos 7           |  el7    |
@@ -35,20 +34,6 @@ make
 apt-get install libhiredis-dev libspice-client-gtk-3.0-dev libjson-glib-dev \
 libxml2-dev libsoup2.4-dev freerdp2-dev gcc cmake pkg-config libusb-1.0-0-dev \
 libusbredirparser-dev
-
-mkdir build
-cd build
-cmake -DCMAKE_BUILD_TYPE=Release ../
-make
-```
-
-## Building on Ubuntu 16.04
-```
-apt-get install libhiredis-dev \
-libspice-client-gtk-3.0-dev libjson-glib-dev libxml2-dev libsoup2.4-dev \
-gcc cmake pkg-config libusb-1.0-0-dev libusbredirparser-dev curl && \
-sed -i 's/xenial/bionic/g' /etc/apt/sources.list && apt-get update && \
-apt-get install freerdp2-dev cmake libspice-client-gtk-3.0-dev 
 
 mkdir build
 cd build
