@@ -1,7 +1,278 @@
 
-n.n.n / 2020-12-25
+n.n.n / 2021-08-04
 ==================
 
+  * FEATURE TG-13969 QR code painting 2
+  * FEATURE TG-13969 QR code painting
+  * FEATURE TG-13969 try
+  * FEATURE TG-13969 Added qr generator
+  * FEATURE TG-13969 warnings fix
+  * Merge branch 'dev' of http://gitlab.bazalt.team/vdi/veil-connect into dev
+  * FEATURE TG-13855 По умолчанию сжатие RemoteFX
+  * FEATURE TG-13855 По умолчанию сжатие RemoteFX
+  * Актуальная ссылка на доку
+  * Merge feature_tg_13855 into dev
+  * Merge feature_tg_13665 into dev
+  * Deploy xenial
+  * Install cmake and libspice-client-gtk-3.0-dev from bionic repo
+  * change dockerfile xenial
+  * Был потерян завершающий null элемент в параметрах rdp
+
+1.6.7 / 2021-07-09
+==================
+
+  * Merge branch 'master' into dev
+  * FEATURE TG-13621 connect xenial
+  * dockerfile xenial
+  * Update vdi-connect.groovy
+  * Update veil-connect-linux-installer.sh
+  * FEATURE TG-13522 Правка мелкого бага
+  * Merge feature_tg_13710 into dev
+  * FEATURE TG-13522 Правки предупреждений
+  * FEATURE TG-13522 Правки компиляции
+
+1.6.6 / 2021-07-01
+==================
+
+  * Merge feature_tg_13619 into dev
+  * FEATURE TG-13522 Токен как атомарная строка во избежание потенциального краша при доступе из двух потоков
+  * FEATURE TG-13522 Упрощение кода
+  * FEATURE TG-13522 wrong x y position fix
+  * FEATURE TG-13522 rdp_display refactor
+  * FEATURE TG-13522 Refactor
+  * FEATURE TG-13522 Scrolls in RDP widget
+  * FEATURE TG-13522 small gui edit
+
+1.6.5 / 2021-06-16
+==================
+
+  * FEATURE TG-13391 Patch version bump
+  * Merge branch 'master' into dev
+  * FEATURE TG-13484 В логах пишется reason сообщение если завершилась свзять по ws
+  * FEATURE TG-13391 Поддержка старых версий сервера в части разрешений
+  * FEATURE TG-13391 Patch bump
+  * Merge branch 'master' into dev
+  * Merge feature_tg_13391 into dev
+  * Merge fix_tg_13406 into dev
+
+1.6.4 / 2021-06-15
+==================
+
+  * Patch bump. New freerdp version
+  * Merge branch 'feature_tg_13361'
+  * FEATURE TG-13361 смена версии freerdp x64
+
+1.6.3 / 2021-06-07
+==================
+
+  * Patch version bump
+  * Merge branch 'dev'
+  * Fix. logout on Disconnect cmd from server
+  * Merge branch 'dev'
+  * Updated diagram
+  * Merge branch 'readme_update' into 'dev'
+  * Readme update
+  * FEATURE TG-13247 Больше настроек передается нативному rdp вьюверу
+
+1.6.2 / 2021-06-02
+==================
+
+  * Merge branch 'dev'
+  * FEATURE TG-13326 Отключен доступ выбора типа кодека на виндоус. Зашит AVC420
+  * FIX TG-13262 Фикс обновления на windows
+  * Refactoring. Structure simplification
+  * Merge dev into master
+  * FEATURE TG-13244 Типы подключений отображаются в том же порядки что были присланы с сервера
+  * Merge feature_tg_13247 into dev
+  * FEATURE TG-13262 Supposed update fix
+  * Merge feature_tg_13250 into dev
+  * FEATURE TG-13110 Printscreen убран из списка посылаемых клавиш
+  * Merge feature_tg_13110 into dev
+
+1.6.1 / 2021-05-19
+==================
+
+  * Merge dev into master
+  * Merge feature_tg_13168 into dev
+  * Merge feature_tg_13146 into dev
+  * Merge fix_tg_13112 into dev
+  * FIX TG-13127 Возможность увидеть версию freerdp в GUI
+  * FIX TG-13127 Больше проверок при обновлении ПО
+  * Merge branch 'feature_tg_13111' into 'master'
+  * FEATURE TG-13111 Add apt-repo arch to installer
+  * Merge branch 'dev' into 'master'
+  * FEATURE TG-13071 Фикс обновления ПО на виндоус
+  * erge branch 'master' into dev
+  * FEATURE TG-13071  Правки GUI
+  * FEATURE TG-13071 В гуй вынесены параметры влияющие на трафик
+  * FEATURE TG-13071 Gui для выбора типа сети в RDP
+  * FEATURE TG-13071 css simplification
+  * FEATURE TG-13071 crush fix
+  * FEATURE TG-13069 Возможность послать Alt Tab
+  * FEATURE TG-13069 App selector CSS
+  * FEATURE TG-13069 Version bump
+  * FEATURE TG-13069 Выбор приложения для запуска в режиме native rdp
+  * FEATURE TG-13069 Refactor
+  * FEATURE TG-13069 В селекторе приложений учитывается команда на отключение
+  * FEATURE TG-13069 Очистка памяти для массива ферм
+  * FEATURE TG-13069  Рабочий прототип
+  * FEATURE TG-13069 Refactor
+  * FEATURE TG-13069 Наброски получения и отображения списка приложений RDS
+
+1.6.0 / 2021-05-11
+==================
+
+  * Merge dev into master
+  * Merge branch 'feature_tg_13069' into 'master'
+  * FEATURE TG-13069 Full sceen bug fix
+  * Merge branch 'feature_tg_13074' into 'master'
+  * FEATURE TG-13074 veil-connect-embedded for astra leningrad-2
+  * Merge branch 'feature_tg_13074' into 'master'
+  * FEATURE TG-13074 veil-connect-embedded for astra leningrad
+
+1.5.4 / 2021-04-29
+==================
+
+  * Merge branch 'dev' into 'master'
+  * Merge branch 'feature_tg_12918' into 'dev'
+  * Feature tg 12918
+  * Merge branch 'feature_tg_13020' into 'master'
+  * FEATURE TG-13000 veil-repo: add repo name in qcow2 file-4
+  * FEATURE TG-12720 Marked/removed unused params
+  * Merge feature_tg_12918 into dev
+  * Merge branch 'feature_tg_12970' into 'master'
+  * FEATURE TG-12970 Fix windows build
+  * FEATURE TG-12720 Подавление открытия консоли во время пинга на винде 2
+  * FEATURE TG-12720 Подавление открытия консоли во время пинга на винде
+  * Ping experimental
+  * FEATURE TG-12720 Сбор статистики только при использовании freerdp 2.1.0 и выше
+
+1.5.3 / 2021-04-15
+==================
+
+  * FEATURE TG-12845 Refactor. Windows check
+  * FEATURE TG-12845 Refactor
+  * FEATURE TG-12845 Removed old code 2
+  * FEATURE TG-12845 Removed old code
+  * Merge feature_tg_12720 into dev
+  * Merge branch 'master' into dev
+  * Revert "Merge branch 'issue_tg_12785'"
+  * Merge branch 'issue_tg_12785'
+  * ISSUE TG-12785 исправление схемы выкладки 3
+  * ISSUE TG-12785 исправление схемы выкладки 2
+  * ISSUE TG-12785 исправление схемы выкладки 1
+  * FEATURE TG-12763 Фикс. Флаг подключения
+  * Merge feature_tg_12718 into dev
+  * FEATURE TG-12682 Сохранения в ini файл параметра включен ли ручной режим
+  * Merge feature_tg_12682 into dev
+  * Merge branch 'feature_tg_12677'
+  * FEATURE TG-12677 исправление сборочного задания
+  * FEATURE TG-12526 Refactor
+
+1.5.2 / 2021-03-29
+==================
+
+  * Merge branch 'dev'
+  * Merge branch 'master' of http://gitlab.bazalt.team/vdi/veil-connect
+  * FEATURE TG-12526 В ручном режиме приложение не завершалось при использовани spice
+  * FEATURE TG-12526 Small fix
+  * FEATURE TG-12526 Отправка доп параметров
+  * Merge branch 'feature_tg_12650' into 'master'
+  * FEATURE TG-12650 Remove gitlab token from pipeline
+  * FEATURE TG-12527 Small fix
+  * merge feature_tg_12527 into dev
+  * Merge branch 'master' into dev
+  * Merge feature_tg_12274 into dev
+
+1.5.1 / 2021-03-22
+==================
+
+  * Merge branch 'feature_tg_12578' into 'master'
+  * FEATURE TG-12578 Smolensk embedded
+  * Merge branch 'feature_tg_12412' into 'master'
+  * FEATURE TG-12412 Install epel-release for centos
+  * Merge branch 'feature_tg_12397' into 'master'
+  * Merge feature_tg_12389 into dev
+  * FEATURE TG-12397 How-to build (alt linux)
+  * Merge branch 'feature_tg_11791' into 'master'
+  * Merge branch 'feature_tg_12251' into 'master'
+  * FEATURE TG-12251 Build for alt linux-2
+  * Merge branch 'feature_tg_12382' into 'master'
+  * FEATURE TG-12382 Update postinst script-3
+  * Merge branch 'feature_tg_12251' into 'master'
+  * FEATURE TG-12251 Build for alt linux
+  * Merge branch 'master' of http://gitlab.bazalt.team/vdi/veil-connect
+  * Merge feature_tg_12274 into master
+  * Merge branch 'feature_tg_12382' into 'master'
+  * FEATURE TG-12382 Update postinst script-2
+  * Merge branch 'feature_tg_12382' into 'master'
+  * FEATURE TG-12382 Update postinst script
+  * FEATURE TG-11791 Veil-connect how-to build (for leningrad)
+
+1.5.0 / 2021-03-09
+==================
+
+  * Merge feature_tg_12061 into master
+  * Merge branch 'feature_tg_12202' into 'master'
+  * FEATURE TG-12202 Add some dlls
+  * FEATURE TG-12206 Обновлен урл до релизов под виндоус
+
+1.4.2 / 2021-02-24
+==================
+
+  * Merge feature_tg_12128 into master
+  * Merge feature_tg_12107 into master
+  * Merge branch 'feature_tg_12122' into 'master'
+  * FEATURE TG-12122 Fix rpm build
+  * Merge feature_tg_12006 into master
+  * Merge branch 'feature_tg_12019' into 'master'
+  * FEATURE TG-12019 New universal install script
+  * Merge branch 'feature_tg_12007' into 'master'
+  * FEATURE TG-12007 Deploy to yum repo
+  * Merge branch 'feature_tg_11909' into 'master'
+  * FEATURE TG-11909 Docker build agent
+  * Merge feature_tg_11978 into master
+  * Merge branch 'feature_tg_11961' into 'master'
+  * FEATURE TG-11961 Fix deb packages version-4
+  * FEATURE TG-11961 Fix deb packages version-3
+  * Merge branch 'feature_tg_11961' into 'master'
+  * FEATURE TG-11961 Fix deb packages version
+  * FEATURE TG-11961 Fix deb packages version-2
+  * FEATURE TG-11961 Fix deb packages version
+  * Merge branch 'feature_tg_11794' into 'master'
+  * FEATURE TG-11794 Fix broker url
+
+1.4.1 / 2021-01-29
+==================
+
+  * Merge feature_tg_11777 into master
+  * Merge feature_tg_11702 into master
+  * Merge feature_tg_11590 into master
+  * Merge branch 'feature_tg_11457' into 'master'
+  * FEATURE TG-11457 Fix meta info
+  * Merge branch 'feature_tg_11457' into 'master'
+  * FEATURE TG-11457 Deploy to apt repo
+
+1.4.0 / 2021-01-20
+==================
+
+  * FEATURE TG-11581  При получении команды отключиться возвращаемся к окну авторизации из любого состояния приложения
+  * FEATURE TG-11581 new app state system
+  * FEATURE TG-11581 Refactor
+  * FEATURE TG-11581 Поправлен баг: при закрытии окна rdp приложение не завершалось, а переходило к окну выбора пула
+  * FEATURE TG-11581 Флаг для распознования ручного коннекта и автоконнекта по ws
+  * Merge feature_tg_11535 into master
+  * Merge feature_tg_11479 into master
+  * Merge feature_tg_11456 into master
+  * FEATURE TG-11441 Показывается окно с выводом процесса apt-get install veil-connect если он завершился с ошибками
+  * VdiManager refactoring
+  * Merge feature_tg_11441 into master
+  * Merge fix_tg_11425 into master
+
+1.3.8 / 2020-12-25
+==================
+
+  * Merge feature_tg_10833 into master
   * FIX TG-11392 фикс. перенос в файле rdp
 
 1.3.7 / 2020-12-24

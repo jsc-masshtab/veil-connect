@@ -139,12 +139,12 @@ static void rdp_viewer_stats_data_updated(gpointer data G_GNUC_UNUSED, VdiVmRemo
 
 RemoteViewerState rdp_viewer_start(RemoteViewer *app, VeilRdpSettings *p_rdp_settings)
 {
-    g_info("%s domain %s ip %s", (const char *)__func__, p_rdp_settings->domain, p_rdp_settings->ip);
-
     RemoteViewerData self;
     RemoteViewerState next_app_state = APP_STATE_UNDEFINED;
     if (p_rdp_settings == NULL)
         return next_app_state;
+
+    g_info("%s domain %s ip %s", (const char *)__func__, p_rdp_settings->domain, p_rdp_settings->ip);
 
     // Если имя и пароль по какой-либо причине отсутствуют, то предлагаем пользователю их ввести.
     gboolean ret = rdp_viewer_ask_for_credentials_if_required(p_rdp_settings);
@@ -199,7 +199,7 @@ RemoteViewerState rdp_viewer_start(RemoteViewer *app, VeilRdpSettings *p_rdp_set
             GdkRectangle geometry = set_monitor_data_and_create_rdp_viewer_window(monitor, i, self.ex_rdp_context,
                                                         &loop);
             total_monitor_width += geometry.width;
-            // find smallest height
+            // find the smallest height
             monitor_height = (i == 0) ? geometry.height : MIN(monitor_height, geometry.height);
         }
     // Create windows only for primary monitor

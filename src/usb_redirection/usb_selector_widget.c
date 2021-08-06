@@ -6,6 +6,9 @@
  * Author: http://mashtab.org/
  */
 
+#include <string.h>
+#include <stdlib.h>
+
 #include <libusb.h>
 #include <usbredirparser.h>
 

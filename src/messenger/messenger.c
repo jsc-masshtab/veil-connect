@@ -7,6 +7,7 @@
  */
 
 #include <string.h>
+#include <stdlib.h>
 
 #include "messenger.h"
 #include "vdi_session.h"

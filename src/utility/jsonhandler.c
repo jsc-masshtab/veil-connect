@@ -69,7 +69,16 @@ JsonObject *json_object_get_object_member_safely(JsonObject *object, const gchar
     return NULL;
 }
 
-JsonObject *jsonhandler_get_data_or_errors_object(JsonParser *parser, const gchar *json_str,
+gboolean json_object_get_bool_member_safely(JsonObject *object, const gchar *member_name)
+{
+    if (object && json_object_has_member(object, member_name))
+        return json_object_get_boolean_member(object, member_name);
+
+    g_info("json member '%s' does not exist", member_name);
+    return FALSE;
+}
+
+JsonObject *json_get_data_or_errors_object(JsonParser *parser, const gchar *json_str,
         ServerReplyType *server_reply_type)
 {
     if (!json_str)

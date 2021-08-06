@@ -123,10 +123,13 @@ list(APPEND SRC_CODE
         src/vdi_client/vdi_redis_client.c
         src/vdi_client/vdi_app_selector.c
         src/vdi_client/vdi_app_selector.h
+        src/vdi_client/vdi_user_settings_widget.h
+        src/vdi_client/vdi_user_settings_widget.c
 
 # app_updater
         src/app_updater/app_updater.h
         src/app_updater/app_updater.c
+
 # messenger
         src/messenger/messenger.h
         src/messenger/messenger.c
@@ -134,6 +137,12 @@ list(APPEND SRC_CODE
 # net_speedometer
         src/net_speedometer/net_speedometer.h
         src/net_speedometer/net_speedometer.c
+
+# qr_code_generation
+        src/qr_code_generation/qr_code_gen.h
+        src/qr_code_generation/qr_code_gen.c
+        src/qr_code_generation/qr_code_renderer.h
+        src/qr_code_generation/qr_code_renderer.c
 )
 
 # usb_redirection

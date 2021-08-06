@@ -121,6 +121,7 @@ VdiSession *vdi_session_new()
 
     vdi_session->vdi_username = NULL;
     vdi_session->vdi_password = NULL;
+    vdi_session->disposable_password = NULL;
     vdi_session->vdi_ip = NULL;
 
     vdi_session->api_url = NULL;
@@ -150,6 +151,7 @@ static void free_session_memory()
 {
     free_memory_safely(&vdi_session_static->vdi_username);
     free_memory_safely(&vdi_session_static->vdi_password);
+    free_memory_safely(&vdi_session_static->disposable_password);
     free_memory_safely(&vdi_session_static->vdi_ip);
 
     free_memory_safely(&vdi_session_static->api_url);
@@ -217,9 +219,12 @@ static gchar *vdi_session_auth_request()
     soup_message_headers_append(msg->request_headers, "User-Agent", "thin-client");
 
     // set body
-    gchar *message_body_str = g_strdup_printf("{\"username\": \"%s\", \"password\": \"%s\", \"ldap\": %s}",
-                                   vdi_session_static->vdi_username, vdi_session_static->vdi_password,
-                                   bool_to_str(vdi_session_static->is_ldap));
+    gchar *message_body_str = g_strdup_printf(
+            "{\"username\": \"%s\", \"password\": \"%s\", \"code\": \"%s\", \"ldap\": %s}",
+            vdi_session_static->vdi_username,
+            vdi_session_static->vdi_password,
+            vdi_session_static->disposable_password,
+            bool_to_str(vdi_session_static->is_ldap));
     //g_info("%s  messageBodyStr %s", (const char *)__func__, messageBodyStr);
     soup_message_set_request(msg, "application/json",
                              SOUP_MEMORY_COPY, message_body_str, strlen_safely(message_body_str));
@@ -242,7 +247,7 @@ static gchar *vdi_session_auth_request()
     JsonParser *parser = json_parser_new();
 
     ServerReplyType server_reply_type;
-    JsonObject *reply_json_object = jsonhandler_get_data_or_errors_object(parser, msg->response_body->data,
+    JsonObject *reply_json_object = json_get_data_or_errors_object(parser, msg->response_body->data,
             &server_reply_type);
 
     switch (server_reply_type) {
@@ -277,7 +282,7 @@ static gchar *vdi_session_auth_request()
     }
 }
 
-// connect to reddis and subscribe for licence handling
+// connect to reddis and subscribe for licence handling. Legacy function
 static void vdi_api_session_register_for_license() {
     if (vdi_session_static->redis_client.is_subscribed)
         return;
@@ -292,8 +297,7 @@ static void vdi_api_session_register_for_license() {
     JsonParser *parser = json_parser_new();
 
     ServerReplyType server_reply_type;
-    JsonObject *data_member_object = jsonhandler_get_data_or_errors_object(parser, response_body_str,
-                                                                           &server_reply_type);
+    JsonObject *data_member_object = json_get_data_or_errors_object(parser, response_body_str, &server_reply_type);
     free_memory_safely(&response_body_str);
 
     if (server_reply_type == SERVER_REPLY_TYPE_DATA) {
@@ -397,13 +401,14 @@ void vdi_session_cancell_pending_requests()
     soup_session_abort(vdi_session_static->soup_session);
 }
 
-void vdi_session_set_credentials(const gchar *username, const gchar *password, const gchar *ip,
-                         int port, gboolean is_ldap)
+void vdi_session_set_credentials(const gchar *username, const gchar *password, gchar *disposable_password,
+        const gchar *ip, int port, gboolean is_ldap)
 {
     free_session_memory();
 
     vdi_session_static->vdi_username = g_strdup(username);
     vdi_session_static->vdi_password = g_strdup(password);
+    vdi_session_static->disposable_password = g_strdup(disposable_password);
     vdi_session_static->vdi_ip = g_strdup(ip);
     vdi_session_static->vdi_port = port;
 
@@ -557,22 +562,17 @@ gchar *vdi_session_api_call(const char *method, const char *uri_string, const gc
 {
     gchar *response_body_str = NULL;
 
-    if (uri_string == NULL)
+    if (uri_string == NULL) {
+        g_warning("%s :uri_string is NULL.", (const char *)__func__);
         return response_body_str;
+    }
 
-    // get the token if we dont have it
+    // Check token
     g_autofree gchar *jwt_str = NULL;
     jwt_str = atomic_string_get(&vdi_session_static->jwt);
     if (jwt_str == NULL) {
-        gchar *reply_msg = vdi_session_auth_request();
-        g_free(reply_msg);
-        // Return if couldn't get the token
-        g_autofree gchar *jwt_str_updated = NULL;
-        jwt_str_updated = atomic_string_get(&vdi_session_static->jwt);
-        if (jwt_str_updated == NULL) {
-            g_warning("%s :Token is NULL. Cant get token", (const char *)__func__);
-            return response_body_str;
-        }
+        g_warning("%s :Token is NULL. Cant execute request.", (const char *)__func__);
+        return response_body_str;
     }
 
     // create msg
@@ -642,18 +642,18 @@ void vdi_session_get_vm_from_pool_task(GTask       *task,
                     GCancellable  *cancellable G_GNUC_UNUSED)
 {
     // register for licensing if its still not done
-    vdi_api_session_register_for_license();
+    vdi_api_session_register_for_license(); // Legacy. Remove later
 
     // get vm from pool
     gchar *url_str = g_strdup_printf("%s/client/pools/%s", vdi_session_static->api_url,
             vdi_session_static->current_pool_id);
-    gchar *bodyStr = g_strdup_printf("{\"remote_protocol\":\"%s\"}", vdi_session_remote_protocol_to_str(
+    gchar *body_str = g_strdup_printf("{\"remote_protocol\":\"%s\"}", vdi_session_remote_protocol_to_str(
             vdi_session_static->current_remote_protocol));
 
-    gchar *response_body_str = vdi_session_api_call("POST", url_str, bodyStr, NULL);
+    gchar *response_body_str = vdi_session_api_call("POST", url_str, body_str, NULL);
 
     g_free(url_str);
-    g_free(bodyStr);
+    g_free(body_str);
 
     //response_body_str == NULL. didnt receive what we wanted
     if (!response_body_str) {
@@ -665,8 +665,7 @@ void vdi_session_get_vm_from_pool_task(GTask       *task,
     JsonParser *parser = json_parser_new();
 
     ServerReplyType server_reply_type;
-    JsonObject *reply_json_object = jsonhandler_get_data_or_errors_object(parser, response_body_str,
-            &server_reply_type);
+    JsonObject *reply_json_object = json_get_data_or_errors_object(parser, response_body_str, &server_reply_type);
 
     VdiVmData *vdi_vm_data = calloc(1, sizeof(VdiVmData));
     vdi_vm_data->server_reply_type = server_reply_type;
@@ -824,8 +823,7 @@ void vdi_session_send_text_msg_task(GTask *task G_GNUC_UNUSED,
     if (response_body_str) {
         JsonParser *parser = json_parser_new();
         ServerReplyType server_reply_type;
-        JsonObject *reply_json_object = jsonhandler_get_data_or_errors_object(parser, response_body_str,
-                                                                              &server_reply_type);
+        JsonObject *reply_json_object = json_get_data_or_errors_object(parser, response_body_str, &server_reply_type);
         if (server_reply_type == SERVER_REPLY_TYPE_DATA) {
             text_message_data->is_successfully_sent = TRUE;
         } else {
@@ -842,6 +840,106 @@ void vdi_session_send_text_msg_task(GTask *task G_GNUC_UNUSED,
     json_node_free(root);
     g_object_unref(gen);
     g_object_unref(builder);
+}
+// UserData
+void vdi_session_get_user_data_task(GTask *task,
+                                    gpointer       source_object G_GNUC_UNUSED,
+                                    gpointer       task_data G_GNUC_UNUSED,
+                                    GCancellable  *cancellable G_GNUC_UNUSED)
+{
+    g_autofree gchar *url_str = NULL;
+    url_str = g_strdup_printf("%s/client/get_user_data", vdi_session_static->api_url);
+    g_autofree gchar *response_body_str;
+    response_body_str = vdi_session_api_call("GET", url_str, NULL, NULL);
+
+    // parse response
+    JsonParser *parser = json_parser_new();
+    ServerReplyType server_reply_type;
+    JsonObject *reply_json_object = json_get_data_or_errors_object(parser, response_body_str, &server_reply_type);
+
+    UserData *tk_user_data = calloc(1, sizeof(UserData)); // free in callback!
+    tk_user_data->is_success = (server_reply_type == SERVER_REPLY_TYPE_DATA);
+    if (tk_user_data->is_success) {
+        JsonObject *user_obj = json_object_get_object_member_safely(reply_json_object, "user");
+        tk_user_data->two_factor = json_object_get_bool_member_safely(user_obj, "two_factor");
+    } else {
+        const gchar *message = json_object_get_string_member_safely(reply_json_object, "message");
+        tk_user_data->error_message = g_strdup(message);
+    }
+
+    g_object_unref(parser);
+    g_task_return_pointer(task, tk_user_data, NULL);
+}
+
+void vdi_session_update_user_data_task(GTask *task,
+                                       gpointer       source_object G_GNUC_UNUSED,
+                                       gpointer       task_data G_GNUC_UNUSED,
+                                       GCancellable  *cancellable G_GNUC_UNUSED)
+{
+    UserData *tk_user_data = g_task_get_task_data(task);
+
+    // Build request body
+    g_autofree gchar *request_body_str = NULL;
+    JsonBuilder *builder = json_builder_new();
+    json_builder_begin_object(builder);
+    json_builder_set_member_name(builder, "two_factor");
+    json_builder_add_boolean_value(builder, tk_user_data->two_factor);
+    json_builder_end_object(builder);
+    request_body_str = json_generate_from_builder(builder);
+    g_object_unref(builder);
+
+    // Do request
+    g_autofree gchar *url_str = NULL;
+    url_str = g_strdup_printf("%s/client/update_user_data", vdi_session_static->api_url);
+    g_autofree gchar *response_body_str = NULL;
+    response_body_str = vdi_session_api_call("POST", url_str, request_body_str, NULL);
+
+    // Parse response
+    JsonParser *parser = json_parser_new();
+    ServerReplyType server_reply_type;
+    JsonObject *reply_json_object = json_get_data_or_errors_object(parser, response_body_str, &server_reply_type);
+
+    tk_user_data->is_success = FALSE;
+    if (server_reply_type == SERVER_REPLY_TYPE_DATA) {
+        tk_user_data->is_success = json_object_get_bool_member_safely(reply_json_object, "ok");
+        JsonObject *user_obj = json_object_get_object_member_safely(reply_json_object, "user");
+        tk_user_data->two_factor = json_object_get_bool_member_safely(user_obj, "two_factor");
+    } else {
+        const gchar *message = json_object_get_string_member_safely(reply_json_object, "message");
+        tk_user_data->error_message = g_strdup(message);
+    }
+
+    g_object_unref(parser);
+    g_task_return_pointer(task, tk_user_data, NULL);
+}
+
+void vdi_session_generate_qr_code_task(GTask *task,
+                                       gpointer       source_object G_GNUC_UNUSED,
+                                       gpointer       task_data G_GNUC_UNUSED,
+                                       GCancellable  *cancellable G_GNUC_UNUSED)
+{
+    g_autofree gchar *url_str = NULL;
+    url_str = g_strdup_printf("%s/client/generate_user_qr_code", vdi_session_static->api_url);
+    g_autofree gchar *response_body_str;
+    response_body_str = vdi_session_api_call("POST", url_str, NULL, NULL);
+
+    // parse response
+    JsonParser *parser = json_parser_new();
+    ServerReplyType server_reply_type;
+    JsonObject *reply_json_object = json_get_data_or_errors_object(parser, response_body_str, &server_reply_type);
+
+    UserData *tk_user_data = calloc(1, sizeof(UserData)); // free in callback!
+    tk_user_data->is_success = (server_reply_type == SERVER_REPLY_TYPE_DATA);
+    if (tk_user_data->is_success) {
+        tk_user_data->qr_uri = g_strdup(json_object_get_string_member_safely(reply_json_object, "qr_uri"));
+        tk_user_data->secret = g_strdup(json_object_get_string_member_safely(reply_json_object, "secret"));
+    } else {
+        const gchar *message = json_object_get_string_member_safely(reply_json_object, "message");
+        tk_user_data->error_message = g_strdup(message);
+    }
+
+    g_object_unref(parser);
+    g_task_return_pointer(task, tk_user_data, NULL);
 }
 
 gboolean vdi_session_logout(void)
@@ -1063,7 +1161,7 @@ gboolean vdi_session_detach_usb(DetachUsbData *detach_usb_data)
         JsonParser *parser = json_parser_new();
 
         ServerReplyType server_reply_type;
-        jsonhandler_get_data_or_errors_object(parser, response_body_str, &server_reply_type);
+        json_get_data_or_errors_object(parser, response_body_str, &server_reply_type);
         if (server_reply_type == SERVER_REPLY_TYPE_DATA) {
             status = TRUE;
         }
@@ -1143,4 +1241,12 @@ void vdi_api_session_free_text_message_data(TextMessageData *text_message_data)
     free_memory_safely(&text_message_data->message);
     free_memory_safely(&text_message_data->error_message);
     free(text_message_data);
+}
+
+void vdi_api_session_free_tk_user_data(UserData *tk_user_data)
+{
+    free_memory_safely(&tk_user_data->qr_uri);
+    free_memory_safely(&tk_user_data->secret);
+    free_memory_safely(&tk_user_data->error_message);
+    free(tk_user_data);
 }
