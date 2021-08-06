@@ -197,6 +197,7 @@ static void connect_settings_data_clear(ConnectSettingsData *connect_settings_da
     g_info("%s", (const char *)__func__);
     free_memory_safely(&connect_settings_data->user);
     free_memory_safely(&connect_settings_data->password);
+    free_memory_safely(&connect_settings_data->disposable_password);
     free_memory_safely(&connect_settings_data->domain);
     free_memory_safely(&connect_settings_data->ip);
     free_memory_safely(&connect_settings_data->vm_verbose_name);

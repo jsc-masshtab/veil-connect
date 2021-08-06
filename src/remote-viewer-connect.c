@@ -43,6 +43,8 @@ typedef struct
     // gui elements
     GtkWidget *login_entry;
     GtkWidget *password_entry;
+    GtkWidget *disposable_password_entry;
+    GtkWidget *check_btn_2fa_password;
 
     GtkWidget *window;
     GtkWidget *settings_button;
@@ -101,6 +103,8 @@ set_data_from_gui_in_outer_pointers(RemoteViewerConnData *ci)
 {
     update_string_safely(&ci->p_conn_data->user, gtk_entry_get_text(GTK_ENTRY(ci->login_entry)));
     update_string_safely(&ci->p_conn_data->password, gtk_entry_get_text(GTK_ENTRY(ci->password_entry)));
+    update_string_safely(&ci->p_conn_data->disposable_password,
+            gtk_entry_get_text(GTK_ENTRY(ci->disposable_password_entry)));
     vdi_session_set_current_remote_protocol(ci->p_conn_data->remote_protocol_type);
 }
 
@@ -146,7 +150,6 @@ on_vdi_session_get_vm_from_pool_finished(GObject *source_object G_GNUC_UNUSED,
 
     set_auth_dialog_state(AUTH_GUI_DEFAULT_STATE, ci);
 
-    // GError *error = NULL;
     gpointer  ptr_res = g_task_propagate_pointer(G_TASK (res), NULL); // take ownership
     if (ptr_res == NULL) {
         set_message_to_info_label(GTK_LABEL(ci->message_display_label), "Не удалось получить вм из пула");
@@ -187,21 +190,40 @@ on_vdi_session_log_in_finished(GObject *source_object G_GNUC_UNUSED,
     reply_msg = g_task_propagate_pointer(G_TASK(res), NULL);
     g_info("%s: is_token_refreshed %s", (const char *)__func__, reply_msg);
 
-    set_auth_dialog_state(AUTH_GUI_DEFAULT_STATE, ci);
-
     g_autofree gchar *token = NULL;
     token = vdi_session_get_token();
     if (token) {
-        ci->dialog_window_response = GTK_RESPONSE_OK;
-        set_data_from_gui_in_outer_pointers(ci);
-        shutdown_loop(ci->loop);
+        // 2 варианта: подключиться к сразу к предыдущему пулу, либо перейти к vdi менеджеру для выбора пула
+        // Если нет информации о предыдущем пуле, то сбрасываем флаг
+        g_autofree gchar *last_pool_id = NULL;
+        last_pool_id = read_str_from_ini_file("RemoteViewerConnect", "last_pool_id");
+        if (!last_pool_id)
+            ci->p_conn_data->is_connect_to_prev_pool = FALSE;
+
+        if (ci->p_conn_data->is_connect_to_prev_pool) {
+
+            set_message_to_info_label(GTK_LABEL(ci->message_display_label), "Автоподключение к предыдущему пулу");
+            vdi_session_set_current_pool_id(last_pool_id);
+
+            VdiVmRemoteProtocol remote_protocol = read_int_from_ini_file("General",
+                    "cur_remote_protocol_index", VDI_SPICE_PROTOCOL);
+            vdi_session_set_current_remote_protocol(remote_protocol);
+
+            // start async task  vdi_session_get_vm_from_pool_task
+            execute_async_task(vdi_session_get_vm_from_pool_task, on_vdi_session_get_vm_from_pool_finished, NULL, ci);
+        } else {
+            ci->dialog_window_response = GTK_RESPONSE_OK;
+            set_data_from_gui_in_outer_pointers(ci);
+            shutdown_loop(ci->loop);
+        }
     } else {
         set_message_to_info_label(GTK_LABEL(ci->message_display_label), reply_msg);
+        set_auth_dialog_state(AUTH_GUI_DEFAULT_STATE, ci);
     }
 }
 
 // connect to VDI server
-void connect_to_vdi_server(RemoteViewerConnData *ci)
+static void connect_to_vdi_server(RemoteViewerConnData *ci)
 {
     if (ci->auth_dialog_state == AUTH_GUI_CONNECT_TRY_STATE)
         return;
@@ -209,40 +231,20 @@ void connect_to_vdi_server(RemoteViewerConnData *ci)
 
     // set credential for connection to VDI server
     set_data_from_gui_in_outer_pointers(ci);
-    vdi_session_set_credentials(ci->p_conn_data->user, ci->p_conn_data->password,
+    vdi_session_set_credentials(ci->p_conn_data->user, ci->p_conn_data->password, ci->p_conn_data->disposable_password,
                                 ci->p_conn_data->ip, ci->p_conn_data->port, ci->p_conn_data->is_ldap);
 
     set_auth_dialog_state(AUTH_GUI_CONNECT_TRY_STATE, ci);
 
-    // 2 варианта: подключиться к сразу к предыдущему пулу, либо перейти к vdi менеджеру для выбора пула
-    // Если нет информации о предыдущем пуле, то сбрасываем флаг
-    g_autofree gchar *last_pool_id = NULL;
-    last_pool_id = read_str_from_ini_file("RemoteViewerConnect", "last_pool_id");
-    if (!last_pool_id)
-        ci->p_conn_data->is_connect_to_prev_pool = FALSE;
-
-    if (ci->p_conn_data->is_connect_to_prev_pool) {
-
-        set_message_to_info_label(GTK_LABEL(ci->message_display_label), "Автоподключение к предыдущему пулу");
-        vdi_session_set_current_pool_id(last_pool_id);
-
-        VdiVmRemoteProtocol remote_protocol = read_int_from_ini_file("General",
-                "cur_remote_protocol_index", VDI_SPICE_PROTOCOL);
-        vdi_session_set_current_remote_protocol(remote_protocol);
-
-        // start async task  vdi_session_get_vm_from_pool_task
-        execute_async_task(vdi_session_get_vm_from_pool_task, on_vdi_session_get_vm_from_pool_finished, NULL, ci);
-    } else {
-        // fetch token task starting
-        execute_async_task(vdi_session_log_in_task, on_vdi_session_log_in_finished, NULL, ci);
-    }
+    //start token fetching task
+    execute_async_task(vdi_session_log_in_task, on_vdi_session_log_in_finished, NULL, ci);
 }
 
 static void
 handle_connect_event(RemoteViewerConnData *ci)
 {
     if (strlen_safely(ci->p_conn_data->ip) > 0) {
-        // In manual mode we shudown the loop.
+        // In manual mode we shutdown the loop.
         if (opt_manual_mode) {
             ci->dialog_window_response = GTK_RESPONSE_OK;
             set_data_from_gui_in_outer_pointers(ci);
@@ -296,6 +298,15 @@ settings_button_clicked_cb(GtkButton *button G_GNUC_UNUSED, gpointer data)
     GtkResponseType res = remote_viewer_start_settings_dialog(ci->p_remote_viewer, ci->p_conn_data,
                                                               GTK_WINDOW(ci->window));
     (void)res;
+}
+
+static void
+on_check_btn_2fa_password_toggled(GtkToggleButton *button, gpointer data)
+{
+    RemoteViewerConnData *ci = data;
+    gboolean is_active = gtk_toggle_button_get_active(button);
+    gtk_widget_set_sensitive(ci->disposable_password_entry, is_active);
+    gtk_entry_set_text(GTK_ENTRY(ci->disposable_password_entry), "");
 }
 
 static void
@@ -380,6 +391,7 @@ remote_viewer_connect_dialog(RemoteViewer *remote_viewer, ConnectSettingsData *c
     ci.connect_button = GTK_WIDGET(gtk_builder_get_object(builder, "connect-button"));
     ci.connect_spinner = GTK_WIDGET(gtk_builder_get_object(builder, "connect-spinner"));
     ci.message_display_label = GTK_WIDGET(gtk_builder_get_object(builder, "message-display-label"));
+    gtk_label_set_selectable(GTK_LABEL(ci.message_display_label), TRUE);
     ci.header_label = GTK_WIDGET(gtk_builder_get_object(builder, "header-label"));
     g_autofree gchar *header_label_tooltip_text = NULL;
     header_label_tooltip_text = g_strdup_printf("Built with freerdp version: %s Application build date: %s %s",
@@ -392,6 +404,9 @@ remote_viewer_connect_dialog(RemoteViewer *remote_viewer, ConnectSettingsData *c
     ci.password_entry = GTK_WIDGET(gtk_builder_get_object(builder, "password-entry"));
     // login entry
     ci.login_entry = GTK_WIDGET(gtk_builder_get_object(builder, "login-entry"));
+    // 2fa password
+    ci.disposable_password_entry = GTK_WIDGET(gtk_builder_get_object(builder, "disposable_password_entry"));
+    ci.check_btn_2fa_password = GTK_WIDGET(gtk_builder_get_object(builder, "check_btn_2fa_password"));
 
     // Signal - callbacks connections
     g_signal_connect(ci.window, "key-press-event", G_CALLBACK(key_pressed_cb), &ci);
@@ -400,6 +415,7 @@ remote_viewer_connect_dialog(RemoteViewer *remote_viewer, ConnectSettingsData *c
     g_signal_connect(ci.connect_button, "clicked", G_CALLBACK(connect_button_clicked_cb), &ci);
     gulong updates_checked_handle = g_signal_connect(remote_viewer->app_updater, "updates-checked",
                                           G_CALLBACK(remote_viewer_on_updates_checked), &ci);
+    g_signal_connect(ci.check_btn_2fa_password, "toggled", G_CALLBACK(on_check_btn_2fa_password_toggled), &ci);
 
     // read ini file
     read_data_from_ini_file(&ci);

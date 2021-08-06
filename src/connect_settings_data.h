@@ -17,6 +17,7 @@ typedef struct{
 
     gchar *user;
     gchar *password;
+    gchar *disposable_password; // 2fa
 
     // General
     gchar *domain;

@@ -35,6 +35,7 @@ struct _VdiManager
     GtkWidget *window;
     GtkWidget *button_quit;
     GtkWidget *vm_main_box;
+    GtkWidget *btn_open_user_settings;
     GtkWidget *button_renew;
     GtkWidget *gtk_flow_box;
     GtkWidget *status_label;

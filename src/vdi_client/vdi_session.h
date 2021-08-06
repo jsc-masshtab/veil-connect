@@ -118,6 +118,17 @@ typedef struct{
 
 } TextMessageData;
 
+// User data
+typedef struct {
+    gboolean two_factor; // включена ли 2fa
+    gchar *qr_uri;
+    gchar *secret;
+
+    gboolean is_success; // ожидаемый ответ от сервера
+    gchar *error_message; // ответное сообщение от сервера. (Не NULL если возникла ошибка при запросе)
+
+} UserData;
+
 //VdiSession class
 
 #define TYPE_VDI_SESSION         ( vdi_session_get_type( ) )
@@ -138,6 +149,7 @@ struct _VdiSession
 
     gchar *vdi_username;
     gchar *vdi_password;
+    gchar *disposable_password; // 2fa
     gchar *vdi_ip;
     int vdi_port;
 
@@ -201,8 +213,8 @@ gchar *vdi_session_get_token(void);
 // cancell pending requests
 void vdi_session_cancell_pending_requests(void);
 // set vdi session credentials
-void vdi_session_set_credentials(const gchar *username, const gchar *password, const gchar *ip,
-                         int port, gboolean is_ldap);
+void vdi_session_set_credentials(const gchar *username, const gchar *password, gchar *disposable_password,
+        const gchar *ip, int port, gboolean is_ldap);
 // set current vm id
 void vdi_session_set_current_pool_id(const gchar *current_pool_id);
 // get current vm id
@@ -269,6 +281,24 @@ void vdi_session_send_text_msg_task(GTask *task,
                                       gpointer       task_data,
                                       GCancellable  *cancellable);
 
+// Request user data
+void vdi_session_get_user_data_task(GTask *task,
+                                    gpointer       source_object,
+                                    gpointer       task_data,
+                                    GCancellable  *cancellable);
+
+// Update user data
+void vdi_session_update_user_data_task(GTask *task,
+                                       gpointer       source_object,
+                                       gpointer       task_data,
+                                       GCancellable  *cancellable);
+
+// Generate QR data
+void vdi_session_generate_qr_code_task(GTask *task,
+                                       gpointer       source_object,
+                                       gpointer       task_data,
+                                       GCancellable  *cancellable);
+
 // Log out sync
 gboolean vdi_session_logout(void);
 
@@ -295,5 +325,6 @@ void vdi_api_session_free_vdi_vm_data(VdiVmData *vdi_vm_data);
 void vdi_api_session_free_attach_usb_data(AttachUsbData *attach_usb_data);
 void vdi_api_session_free_detach_usb_data(DetachUsbData *detach_usb_data);
 void vdi_api_session_free_text_message_data(TextMessageData *text_message_data);
+void vdi_api_session_free_tk_user_data(UserData *tk_user_data);
 
 #endif //VIRT_VIEWER_VEIL_VDI_API_SESSION_H
