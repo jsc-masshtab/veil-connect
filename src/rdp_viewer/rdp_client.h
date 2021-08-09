@@ -62,13 +62,11 @@ typedef struct {
     // RDP settings
     VeilRdpSettings *p_rdp_settings; // указатель на данные. Не владеет этими данными
 
-    // UpdateImageCallback update_image_callback; // callback for updating image in the main thread
     UpdateCursorCallback update_cursor_callback; // callback for updating cursor in the main thread
     guint cursor_update_timeout_id;
 
     // rail
     RailClientContext* rail;
-    GArray *app_windows_array;
 
     // errors
     UINT32 last_rdp_error; // main freerdp error
@@ -81,7 +79,6 @@ typedef struct {
 
     RemoteViewer *app;
 
-    //GAsyncQueue *display_update_queue; // очередь для обновления изображений
     guint display_update_timeout_id;
     GMutex invalid_region_mutex;
     gboolean invalid_region_has_data;
@@ -105,7 +102,8 @@ BOOL rdp_client_abort_connection(freerdp* instance);
 void rdp_client_start_routine_thread(ExtendedRdpContext *ex_rdp_context);
 void rdp_client_stop_routine_thread(ExtendedRdpContext *ex_rdp_context);
 
-int rdp_client_entry(RDP_CLIENT_ENTRY_POINTS* pEntryPoints);
+// Create full error message. Allocate memory. Используется после дисконнекта
+gchar *rdp_client_get_full_error_msg(ExtendedRdpContext *ex_rdp_context);
 
 
 #endif /* FREERDP_CLIENT_SAMPLE_H */

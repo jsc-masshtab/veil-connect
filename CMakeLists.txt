@@ -95,6 +95,8 @@ list(APPEND SRC_CODE
         src/rdp_viewer/rdp_clipboard.c
         src/rdp_viewer/rdp_settings.h
         src/rdp_viewer/rdp_settings.c
+        src/rdp_viewer/rdp_util.h
+        src/rdp_viewer/rdp_util.c
 
 #utility
         src/utility/crashhandler.h

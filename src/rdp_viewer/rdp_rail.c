@@ -204,25 +204,6 @@ static BOOL rdp_rail_window_update(rdpContext* context G_GNUC_UNUSED,
 static BOOL rdp_rail_window_delete(rdpContext* context G_GNUC_UNUSED, const WINDOW_ORDER_INFO* orderInfo G_GNUC_UNUSED)
 {
     g_info("%s", (const char *) __func__);
-    //ExtendedRdpContext* ex_context = (ExtendedRdpContext*)context;
-
-    // orderInfo->fieldFlags & WINDOW_ORDER_TYPE_WINDOW
-    /*if (orderInfo->fieldFlags == 553648128) {
-        ex_context->app_windows_amount--;
-        g_info("%s win_amount %i orderInfo->windowId: %i    fieldFlags: %i", (const char *) __func__,
-               ex_context->app_windows_amount, orderInfo->windowId, orderInfo->fieldFlags);
-    }*/
-
-    //for(guint i = 0; i < ex_context->app_windows_array->len; ++i) {
-    //    UINT32 window_id = g_array_index(ex_context->app_windows_array, UINT32, i);
-    //    if (orderInfo->windowId == window_id) {
-    //        g_array_remove_index_fast(ex_context->app_windows_array, i);
-    //        break;
-    //    }
-    //}
-    //
-    //if (ex_context->app_windows_array->len == 0)
-    //    freerdp_abort_connect(context->instance);
     return TRUE;
 }
 

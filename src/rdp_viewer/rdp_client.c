@@ -35,9 +35,10 @@
 #include "rdp_channels.h"
 #include "rdp_client.h"
 #include "rdp_cursor.h"
-#include "rdp_data.h"
+#include "rdp_util.h"
 #include "rdp_viewer_window.h"
 #include "rdp_keyboard.h"
+#include "rdp_rail.h"
 
 #include "remote-viewer-util.h"
 #include "settingsfile.h"
@@ -48,6 +49,9 @@
 #define PROGRAMM_NAME "rdp_gtk_client"
 #define TAG CLIENT_TAG(PROGRAMM_NAME)
 #define CONN_TRY_NUMBER 2
+
+
+static int rdp_client_entry(RDP_CLIENT_ENTRY_POINTS* pEntryPoints);
 
 
 static void rdp_client_demand_image_update(ExtendedRdpContext* ex_context, int x, int y, int width, int height)
@@ -465,6 +469,26 @@ void rdp_client_stop_routine_thread(ExtendedRdpContext *ex_rdp_context)
     freerdp_set_last_error(context, FREERDP_ERROR_SUCCESS);
 }
 
+gchar *rdp_client_get_full_error_msg(ExtendedRdpContext *ex_rdp_context)
+{
+    gchar *final_msg = NULL;
+    g_autofree gchar *rdp_err_msg = NULL;
+    g_autofree gchar *rail_rdp_err_msg = NULL;
+
+    rdp_err_msg = g_strdup_printf(("Нет соединения. Код: 0x%X %s"), ex_rdp_context->last_rdp_error,
+                                 rdp_util_error_to_str(ex_rdp_context->last_rdp_error));
+
+    if (ex_rdp_context->rail_rdp_error) {
+        rail_rdp_err_msg = g_strdup_printf("Ошибка удаленного приложения. 0x%X  %s", ex_rdp_context->rail_rdp_error,
+                              rail_error_to_string(ex_rdp_context->rail_rdp_error));
+    } else {
+        rail_rdp_err_msg = g_strdup("");
+    }
+
+    final_msg = g_strdup_printf("%s %s", rdp_err_msg, rail_rdp_err_msg);
+    return final_msg;
+}
+
 //static BOOL update_send_synchronize(rdpContext* context)
 //{
 //    //g_info("%s\n", (const char *)__func__);
@@ -673,21 +697,9 @@ static void rdp_post_disconnect(freerdp* instance)
 
     gdi_free(instance);
 
-    // Close rdp windows if LOGOFF_BY_USER received or there are no errors
-    // For situation where user intentionally closed connection
     if (!ex_rdp_context->is_reconnecting) {
-        gboolean is_stop_intentional = FALSE;
-        if (last_error >= 0x10000 && last_error < 0x00020000) {
-            if ((last_error & 0xFFFF) == ERRINFO_LOGOFF_BY_USER ||
-                (last_error & 0xFFFF) == ERRINFO_RPC_INITIATED_DISCONNECT_BY_USER)
-                is_stop_intentional = TRUE;
-        }
-
-        if (is_stop_intentional || (last_error == 0 && ex_rdp_context->rail_rdp_error == 0)) {
-            if (*ex_rdp_context->next_app_state_p == APP_STATE_UNDEFINED)
-                *ex_rdp_context->next_app_state_p = APP_STATE_VDI_DIALOG;
-            shutdown_loop(*(ex_rdp_context->p_loop));
-        }
+        // Stop event loop
+        shutdown_loop(*(ex_rdp_context->p_loop));
     }
 }
 
@@ -732,8 +744,6 @@ static BOOL rdp_client_new(freerdp* instance, rdpContext* context)
     //instance->VerifyChangedCertificateEx = client_cli_verify_changed_certificate_ex;
     instance->VerifyCertificate = client_cli_verify_certificate;
     instance->VerifyChangedCertificate = client_cli_verify_changed_certificate;
-
-
     instance->LogonErrorInfo = rdp_logon_error_info;
 
     g_mutex_init(&ex->primary_buffer_mutex);
@@ -770,7 +780,7 @@ static int rdp_client_stop(rdpContext* context)
     return 0;
 }
 
-int rdp_client_entry(RDP_CLIENT_ENTRY_POINTS* pEntryPoints)
+static int rdp_client_entry(RDP_CLIENT_ENTRY_POINTS* pEntryPoints)
 {
     ZeroMemory(pEntryPoints, sizeof(RDP_CLIENT_ENTRY_POINTS));
     pEntryPoints->Version = RDP_CLIENT_INTERFACE_VERSION;

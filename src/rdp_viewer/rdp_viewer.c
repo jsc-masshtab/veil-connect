@@ -137,6 +137,27 @@ static void rdp_viewer_stats_data_updated(gpointer data G_GNUC_UNUSED, VdiVmRemo
     }
 }
 
+static void rdp_viewer_show_error_msg_if_required(RemoteViewerData *self)
+{
+    gboolean is_stop_intentional = FALSE;
+    UINT32 last_error = self->ex_rdp_context->last_rdp_error;
+    if (last_error >= 0x10000 && last_error < 0x00020000) {
+        if ((last_error & 0xFFFF) == ERRINFO_LOGOFF_BY_USER ||
+            (last_error & 0xFFFF) == ERRINFO_RPC_INITIATED_DISCONNECT_BY_USER)
+            is_stop_intentional = TRUE;
+    }
+
+    if (!is_stop_intentional && (last_error != 0 || self->ex_rdp_context->rail_rdp_error != 0)) {
+        if (*self->ex_rdp_context->next_app_state_p == APP_STATE_UNDEFINED)
+            *self->ex_rdp_context->next_app_state_p = APP_STATE_VDI_DIALOG;
+
+        gchar *msg = rdp_client_get_full_error_msg(self->ex_rdp_context);
+        RdpWindowData *rdp_window_data = g_array_index(self->ex_rdp_context->rdp_windows_array, RdpWindowData *, 0);
+        show_msg_box_dialog(GTK_WINDOW(rdp_window_data->rdp_viewer_window), msg);
+        g_free(msg);
+    }
+}
+
 RemoteViewerState rdp_viewer_start(RemoteViewer *app, VeilRdpSettings *p_rdp_settings)
 {
     RemoteViewerData self;
@@ -235,13 +256,17 @@ RemoteViewerState rdp_viewer_start(RemoteViewer *app, VeilRdpSettings *p_rdp_set
     }
     free_memory_safely(&shared_folders_str);
 
-    // launch RDP routine in thread
+    // start RDP routine in thread
     rdp_client_start_routine_thread(self.ex_rdp_context);
 
     // launch event loop
     create_loop_and_launch(&loop);
 
-    usbredir_controller_stop_all_cur_tasks(FALSE); // stop usb tasks if there are any
+    // stop usb tasks if there are any
+    usbredir_controller_stop_all_cur_tasks(FALSE);
+
+    /// Показать сообщение если завершение работы не было совершено пользователем намерено (произошла ошибка)
+    rdp_viewer_show_error_msg_if_required(&self);
 
     // deinit all
     g_object_unref(self.net_speedometer);
