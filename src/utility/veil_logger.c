@@ -83,6 +83,9 @@ void logger_save_clipboard_data(const gchar *data, guint size, ClipboardLoggerDa
     if (clipboard_log_enabled != 1)
         return;
 
+    if (data == NULL)
+        return;
+
     // open file
     g_autofree gchar *file_name = NULL;
     file_name = g_build_filename(cur_log_path, "clipboard.txt", NULL);

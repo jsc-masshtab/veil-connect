@@ -1009,8 +1009,10 @@ on_clipboard_from_client_to_vm(SpiceMainChannel *main G_GNUC_UNUSED, guint selec
     if (type == VD_AGENT_CLIPBOARD_UTF8_TEXT) {
         GtkClipboard *gtk_clipboard = gtk_clipboard_get(GDK_SELECTION_CLIPBOARD);
         gchar *text = gtk_clipboard_wait_for_text(gtk_clipboard);
-        logger_save_clipboard_data(text, strlen_safely(text), CLIPBOARD_LOGGER_FROM_CLIENT_TO_VM);
-        g_free(text);
+        if (text) {
+            logger_save_clipboard_data(text, strlen_safely(text), CLIPBOARD_LOGGER_FROM_CLIENT_TO_VM);
+            g_free(text);
+        }
     }
     return TRUE;
 }
@@ -1020,7 +1022,7 @@ on_clipboard_got_from_vm(SpiceMainChannel *main G_GNUC_UNUSED, guint selection G
                                      guint type, const guchar *data, guint size,
                                      gpointer user_data G_GNUC_UNUSED)
 {
-    if (type == VD_AGENT_CLIPBOARD_UTF8_TEXT) {
+    if (type == VD_AGENT_CLIPBOARD_UTF8_TEXT && data) {
         logger_save_clipboard_data((const gchar *)data, size, CLIPBOARD_LOGGER_FROM_VM_TO_CLIENT);
     }
 }
