@@ -179,8 +179,8 @@ static void on_vdi_session_get_vdi_pool_data_finished(GObject *source_object G_G
     g_info("%s", (const char *)__func__);
 
     GError *error = NULL;
-    gpointer  ptr_res = g_task_propagate_pointer(G_TASK (res), &error); // take ownership
-    if(ptr_res == NULL){
+    gpointer ptr_res = g_task_propagate_pointer(G_TASK(res), &error); // take ownership
+    if(ptr_res == NULL) {
         set_vdi_client_state(self, VDI_RECEIVED_RESPONSE, "Не удалось получить список пулов", TRUE);
         return;
     }

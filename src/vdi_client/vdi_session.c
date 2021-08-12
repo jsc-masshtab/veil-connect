@@ -340,6 +340,7 @@ void vdi_session_static_destroy()
     g_object_unref(vdi_session_static->soup_session);
     free_session_memory();
     g_object_unref(vdi_session_static);
+    vdi_session_static = NULL;
 }
 
 void vdi_session_vm_state_change_notify(int power_state)

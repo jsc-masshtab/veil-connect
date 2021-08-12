@@ -5,7 +5,6 @@ set(CMAKE_C_STANDARD 99)
 
 ######################CUSTOM CMAKE OPTIONS#############################
 option(BUILD_x32 "Use path to 32bit dependencies" OFF)
-
 ######################COMPILER OPTIONS#################################
 add_compile_options(-Wno-deprecated-declarations) # -Wall -Wextra
 
@@ -40,7 +39,6 @@ list(APPEND SRC_CODE
         src/about_dialog.c
         src/conn_info_dialog.h
         src/conn_info_dialog.c
-        src/main.c
 
 # virt_viewer
         src/virt_viewer/virt-viewer-resources.h
@@ -294,8 +292,8 @@ endif (WIN32)
     # usbredirparser
     SET(LIBS ${LIBS} usbredirparser) #
 
-#############################LINKING###################################
-ADD_EXECUTABLE(veil_connect ${GUI_TYPE} ${SRC_CODE})
+###########################APP LINKING#################################
+ADD_EXECUTABLE(veil_connect ${GUI_TYPE} ${SRC_CODE} src/main.c)
 target_link_libraries(
     veil_connect # exec
     ${LIBS} # libs
@@ -327,3 +325,15 @@ file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/doc/start_vdi_client.sh
 file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/doc/update_script.sh
         DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 endif (UNIX)
+
+#############################TESTS###################################
+if (BUILD_TESTING)
+    enable_testing()
+    ADD_EXECUTABLE(test_networking ${SRC_CODE} tests/test_networking.c)
+    set_target_properties(test_networking PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/tests")
+    target_link_libraries(
+            test_networking # exec
+            ${LIBS} # libs
+    )
+    add_test(NAME test_networking COMMAND test_networking --verbose)
+endif ()

@@ -306,10 +306,6 @@ gboolean vdi_session_logout(void);
 // Return link to dowmload new version or NULL
 gchar *vdi_session_check_for_tk_updates(const gchar *veil_connect_url, gchar **p_last_version);
 
-// Download installer
-// Return path to installer
-gchar *vdi_session_download_tk_installer(const gchar *download_link);
-
 // Attach USB
 gchar *vdi_session_attach_usb(AttachUsbData *attach_usb_data);
 

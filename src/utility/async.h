@@ -12,7 +12,7 @@
 #include <gio/gio.h>
 
 // threads
-GTask *execute_async_task(GTaskThreadFunc  task_func,
+void execute_async_task(GTaskThreadFunc  task_func,
                         GAsyncReadyCallback  callback,
                         gpointer task_data,
                         gpointer callback_data);
