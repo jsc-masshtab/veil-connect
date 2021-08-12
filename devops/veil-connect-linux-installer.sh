@@ -31,7 +31,7 @@ case $OS in
         apt-get update && apt-get install veil-connect -y
         rm -f /etc/apt/sources.list.d/stretch-backports.list && apt-get update
         ;;
-    2|3|4/5)
+    2|3|4|5)
         apt-get update && apt-get install apt-transport-https wget lsb-release -y
         wget -qO - https://veil-update.mashtab.org/veil-repo-key.gpg | apt-key add -
         echo "deb [arch=amd64] $REPO_URL/apt $(lsb_release -cs) main" | tee /etc/apt/sources.list.d/veil-connect.list
@@ -50,20 +50,21 @@ EOF
         yum install epel-release -y
         yum install veil-connect -y
         ;;
-    7)
+    8)
         apt-get update && apt-get install apt-transport-https wget -y
         wget -qO - https://veil-update.mashtab.org/veil-repo-key.gpg | apt-key add -
         echo "deb [arch=amd64] $REPO_URL/apt bionic main" | tee /etc/apt/sources.list.d/veil-connect.list
         apt-get update && apt-get install veil-connect -y
         ;;
-    8)
-        echo "Please visit https://veil.mashtab.org/docs/vdi/connect/how_to/install for info" ;;
     9)
+        echo "Please visit https://veil.mashtab.org/docs/vdi/connect/how_to/install for info" ;;
+    10)
         apt-get update && apt-get install wget -y
         wget https://veil-update.mashtab.org/veil-connect/linux/apt-rpm/x86_64/RPMS.alt9/veil-connect-latest.rpm
         apt-get install ./veil-connect-latest.rpm -y
         rm -f veil-connect-latest.rpm
         ;;
+    
     *)
         echo "Error: Empty OS" ;;
 esac

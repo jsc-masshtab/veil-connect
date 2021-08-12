@@ -169,7 +169,8 @@ static void rdp_cliprdr_get_clipboard_data(RdpClipboardEventData *rdp_clipboard_
             case CB_FORMAT_HTML:
             {
                 inbuf = (UINT8*)gtk_clipboard_wait_for_text(gtkClipboard);
-                logger_save_clipboard_data((const gchar *)inbuf, strlen((char*)inbuf),
+                if (inbuf)
+                    logger_save_clipboard_data((const gchar *)inbuf, strlen((char*)inbuf),
                         CLIPBOARD_LOGGER_FROM_CLIENT_TO_VM);
                 break;
             }
@@ -292,9 +293,11 @@ static void rdp_cliprdr_set_clipboard_content(RdpClipboardEventData *rdp_clipboa
     } else {
         const gchar *text = (gchar *)rdp_clipboard_event_data->data;
         //g_info("text: %s", text);
-        gtk_clipboard_set_text(gtkClipboard, text, -1);
-        logger_save_clipboard_data(text, strlen_safely(text), CLIPBOARD_LOGGER_FROM_VM_TO_CLIENT);
-        free(rdp_clipboard_event_data->data);
+        if (text) {
+            gtk_clipboard_set_text(gtkClipboard, text, -1);
+            logger_save_clipboard_data(text, strlen_safely(text), CLIPBOARD_LOGGER_FROM_VM_TO_CLIENT);
+            free(rdp_clipboard_event_data->data);
+        }
     }
 }
 

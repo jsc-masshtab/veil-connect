@@ -46,7 +46,6 @@ pipeline {
         string(      name: 'VERSION',              defaultValue: '1.7.0',           description: 'version')
         booleanParam(name: 'STRETCH',              defaultValue: true,              description: 'create DEB?')
         booleanParam(name: 'BUSTER',               defaultValue: true,              description: 'create DEB?')
-        booleanParam(name: 'XENIAL',               defaultValue: true,              description: 'create DEB?')
         booleanParam(name: 'BIONIC',               defaultValue: true,              description: 'create DEB?')
         booleanParam(name: 'FOCAL',                defaultValue: true,              description: 'create DEB?')
         booleanParam(name: 'EL7',                  defaultValue: true,              description: 'create RPM?')
@@ -86,16 +85,6 @@ pipeline {
                     }
                     steps {
                         sh "docker build -f devops/docker/Dockerfile.buster . -t veil-connect-builder-buster:${VERSION}"
-                    }
-                }
-
-                stage ('xenial. docker build') {
-                    when {
-                        beforeAgent true
-                        expression { params.XENIAL == true }
-                    }
-                    steps {
-                        sh "docker build -f devops/docker/Dockerfile.xenial . -t veil-connect-builder-xenial:${VERSION}"
                     }
                 }
 
@@ -204,46 +193,6 @@ pipeline {
                     agent {
                         docker {
                             image "veil-connect-builder-buster:${VERSION}"
-                            args '-u root:root'
-                            reuseNode true
-                            label "${AGENT}"
-                        }
-                    }
-                    steps {
-                        sh script: '''
-                            mkdir build-${DISTR}
-                            cd build-${DISTR}
-                            cmake -DCMAKE_BUILD_TYPE=Release ../
-                            make
-                            rm -rf CMakeCache.txt  CMakeFiles  Makefile  cmake_install.cmake
-
-                            # make installer
-                            cp -r ${WORKSPACE}/devops/deb ${WORKSPACE}/devops/deb-${DISTR}
-                            mkdir -p ${WORKSPACE}/devops/deb-${DISTR}/root/opt/veil-connect
-                            mkdir -p ${WORKSPACE}/devops/deb-${DISTR}/root/usr/share/applications
-                            cp -r ${WORKSPACE}/build-${DISTR}/* ${WORKSPACE}/doc/veil-connect.ico ${WORKSPACE}/devops/deb-${DISTR}/root/opt/veil-connect
-                            cp ${WORKSPACE}/doc/veil-connect.desktop ${WORKSPACE}/devops/deb-${DISTR}/root/usr/share/applications
-                            sed -i -e "s:%%VER%%:${VERSION}~${DISTR}:g" ${WORKSPACE}/devops/deb-${DISTR}/root/DEBIAN/control
-                            chmod -R 777 ${WORKSPACE}/devops/deb-${DISTR}/root
-                            chmod -R 755 ${WORKSPACE}/devops/deb-${DISTR}/root/DEBIAN
-                            chown -R root:root ${WORKSPACE}/devops/deb-${DISTR}/root
-                            cd ${WORKSPACE}/devops/deb-${DISTR}
-                            dpkg-deb -b root .
-                        '''
-                    }
-                }
-
-                stage ('xenial. build') {
-                    when {
-                        beforeAgent true
-                        expression { params.XENIAL == true || params.EMBEDDED == true }
-                    }
-                    environment {
-                        DISTR = "xenial"
-                    }
-                    agent {
-                        docker {
-                            image "veil-connect-builder-xenial:${VERSION}"
                             args '-u root:root'
                             reuseNode true
                             label "${AGENT}"
@@ -718,29 +667,6 @@ pipeline {
                     }
                     environment {
                         DISTR = "bionic"
-                    }
-                    steps {
-                        sh script: '''
-                            REPO=${PRJNAME}-${DISTR}
-                            DEB=$(ls -1 ${WORKSPACE}/devops/deb-${DISTR}/*.deb)
-
-                            curl -sS -X POST -F file=@$DEB http://$APT_SRV:8008/api/files/${REPO}; echo ""
-                            curl -sS -X POST http://$APT_SRV:8008/api/repos/${REPO}/file/${REPO}?forceReplace=1
-                            JSON1="{\\"Name\\":\\"${REPO}-${DATE}\\"}"
-                            JSON2="{\\"Snapshots\\":[{\\"Component\\":\\"main\\",\\"Name\\":\\"${REPO}-\${DATE}\\"}],\\"ForceOverwrite\\":true}"
-                            curl -sS -X POST -H 'Content-Type: application/json' -d ${JSON1} http://$APT_SRV:8008/api/repos/${REPO}/snapshots
-                            curl -sS -X PUT -H 'Content-Type: application/json' -d ${JSON2} http://$APT_SRV:8008/api/publish/${PRJNAME}/${DISTR}
-                        '''
-                    }
-                }
-
-                stage ('xenial. deploy to repo') {
-                    when {
-                        beforeAgent true
-                        expression { params.XENIAL == true }
-                    }
-                    environment {
-                        DISTR = "xenial"
                     }
                     steps {
                         sh script: '''
