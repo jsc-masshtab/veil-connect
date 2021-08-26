@@ -17,6 +17,7 @@
     <file>ui/vdi_app_selector_form.ui</file>
     <file>ui/connection_info_dialog.ui</file>
     <file>ui/vdi_user_settings_form.ui</file>
+    <file>ui/x2go_control_form.ui</file>
     <file alias="icons/24x24/virt-viewer-usb.png">icons/24x24/virt-viewer-usb.png</file>
     <file alias="icons/content/img/veil-32x32.png">icons/content/img/veil-32x32.png</file>
     <file alias="icons/content/img/other_icon.png">icons/content/img/other_icon.png</file>
@@ -24,5 +25,6 @@
     <file alias="icons/content/img/windows_icon.png">icons/content/img/windows_icon.png</file>
     <file alias="icons/content/img/red_circle.png">icons/content/img/red_circle.png</file> 
     <file alias="icons/content/img/green_circle.png">icons/content/img/green_circle.png</file>
+    <file alias="icons/content/img/x2go-logo-with-text.png">icons/content/img/x2go-logo-with-text.png</file>
   </gresource>
 </gresources>

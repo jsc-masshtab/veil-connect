@@ -24,10 +24,9 @@
 #include "remote-viewer-connect.h"
 #include "vdi_manager.h"
 #include "connect_settings_data.h"
-
 #include "usbredir_controller.h"
-
 #include "rdp_viewer.h"
+#include "x2go/x2go_launcher.h"
 #ifdef _WIN32
 #include "windows_rdp_launcher.h"
 #endif
@@ -235,12 +234,13 @@ retry_connect_to_vm:
             } else {
                 rdp_settings_read_ini_file(&con_data.rdp_settings, TRUE);
                 rdp_settings_set_connect_data(&con_data.rdp_settings, con_data.user, con_data.password,
-                        con_data.domain, con_data.ip, con_data.port);
+                                              con_data.domain, con_data.ip, con_data.port);
             }
-
             app_state = rdp_viewer_start(self, &con_data.rdp_settings);
 
-        } else { // spice by default
+        } else if (vdi_session_get_current_remote_protocol() == VDI_X2GO_PROTOCOL) {
+            x2go_launcher_start(&con_data);
+        } else { // SPICE by default
             virt_viewer_app_set_spice_session_data(self->virt_viewer_obj, con_data.ip, con_data.port,
                     con_data.user, con_data.password);
             virt_viewer_app_instant_start(self->virt_viewer_obj);
@@ -292,6 +292,8 @@ retry_connect_to_vm:
                                           vdi_session_get_vdi_password(), con_data.domain, con_data.ip, 0);
             launch_windows_rdp_client(&con_data.rdp_settings);
 #endif
+        } else if (vdi_session_get_current_remote_protocol() == VDI_X2GO_PROTOCOL) {
+            x2go_launcher_start(&con_data);
         } else { // spice by default
             virt_viewer_app_set_spice_session_data(self->virt_viewer_obj, con_data.ip, con_data.port,
                     con_data.user, con_data.password);
@@ -306,7 +308,7 @@ retry_connect_to_vm:
             goto to_exit;
         else if (next_app_state == APP_STATE_AUTH_DIALOG)
             goto retry_auth;
-        else
+        else if (next_app_state == APP_STATE_VDI_DIALOG)
             goto retry_connect_to_vm;
     }
 

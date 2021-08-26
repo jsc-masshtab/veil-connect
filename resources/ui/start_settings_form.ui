@@ -270,6 +270,7 @@
                         <items>
                           <item id="SPICE" translatable="yes">SPICE</item>
                           <item id="RDP" translatable="yes">RDP</item>
+                          <item id="X2GO" translatable="yes">X2GO</item>
                         </items>
                       </object>
                       <packing>
@@ -851,6 +852,276 @@
                   </packing>
                 </child>
                 <child>
+                  <object class="GtkBox">
+                    <property name="visible">True</property>
+                    <property name="can_focus">False</property>
+                    <property name="orientation">vertical</property>
+                    <property name="spacing">6</property>
+                    <child>
+                      <object class="GtkBox">
+                        <property name="visible">True</property>
+                        <property name="can_focus">False</property>
+                        <property name="spacing">6</property>
+                        <property name="homogeneous">True</property>
+                        <child>
+                          <object class="GtkLabel">
+                            <property name="visible">True</property>
+                            <property name="can_focus">False</property>
+                            <property name="halign">end</property>
+                            <property name="label" translatable="yes">Тип сессии</property>
+                          </object>
+                          <packing>
+                            <property name="expand">False</property>
+                            <property name="fill">True</property>
+                            <property name="position">0</property>
+                          </packing>
+                        </child>
+                        <child>
+                          <object class="GtkComboBoxText" id="session_type_combobox">
+                            <property name="visible">True</property>
+                            <property name="can_focus">False</property>
+                            <property name="active">3</property>
+                            <items>
+                              <item id="KDE" translatable="yes">KDE</item>
+                              <item id="GNOME" translatable="yes">GNOME</item>
+                              <item id="LXDE" translatable="yes">LXDE</item>
+                              <item id="XFCE" translatable="yes">XFCE</item>
+                              <item id="MATE" translatable="yes">MATE</item>
+                              <item id="UNITY" translatable="yes">UNITY</item>
+                              <item id="CINNAMON" translatable="yes">CINNAMON</item>
+                              <item id="TRINITY" translatable="yes">TRINITY</item>
+                              <item id="OPENBOX" translatable="yes">OPENBOX</item>
+                              <item id="ICEWM" translatable="yes">ICEWM</item>
+                              <item id="remote_app" translatable="yes">Приложение</item>
+                            </items>
+                          </object>
+                          <packing>
+                            <property name="expand">False</property>
+                            <property name="fill">True</property>
+                            <property name="position">1</property>
+                          </packing>
+                        </child>
+                      </object>
+                      <packing>
+                        <property name="expand">False</property>
+                        <property name="fill">True</property>
+                        <property name="position">0</property>
+                      </packing>
+                    </child>
+                    <child>
+                      <object class="GtkBox">
+                        <property name="visible">True</property>
+                        <property name="can_focus">False</property>
+                        <property name="spacing">6</property>
+                        <property name="homogeneous">True</property>
+                        <child>
+                          <object class="GtkLabel">
+                            <property name="visible">True</property>
+                            <property name="can_focus">False</property>
+                            <property name="halign">end</property>
+                            <property name="hexpand">False</property>
+                            <property name="label" translatable="yes">Метод сжатия</property>
+                          </object>
+                          <packing>
+                            <property name="expand">False</property>
+                            <property name="fill">True</property>
+                            <property name="position">0</property>
+                          </packing>
+                        </child>
+                        <child>
+                          <object class="GtkComboBoxText" id="compress_method_combobox">
+                            <property name="visible">True</property>
+                            <property name="can_focus">False</property>
+                            <property name="active">42</property>
+                            <items>
+                              <item translatable="yes">nopack</item>
+                              <item translatable="yes">adaptive</item>
+                              <item translatable="yes">8</item>
+                              <item translatable="yes">64</item>
+                              <item translatable="yes">256</item>
+                              <item translatable="yes">512</item>
+                              <item translatable="yes">4k</item>
+                              <item translatable="yes">32k</item>
+                              <item translatable="yes">64k</item>
+                              <item translatable="yes">256k</item>
+                              <item translatable="yes">2m</item>
+                              <item translatable="yes">16m</item>
+                              <item translatable="yes">256-rdp</item>
+                              <item translatable="yes">256-rdp-compressed</item>
+                              <item translatable="yes">32k-rdp</item>
+                              <item translatable="yes">32k-rdp-compressed</item>
+                              <item translatable="yes">64k-rdp</item>
+                              <item translatable="yes">64k-rdp-compressed</item>
+                              <item translatable="yes">16m-rdp</item>
+                              <item translatable="yes">16m-rdp-compressed</item>
+                              <item translatable="yes">rfb-hextile</item>
+                              <item translatable="yes">rfb-tight</item>
+                              <item translatable="yes">rfb-tight-compressed</item>
+                              <item translatable="yes">8-tight</item>
+                              <item translatable="yes">64-tight</item>
+                              <item translatable="yes">256-tight</item>
+                              <item translatable="yes">512-tight</item>
+                              <item translatable="yes">4k-tight</item>
+                              <item translatable="yes">32k-tight</item>
+                              <item translatable="yes">64k-tight</item>
+                              <item translatable="yes">256k-tight</item>
+                              <item translatable="yes">2m-tight</item>
+                              <item translatable="yes">16m-tight</item>
+                              <item translatable="yes">8-jpeg</item>
+                              <item translatable="yes">64-jpeg</item>
+                              <item translatable="yes">256-jpeg</item>
+                              <item translatable="yes">512-jpeg</item>
+                              <item translatable="yes">4k-jpeg</item>
+                              <item translatable="yes">32k-jpeg</item>
+                              <item translatable="yes">64k-jpeg</item>
+                              <item translatable="yes">256k-jpeg</item>
+                              <item translatable="yes">2m-jpeg</item>
+                              <item translatable="yes">16m-jpeg</item>
+                              <item translatable="yes">8-png-jpeg</item>
+                              <item translatable="yes">64-png-jpeg</item>
+                              <item translatable="yes">256-png-jpeg</item>
+                              <item translatable="yes">512-png-jpeg</item>
+                              <item translatable="yes">4k-png-jpeg</item>
+                              <item translatable="yes">32k-png-jpeg</item>
+                              <item translatable="yes">64k-png-jpeg</item>
+                              <item translatable="yes">256k-png-jpeg</item>
+                              <item translatable="yes">2m-png-jpeg</item>
+                              <item translatable="yes">16m-png-jpeg</item>
+                              <item translatable="yes">8-png</item>
+                              <item translatable="yes">64-png</item>
+                              <item translatable="yes">256-png</item>
+                              <item translatable="yes">512-png</item>
+                              <item translatable="yes">4k-png</item>
+                              <item translatable="yes">32k-png</item>
+                              <item translatable="yes">64k-png</item>
+                              <item translatable="yes">256k-png</item>
+                              <item translatable="yes">2m-png</item>
+                              <item translatable="yes">16m-png</item>
+                              <item translatable="yes">16m-rgb</item>
+                              <item translatable="yes">16m-rle</item>
+                            </items>
+                          </object>
+                          <packing>
+                            <property name="expand">False</property>
+                            <property name="fill">True</property>
+                            <property name="position">1</property>
+                          </packing>
+                        </child>
+                      </object>
+                      <packing>
+                        <property name="expand">False</property>
+                        <property name="fill">True</property>
+                        <property name="position">1</property>
+                      </packing>
+                    </child>
+                    <child>
+                      <object class="GtkBox">
+                        <property name="visible">True</property>
+                        <property name="can_focus">False</property>
+                        <property name="spacing">6</property>
+                        <property name="homogeneous">True</property>
+                        <child>
+                          <object class="GtkCheckButton" id="conn_type_check_btn">
+                            <property name="label" translatable="yes">Указать сетевое подключение</property>
+                            <property name="visible">True</property>
+                            <property name="can_focus">True</property>
+                            <property name="receives_default">False</property>
+                            <property name="draw_indicator">True</property>
+                          </object>
+                          <packing>
+                            <property name="expand">False</property>
+                            <property name="fill">True</property>
+                            <property name="position">0</property>
+                          </packing>
+                        </child>
+                        <child>
+                          <object class="GtkComboBoxText" id="conn_type_combobox">
+                            <property name="visible">True</property>
+                            <property name="sensitive">False</property>
+                            <property name="can_focus">False</property>
+                            <property name="active">0</property>
+                            <items>
+                              <item id="modem" translatable="yes">modem</item>
+                              <item id="isdn" translatable="yes">isdn</item>
+                              <item id="adsl" translatable="yes">adsl</item>
+                              <item id="wan" translatable="yes">wan</item>
+                              <item id="lan" translatable="yes">lan</item>
+                            </items>
+                          </object>
+                          <packing>
+                            <property name="expand">False</property>
+                            <property name="fill">True</property>
+                            <property name="position">1</property>
+                          </packing>
+                        </child>
+                      </object>
+                      <packing>
+                        <property name="expand">False</property>
+                        <property name="fill">True</property>
+                        <property name="position">2</property>
+                      </packing>
+                    </child>
+                    <child>
+                      <object class="GtkBox">
+                        <property name="visible">True</property>
+                        <property name="can_focus">False</property>
+                        <property name="spacing">6</property>
+                        <property name="homogeneous">True</property>
+                        <child>
+                          <object class="GtkCheckButton" id="full_screen_check_btn">
+                            <property name="label" translatable="yes">Полный экран</property>
+                            <property name="visible">True</property>
+                            <property name="can_focus">True</property>
+                            <property name="receives_default">False</property>
+                            <property name="draw_indicator">True</property>
+                          </object>
+                          <packing>
+                            <property name="expand">False</property>
+                            <property name="fill">True</property>
+                            <property name="position">0</property>
+                          </packing>
+                        </child>
+                        <child>
+                          <object class="GtkLabel">
+                            <property name="visible">True</property>
+                            <property name="can_focus">False</property>
+                          </object>
+                          <packing>
+                            <property name="expand">False</property>
+                            <property name="fill">True</property>
+                            <property name="position">1</property>
+                          </packing>
+                        </child>
+                      </object>
+                      <packing>
+                        <property name="expand">False</property>
+                        <property name="fill">True</property>
+                        <property name="position">3</property>
+                      </packing>
+                    </child>
+                    <child>
+                      <placeholder/>
+                    </child>
+                    <child>
+                      <placeholder/>
+                    </child>
+                  </object>
+                  <packing>
+                    <property name="position">3</property>
+                  </packing>
+                </child>
+                <child type="tab">
+                  <object class="GtkLabel">
+                    <property name="visible">True</property>
+                    <property name="can_focus">False</property>
+                    <property name="label" translatable="yes">X2GO</property>
+                  </object>
+                  <packing>
+                    <property name="position">3</property>
+                    <property name="tab_fill">False</property>
+                  </packing>
+                </child>
+                <child>
                   <object class="GtkGrid">
                     <property name="visible">True</property>
                     <property name="can_focus">False</property>
@@ -953,7 +1224,7 @@
                     </child>
                   </object>
                   <packing>
-                    <property name="position">3</property>
+                    <property name="position">4</property>
                   </packing>
                 </child>
                 <child type="tab">
@@ -963,7 +1234,7 @@
                     <property name="label" translatable="yes">Служебные</property>
                   </object>
                   <packing>
-                    <property name="position">3</property>
+                    <property name="position">4</property>
                     <property name="tab_fill">False</property>
                   </packing>
                 </child>

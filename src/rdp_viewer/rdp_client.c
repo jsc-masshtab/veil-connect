@@ -100,19 +100,19 @@ static void add_rdp_param(GArray *rdp_params_dyn_array, gchar *rdp_param)
     g_array_append_val(rdp_params_dyn_array, rdp_param);
 }
 
-// Прочитать из ini параметр и передать в freerdp настройки
-static void rdp_client_add_str_param_from_ini(GArray *rdp_params_dyn_array,
-        const gchar *ini_key, const gchar *rdp_param_name, const gchar *default_rdp_param_value)
-{
-    gchar *ini_param = read_str_from_ini_file("RDPSettings", ini_key);
-    if (ini_param) {
-        g_strstrip(ini_param);
-        add_rdp_param(rdp_params_dyn_array, g_strdup_printf("%s:%s", rdp_param_name, ini_param));
-        g_free(ini_param);
-    } else if (default_rdp_param_value) {
-        add_rdp_param(rdp_params_dyn_array, g_strdup_printf("%s:%s", rdp_param_name, default_rdp_param_value));
-    }
-}
+//// Прочитать из ini параметр и передать в freerdp настройки
+//static void rdp_client_add_str_param_from_ini(GArray *rdp_params_dyn_array,
+//        const gchar *ini_key, const gchar *rdp_param_name, const gchar *default_rdp_param_value)
+//{
+//    gchar *ini_param = read_str_from_ini_file("RDPSettings", ini_key);
+//    if (ini_param) {
+//        g_strstrip(ini_param);
+//        add_rdp_param(rdp_params_dyn_array, g_strdup_printf("%s:%s", rdp_param_name, ini_param));
+//        g_free(ini_param);
+//    } else if (default_rdp_param_value) {
+//        add_rdp_param(rdp_params_dyn_array, g_strdup_printf("%s:%s", rdp_param_name, default_rdp_param_value));
+//    }
+//}
 
 static gchar * rdp_client_get_corrected_user_name(ExtendedRdpContext* ex)
 {

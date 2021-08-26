@@ -304,14 +304,19 @@ void vdi_ws_client_send_vm_changed(VdiWsClient *ws_vdi_client, const gchar *vm_i
     json_builder_set_member_name(builder, "connection_type");
     VdiVmRemoteProtocol protocol = vdi_session_get_current_remote_protocol();
     if (vm_id == NULL || protocol == VDI_ANOTHER_REMOTE_PROTOCOL)
-        json_builder_add_string_value(builder, NULL);
+        json_builder_add_null_value(builder);
     else
         json_builder_add_string_value(builder, vdi_session_remote_protocol_to_str(protocol));
 
     json_builder_set_member_name(builder, "is_connection_secure");
-    // RDP соединения шифруются, другие нет.
-    gboolean is_connection_secure = (protocol == VDI_RDP_PROTOCOL || protocol == VDI_RDP_WINDOWS_NATIVE_PROTOCOL);
-    json_builder_add_boolean_value(builder, is_connection_secure);
+    if (vm_id == NULL) {
+        json_builder_add_null_value(builder);
+    }
+    else {
+        // RDP соединения шифруются, другие нет.
+        gboolean is_connection_secure = (protocol == VDI_RDP_PROTOCOL || protocol == VDI_RDP_WINDOWS_NATIVE_PROTOCOL);
+        json_builder_add_boolean_value(builder, is_connection_secure);
+    }
 
     json_builder_end_object(builder);
 

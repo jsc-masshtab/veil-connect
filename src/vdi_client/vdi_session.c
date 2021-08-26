@@ -471,6 +471,8 @@ VdiVmRemoteProtocol vdi_session_str_to_remote_protocol(const gchar *protocol_str
         protocol = VDI_RDP_PROTOCOL;
     else if (g_strcmp0("NATIVE_RDP", protocol_str) == 0)
         protocol = VDI_RDP_WINDOWS_NATIVE_PROTOCOL;
+    else if (g_strcmp0("X2GO", protocol_str) == 0)
+        protocol = VDI_X2GO_PROTOCOL;
 
     return protocol;
 }
@@ -486,6 +488,8 @@ const gchar *vdi_session_remote_protocol_to_str(VdiVmRemoteProtocol protocol)
             return "RDP";
         case VDI_RDP_WINDOWS_NATIVE_PROTOCOL:
             return "NATIVE_RDP";
+        case VDI_X2GO_PROTOCOL:
+            return "X2GO";
         case VDI_ANOTHER_REMOTE_PROTOCOL:
         default:
             return "UNKNOWN_PROTOCOL";
@@ -850,7 +854,7 @@ void vdi_session_get_user_data_task(GTask *task,
 {
     g_autofree gchar *url_str = NULL;
     url_str = g_strdup_printf("%s/client/get_user_data", vdi_session_static->api_url);
-    g_autofree gchar *response_body_str;
+    g_autofree gchar *response_body_str = NULL;
     response_body_str = vdi_session_api_call("GET", url_str, NULL, NULL);
 
     // parse response

@@ -14,10 +14,12 @@
 #include <gdk/gdkkeysyms.h>
 #include <glib/gtypes.h>
 
+GKeyFile *get_keyfile(void);
 const gchar *get_ini_file_name(void);
-void free_ini_file_name(void);
+void close_ini_file(void);
 
 gchar *read_str_from_ini_file(const gchar *group_name,  const gchar *key);
+gchar *read_str_from_ini_file_with_def(const gchar *group_name,  const gchar *key, const gchar *default_val);
 gchar *read_str_from_ini_file_default(const gchar *group_name,  const gchar *key, const gchar *default_str);
 void write_str_to_ini_file(const gchar *group_name,  const gchar *key, const gchar *str_value);
 
