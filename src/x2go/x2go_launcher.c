@@ -137,6 +137,7 @@ x2go_launcher_cb_err_watch( GIOChannel *channel, GIOCondition cond, X2goData *da
         gtk_widget_show_all(data->window);
 
     } else if (strstr(string, "re-trying SSH key discovery now")) {
+
         // Possibly wrong credentials
         gtk_label_set_text(GTK_LABEL(data->status_label), "Ошибка авторизации");
         gtk_image_set_from_stock(GTK_IMAGE(data->credentials_image),
