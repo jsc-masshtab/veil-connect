@@ -143,6 +143,10 @@ list(APPEND SRC_CODE
         src/qr_code_generation/qr_code_gen.c
         src/qr_code_generation/qr_code_renderer.h
         src/qr_code_generation/qr_code_renderer.c
+
+# x2go
+        src/x2go/x2go_launcher.h
+        src/x2go/x2go_launcher.c
 )
 
 # usb_redirection

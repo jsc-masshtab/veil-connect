@@ -53,7 +53,7 @@ main(int argc, char **argv)
     // free resources
     remote_viewer_free_resources(remote_viewer);
     g_object_unref(remote_viewer);
-    free_ini_file_name();
+    close_ini_file();
     veil_logger_free();
 
     return ret;

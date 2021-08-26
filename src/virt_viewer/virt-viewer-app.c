@@ -339,11 +339,8 @@ virt_viewer_app_get_monitor_mapping_for_section(VirtViewerApp *self G_GNUC_UNUSE
     gchar **mappings = NULL;
     GHashTable *mapping = NULL;
 
-    GKeyFile *keyfile = g_key_file_new();
-    if(g_key_file_load_from_file(keyfile, get_ini_file_name(),
-                              G_KEY_FILE_KEEP_COMMENTS |
-                              G_KEY_FILE_KEEP_TRANSLATIONS,
-                              NULL)) {
+    GKeyFile *keyfile = get_keyfile();
+    if(keyfile) {
         mappings = g_key_file_get_string_list(keyfile, section, "monitor-mapping", &nmappings, &error);
 
         if (error) {
@@ -356,7 +353,6 @@ virt_viewer_app_get_monitor_mapping_for_section(VirtViewerApp *self G_GNUC_UNUSE
         }
         g_strfreev(mappings);
     }
-    g_key_file_free(keyfile);
 
     return mapping;
 }

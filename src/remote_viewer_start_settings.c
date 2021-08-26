@@ -76,6 +76,18 @@ typedef struct{
 
     UsbSelectorWidget *usb_selector_widget;
 
+    // X2GO settings
+    struct {
+        GtkWidget *session_type_combobox;
+
+        GtkWidget *conn_type_check_btn;
+        GtkWidget *conn_type_combobox;
+
+        GtkWidget *full_screen_check_btn;
+
+        GtkWidget *compress_method_combobox;
+    } x2go;
+
     // Service
     GtkWidget *btn_archive_logs;
     GtkWidget *log_location_label;
@@ -332,6 +344,13 @@ btn_btn_choose_rdp_file_clicked(GtkButton *button G_GNUC_UNUSED, ConnectSettings
     }
 
     gtk_widget_destroy(dialog);
+}
+
+static void
+on_conn_type_check_btn_toggled(GtkToggleButton *button, ConnectSettingsDialogData *dialog_data)
+{
+    gboolean is_toggled = gtk_toggle_button_get_active(button);
+    gtk_widget_set_sensitive(dialog_data->x2go.conn_type_combobox, is_toggled);
 }
 
 static void
@@ -654,6 +673,21 @@ fill_connect_settings_gui(ConnectSettingsDialogData *dialog_data, ConnectSetting
     gtk_widget_set_sensitive(dialog_data->btn_choose_rdp_file, use_rdp_file);
     gtk_widget_set_sensitive(dialog_data->rdp_file_name_entry, use_rdp_file);
 
+    // X2Go Settings
+    g_autofree gchar *x2go_session_type = NULL;
+    x2go_session_type = read_str_from_ini_file_with_def("X2GoSettings", "session_type", "XFCE");
+    gtk_combo_box_set_active_id(GTK_COMBO_BOX(dialog_data->x2go.session_type_combobox), x2go_session_type);
+
+    gboolean conn_type_assigned = read_int_from_ini_file("X2GoSettings", "conn_type_assigned", 0);
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(dialog_data->x2go.conn_type_check_btn), conn_type_assigned);
+    gtk_widget_set_sensitive(dialog_data->x2go.conn_type_combobox, conn_type_assigned);
+    g_autofree gchar *x2go_conn_type = NULL;
+    x2go_conn_type = read_str_from_ini_file_with_def("X2GoSettings", "conn_type", "modem");
+    gtk_combo_box_set_active_id(GTK_COMBO_BOX(dialog_data->x2go.conn_type_combobox), x2go_conn_type);
+
+    gboolean full_screen = read_int_from_ini_file("X2GoSettings", "full_screen", 0);
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(dialog_data->x2go.full_screen_check_btn), full_screen);
+
     // Service settings
     gchar *cur_url = app_updater_get_windows_releases_url(dialog_data->p_remote_viewer->app_updater);
     gchar *windows_updates_url = read_str_from_ini_file_default("ServiceSettings",
@@ -781,6 +815,21 @@ save_data_to_ini_file(ConnectSettingsDialogData *dialog_data)
     write_str_to_ini_file("RDPSettings", "rdp_settings_file", rdp_settings_file_mod);
     g_free(rdp_settings_file_mod);
 
+    // X2Go settings
+    const gchar *x2go_session_type =
+            gtk_combo_box_get_active_id(GTK_COMBO_BOX(dialog_data->x2go.session_type_combobox));
+    write_str_to_ini_file("X2GoSettings", "session_type", x2go_session_type);
+
+    gboolean conn_type_assigned = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(
+            dialog_data->x2go.conn_type_check_btn));
+    write_int_to_ini_file("X2GoSettings", "conn_type_assigned", conn_type_assigned);
+    const gchar *x2go_conn_type = gtk_combo_box_get_active_id(GTK_COMBO_BOX(dialog_data->x2go.conn_type_combobox));
+    write_str_to_ini_file("X2GoSettings", "conn_type", x2go_conn_type);
+
+    gboolean full_screen = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(
+                                                                       dialog_data->x2go.full_screen_check_btn));
+    write_int_to_ini_file("X2GoSettings", "full_screen", full_screen);
+
     // Service settings
     write_str_to_ini_file("ServiceSettings", "windows_updates_url",
                           gtk_entry_get_text(GTK_ENTRY(dialog_data->windows_updates_url_entry)));
@@ -866,6 +915,17 @@ GtkResponseType remote_viewer_start_settings_dialog(RemoteViewer *p_remote_viewe
     gtk_widget_destroy(dialog_data.usb_selector_widget->tk_address_header);
     usb_selector_widget_enable_auto_toggle(dialog_data.usb_selector_widget);
 
+    // X2Go settings
+    dialog_data.x2go.session_type_combobox = get_widget_from_builder(dialog_data.builder, "session_type_combobox");
+
+    dialog_data.x2go.conn_type_check_btn = get_widget_from_builder(dialog_data.builder, "conn_type_check_btn");
+    dialog_data.x2go.conn_type_combobox = get_widget_from_builder(dialog_data.builder, "conn_type_combobox");
+
+    dialog_data.x2go.full_screen_check_btn = get_widget_from_builder(dialog_data.builder, "full_screen_check_btn");
+
+    dialog_data.x2go.compress_method_combobox =
+            get_widget_from_builder(dialog_data.builder, "compress_method_combobox");
+
     // Service functions
     dialog_data.btn_archive_logs = get_widget_from_builder(dialog_data.builder, "btn_archive_logs");
     dialog_data.log_location_label = get_widget_from_builder(dialog_data.builder, "log_location_label");
@@ -909,6 +969,9 @@ GtkResponseType remote_viewer_start_settings_dialog(RemoteViewer *p_remote_viewe
                      G_CALLBACK(on_use_rdp_file_check_btn_toggled), &dialog_data);
     g_signal_connect(dialog_data.btn_choose_rdp_file, "clicked",
                      G_CALLBACK(btn_btn_choose_rdp_file_clicked), &dialog_data);
+
+    g_signal_connect(dialog_data.x2go.conn_type_check_btn, "toggled",
+                     G_CALLBACK(on_conn_type_check_btn_toggled), &dialog_data);
 
     g_signal_connect(dialog_data.btn_archive_logs, "clicked",
                      G_CALLBACK(btn_archive_logs_clicked_cb), &dialog_data);
