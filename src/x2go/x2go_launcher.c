@@ -51,14 +51,20 @@ typedef struct
     const ConnectSettingsData *p_data;
 
 } X2goData;
-
+// #ifdef G_OS_WIN32   #ifdef G_OS_UNIX
 static void x2go_launcher_stop_process(X2goData *data, int sig)
 {
     // If process is running than stop it
     if (data->is_launched) {
         if (data->pid) {
-            kill(data->pid, sig); // todo: maybe CloseHandle on windows
+#ifdef G_OS_WIN32
+            (void)sig;
+            TerminateProcess(data->pid, 0);
+#elif __linux__
+            kill(data->pid, sig);
+#endif
             g_info("%s SIG %i sent", __func__, sig);
+
         }
     } else {
         shutdown_loop(data->loop);
@@ -71,7 +77,7 @@ x2go_launcher_cb_child_watch( GPid  pid, gint status, X2goData *data )
 {
     g_info("FINISHED. %s Status: %i", __func__, status);
     /* Close pid */
-    g_spawn_close_pid( pid );
+    g_spawn_close_pid(pid);
     data->is_launched = FALSE;
     data->pid = 0;
 
@@ -81,7 +87,6 @@ x2go_launcher_cb_child_watch( GPid  pid, gint status, X2goData *data )
         gtk_widget_set_sensitive(data->btn_connect, TRUE);
         gtk_label_set_text(GTK_LABEL(data->status_label), "Подключение завершено");
     }
-
 }
 
 static gboolean
@@ -253,7 +258,11 @@ static void x2go_launcher_cancel_btn_clicked(GtkButton *button G_GNUC_UNUSED, X2
 static void x2go_launcher_btn_close_clicked(GtkButton *button G_GNUC_UNUSED, X2goData *data)
 {
     g_info("%s", __func__);
+#ifdef G_OS_WIN32
+    x2go_launcher_stop_process(data, 0);
+#elif __linux__
     x2go_launcher_stop_process(data, SIGKILL);
+#endif
 }
 
 static void x2go_launcher_btn_connect_clicked(GtkButton *button G_GNUC_UNUSED, X2goData *data)

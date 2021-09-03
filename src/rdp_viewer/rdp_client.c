@@ -213,7 +213,9 @@ static GArray *rdp_client_create_params_array(ExtendedRdpContext* ex)
     // remote app. Сначала смотрим есть ли в переданных настройках, иначе - есть ли в ini
     if(ex->p_rdp_settings->is_remote_app) {
         add_rdp_param(rdp_params_dyn_array, g_strdup_printf("/app:%s", ex->p_rdp_settings->remote_app_program));
-        add_rdp_param(rdp_params_dyn_array, g_strdup_printf("/app-cmd:%s", ex->p_rdp_settings->remote_app_options));
+        if (ex->p_rdp_settings->remote_app_options)
+            add_rdp_param(rdp_params_dyn_array, g_strdup_printf("/app-cmd:%s",
+                                                                ex->p_rdp_settings->remote_app_options));
     }
 
     // rdp_args     custom from ini file

@@ -19,8 +19,36 @@
 #include "rdp_viewer.h"
 #include "remote-viewer-util.h"
 
+
+typedef struct
+{
+    GMainLoop *loop;
+
+    GPid pid;
+    gboolean is_launched;
+
+} NativeRdpData;
+
 #ifdef _WIN32
-static void append_rdp_data(FILE *destFile, const gchar *param_name, const gchar *param_value)
+static void
+windows_rdp_launcher_cb_child_watch( GPid  pid, gint status, NativeRdpData *data)
+{
+    g_info("FINISHED. %s Status: %i", __func__, status);
+    g_spawn_close_pid(pid);
+
+    shutdown_loop(data->loop);
+}
+
+static void
+on_ws_cmd_received(gpointer data G_GNUC_UNUSED, const gchar *cmd, NativeRdpData *native_rdp_data)
+{
+    if (g_strcmp0(cmd, "DISCONNECT") == 0) {
+        TerminateProcess(native_rdp_data->pid, 0);
+    }
+}
+
+static void
+append_rdp_data(FILE *destFile, const gchar *param_name, const gchar *param_value)
 {
     if (param_value == NULL)
         return;
@@ -54,7 +82,8 @@ launch_windows_rdp_client(const VeilRdpSettings *p_rdp_settings)
     gchar *app_rdp_data_dir = g_strdup_printf("%s/rdp_data", app_data_dir);
     g_mkdir_with_parents(app_rdp_data_dir, 0755);
 
-    char *rdp_data_file_name = g_strdup_printf("%s/rdp_file.rdp", app_rdp_data_dir);
+    g_autofree gchar *rdp_data_file_name = NULL;
+    rdp_data_file_name = g_strdup_printf("%s/rdp_file.rdp", app_rdp_data_dir);
     g_free(app_rdp_data_dir);
     g_free(app_data_dir);
 
@@ -103,41 +132,39 @@ launch_windows_rdp_client(const VeilRdpSettings *p_rdp_settings)
     fclose(sourceFile);
     fclose(destFile);
 
+    NativeRdpData data = {};
+
     // launch process
-    STARTUPINFO si;
-    PROCESS_INFORMATION pi;
+    gchar *argv[3] = {};
+    int index = 0;
+    argv[index] = g_strdup("mstsc");
+    argv[++index] = g_strdup(rdp_data_file_name);
 
-    ZeroMemory( &si, sizeof(si) );
-    si.cb = sizeof(si);
-    ZeroMemory( &pi, sizeof(pi) );
+    GError *error = NULL;
 
-    // Start the child process.
-    gchar *cmd_line = g_strdup_printf("mstsc %s", rdp_data_file_name);
-//    gchar *cmd_line = g_strdup(
-//            "mstsc C:\\job\\vdiserver\\desktop-client-c\\cmake-build-release\\rdp_datardp_file.rdp");
-    if( !CreateProcess( NULL,   // No module name (use command line)
-                        cmd_line,        // Command line
-                        NULL,           // Process handle not inheritable
-                        NULL,           // Thread handle not inheritable
-                        FALSE,          // Set handle inheritance to FALSE
-                        0,              // No creation flags
-                        NULL,           // Use parent's environment block
-                        NULL,           // Use parent's starting directory
-                        &si,            // Pointer to STARTUPINFO structure
-                        &pi )           // Pointer to PROCESS_INFORMATION structure
-            )
-    {
-        g_info( "CreateProcess failed (%lu).", GetLastError() );
-        g_free(cmd_line);
+    data.is_launched = g_spawn_async(NULL, argv, NULL,
+                                     G_SPAWN_DO_NOT_REAP_CHILD | G_SPAWN_SEARCH_PATH, NULL,
+                                     NULL, &data.pid, &error);
+    if (!data.is_launched) {
+        g_warning("mstsc SPAWN FAILED");
+        if (error) {
+            g_warning("%s", error->message);
+            g_clear_error(&error);
+        }
         return;
     }
-    g_free(cmd_line);
 
-    // Wait until child process exits.
-    WaitForSingleObject( pi.hProcess, INFINITE );
+    // disconnect signal
+    gulong ws_cmd_received_handle = g_signal_connect(get_vdi_session_static(), "ws-cmd-received",
+                                                        G_CALLBACK(on_ws_cmd_received), &data);
 
-    // Close process and thread handles.
-    CloseHandle( pi.hProcess );
-    CloseHandle( pi.hThread );
+    // stop process callback
+    g_child_watch_add(data.pid, (GChildWatchFunc)windows_rdp_launcher_cb_child_watch, &data);
+
+    // launch event loop
+    create_loop_and_launch(&data.loop);
+
+    g_signal_handler_disconnect(get_vdi_session_static(), ws_cmd_received_handle);
+
 #endif
 }
