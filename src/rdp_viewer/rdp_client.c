@@ -100,20 +100,6 @@ static void add_rdp_param(GArray *rdp_params_dyn_array, gchar *rdp_param)
     g_array_append_val(rdp_params_dyn_array, rdp_param);
 }
 
-//// Прочитать из ini параметр и передать в freerdp настройки
-//static void rdp_client_add_str_param_from_ini(GArray *rdp_params_dyn_array,
-//        const gchar *ini_key, const gchar *rdp_param_name, const gchar *default_rdp_param_value)
-//{
-//    gchar *ini_param = read_str_from_ini_file("RDPSettings", ini_key);
-//    if (ini_param) {
-//        g_strstrip(ini_param);
-//        add_rdp_param(rdp_params_dyn_array, g_strdup_printf("%s:%s", rdp_param_name, ini_param));
-//        g_free(ini_param);
-//    } else if (default_rdp_param_value) {
-//        add_rdp_param(rdp_params_dyn_array, g_strdup_printf("%s:%s", rdp_param_name, default_rdp_param_value));
-//    }
-//}
-
 static gchar * rdp_client_get_corrected_user_name(ExtendedRdpContext* ex)
 {
     if (ex->p_rdp_settings->user_name == NULL)
@@ -171,18 +157,18 @@ static GArray *rdp_client_create_params_array(ExtendedRdpContext* ex)
         add_rdp_param(rdp_params_dyn_array, g_strdup("+aero"));
 
     // /gfx-h264:AVC444
-    gboolean is_rdp_vid_comp_used = read_int_from_ini_file("RDPSettings", "is_rdp_vid_comp_used", TRUE);
+    gboolean is_rdp_vid_comp_used = ex->p_rdp_settings->is_rdp_vid_comp_used;
     if (is_rdp_vid_comp_used) {
-        g_autofree gchar *codec = NULL;
-        codec = read_str_from_ini_file("RDPSettings", "rdp_vid_comp_codec");
-        if (codec == NULL || g_strcmp0(codec, "RFX") == 0) // Если не указан то по умолчанию RFX
+        // Если не указан то по умолчанию RFX
+        const gchar *codec = ex->p_rdp_settings->rdp_vid_comp_codec;
+        if (codec == NULL || g_strcmp0(codec, "RFX") == 0)
             add_rdp_param(rdp_params_dyn_array, g_strdup("/gfx:RFX"));
         else if (g_strcmp0(codec, "AVC420") == 0 || g_strcmp0(codec, "AVC444") == 0)
             add_rdp_param(rdp_params_dyn_array, g_strdup_printf("/gfx-h264:%s", codec));
     }
 
     // drives (folders)
-    gchar *shared_folders_str = read_str_from_ini_file("RDPSettings", "rdp_shared_folders");
+    const gchar *shared_folders_str = ex->p_rdp_settings->shared_folders_str;
 
     if (shared_folders_str && vdi_session_is_folders_redir_permitted()) {
         gchar **shared_folders_array = g_strsplit(shared_folders_str, ";", 10);
@@ -208,7 +194,6 @@ static GArray *rdp_client_create_params_array(ExtendedRdpContext* ex)
 
         g_strfreev(shared_folders_array);
     }
-    free_memory_safely(&shared_folders_str);
 
     // remote app. Сначала смотрим есть ли в переданных настройках, иначе - есть ли в ini
     if(ex->p_rdp_settings->is_remote_app) {
@@ -249,13 +234,8 @@ static GArray *rdp_client_create_params_array(ExtendedRdpContext* ex)
         add_rdp_param(rdp_params_dyn_array, g_strdup("-themes"));
 
     // USB for RemoteFX
-    if (vdi_session_is_usb_redir_permitted()) {
-        g_autofree gchar *usb_devices_str = NULL;
-        usb_devices_str = read_str_from_ini_file("RDPSettings", "usb_devices");
-        if (strlen_safely(usb_devices_str)) {
-            add_rdp_param(rdp_params_dyn_array, g_strdup_printf("/usb:addr:%s", usb_devices_str));
-        }
-    }
+    if (vdi_session_is_usb_redir_permitted() && strlen_safely(ex->p_rdp_settings->usb_devices))
+        add_rdp_param(rdp_params_dyn_array, g_strdup_printf("/usb:addr:%s", ex->p_rdp_settings->usb_devices));
 
     return rdp_params_dyn_array;
 }
@@ -269,7 +249,7 @@ static void rdp_client_destroy_params_array(GArray *rdp_params_dyn_array)
     g_array_free(rdp_params_dyn_array, TRUE);
 }
 
-ExtendedRdpContext* create_rdp_context(UpdateCursorCallback update_cursor_callback,
+ExtendedRdpContext* create_rdp_context(VeilRdpSettings *p_rdp_settings, UpdateCursorCallback update_cursor_callback,
                                               GSourceFunc update_images_func)
 {
     RDP_CLIENT_ENTRY_POINTS clientEntryPoints;
@@ -277,6 +257,7 @@ ExtendedRdpContext* create_rdp_context(UpdateCursorCallback update_cursor_callba
     rdpContext* context = freerdp_client_context_new(&clientEntryPoints);
 
     ExtendedRdpContext* ex_rdp_context = (ExtendedRdpContext*)context;
+    ex_rdp_context->p_rdp_settings = p_rdp_settings;
     ex_rdp_context->is_running = FALSE;
     //ex_rdp_context->update_image_callback = (UpdateImageCallback)update_image_callback;
     ex_rdp_context->update_cursor_callback = update_cursor_callback;
@@ -288,7 +269,7 @@ ExtendedRdpContext* create_rdp_context(UpdateCursorCallback update_cursor_callba
     //ex_rdp_context->display_update_queue = g_async_queue_new();
     g_mutex_init(&ex_rdp_context->invalid_region_mutex);
     // get desired fps from ini file
-    UINT32 rdp_fps = CLAMP(read_int_from_ini_file("RDPSettings", "rdp_fps", 30), 1, 60);
+    UINT32 rdp_fps = CLAMP(ex_rdp_context->p_rdp_settings->rdp_fps, 1, 60);
     guint redraw_timeout = 1000 / rdp_fps;
     ex_rdp_context->display_update_timeout_id = g_timeout_add(redraw_timeout, update_images_func, ex_rdp_context);
 
@@ -316,11 +297,6 @@ void destroy_rdp_context(ExtendedRdpContext* ex_rdp_context)
         freerdp_client_context_free((rdpContext*)ex_rdp_context);
         ex_rdp_context = NULL;
     }
-}
-
-void rdp_client_set_settings(ExtendedRdpContext *ex_rdp_context, VeilRdpSettings *p_rdp_settings)
-{
-    ex_rdp_context->p_rdp_settings = p_rdp_settings;
 }
 
 void rdp_client_set_rdp_image_size(ExtendedRdpContext *ex_rdp_context,
@@ -615,20 +591,20 @@ static BOOL rdp_post_connect(freerdp* instance)
     // PIXEL_FORMAT_BGRA32      CAIRO_FORMAT_ARGB32
     g_info("%s", (const char *)__func__);
 
+    ExtendedRdpContext* ex = (ExtendedRdpContext*)instance->context;
+
     UINT32 freerdp_pix_format = PIXEL_FORMAT_RGB16; // default
     cairo_format_t cairo_format = CAIRO_FORMAT_RGB16_565; // default
 #ifdef __APPLE__ // support only BGRA32
     gchar *rdp_pixel_format_str = g_strdup("BGRA32");
 #else
     // get image pixel format from ini file
-    gchar *rdp_pixel_format_str = read_str_from_ini_file("RDPSettings", "rdp_pixel_format");
+    const gchar *rdp_pixel_format_str = ex->p_rdp_settings->rdp_pixel_format_str;
 #endif
     if (g_strcmp0(rdp_pixel_format_str, "BGRA32") == 0) {
         freerdp_pix_format = PIXEL_FORMAT_BGRA32;
         cairo_format = CAIRO_FORMAT_ARGB32;
     }
-
-    free_memory_safely(&rdp_pixel_format_str);
 
     // init
     if (!gdi_init(instance, freerdp_pix_format))
@@ -654,7 +630,6 @@ static BOOL rdp_post_connect(freerdp* instance)
     //instance->update->Synchronize = update_send_synchronize;
 
     // create image surface. Must be recreated on resize (but its not required to this date 22.10.2020)
-    ExtendedRdpContext* ex = (ExtendedRdpContext*)instance->context;
     rdpGdi* gdi = ex->context.gdi;
 
     g_mutex_lock(&ex->primary_buffer_mutex);

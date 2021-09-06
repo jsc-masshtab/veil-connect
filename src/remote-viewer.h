@@ -32,6 +32,8 @@ typedef struct {
 
     RemoteViewerPrivate *priv;
 
+    ConnectSettingsData conn_data; // Структура, в которой содержаться текущие настройкм приложения
+
     VirtViewerApp *virt_viewer_obj;
     AppUpdater *app_updater;
     VdiManager *vdi_manager;

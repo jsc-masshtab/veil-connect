@@ -54,7 +54,6 @@
 #define ZOOM_STEP 10
 
 // externs
-extern gboolean opt_manual_mode;
 
 /* Signal handlers for main window  */
 void virt_viewer_window_menu_view_zoom_out(GtkWidget *menu, VirtViewerWindow *self);
@@ -376,12 +375,6 @@ virt_viewer_window_init (VirtViewerWindow *self)
     gtk_widget_set_sensitive(GTK_WIDGET(gtk_builder_get_object(self->priv->builder, "menu-view-zoom")), FALSE);
     //gtk_widget_set_sensitive(GTK_WIDGET(gtk_builder_get_object(self->priv->builder, "menu-file-screenshot")), FALSE);
     gtk_widget_set_sensitive(GTK_WIDGET(gtk_builder_get_object(self->priv->builder, "menu-preferences")), FALSE);
-
-    gboolean is_spice_client_cursor_visible = read_int_from_ini_file(
-            "SpiceSettings", "is_spice_client_cursor_visible", FALSE);
-    if (is_spice_client_cursor_visible) {
-        set_client_spice_cursor_visible(is_spice_client_cursor_visible);
-    }
 
     gtk_builder_connect_signals(priv->builder, self);
 

@@ -12,11 +12,11 @@
 #include <gtk/gtk.h>
 
 #include "vdi_session.h"
-#include "connect_settings_data.h"
+#include "settings_data.h"
 #include "remote-viewer.h"
 
 
-GtkResponseType remote_viewer_connect_dialog(RemoteViewer *remote_viewer, ConnectSettingsData *connect_settings_data);
+GtkResponseType remote_viewer_connect_dialog(RemoteViewer *remote_viewer);
 
 #endif /* REMOTE_VIEWER_CONNECT_H */
 

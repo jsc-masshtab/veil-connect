@@ -146,6 +146,9 @@ void remove_char(char *str, char character);
 
 // must be freed
 gchar *get_current_readable_time(void);
+
+void copy_file_content(FILE *sourceFile, FILE *destFile);
+
 #endif
 
 /*

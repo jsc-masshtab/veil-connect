@@ -94,21 +94,15 @@ launch_windows_rdp_client(const VeilRdpSettings *p_rdp_settings)
     if (destFile == NULL)
     {
         // Unable to open
-        g_info("\nUnable to open file rdp_file.rd.");
+        g_info("\nUnable to open file %s.", rdp_data_file_name);
         g_info("Please check if file exists and you have read/write privilege.");
         fclose(sourceFile);
         return;
     }
-    // Copy file
-    char ch;
-    /* Copy file contents character by character. */
-    while ((ch = fgetc(sourceFile)) != EOF)
-    {
-        fputc(ch, destFile);
-        //g_info("symbol: %i.", ch);
-    }
+    // Copy file    char ch;
+    copy_file_content(sourceFile, destFile);
 
-    // apend unique data
+    // append unique data
     append_rdp_data(destFile, "full address:s", p_rdp_settings->ip);
     append_rdp_data(destFile, "username:s", p_rdp_settings->user_name);
     append_rdp_data(destFile, "domain:s", p_rdp_settings->domain);
@@ -145,6 +139,11 @@ launch_windows_rdp_client(const VeilRdpSettings *p_rdp_settings)
     data.is_launched = g_spawn_async(NULL, argv, NULL,
                                      G_SPAWN_DO_NOT_REAP_CHILD | G_SPAWN_SEARCH_PATH, NULL,
                                      NULL, &data.pid, &error);
+
+    for (guint i = 0; i < (sizeof(argv) / sizeof(gchar *)); i++) {
+        g_free(argv[i]);
+    }
+
     if (!data.is_launched) {
         g_warning("mstsc SPAWN FAILED");
         if (error) {

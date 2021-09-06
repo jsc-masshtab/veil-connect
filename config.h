@@ -156,3 +156,5 @@
 /*Product links*/
 #define VEIL_PRODUCT_SITE "https://mashtab.org/files/vdi/index.html"
 #define VEIL_CONNECT_DOC_SITE "https://veil.mashtab.org/vdi-docs/connect/operator_guide/annotate/"
+
+#define VEIL_CONNECT_WIN_RELEASE_URL "https://veil-update.mashtab.org/veil-connect/windows/latest/"

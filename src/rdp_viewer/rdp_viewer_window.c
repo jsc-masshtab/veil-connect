@@ -29,7 +29,6 @@
 
 #define MAX_KEY_COMBO 4
 
-extern gboolean opt_manual_mode;
 
 struct keyComboDef {
     guint keys[MAX_KEY_COMBO];
@@ -309,8 +308,8 @@ static void rdp_viewer_item_menu_usb_activated(GtkWidget *menu G_GNUC_UNUSED, gp
     return;
 #endif
     // Работает только в связке с veil
-    if (opt_manual_mode)
-        return;
+    //if (opt_manual_mode)
+    //    return;
     // Не показывать если уже открыто
     if (usbredir_controller_is_usb_tcp_window_shown())
         return;

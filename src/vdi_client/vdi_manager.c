@@ -487,10 +487,10 @@ static void vdi_manager_init(VdiManager *self)
 }
 
 /////////////////////////////////// main function
-RemoteViewerState vdi_manager_dialog(VdiManager *self, ConnectSettingsData *con_data)
+RemoteViewerState vdi_manager_dialog(VdiManager *self, ConnectSettingsData *conn_data)
 {
     read_data_from_ini_file();
-    self->p_conn_data = con_data;
+    self->p_conn_data = conn_data;
 
     // show window
     gtk_window_set_position(GTK_WINDOW(self->window), GTK_WIN_POS_CENTER);

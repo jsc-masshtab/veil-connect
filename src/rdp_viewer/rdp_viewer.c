@@ -174,8 +174,9 @@ RemoteViewerState rdp_viewer_start(RemoteViewer *app, VeilRdpSettings *p_rdp_set
 
     GMainLoop *loop = NULL;
     // create RDP context
-    self.ex_rdp_context = create_rdp_context((UpdateCursorCallback)rdp_viewer_update_cursor,
-                                                            (GSourceFunc)rdp_viewer_update_images);
+    self.ex_rdp_context = create_rdp_context(p_rdp_settings,
+            (UpdateCursorCallback)rdp_viewer_update_cursor,
+            (GSourceFunc)rdp_viewer_update_images);
     self.ex_rdp_context->p_loop = &loop;
     self.ex_rdp_context->next_app_state_p = &next_app_state;
     self.ex_rdp_context->app = app;
@@ -186,8 +187,6 @@ RemoteViewerState rdp_viewer_start(RemoteViewer *app, VeilRdpSettings *p_rdp_set
     net_speedometer_set_pointer_rdp_context(self.net_speedometer, self.ex_rdp_context->context.rdp);
     g_signal_connect(self.net_speedometer, "stats-data-updated",
                      G_CALLBACK(rdp_viewer_stats_data_updated), self.ex_rdp_context);
-
-    rdp_client_set_settings(self.ex_rdp_context, p_rdp_settings);
 
     // Set some presettings
     usbredir_controller_reset_tcp_usb_devices_on_next_gui_opening(TRUE);

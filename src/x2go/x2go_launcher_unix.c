@@ -175,15 +175,7 @@ static void x2go_launcher_launch_process(X2goData *data)
     gtk_widget_set_sensitive(GTK_WIDGET(data->btn_connect), FALSE);
     gtk_image_set_from_stock(GTK_IMAGE(data->credentials_image), "gtk-ok", GTK_ICON_SIZE_BUTTON);
 
-    const ConnectSettingsData *con_data = data->p_data;
-
-    // Parameters
-    g_autofree gchar *x2go_session_type = NULL;
-    x2go_session_type = read_str_from_ini_file_with_def("X2GoSettings", "session_type", "XFCE");
-    gboolean conn_type_assigned = read_int_from_ini_file("X2GoSettings", "conn_type_assigned", 0);
-    g_autofree gchar *x2go_conn_type = NULL;
-    x2go_conn_type = read_str_from_ini_file_with_def("X2GoSettings", "conn_type", "modem");
-    gboolean full_screen = read_int_from_ini_file("X2GoSettings", "full_screen", 0);
+    const ConnectSettingsData *conn_data = data->p_data;
 
     gchar *argv[MAX_PARAM_AMOUNT] = {};
     int index = 0;
@@ -192,13 +184,13 @@ static void x2go_launcher_launch_process(X2goData *data)
     argv[++index] = g_strdup("--add-to-known-hosts");
     argv[++index] = g_strdup("--libdebug");
     argv[++index] = g_strdup("--auth-attempts=0");
-    argv[++index] = g_strdup_printf("-c=%s", x2go_session_type);
-    argv[++index] = g_strdup_printf("--server=%s", con_data->ip);
+    argv[++index] = g_strdup_printf("-c=%s", conn_data->x2Go_settings.x2go_session_type);
+    argv[++index] = g_strdup_printf("--server=%s", conn_data->ip);
     argv[++index] = g_strdup_printf("-u=%s", gtk_entry_get_text(GTK_ENTRY(data->user_name_entry)));
     argv[++index] = g_strdup_printf("--password=%s", gtk_entry_get_text(GTK_ENTRY(data->password_entry)));
-    if (conn_type_assigned)
-        argv[++index] = g_strdup_printf("--link=%s", x2go_conn_type);
-    if (full_screen)
+    if (conn_data->x2Go_settings.conn_type_assigned)
+        argv[++index] = g_strdup_printf("--link=%s", conn_data->x2Go_settings.x2go_conn_type);
+    if (conn_data->x2Go_settings.full_screen)
         argv[++index] = g_strdup("--geometry=fullscreen");
 
     gint out_fd, err_fd;//, in_fd;
@@ -272,7 +264,7 @@ static void x2go_launcher_btn_connect_clicked(GtkButton *button G_GNUC_UNUSED, X
 
 static void x2go_launcher_setup_gui(X2goData *data)
 {
-    const ConnectSettingsData *con_data = data->p_data;
+    const ConnectSettingsData *conn_data = data->p_data;
 
     data->builder = remote_viewer_util_load_ui("x2go_control_form.ui");
 
@@ -294,11 +286,11 @@ static void x2go_launcher_setup_gui(X2goData *data)
     data->btn_connect = get_widget_from_builder(data->builder, "btn_connect");
 
     data->address_label = get_widget_from_builder(data->builder, "address_label");
-    gtk_label_set_text(GTK_LABEL(data->address_label), con_data->ip);
+    gtk_label_set_text(GTK_LABEL(data->address_label), conn_data->ip);
     data->user_name_entry = get_widget_from_builder(data->builder, "user_name_entry");
     data->password_entry = get_widget_from_builder(data->builder, "password_entry");
-    gtk_entry_set_text(GTK_ENTRY(data->user_name_entry), con_data->user);
-    gtk_entry_set_text(GTK_ENTRY(data->password_entry), con_data->password);
+    gtk_entry_set_text(GTK_ENTRY(data->user_name_entry), conn_data->user);
+    gtk_entry_set_text(GTK_ENTRY(data->password_entry), conn_data->password);
     data->credentials_image = get_widget_from_builder(data->builder, "credentials_image");
 
     // connects
@@ -312,10 +304,10 @@ static void x2go_launcher_setup_gui(X2goData *data)
     gtk_widget_show_all(data->window);
 }
 
-void x2go_launcher_start(const ConnectSettingsData *con_data)
+void x2go_launcher_start(const ConnectSettingsData *conn_data)
 {
     X2goData data = {};
-    data.p_data = con_data;
+    data.p_data = conn_data;
 
     // GUI
     x2go_launcher_setup_gui(&data);

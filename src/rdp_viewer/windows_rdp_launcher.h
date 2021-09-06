@@ -11,7 +11,7 @@
 
 #include <gtk/gtk.h>
 
-#include "rdp_settings.h"
+#include "settings_data.h"
 
 void launch_windows_rdp_client(const VeilRdpSettings *p_rdp_settings);
 

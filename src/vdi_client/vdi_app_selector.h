@@ -8,7 +8,7 @@
 #include <gtk/gtk.h>
 #include <json-glib/json-glib.h>
 
-#include "rdp_settings.h"
+#include "settings_data.h"
 
 #ifndef VEIL_CONNECT_VDI_APP_SELECTOR_H
 #define VEIL_CONNECT_VDI_APP_SELECTOR_H

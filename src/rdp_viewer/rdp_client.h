@@ -87,11 +87,10 @@ typedef struct {
 } ExtendedRdpContext;
 
 
-ExtendedRdpContext* create_rdp_context(UpdateCursorCallback update_cursor_callback,
-                                       GSourceFunc update_images_func);
+ExtendedRdpContext* create_rdp_context(VeilRdpSettings *p_rdp_settings,
+        UpdateCursorCallback update_cursor_callback, GSourceFunc update_images_func);
 void destroy_rdp_context(ExtendedRdpContext* ex_rdp_context);
 
-void rdp_client_set_settings(ExtendedRdpContext *ex_rdp_context, VeilRdpSettings *p_rdp_settings);
 void rdp_client_set_rdp_image_size(ExtendedRdpContext *ex_rdp_context,
                                          int whole_image_width, int whole_image_height);
 

@@ -19,7 +19,6 @@
 
 #include "remote_viewer_start_settings.h"
 
-extern gboolean opt_manual_mode;
 
 typedef struct{
 
@@ -104,7 +103,6 @@ typedef struct{
     GtkWidget *bt_cancel;
     GtkWidget *bt_ok;
 
-    ConnectSettingsData *p_conn_data;
     RemoteViewer *p_remote_viewer;
 
     // signal handler ids
@@ -148,10 +146,10 @@ make_entry_red(GtkWidget *entry)
     gtk_widget_set_name(entry, "network_entry_with_errors");
 }
 
-/*Take data from GUI. Return true if there were no errors otherwise - false  */
+/*Return true if there were no errors otherwise - false  */
 // У виджета есть понятие id имя, котоое уникально и есть понятие имя виджета, которое используется для css.
 static gboolean
-fill_p_conn_data_from_gui(ConnectSettingsData *p_conn_data, ConnectSettingsDialogData *dialog_data)
+check_parameters(ConnectSettingsData *p_conn_data, ConnectSettingsDialogData *dialog_data)
 {
     gboolean is_ok = TRUE;
     const gchar *pattern = "^$|[а-яА-ЯёЁa-zA-Z0-9]+[а-яА-ЯёЁa-zA-Z0-9.\\-_+ ]*$";
@@ -162,7 +160,6 @@ fill_p_conn_data_from_gui(ConnectSettingsData *p_conn_data, ConnectSettingsDialo
 
     if (is_matched) {
         gtk_widget_set_name(dialog_data->domain_entry, "domain-entry");
-        update_string_safely(&p_conn_data->domain, domain_gui_str);
     } else {
         make_entry_red(dialog_data->domain_entry);
         is_ok = FALSE;
@@ -176,22 +173,9 @@ fill_p_conn_data_from_gui(ConnectSettingsData *p_conn_data, ConnectSettingsDialo
 
     if (is_matched) {
         gtk_widget_set_name(dialog_data->address_entry, "connection-address-entry");
-        update_string_safely(&p_conn_data->ip, address_gui_str);
     } else {
         make_entry_red(dialog_data->address_entry);
         is_ok = FALSE;
-    }
-
-    p_conn_data->port = gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(dialog_data->port_spinbox));
-    p_conn_data->is_ldap = gtk_toggle_button_get_active((GtkToggleButton *)dialog_data->ldap_check_btn);
-    p_conn_data->is_connect_to_prev_pool =
-            gtk_toggle_button_get_active((GtkToggleButton *)dialog_data->conn_to_prev_pool_checkbutton);
-
-    if (dialog_data->remote_protocol_combobox) {
-        gchar *current_protocol_str = gtk_combo_box_text_get_active_text(
-                (GtkComboBoxText*)dialog_data->remote_protocol_combobox);
-        p_conn_data->remote_protocol_type = vdi_session_str_to_remote_protocol(current_protocol_str);
-        free_memory_safely(&current_protocol_str);
     }
 
     return is_ok;
@@ -521,37 +505,17 @@ on_direct_connect_mode_check_btn_toggled(GtkToggleButton *check_btn, gpointer us
         gtk_spin_button_set_value(GTK_SPIN_BUTTON(dialog_data->port_spinbox), 443);
 }
 
-static void
-ok_button_clicked_cb(GtkButton *button G_GNUC_UNUSED, ConnectSettingsDialogData *dialog_data)
+static ConnectSettingsData *
+get_conn_data(ConnectSettingsDialogData *dialog_data)
 {
-    // fill p_conn_data from gui
-    gboolean is_success = fill_p_conn_data_from_gui(dialog_data->p_conn_data, dialog_data);
-
-    /* // Check some RDP settings
-     const gchar *shared_folders_str = gtk_entry_get_text(GTK_ENTRY(dialog_data->rdp_shared_folders_entry));
-     gchar **shared_folders_array = g_strsplit(shared_folders_str, ";", 10);
-
-     gchar **shared_folder;
-     for (shared_folder = shared_folders_array; *shared_folder; shared_folder++) {
-         // Подсвечиваем поле красным, если обнаружили некорректный путь
-         if(g_access(*shared_folder, R_OK) != 0) {
-             make_entry_red(dialog_data->rdp_shared_folders_entry);
-             is_success = FALSE;
-             break;
-         }
-     }
-     g_strfreev(shared_folders_array);*/
-
-    // Close the window if settings are ok
-    if (is_success) {
-        dialog_data->dialog_window_response = GTK_RESPONSE_OK;
-        shutdown_loop(dialog_data->loop);
-    }
+    return &dialog_data->p_remote_viewer->conn_data;
 }
 
 static void
-fill_connect_settings_gui(ConnectSettingsDialogData *dialog_data, ConnectSettingsData *p_conn_data)
+fill_gui(ConnectSettingsDialogData *dialog_data)
 {
+    ConnectSettingsData *p_conn_data = get_conn_data(dialog_data);
+
     /// General settings
     // domain
     if (p_conn_data->domain) {
@@ -573,97 +537,78 @@ fill_connect_settings_gui(ConnectSettingsDialogData *dialog_data, ConnectSetting
     gtk_toggle_button_set_active((GtkToggleButton *)dialog_data->save_password_checkbtn, p_conn_data->to_save_pswd);
 
     if (dialog_data->remote_protocol_combobox) {
+        VdiVmRemoteProtocol protocol = vdi_session_get_current_remote_protocol();
         // Текст и id совпадают
-        const gchar *protocol_str = vdi_session_remote_protocol_to_str(p_conn_data->remote_protocol_type);
+        const gchar *protocol_str = vdi_session_remote_protocol_to_str(protocol);
         gtk_combo_box_set_active_id((GtkComboBox *) dialog_data->remote_protocol_combobox, protocol_str);
     }
 
     /// Spice settings
-    gboolean is_spice_client_cursor_visible =
-            read_int_from_ini_file("SpiceSettings", "is_spice_client_cursor_visible", FALSE);
     gtk_toggle_button_set_active((GtkToggleButton*)dialog_data->client_cursor_visible_checkbutton,
-                                 is_spice_client_cursor_visible);
+                                 p_conn_data->spice_settings.is_spice_client_cursor_visible);
 
     /// RDP settings
-    gchar *rdp_pixel_format_str = read_str_from_ini_file("RDPSettings", "rdp_pixel_format");
-    UINT32 freerdp_pix_index = (g_strcmp0(rdp_pixel_format_str, "BGRA32") == 0) ? 1 : 0;
-    free_memory_safely(&rdp_pixel_format_str);
+    UINT32 freerdp_pix_index = (g_strcmp0(p_conn_data->rdp_settings.rdp_pixel_format_str, "BGRA32") == 0) ? 1 : 0;
     gtk_combo_box_set_active((GtkComboBox*)dialog_data->rdp_image_pixel_format_combobox, freerdp_pix_index);
 
-    UINT32 rdp_fps = CLAMP(read_int_from_ini_file("RDPSettings", "rdp_fps", 30), 1, 60);
+    UINT32 rdp_fps = CLAMP(p_conn_data->rdp_settings.rdp_fps, 1, 60);
     gtk_spin_button_set_value((GtkSpinButton*) dialog_data->rdp_fps_spin_btn, (gdouble)rdp_fps);
 
-    gboolean is_rdp_vid_comp_used = read_int_from_ini_file("RDPSettings", "is_rdp_vid_comp_used", TRUE);
-    gtk_toggle_button_set_active((GtkToggleButton *)dialog_data->is_rdp_vid_comp_used_check_btn, is_rdp_vid_comp_used);
+    gtk_toggle_button_set_active((GtkToggleButton *)dialog_data->is_rdp_vid_comp_used_check_btn,
+                                 p_conn_data->rdp_settings.is_rdp_vid_comp_used);
 
-    gtk_widget_set_sensitive(dialog_data->rdp_codec_combobox, is_rdp_vid_comp_used);
-    if (is_rdp_vid_comp_used) {
-        gchar *rdp_vid_comp_codec = read_str_from_ini_file("RDPSettings", "rdp_vid_comp_codec");
-        if (rdp_vid_comp_codec) {
-            g_strstrip(rdp_vid_comp_codec);
-            gtk_combo_box_set_active_id(GTK_COMBO_BOX(dialog_data->rdp_codec_combobox), rdp_vid_comp_codec);
-            free_memory_safely(&rdp_vid_comp_codec);
-        }
+    gtk_widget_set_sensitive(dialog_data->rdp_codec_combobox, p_conn_data->rdp_settings.is_rdp_vid_comp_used);
+    if (p_conn_data->rdp_settings.is_rdp_vid_comp_used)
+        gtk_combo_box_set_active_id(GTK_COMBO_BOX(dialog_data->rdp_codec_combobox),
+                p_conn_data->rdp_settings.rdp_vid_comp_codec);
+
+    if (p_conn_data->rdp_settings.shared_folders_str)
+        gtk_entry_set_text(GTK_ENTRY(dialog_data->rdp_shared_folders_entry),
+                p_conn_data->rdp_settings.shared_folders_str);
+
+    gtk_toggle_button_set_active((GtkToggleButton *)dialog_data->is_multimon_check_btn,
+            p_conn_data->rdp_settings.is_multimon);
+
+    gtk_toggle_button_set_active((GtkToggleButton *)dialog_data->redirect_printers_check_btn,
+            p_conn_data->rdp_settings.redirectprinters);
+
+    gtk_toggle_button_set_active((GtkToggleButton *)dialog_data->remote_app_check_btn,
+            p_conn_data->rdp_settings.is_remote_app);
+    if (p_conn_data->rdp_settings.remote_app_program)
+        gtk_entry_set_text(GTK_ENTRY(dialog_data->remote_app_name_entry), p_conn_data->rdp_settings.remote_app_program);
+
+    if (p_conn_data->rdp_settings.remote_app_options) {
+        gtk_entry_set_text(GTK_ENTRY(dialog_data->remote_app_options_entry),
+                p_conn_data->rdp_settings.remote_app_options);
     }
 
-    gchar *shared_folders_str = read_str_from_ini_file("RDPSettings", "rdp_shared_folders");
-    if (shared_folders_str)
-        gtk_entry_set_text(GTK_ENTRY(dialog_data->rdp_shared_folders_entry), shared_folders_str);
-    free_memory_safely(&shared_folders_str);
+    gtk_toggle_button_set_active((GtkToggleButton *)dialog_data->rdp_sec_protocol_check_btn,
+            p_conn_data->rdp_settings.is_sec_protocol_assigned);
+    gtk_widget_set_sensitive(dialog_data->sec_type_combobox, p_conn_data->rdp_settings.is_sec_protocol_assigned);
 
-    gboolean is_rdp_multimon = read_int_from_ini_file("RDPSettings", "is_multimon", FALSE);
-    gtk_toggle_button_set_active((GtkToggleButton *)dialog_data->is_multimon_check_btn, is_rdp_multimon);
+    if (p_conn_data->rdp_settings.is_sec_protocol_assigned && p_conn_data->rdp_settings.sec_protocol_type)
+        gtk_combo_box_set_active_id(GTK_COMBO_BOX(dialog_data->sec_type_combobox),
+                p_conn_data->rdp_settings.sec_protocol_type);
 
-    gboolean redirect_printers = read_int_from_ini_file("RDPSettings", "redirect_printers", FALSE);
-    gtk_toggle_button_set_active((GtkToggleButton *)dialog_data->redirect_printers_check_btn, redirect_printers);
-
-    gboolean is_remote_app = read_int_from_ini_file("RDPSettings", "is_remote_app", 0);
-    gtk_toggle_button_set_active((GtkToggleButton *)dialog_data->remote_app_check_btn, is_remote_app);
-    gchar *remote_app_program = read_str_from_ini_file("RDPSettings", "remote_app_program");
-    if (remote_app_program) {
-        gtk_entry_set_text(GTK_ENTRY(dialog_data->remote_app_name_entry), remote_app_program);
-        g_free(remote_app_program);
-    }
-    gchar *remote_app_options = read_str_from_ini_file("RDPSettings", "remote_app_options");
-    if (remote_app_options) {
-        gtk_entry_set_text(GTK_ENTRY(dialog_data->remote_app_options_entry), remote_app_options);
-        g_free(remote_app_options);
-    }
-
-    gboolean is_sec_protocol_assigned = read_int_from_ini_file("RDPSettings", "is_sec_protocol_assigned", 0);
-    gtk_toggle_button_set_active((GtkToggleButton *)dialog_data->rdp_sec_protocol_check_btn, is_sec_protocol_assigned);
-    gtk_widget_set_sensitive(dialog_data->sec_type_combobox, is_sec_protocol_assigned);
-    if (is_sec_protocol_assigned) {
-        gchar *sec_protocol_type = read_str_from_ini_file("RDPSettings", "sec_protocol_type");
-        if (sec_protocol_type) {
-            gtk_combo_box_set_active_id(GTK_COMBO_BOX(dialog_data->sec_type_combobox), sec_protocol_type);
-            g_free(sec_protocol_type);
-        }
-    }
-
-    gboolean is_rdp_network_assigned = read_int_from_ini_file("RDPSettings", "is_rdp_network_assigned", 0);
+    gboolean is_rdp_network_assigned = p_conn_data->rdp_settings.is_rdp_network_assigned;
     gtk_toggle_button_set_active((GtkToggleButton *)dialog_data->rdp_network_check_btn, is_rdp_network_assigned);
     gtk_widget_set_sensitive(dialog_data->rdp_network_type_combobox, is_rdp_network_assigned);
-    if (is_rdp_network_assigned) {
-        gchar *rdp_network_type = read_str_from_ini_file("RDPSettings", "rdp_network_type");
-        if (rdp_network_type) {
-            gtk_combo_box_set_active_id(GTK_COMBO_BOX(dialog_data->rdp_network_type_combobox), rdp_network_type);
-            g_free(rdp_network_type);
-        }
+    if (is_rdp_network_assigned && p_conn_data->rdp_settings.rdp_network_type) {
+        gtk_combo_box_set_active_id(GTK_COMBO_BOX(dialog_data->rdp_network_type_combobox),
+                p_conn_data->rdp_settings.rdp_network_type);
     }
 
-    gboolean rdp_decorations = read_int_from_ini_file("RDPSettings", "disable_rdp_decorations", 0);
-    gtk_toggle_button_set_active((GtkToggleButton *)dialog_data->rdp_decorations_check_btn, rdp_decorations);
-    gboolean rdp_fonts = read_int_from_ini_file("RDPSettings", "disable_rdp_fonts", 0);
-    gtk_toggle_button_set_active((GtkToggleButton *)dialog_data->rdp_fonts_check_btn, rdp_fonts);
-    gboolean rdp_themes = read_int_from_ini_file("RDPSettings", "disable_rdp_themes", 0);
-    gtk_toggle_button_set_active((GtkToggleButton *)dialog_data->rdp_themes_check_btn, rdp_themes);
+    gtk_toggle_button_set_active((GtkToggleButton *)dialog_data->rdp_decorations_check_btn,
+            p_conn_data->rdp_settings.disable_rdp_decorations);
+    gtk_toggle_button_set_active((GtkToggleButton *)dialog_data->rdp_fonts_check_btn,
+            p_conn_data->rdp_settings.disable_rdp_fonts);
+    gtk_toggle_button_set_active((GtkToggleButton *)dialog_data->rdp_themes_check_btn,
+            p_conn_data->rdp_settings.disable_rdp_themes);
 
-    gchar *usb_devices = read_str_from_ini_file("RDPSettings", "usb_devices");
-    usb_selector_widget_set_selected_usb_str(dialog_data->usb_selector_widget, usb_devices);
-    g_free(usb_devices);
+    usb_selector_widget_set_selected_usb_str(dialog_data->usb_selector_widget, p_conn_data->rdp_settings.usb_devices);
 
-    gboolean use_rdp_file = read_int_from_ini_file("RDPSettings", "use_rdp_file", 0);
+    gboolean use_rdp_file = p_conn_data->rdp_settings.use_rdp_file;
+    p_conn_data->rdp_settings.use_rdp_file = read_int_from_ini_file("RDPSettings", "use_rdp_file", 0);
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(dialog_data->use_rdp_file_check_btn), use_rdp_file);
     gchar *rdp_settings_file = read_str_from_ini_file("RDPSettings", "rdp_settings_file");
     if (rdp_settings_file) {
@@ -674,178 +619,164 @@ fill_connect_settings_gui(ConnectSettingsDialogData *dialog_data, ConnectSetting
     gtk_widget_set_sensitive(dialog_data->rdp_file_name_entry, use_rdp_file);
 
     // X2Go Settings
-    g_autofree gchar *x2go_session_type = NULL;
-    x2go_session_type = read_str_from_ini_file_with_def("X2GoSettings", "session_type", "XFCE");
-    gtk_combo_box_set_active_id(GTK_COMBO_BOX(dialog_data->x2go.session_type_combobox), x2go_session_type);
+    gtk_combo_box_set_active_id(GTK_COMBO_BOX(dialog_data->x2go.session_type_combobox),
+            p_conn_data->x2Go_settings.x2go_session_type);
 
-    gboolean conn_type_assigned = read_int_from_ini_file("X2GoSettings", "conn_type_assigned", 0);
+    gboolean conn_type_assigned = p_conn_data->x2Go_settings.conn_type_assigned;
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(dialog_data->x2go.conn_type_check_btn), conn_type_assigned);
     gtk_widget_set_sensitive(dialog_data->x2go.conn_type_combobox, conn_type_assigned);
-    g_autofree gchar *x2go_conn_type = NULL;
-    x2go_conn_type = read_str_from_ini_file_with_def("X2GoSettings", "conn_type", "modem");
-    gtk_combo_box_set_active_id(GTK_COMBO_BOX(dialog_data->x2go.conn_type_combobox), x2go_conn_type);
+    gtk_combo_box_set_active_id(GTK_COMBO_BOX(dialog_data->x2go.conn_type_combobox),
+            p_conn_data->x2Go_settings.x2go_conn_type);
 
-    gboolean full_screen = read_int_from_ini_file("X2GoSettings", "full_screen", 0);
-    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(dialog_data->x2go.full_screen_check_btn), full_screen);
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(dialog_data->x2go.full_screen_check_btn),
+            p_conn_data->x2Go_settings.full_screen);
 
     // Service settings
-    gchar *cur_url = app_updater_get_windows_releases_url(dialog_data->p_remote_viewer->app_updater);
-    gchar *windows_updates_url = read_str_from_ini_file_default("ServiceSettings",
-                                                                "windows_updates_url", cur_url);
-    free_memory_safely(&cur_url);
-    if (windows_updates_url) {
-        gtk_entry_set_text(GTK_ENTRY(dialog_data->windows_updates_url_entry), windows_updates_url);
-        g_free(windows_updates_url);
-    }
+    gtk_entry_set_text(GTK_ENTRY(dialog_data->windows_updates_url_entry), p_conn_data->windows_updates_url);
 
     gulong entry_handler_id = dialog_data->on_direct_connect_mode_check_btn_toggled_id;
     g_signal_handler_block(dialog_data->direct_connect_mode_check_btn, entry_handler_id); // to prevent callback
-    gtk_toggle_button_set_active((GtkToggleButton *)dialog_data->direct_connect_mode_check_btn, opt_manual_mode);
+    gtk_toggle_button_set_active((GtkToggleButton *)dialog_data->direct_connect_mode_check_btn,
+            p_conn_data->opt_manual_mode);
     g_signal_handler_unblock(dialog_data->direct_connect_mode_check_btn, entry_handler_id);
 }
 
 static void
-save_data_to_ini_file(ConnectSettingsDialogData *dialog_data)
+take_from_gui(ConnectSettingsDialogData *dialog_data)
 {
-    if (dialog_data->dialog_window_response != GTK_RESPONSE_OK)
-        return;
+    ConnectSettingsData *conn_data = get_conn_data(dialog_data);
 
     const gchar *paramToFileGrpoup = get_cur_ini_param_group();
     // domain
-    write_str_to_ini_file(paramToFileGrpoup, "domain", gtk_entry_get_text(GTK_ENTRY(dialog_data->domain_entry)));
+    update_string_safely(&conn_data->domain, gtk_entry_get_text(GTK_ENTRY(dialog_data->domain_entry)));
     // ip port
-    write_str_to_ini_file(paramToFileGrpoup, "ip", gtk_entry_get_text(GTK_ENTRY(dialog_data->address_entry)));
-    gint port = gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(dialog_data->port_spinbox));
-    write_int_to_ini_file(paramToFileGrpoup, "port", port);
+    update_string_safely(&conn_data->ip, gtk_entry_get_text(GTK_ENTRY(dialog_data->address_entry)));
+    conn_data->port = gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(dialog_data->port_spinbox));
     // ldap
-    gboolean is_ldap_btn_checked = gtk_toggle_button_get_active((GtkToggleButton *)dialog_data->ldap_check_btn);
-    write_int_to_ini_file(paramToFileGrpoup, "is_ldap_btn_checked", is_ldap_btn_checked);
+    conn_data->is_ldap = gtk_toggle_button_get_active((GtkToggleButton *)dialog_data->ldap_check_btn);
     // prev pool
-    gboolean is_conn_to_prev_pool_btn_checked =
+    conn_data->is_connect_to_prev_pool =
             gtk_toggle_button_get_active((GtkToggleButton *)dialog_data->conn_to_prev_pool_checkbutton);
-    write_int_to_ini_file(paramToFileGrpoup, "is_conn_to_prev_pool_btn_checked", is_conn_to_prev_pool_btn_checked);
     // pswd
-    dialog_data->p_conn_data->to_save_pswd = gtk_toggle_button_get_active(
-            (GtkToggleButton *)dialog_data->save_password_checkbtn);
-    write_int_to_ini_file(paramToFileGrpoup, "to_save_pswd", dialog_data->p_conn_data->to_save_pswd);
+    conn_data->to_save_pswd = gtk_toggle_button_get_active((GtkToggleButton *)dialog_data->save_password_checkbtn);
 
     if (dialog_data->remote_protocol_combobox) {
         const gchar *protocol_str = gtk_combo_box_get_active_id((GtkComboBox*)dialog_data->remote_protocol_combobox);
         VdiVmRemoteProtocol protocol = vdi_session_str_to_remote_protocol(protocol_str);
-        write_int_to_ini_file("General", "cur_remote_protocol_index", protocol);
+        vdi_session_set_current_remote_protocol(protocol);
     }
 
     /// Spice debug cursor enabling
-    gboolean is_spice_client_cursor_visible =
+    conn_data->spice_settings.is_spice_client_cursor_visible =
             gtk_toggle_button_get_active((GtkToggleButton *)dialog_data->client_cursor_visible_checkbutton);
-    set_client_spice_cursor_visible(is_spice_client_cursor_visible);
 
     /// RDP settings
-    gchar *rdp_pixel_format_str = gtk_combo_box_text_get_active_text(
-            (GtkComboBoxText *)dialog_data->rdp_image_pixel_format_combobox);
-    write_str_to_ini_file("RDPSettings", "rdp_pixel_format", rdp_pixel_format_str);
-    free_memory_safely(&rdp_pixel_format_str);
+    update_string_safely(&conn_data->rdp_settings.rdp_pixel_format_str,
+            gtk_combo_box_text_get_active_text((GtkComboBoxText *)dialog_data->rdp_image_pixel_format_combobox));
 
-    gint fps = (gint)gtk_spin_button_get_value((GtkSpinButton *)dialog_data->rdp_fps_spin_btn);
-    write_int_to_ini_file("RDPSettings", "rdp_fps", fps);
+    conn_data->rdp_settings.rdp_fps = (gint)gtk_spin_button_get_value((GtkSpinButton *)dialog_data->rdp_fps_spin_btn);
 
-    gboolean is_rdp_vid_comp_used = gtk_toggle_button_get_active(
+    conn_data->rdp_settings.is_rdp_vid_comp_used = gtk_toggle_button_get_active(
             (GtkToggleButton *)dialog_data->is_rdp_vid_comp_used_check_btn);
-    write_int_to_ini_file("RDPSettings", "is_rdp_vid_comp_used", is_rdp_vid_comp_used);
 
     if (dialog_data->rdp_codec_combobox) {
         const gchar *rdp_vid_comp_codec_str =
                 gtk_combo_box_get_active_id(GTK_COMBO_BOX(dialog_data->rdp_codec_combobox));
-        write_str_to_ini_file("RDPSettings", "rdp_vid_comp_codec", rdp_vid_comp_codec_str);
+        update_string_safely(&conn_data->rdp_settings.rdp_vid_comp_codec, rdp_vid_comp_codec_str);
     }
 
     const gchar *shared_folders_str = gtk_entry_get_text(GTK_ENTRY(dialog_data->rdp_shared_folders_entry));
     // Пользовать мог ввести путь с виндусятскими разделителями, поэтому на всякий случай заменяем
     gchar *folder_name = replace_str(shared_folders_str, "\\", "/");
-    write_str_to_ini_file("RDPSettings", "rdp_shared_folders", folder_name);
+    update_string_safely(&conn_data->rdp_settings.shared_folders_str, folder_name);
     free_memory_safely(&folder_name);
 
     gboolean is_rdp_multimon = gtk_toggle_button_get_active((GtkToggleButton *)dialog_data->is_multimon_check_btn);
-    write_int_to_ini_file("RDPSettings", "is_multimon", is_rdp_multimon);
+    conn_data->rdp_settings.is_multimon = is_rdp_multimon;
 
-    gboolean redirect_printers = gtk_toggle_button_get_active(
+    conn_data->rdp_settings.redirectprinters = gtk_toggle_button_get_active(
             (GtkToggleButton *)dialog_data->redirect_printers_check_btn);
-    write_int_to_ini_file("RDPSettings", "redirect_printers", redirect_printers);
 
-    gboolean is_remote_app = gtk_toggle_button_get_active((GtkToggleButton *)dialog_data->remote_app_check_btn);
-    write_int_to_ini_file("RDPSettings", "is_remote_app", is_remote_app);
-    write_str_to_ini_file("RDPSettings", "remote_app_program",
+    conn_data->rdp_settings.is_remote_app =
+            gtk_toggle_button_get_active((GtkToggleButton *)dialog_data->remote_app_check_btn);
+    update_string_safely(&conn_data->rdp_settings.remote_app_program,
                           gtk_entry_get_text(GTK_ENTRY(dialog_data->remote_app_name_entry)));
-    write_str_to_ini_file("RDPSettings", "remote_app_options",
+    update_string_safely(&conn_data->rdp_settings.remote_app_options,
                           gtk_entry_get_text(GTK_ENTRY(dialog_data->remote_app_options_entry)));
     //
-    gboolean is_sec_protocol_assigned = gtk_toggle_button_get_active((GtkToggleButton *)
+    conn_data->rdp_settings.is_sec_protocol_assigned = gtk_toggle_button_get_active((GtkToggleButton *)
                                                                             dialog_data->rdp_sec_protocol_check_btn);
-    write_int_to_ini_file("RDPSettings", "is_sec_protocol_assigned", is_sec_protocol_assigned);
     const gchar *sec_protocol_type =
             gtk_combo_box_get_active_id(GTK_COMBO_BOX(dialog_data->sec_type_combobox));
-    write_str_to_ini_file("RDPSettings", "sec_protocol_type", sec_protocol_type);
+    update_string_safely(&conn_data->rdp_settings.sec_protocol_type, sec_protocol_type);
     //
-    gboolean is_rdp_network_assigned = gtk_toggle_button_get_active((GtkToggleButton *)
+    conn_data->rdp_settings.is_rdp_network_assigned = gtk_toggle_button_get_active((GtkToggleButton *)
                                                                dialog_data->rdp_network_check_btn);
-    write_int_to_ini_file("RDPSettings", "is_rdp_network_assigned", is_rdp_network_assigned);
     const gchar *rdp_network_type =
             gtk_combo_box_get_active_id(GTK_COMBO_BOX(dialog_data->rdp_network_type_combobox));
-    write_str_to_ini_file("RDPSettings", "rdp_network_type", rdp_network_type);
+    update_string_safely(&conn_data->rdp_settings.rdp_network_type, rdp_network_type);
 
-    gboolean rdp_decorations = gtk_toggle_button_get_active((GtkToggleButton *)dialog_data->rdp_decorations_check_btn);
-    write_int_to_ini_file("RDPSettings", "disable_rdp_decorations", rdp_decorations);
-    gboolean rdp_fonts = gtk_toggle_button_get_active((GtkToggleButton *)dialog_data->rdp_fonts_check_btn);
-    write_int_to_ini_file("RDPSettings", "disable_rdp_fonts", rdp_fonts);
-    gboolean rdp_themes = gtk_toggle_button_get_active((GtkToggleButton *)dialog_data->rdp_themes_check_btn);
-    write_int_to_ini_file("RDPSettings", "disable_rdp_themes", rdp_themes);
+    conn_data->rdp_settings.disable_rdp_decorations =
+            gtk_toggle_button_get_active((GtkToggleButton *)dialog_data->rdp_decorations_check_btn);
+    conn_data->rdp_settings.disable_rdp_fonts =
+            gtk_toggle_button_get_active((GtkToggleButton *)dialog_data->rdp_fonts_check_btn);
+    conn_data->rdp_settings.disable_rdp_themes =
+            gtk_toggle_button_get_active((GtkToggleButton *)dialog_data->rdp_themes_check_btn);
 
     gchar *usb_devices = usb_selector_widget_get_selected_usb_str(dialog_data->usb_selector_widget);
     if (usb_devices) {
-        write_str_to_ini_file("RDPSettings", "usb_devices", usb_devices);
+        update_string_safely(&conn_data->rdp_settings.usb_devices, usb_devices);
         g_free(usb_devices);
     } else {
-        write_str_to_ini_file("RDPSettings", "usb_devices", "");
+        update_string_safely(&conn_data->rdp_settings.usb_devices, "");
     }
 
-    gboolean use_rdp_file = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(dialog_data->use_rdp_file_check_btn));
-    write_int_to_ini_file("RDPSettings", "use_rdp_file", use_rdp_file);
+    conn_data->rdp_settings.use_rdp_file =
+            gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(dialog_data->use_rdp_file_check_btn));
     const gchar *rdp_settings_file = gtk_entry_get_text(GTK_ENTRY(dialog_data->rdp_file_name_entry));
     gchar *rdp_settings_file_mod = replace_str(rdp_settings_file, "\\", "/");
-    write_str_to_ini_file("RDPSettings", "rdp_settings_file", rdp_settings_file_mod);
+    update_string_safely(&conn_data->rdp_settings.rdp_settings_file, rdp_settings_file_mod);
     g_free(rdp_settings_file_mod);
 
     // X2Go settings
     const gchar *x2go_session_type =
             gtk_combo_box_get_active_id(GTK_COMBO_BOX(dialog_data->x2go.session_type_combobox));
-    write_str_to_ini_file("X2GoSettings", "session_type", x2go_session_type);
+    update_string_safely(&conn_data->x2Go_settings.x2go_session_type, x2go_session_type);
 
-    gboolean conn_type_assigned = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(
+    conn_data->x2Go_settings.conn_type_assigned = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(
             dialog_data->x2go.conn_type_check_btn));
-    write_int_to_ini_file("X2GoSettings", "conn_type_assigned", conn_type_assigned);
     const gchar *x2go_conn_type = gtk_combo_box_get_active_id(GTK_COMBO_BOX(dialog_data->x2go.conn_type_combobox));
-    write_str_to_ini_file("X2GoSettings", "conn_type", x2go_conn_type);
+    update_string_safely(&conn_data->x2Go_settings.x2go_conn_type, x2go_conn_type);
 
-    gboolean full_screen = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(
+    conn_data->x2Go_settings.full_screen = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(
                                                                        dialog_data->x2go.full_screen_check_btn));
-    write_int_to_ini_file("X2GoSettings", "full_screen", full_screen);
 
     // Service settings
-    write_str_to_ini_file("ServiceSettings", "windows_updates_url",
+    update_string_safely(&conn_data->windows_updates_url,
                           gtk_entry_get_text(GTK_ENTRY(dialog_data->windows_updates_url_entry)));
-
-    opt_manual_mode = gtk_toggle_button_get_active((GtkToggleButton *)dialog_data->direct_connect_mode_check_btn);
-    write_int_to_ini_file("General", "opt_manual_mode", opt_manual_mode);
+    conn_data->opt_manual_mode =
+            gtk_toggle_button_get_active((GtkToggleButton *)dialog_data->direct_connect_mode_check_btn);
 }
 
-GtkResponseType remote_viewer_start_settings_dialog(RemoteViewer *p_remote_viewer,
-                                                    ConnectSettingsData *p_conn_data, GtkWindow *parent)
+static void
+ok_button_clicked_cb(GtkButton *button G_GNUC_UNUSED, ConnectSettingsDialogData *dialog_data)
 {
-    ConnectSettingsDialogData dialog_data;
-    memset(&dialog_data, 0, sizeof(ConnectSettingsDialogData));
+    // fill p_conn_data from gui
+    gboolean is_success = check_parameters(get_conn_data(dialog_data), dialog_data);
+
+    // Close the window if settings are ok
+    if (is_success) {
+        dialog_data->dialog_window_response = GTK_RESPONSE_OK;
+        take_from_gui(dialog_data);
+        shutdown_loop(dialog_data->loop);
+    }
+}
+
+GtkResponseType remote_viewer_start_settings_dialog(RemoteViewer *p_remote_viewer, GtkWindow *parent)
+{
+    ConnectSettingsDialogData dialog_data = {};
 
     dialog_data.p_remote_viewer = p_remote_viewer;
-    dialog_data.p_conn_data = p_conn_data;
     dialog_data.dialog_window_response = GTK_RESPONSE_OK;
 
     // gui widgets
@@ -991,15 +922,13 @@ GtkResponseType remote_viewer_start_settings_dialog(RemoteViewer *p_remote_viewe
     gulong state_hdle = g_signal_connect(p_remote_viewer->app_updater, "state-changed",
                                          G_CALLBACK(on_app_updater_status_changed),&dialog_data);
 
-    // read from file
-    fill_p_conn_data_from_ini_file(p_conn_data);
-    fill_connect_settings_gui(&dialog_data, p_conn_data);
+    fill_gui(&dialog_data);
 
     // show window
     gtk_window_set_transient_for(GTK_WINDOW(dialog_data.window), parent);
     gtk_window_set_position(GTK_WINDOW(dialog_data.window), GTK_WIN_POS_CENTER);
     gtk_widget_show_all(dialog_data.window);
-    update_gui_according_to_connect_mode(&dialog_data, opt_manual_mode);
+    update_gui_according_to_connect_mode(&dialog_data, get_conn_data(&dialog_data)->opt_manual_mode);
 #ifndef  _WIN32
     gtk_widget_hide(dialog_data.windows_updates_url_entry);
 #endif
@@ -1007,8 +936,8 @@ GtkResponseType remote_viewer_start_settings_dialog(RemoteViewer *p_remote_viewe
 
     create_loop_and_launch(&dialog_data.loop);
 
-    // write to file if response is GTK_RESPONSE_OK
-    save_data_to_ini_file(&dialog_data);
+    // save
+    settings_data_save_all(get_conn_data(&dialog_data));
 
     // disconnect signals from external sources
     g_signal_handler_disconnect(p_remote_viewer->app_updater, st_msg_hdle);
@@ -1020,35 +949,4 @@ GtkResponseType remote_viewer_start_settings_dialog(RemoteViewer *p_remote_viewe
     gtk_widget_destroy(dialog_data.window);
 
     return dialog_data.dialog_window_response;
-}
-
-void fill_p_conn_data_from_ini_file(ConnectSettingsData *p_conn_data)
-{
-    g_info("get_ini_file_name: %s", get_ini_file_name());
-
-    // Main settings
-    const gchar *group_name = get_cur_ini_param_group();
-    // domain
-    gchar *domain = read_str_from_ini_file(group_name, "domain");
-    update_string_safely(&p_conn_data->domain, domain);
-    free_memory_safely(&domain);
-    // ip
-    gchar *ip = read_str_from_ini_file(group_name, "ip");
-    update_string_safely(&p_conn_data->ip, ip);
-    free_memory_safely(&ip);
-    // port
-    p_conn_data->port = read_int_from_ini_file(group_name, "port", 443);
-    // ldap
-    p_conn_data->is_ldap = read_int_from_ini_file("RemoteViewerConnect", "is_ldap_btn_checked", 0);
-    // Connect to prev pool
-    p_conn_data->is_connect_to_prev_pool =
-            read_int_from_ini_file("RemoteViewerConnect", "is_conn_to_prev_pool_btn_checked", 0);
-    // pswd
-    p_conn_data->to_save_pswd = read_int_from_ini_file(group_name, "to_save_pswd", 1);
-
-    // remote protocol
-    gint remote_protocol_type = read_int_from_ini_file("General", "cur_remote_protocol_index", VDI_SPICE_PROTOCOL);
-    p_conn_data->remote_protocol_type = (VdiVmRemoteProtocol)remote_protocol_type;
-
-    opt_manual_mode = read_int_from_ini_file("General", "opt_manual_mode", 0);
 }

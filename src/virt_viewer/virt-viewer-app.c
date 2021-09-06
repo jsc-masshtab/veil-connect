@@ -68,7 +68,6 @@
 #define RECONNECT_TIMEOUT 3000
 
 gboolean doDebug = FALSE;
-gboolean opt_manual_mode = FALSE;
 static int opt_zoom = NORMAL_ZOOM_LEVEL;
 static gchar *opt_hotkeys = NULL;
 static gboolean opt_verbose = FALSE;

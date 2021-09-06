@@ -34,7 +34,6 @@
 #include "remote-viewer-util.h"
 #include "settingsfile.h"
 
-extern gboolean opt_manual_mode;
 
 void
 create_loop_and_launch(GMainLoop **loop)
@@ -806,8 +805,6 @@ void set_client_spice_cursor_visible(gboolean is_visible)
     } else {
         g_unsetenv(spice_cursor_env_var);
     }
-
-    write_int_to_ini_file("SpiceSettings", "is_spice_client_cursor_visible", is_visible);
 }
 
 GtkWidget *get_widget_from_builder(GtkBuilder *builder, const gchar *name)
@@ -993,6 +990,17 @@ gchar *get_current_readable_time()
     g_date_time_unref(datetime);
 
     return time;
+}
+
+void copy_file_content(FILE *sourceFile, FILE *destFile)
+{
+    char ch;
+    /* Copy file contents character by character. */
+    while ((ch = fgetc(sourceFile)) != EOF)
+    {
+        fputc(ch, destFile);
+        //g_info("symbol: %i.", ch);
+    }
 }
 
 /*

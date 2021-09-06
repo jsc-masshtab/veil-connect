@@ -24,7 +24,8 @@ INCLUDE_DIRECTORIES(
 #############################APP FILES#################################
 list(APPEND SRC_CODE
         config.h
-        src/connect_settings_data.h
+        src/settings_data.h
+        src/settings_data.c
         src/remote-viewer.h
         src/remote-viewer.c
         src/remote-viewer-connect.c
@@ -91,8 +92,6 @@ list(APPEND SRC_CODE
         src/rdp_viewer/rdp_keyboard.c
         src/rdp_viewer/rdp_clipboard.h
         src/rdp_viewer/rdp_clipboard.c
-        src/rdp_viewer/rdp_settings.h
-        src/rdp_viewer/rdp_settings.c
         src/rdp_viewer/rdp_util.h
         src/rdp_viewer/rdp_util.c
 
@@ -143,10 +142,6 @@ list(APPEND SRC_CODE
         src/qr_code_generation/qr_code_gen.c
         src/qr_code_generation/qr_code_renderer.h
         src/qr_code_generation/qr_code_renderer.c
-
-# x2go
-        src/x2go/x2go_launcher.h
-        src/x2go/x2go_launcher.c
 )
 
 # usb_redirection
@@ -172,6 +167,21 @@ endif (UNIX)
 if (WIN32)
 list(APPEND SRC_CODE
         src/usb_redirection/usbredirserver_win.c
+)
+endif (WIN32)
+
+# x2go
+list(APPEND SRC_CODE
+        src/x2go/x2go_launcher.h
+)
+if (UNIX)
+list(APPEND SRC_CODE
+        src/x2go/x2go_launcher_unix.c
+)
+endif (UNIX)
+if (WIN32)
+    list(APPEND SRC_CODE
+        src/x2go/x2go_launcher_win.c
 )
 endif (WIN32)
 
@@ -227,6 +237,8 @@ if (WIN32)
         message(STATUS "Using 64bit dependencies")
         SET(LIBS_INCLUDE_PATH C:/msys32/mingw64/include/)
         SET(FREERDP_PATH C:/job/FreeRDP-2.3.2/)
+        #SET(LIBS_INCLUDE_PATH C:/msys64/mingw64/include/)
+        #SET(FREERDP_PATH C:/job/freerdp/FreeRDP/)
         SET(HIREDIS_PATH C:/job/hiredis-mingw/)
     endif(BUILD_x32)
 
@@ -311,6 +323,8 @@ if (WIN32)
     file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/doc/usb.ids
             DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/share/hwdata)
     file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/doc/ping_no_console.vbs
+            DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
+    file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/doc/x2go_data
             DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 endif (WIN32)
 

@@ -11,9 +11,9 @@
 
 #include <gtk/gtk.h>
 
-#include "connect_settings_data.h"
+#include "settings_data.h"
 
-void x2go_launcher_start(const ConnectSettingsData *con_data);
+void x2go_launcher_start(const ConnectSettingsData *conn_data);
 
 
 #endif //VEIL_CONNECT_X2GO_LAUNCHER_H

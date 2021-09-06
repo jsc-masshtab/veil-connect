@@ -11,7 +11,7 @@
 
 #include <gtk/gtk.h>
 
-#include "connect_settings_data.h"
+#include "settings_data.h"
 #include "vdi_session.h"
 
 
@@ -62,7 +62,7 @@ struct _VdiManagerClass
 
 GType vdi_manager_get_type( void ) G_GNUC_CONST;
 
-RemoteViewerState vdi_manager_dialog(VdiManager *self, ConnectSettingsData *con_data);
+RemoteViewerState vdi_manager_dialog(VdiManager *self, ConnectSettingsData *conn_data);
 
 VdiManager *vdi_manager_new(void);
 #endif //VIRT_VIEWER_VEIL_VDI_MANAGER_H

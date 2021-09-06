@@ -13,7 +13,7 @@
 
 #include "remote-viewer.h"
 #include "remote-viewer-util.h"
-#include "rdp_settings.h"
+
 
 RemoteViewerState rdp_viewer_start(RemoteViewer *app, VeilRdpSettings *p_rdp_settings);
 
