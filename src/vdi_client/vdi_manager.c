@@ -410,14 +410,6 @@ static void on_vm_start_button_clicked(GtkButton *button, VdiManager *self)
 }
 
 static void
-read_data_from_ini_file()
-{
-    gint cur_remote_protocol_index = read_int_from_ini_file("General",
-            "cur_remote_protocol_index", VDI_SPICE_PROTOCOL);
-    vdi_session_set_current_remote_protocol((VdiVmRemoteProtocol)cur_remote_protocol_index);
-}
-
-static void
 save_data_to_ini_file()
 {
     write_int_to_ini_file("General", "cur_remote_protocol_index", (gint)vdi_session_get_current_remote_protocol());
@@ -489,7 +481,6 @@ static void vdi_manager_init(VdiManager *self)
 /////////////////////////////////// main function
 RemoteViewerState vdi_manager_dialog(VdiManager *self, ConnectSettingsData *conn_data)
 {
-    read_data_from_ini_file();
     self->p_conn_data = conn_data;
 
     // show window
