@@ -152,7 +152,7 @@ static void x2go_launcher_launch_process(X2goData *data)
     g_child_watch_add(data->pid, (GChildWatchFunc)x2go_launcher_cb_child_watch, data);
 }
 
-void x2go_launcher_start(const ConnectSettingsData *con_data)
+void x2go_launcher_start(const gchar *user, const gchar * password, const ConnectSettingsData *con_data)
 {
     X2goData data = {};
     data.p_data = con_data;

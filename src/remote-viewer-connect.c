@@ -102,10 +102,16 @@ get_conn_data(RemoteViewerConnData *ci)
 static void
 take_from_gui(RemoteViewerConnData *ci)
 {
-    update_string_safely(&get_conn_data(ci)->user, gtk_entry_get_text(GTK_ENTRY(ci->login_entry)));
-    update_string_safely(&get_conn_data(ci)->password, gtk_entry_get_text(GTK_ENTRY(ci->password_entry)));
-    update_string_safely(&get_conn_data(ci)->disposable_password,
-                         gtk_entry_get_text(GTK_ENTRY(ci->disposable_password_entry)));
+    const gchar *login = gtk_entry_get_text(GTK_ENTRY(ci->login_entry));
+    const gchar *password = gtk_entry_get_text(GTK_ENTRY(ci->password_entry));
+    const gchar *disposable_password = gtk_entry_get_text(GTK_ENTRY(ci->disposable_password_entry));
+
+    if (get_conn_data(ci)->opt_manual_mode) {
+        update_string_safely(&get_conn_data(ci)->user, login);
+        update_string_safely(&get_conn_data(ci)->password, password);
+    } else {
+        vdi_session_set_credentials(login, password, disposable_password);
+    }
 }
 
 // set error message
@@ -221,10 +227,6 @@ static void connect_to_vdi_server(RemoteViewerConnData *ci)
 
     // set credential for connection to VDI server
     take_from_gui(ci);
-    vdi_session_set_credentials(get_conn_data(ci)->user, get_conn_data(ci)->password,
-            get_conn_data(ci)->disposable_password, get_conn_data(ci)->ip,
-                                get_conn_data(ci)->port, get_conn_data(ci)->is_ldap);
-
     set_auth_dialog_state(AUTH_GUI_CONNECT_TRY_STATE, ci);
 
     //start token fetching task
@@ -234,18 +236,27 @@ static void connect_to_vdi_server(RemoteViewerConnData *ci)
 static void
 handle_connect_event(RemoteViewerConnData *ci)
 {
-    if (strlen_safely(get_conn_data(ci)->ip) > 0) {
-        // In manual mode we shutdown the loop.
-        if (get_conn_data(ci)->opt_manual_mode) {
-            ci->dialog_window_response = GTK_RESPONSE_OK;
-            take_from_gui(ci);
-            shutdown_loop(ci->loop);
-        } else {
-            connect_to_vdi_server(ci);
+    // In manual mode we shutdown the loop.
+    if (get_conn_data(ci)->opt_manual_mode) {
+
+        if (strlen_safely(get_conn_data(ci)->ip) == 0) {
+            set_message_to_info_label(GTK_LABEL(ci->message_display_label),
+                                      "Не указан адрес подключения (Настройки->Основные)");
+            return;
         }
+
+        ci->dialog_window_response = GTK_RESPONSE_OK;
+        take_from_gui(ci);
+        shutdown_loop(ci->loop);
     } else {
-        set_message_to_info_label(GTK_LABEL(ci->message_display_label),
-                "Не указан адрес подключения (Настройки->Основные)");
+
+        if (strlen_safely(vdi_session_get_vdi_ip()) == 0) {
+            set_message_to_info_label(GTK_LABEL(ci->message_display_label),
+                                      "Не указан адрес подключения (Настройки->Основные)");
+            return;
+        }
+
+        connect_to_vdi_server(ci);
     }
 }
 
@@ -308,20 +319,16 @@ connect_button_clicked_cb(GtkButton *button G_GNUC_UNUSED, gpointer data)
 static void
 fill_gui(RemoteViewerConnData *ci)
 {
-    // set params save group
-    const gchar *paramToFileGrpoup = get_cur_ini_param_group();
-
-    //password
-    gchar *password_from_settings_file = read_str_from_ini_file(paramToFileGrpoup, "password");
-    if (password_from_settings_file) {
-        gtk_entry_set_text(GTK_ENTRY(ci->password_entry), password_from_settings_file);
-        free_memory_safely(&password_from_settings_file);
-    }
-    // login
-    gchar *user_from_settings_file = read_str_from_ini_file(paramToFileGrpoup, "username");
-    if (user_from_settings_file) {
-        gtk_entry_set_text(GTK_ENTRY(ci->login_entry), user_from_settings_file);
-        free_memory_safely(&user_from_settings_file);
+    if (get_conn_data(ci)->opt_manual_mode) {
+        if (get_conn_data(ci)->user)
+            gtk_entry_set_text(GTK_ENTRY(ci->login_entry), get_conn_data(ci)->user);
+        if (get_conn_data(ci)->password)
+            gtk_entry_set_text(GTK_ENTRY(ci->password_entry), get_conn_data(ci)->password);
+    } else {
+        if (vdi_session_get_vdi_username())
+            gtk_entry_set_text(GTK_ENTRY(ci->login_entry), vdi_session_get_vdi_username());
+        if (vdi_session_get_vdi_password())
+            gtk_entry_set_text(GTK_ENTRY(ci->password_entry), vdi_session_get_vdi_password());
     }
 }
 

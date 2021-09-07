@@ -175,6 +175,12 @@ static void x2go_launcher_launch_process(X2goData *data)
     gtk_widget_set_sensitive(GTK_WIDGET(data->btn_connect), FALSE);
     gtk_image_set_from_stock(GTK_IMAGE(data->credentials_image), "gtk-ok", GTK_ICON_SIZE_BUTTON);
 
+    const gchar *user_name = gtk_entry_get_text(GTK_ENTRY(data->user_name_entry));
+    if (strlen_safely(user_name) == 0) {
+        gtk_label_set_text(GTK_LABEL(data->status_label), "Не указано имя");
+        return;
+    }
+
     const ConnectSettingsData *conn_data = data->p_data;
 
     gchar *argv[MAX_PARAM_AMOUNT] = {};
@@ -186,7 +192,7 @@ static void x2go_launcher_launch_process(X2goData *data)
     argv[++index] = g_strdup("--auth-attempts=0");
     argv[++index] = g_strdup_printf("-c=%s", conn_data->x2Go_settings.x2go_session_type);
     argv[++index] = g_strdup_printf("--server=%s", conn_data->ip);
-    argv[++index] = g_strdup_printf("-u=%s", gtk_entry_get_text(GTK_ENTRY(data->user_name_entry)));
+    argv[++index] = g_strdup_printf("-u=%s", user_name);
     argv[++index] = g_strdup_printf("--password=%s", gtk_entry_get_text(GTK_ENTRY(data->password_entry)));
     if (conn_data->x2Go_settings.conn_type_assigned)
         argv[++index] = g_strdup_printf("--link=%s", conn_data->x2Go_settings.x2go_conn_type);
@@ -262,7 +268,7 @@ static void x2go_launcher_btn_connect_clicked(GtkButton *button G_GNUC_UNUSED, X
     x2go_launcher_launch_process(data);
 }
 
-static void x2go_launcher_setup_gui(X2goData *data)
+static void x2go_launcher_setup_gui(const gchar *user, const gchar *password, X2goData *data)
 {
     const ConnectSettingsData *conn_data = data->p_data;
 
@@ -289,8 +295,8 @@ static void x2go_launcher_setup_gui(X2goData *data)
     gtk_label_set_text(GTK_LABEL(data->address_label), conn_data->ip);
     data->user_name_entry = get_widget_from_builder(data->builder, "user_name_entry");
     data->password_entry = get_widget_from_builder(data->builder, "password_entry");
-    gtk_entry_set_text(GTK_ENTRY(data->user_name_entry), conn_data->user);
-    gtk_entry_set_text(GTK_ENTRY(data->password_entry), conn_data->password);
+    gtk_entry_set_text(GTK_ENTRY(data->user_name_entry), user);
+    gtk_entry_set_text(GTK_ENTRY(data->password_entry), password);
     data->credentials_image = get_widget_from_builder(data->builder, "credentials_image");
 
     // connects
@@ -304,13 +310,13 @@ static void x2go_launcher_setup_gui(X2goData *data)
     gtk_widget_show_all(data->window);
 }
 
-void x2go_launcher_start(const ConnectSettingsData *conn_data)
+void x2go_launcher_start(const gchar *user, const gchar *password, const ConnectSettingsData *conn_data)
 {
     X2goData data = {};
     data.p_data = conn_data;
 
     // GUI
-    x2go_launcher_setup_gui(&data);
+    x2go_launcher_setup_gui(user, password, &data);
 
     // Process
     x2go_launcher_launch_process(&data);

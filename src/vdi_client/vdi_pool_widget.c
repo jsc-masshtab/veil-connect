@@ -67,7 +67,8 @@ VdiPoolWidget build_pool_widget(const gchar *pool_id, const gchar *pool_name,
 #ifdef _WIN32
             || g_strcmp0(protocol_name, vdi_session_remote_protocol_to_str(VDI_RDP_WINDOWS_NATIVE_PROTOCOL)) == 0
 #endif
-                )
+            || g_strcmp0(protocol_name, vdi_session_remote_protocol_to_str(VDI_X2GO_PROTOCOL)) == 0
+            )
             gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(vdi_pool_widget.combobox_remote_protocol), protocol_name);
     }
     gtk_combo_box_set_active(GTK_COMBO_BOX(vdi_pool_widget.combobox_remote_protocol), 0);

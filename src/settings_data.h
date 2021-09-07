@@ -86,7 +86,6 @@ typedef struct{
     // General settings
     gchar *user;
     gchar *password;
-    gchar *disposable_password;
 
     gchar *domain;
     gchar *ip;

@@ -204,6 +204,8 @@ void vdi_session_text_msg_received_notify(const gchar *author, const gchar *text
 const gchar *vdi_session_get_vdi_ip(void);
 // get port
 int vdi_session_get_vdi_port(void);
+
+gboolean vdi_session_is_ldap(void);
 // get username
 const gchar *vdi_session_get_vdi_username(void);
 // get password
@@ -214,8 +216,9 @@ gchar *vdi_session_get_token(void);
 // cancell pending requests
 void vdi_session_cancell_pending_requests(void);
 // set vdi session credentials
-void vdi_session_set_credentials(const gchar *username, const gchar *password, gchar *disposable_password,
-        const gchar *ip, int port, gboolean is_ldap);
+void vdi_session_set_credentials(const gchar *username, const gchar *password,
+                                 const gchar *disposable_password);
+void vdi_session_set_conn_data(const gchar *ip, int port, gboolean is_ldap);
 // set current vm id
 void vdi_session_set_current_pool_id(const gchar *current_pool_id);
 // get current vm id

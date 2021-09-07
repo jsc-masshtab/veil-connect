@@ -516,20 +516,37 @@ fill_gui(ConnectSettingsDialogData *dialog_data)
 {
     ConnectSettingsData *p_conn_data = get_conn_data(dialog_data);
 
+    // Service settings
+    gtk_entry_set_text(GTK_ENTRY(dialog_data->windows_updates_url_entry), p_conn_data->windows_updates_url);
+
+    gulong entry_handler_id = dialog_data->on_direct_connect_mode_check_btn_toggled_id;
+    g_signal_handler_block(dialog_data->direct_connect_mode_check_btn, entry_handler_id); // to prevent callback
+    gtk_toggle_button_set_active((GtkToggleButton *)dialog_data->direct_connect_mode_check_btn,
+                                 p_conn_data->opt_manual_mode);
+    g_signal_handler_unblock(dialog_data->direct_connect_mode_check_btn, entry_handler_id);
+
     /// General settings
     // domain
     if (p_conn_data->domain) {
         gtk_entry_set_text(GTK_ENTRY(dialog_data->domain_entry), p_conn_data->domain);
     }
-    // ip
-    if (p_conn_data->ip) {
-        gtk_entry_set_text(GTK_ENTRY(dialog_data->address_entry), p_conn_data->ip);
+    if (p_conn_data->opt_manual_mode) {
+        // ip
+        if (p_conn_data->ip) {
+            gtk_entry_set_text(GTK_ENTRY(dialog_data->address_entry), p_conn_data->ip);
+        }
+        // port.
+        gtk_spin_button_set_value(GTK_SPIN_BUTTON(dialog_data->port_spinbox), p_conn_data->port);
+        // ldap
+        gtk_toggle_button_set_active((GtkToggleButton *)dialog_data->ldap_check_btn, p_conn_data->is_ldap);
+    } else {
+        if (vdi_session_get_vdi_ip())
+            gtk_entry_set_text(GTK_ENTRY(dialog_data->address_entry), vdi_session_get_vdi_ip());
+        gtk_spin_button_set_value(GTK_SPIN_BUTTON(dialog_data->port_spinbox),
+                                  vdi_session_get_vdi_port());
+        gtk_toggle_button_set_active((GtkToggleButton *)dialog_data->ldap_check_btn, vdi_session_is_ldap());
     }
-    // port.
-    gtk_spin_button_set_value(GTK_SPIN_BUTTON(dialog_data->port_spinbox), p_conn_data->port);
-    // ldap
-    gboolean is_ldap_btn_checked = p_conn_data->is_ldap;
-    gtk_toggle_button_set_active((GtkToggleButton *)dialog_data->ldap_check_btn, is_ldap_btn_checked);
+
     // Connect to prev pool
     gtk_toggle_button_set_active((GtkToggleButton *)dialog_data->conn_to_prev_pool_checkbutton,
                                  p_conn_data->is_connect_to_prev_pool);
@@ -630,15 +647,6 @@ fill_gui(ConnectSettingsDialogData *dialog_data)
 
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(dialog_data->x2go.full_screen_check_btn),
             p_conn_data->x2Go_settings.full_screen);
-
-    // Service settings
-    gtk_entry_set_text(GTK_ENTRY(dialog_data->windows_updates_url_entry), p_conn_data->windows_updates_url);
-
-    gulong entry_handler_id = dialog_data->on_direct_connect_mode_check_btn_toggled_id;
-    g_signal_handler_block(dialog_data->direct_connect_mode_check_btn, entry_handler_id); // to prevent callback
-    gtk_toggle_button_set_active((GtkToggleButton *)dialog_data->direct_connect_mode_check_btn,
-            p_conn_data->opt_manual_mode);
-    g_signal_handler_unblock(dialog_data->direct_connect_mode_check_btn, entry_handler_id);
 }
 
 static void
@@ -646,14 +654,29 @@ take_from_gui(ConnectSettingsDialogData *dialog_data)
 {
     ConnectSettingsData *conn_data = get_conn_data(dialog_data);
 
+    // Service settings
+    update_string_safely(&conn_data->windows_updates_url,
+                         gtk_entry_get_text(GTK_ENTRY(dialog_data->windows_updates_url_entry)));
+    conn_data->opt_manual_mode =
+            gtk_toggle_button_get_active((GtkToggleButton *)dialog_data->direct_connect_mode_check_btn);
+
+    // Main
     const gchar *paramToFileGrpoup = get_cur_ini_param_group();
     // domain
     update_string_safely(&conn_data->domain, gtk_entry_get_text(GTK_ENTRY(dialog_data->domain_entry)));
-    // ip port
-    update_string_safely(&conn_data->ip, gtk_entry_get_text(GTK_ENTRY(dialog_data->address_entry)));
-    conn_data->port = gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(dialog_data->port_spinbox));
-    // ldap
-    conn_data->is_ldap = gtk_toggle_button_get_active((GtkToggleButton *)dialog_data->ldap_check_btn);
+    const gchar *ip = gtk_entry_get_text(GTK_ENTRY(dialog_data->address_entry));
+    int port = gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(dialog_data->port_spinbox));
+    gboolean is_ldap = gtk_toggle_button_get_active((GtkToggleButton *)dialog_data->ldap_check_btn);
+    if (conn_data->opt_manual_mode) {
+        // ip port
+        update_string_safely(&conn_data->ip, ip);
+        conn_data->port = port;
+        // ldap
+        conn_data->is_ldap = is_ldap;
+    } else {
+        vdi_session_set_conn_data(ip, port, is_ldap);
+    }
+
     // prev pool
     conn_data->is_connect_to_prev_pool =
             gtk_toggle_button_get_active((GtkToggleButton *)dialog_data->conn_to_prev_pool_checkbutton);
@@ -750,12 +773,6 @@ take_from_gui(ConnectSettingsDialogData *dialog_data)
 
     conn_data->x2Go_settings.full_screen = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(
                                                                        dialog_data->x2go.full_screen_check_btn));
-
-    // Service settings
-    update_string_safely(&conn_data->windows_updates_url,
-                          gtk_entry_get_text(GTK_ENTRY(dialog_data->windows_updates_url_entry)));
-    conn_data->opt_manual_mode =
-            gtk_toggle_button_get_active((GtkToggleButton *)dialog_data->direct_connect_mode_check_btn);
 }
 
 static void

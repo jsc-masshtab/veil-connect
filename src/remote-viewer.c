@@ -229,7 +229,7 @@ retry_connect_to_vm:
             app_state = rdp_viewer_start(self, &self->conn_data.rdp_settings);
 
         } else if (vdi_session_get_current_remote_protocol() == VDI_X2GO_PROTOCOL) {
-            x2go_launcher_start(&self->conn_data);
+            x2go_launcher_start(self->conn_data.user, self->conn_data.password, &self->conn_data);
         } else { // SPICE by default
             virt_viewer_app_set_spice_session_data(self->virt_viewer_obj, self->conn_data.ip, self->conn_data.port,
                                                    self->conn_data.user, self->conn_data.password);
@@ -283,7 +283,7 @@ retry_connect_to_vm:
             launch_windows_rdp_client(&self->conn_data.rdp_settings);
 #endif
         } else if (vdi_session_get_current_remote_protocol() == VDI_X2GO_PROTOCOL) {
-            x2go_launcher_start(&self->conn_data);
+            x2go_launcher_start(vdi_session_get_vdi_username(), vdi_session_get_vdi_password(), &self->conn_data);
         } else { // spice by default
             virt_viewer_app_set_spice_session_data(self->virt_viewer_obj, self->conn_data.ip, self->conn_data.port,
                                                    self->conn_data.user, self->conn_data.password);

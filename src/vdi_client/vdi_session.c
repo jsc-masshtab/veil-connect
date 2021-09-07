@@ -382,6 +382,11 @@ int vdi_session_get_vdi_port(void)
     return vdi_session_static->vdi_port;
 }
 
+gboolean vdi_session_is_ldap()
+{
+    return vdi_session_static->is_ldap;
+}
+
 const gchar *vdi_session_get_vdi_username(void)
 {
     return vdi_session_static->vdi_username;
@@ -402,14 +407,24 @@ void vdi_session_cancell_pending_requests()
     soup_session_abort(vdi_session_static->soup_session);
 }
 
-void vdi_session_set_credentials(const gchar *username, const gchar *password, gchar *disposable_password,
-        const gchar *ip, int port, gboolean is_ldap)
+void vdi_session_set_credentials(const gchar *username, const gchar *password,
+                                 const gchar *disposable_password)
 {
-    free_session_memory();
+    free_memory_safely(&vdi_session_static->vdi_username);
+    free_memory_safely(&vdi_session_static->vdi_password);
+    free_memory_safely(&vdi_session_static->disposable_password);
 
     vdi_session_static->vdi_username = g_strdup(username);
     vdi_session_static->vdi_password = g_strdup(password);
     vdi_session_static->disposable_password = g_strdup(disposable_password);
+}
+
+void vdi_session_set_conn_data(const gchar *ip, int port, gboolean is_ldap)
+{
+    free_memory_safely(&vdi_session_static->vdi_ip);
+    free_memory_safely(&vdi_session_static->api_url);
+    free_memory_safely(&vdi_session_static->auth_url);
+
     vdi_session_static->vdi_ip = g_strdup(ip);
     vdi_session_static->vdi_port = port;
 
@@ -422,7 +437,7 @@ void vdi_session_set_credentials(const gchar *username, const gchar *password, g
                                                       vdi_session_static->vdi_ip, vdi_session_static->vdi_port);
     else
         vdi_session_static->api_url = g_strdup_printf("%s://%s:%i/api", http_protocol,
-            vdi_session_static->vdi_ip, vdi_session_static->vdi_port);
+                                                      vdi_session_static->vdi_ip, vdi_session_static->vdi_port);
 
     vdi_session_static->auth_url = g_strdup_printf("%s/auth/", vdi_session_static->api_url);
 

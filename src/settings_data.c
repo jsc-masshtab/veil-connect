@@ -20,20 +20,32 @@ void settings_data_read_all(ConnectSettingsData *data)
 {
     settings_data_clear(data);
 
+    // Direct connection to VM data
+    const gchar *manual_conn_group = "ManualConnect";
+    data->user = read_str_from_ini_file(manual_conn_group, "username");
+    data->password = read_str_from_ini_file(manual_conn_group, "password");
+
+    data->ip = read_str_from_ini_file(manual_conn_group, "ip");
+    data->port = read_int_from_ini_file(manual_conn_group, "port", 443);
+    data->is_ldap = read_int_from_ini_file(manual_conn_group, "is_ldap", 0);
+
     // set params save group
     const gchar *paramToFileGrpoup = get_cur_ini_param_group();
+    g_autofree gchar *username = NULL;
+    g_autofree gchar *password = NULL;
+    g_autofree gchar *ip = NULL;
+    username = read_str_from_ini_file(paramToFileGrpoup, "username");
+    password = read_str_from_ini_file(paramToFileGrpoup, "password");
+    ip = read_str_from_ini_file(paramToFileGrpoup, "ip");
+    int port = read_int_from_ini_file(paramToFileGrpoup, "port", 443);
+    gboolean is_ldap = read_int_from_ini_file(paramToFileGrpoup, "is_ldap", 0);
 
-    //
-    data->user = read_str_from_ini_file(paramToFileGrpoup, "username");
-    data->password = read_str_from_ini_file(paramToFileGrpoup, "password");
+    vdi_session_set_credentials(username, password, NULL);
+    vdi_session_set_conn_data(ip, port, is_ldap);
 
     data->domain = read_str_from_ini_file(paramToFileGrpoup, "domain");
-    data->ip = read_str_from_ini_file(paramToFileGrpoup, "ip");
-    data->port = read_int_from_ini_file(paramToFileGrpoup, "port", 443);
-
-    data->is_ldap = read_int_from_ini_file("RemoteViewerConnect", "is_ldap_btn_checked", 0);
     data->is_connect_to_prev_pool =
-            read_int_from_ini_file("RemoteViewerConnect", "is_conn_to_prev_pool_btn_checked", 0);
+            read_int_from_ini_file(paramToFileGrpoup, "is_conn_to_prev_pool_btn_checked", 0);
     data->to_save_pswd = read_int_from_ini_file(paramToFileGrpoup, "to_save_pswd", 1);
 
     vdi_session_set_current_remote_protocol(
@@ -58,15 +70,24 @@ void settings_data_read_all(ConnectSettingsData *data)
  */
 void settings_data_save_all(ConnectSettingsData *data)
 {
+    const gchar *manual_conn_group = "ManualConnect";
+    write_str_to_ini_file(manual_conn_group, "username", data->user);
+    if (data->to_save_pswd)
+        write_str_to_ini_file(manual_conn_group, "password", data->password);
+    write_str_to_ini_file(manual_conn_group, "ip", data->ip);
+    write_int_to_ini_file(manual_conn_group, "port", data->port);
+    write_int_to_ini_file(manual_conn_group, "is_ldap", data->is_ldap);
+
     const gchar *paramToFileGrpoup = get_cur_ini_param_group();
     // Main
-    write_str_to_ini_file(paramToFileGrpoup, "username", data->user);
-    write_str_to_ini_file(paramToFileGrpoup, "password", data->password);
+    write_str_to_ini_file(paramToFileGrpoup, "username", vdi_session_get_vdi_username());
+    if (data->to_save_pswd)
+        write_str_to_ini_file(paramToFileGrpoup, "password", vdi_session_get_vdi_password());
+    write_str_to_ini_file(paramToFileGrpoup, "ip", vdi_session_get_vdi_ip());
+    write_int_to_ini_file(paramToFileGrpoup, "port", vdi_session_get_vdi_port());
+    write_int_to_ini_file(paramToFileGrpoup, "is_ldap", vdi_session_is_ldap());
 
     write_str_to_ini_file(paramToFileGrpoup, "domain", data->domain);
-    write_str_to_ini_file(paramToFileGrpoup, "ip", data->ip);
-    write_int_to_ini_file(paramToFileGrpoup, "port", data->port);
-    write_int_to_ini_file(paramToFileGrpoup, "is_ldap_btn_checked", data->is_ldap);
     write_int_to_ini_file(paramToFileGrpoup, "is_conn_to_prev_pool_btn_checked", data->is_connect_to_prev_pool);
     write_int_to_ini_file(paramToFileGrpoup, "to_save_pswd", data->to_save_pswd);
     write_int_to_ini_file("General", "cur_remote_protocol_index", vdi_session_get_current_remote_protocol());
@@ -87,7 +108,6 @@ void settings_data_clear(ConnectSettingsData *data)
 {
     free_memory_safely(&data->user);
     free_memory_safely(&data->password);
-    free_memory_safely(&data->disposable_password);
     free_memory_safely(&data->domain);
     free_memory_safely(&data->ip);
     free_memory_safely(&data->vm_verbose_name);
