@@ -76,16 +76,16 @@ typedef struct{
     UsbSelectorWidget *usb_selector_widget;
 
     // X2GO settings
-    struct {
-        GtkWidget *session_type_combobox;
+    GtkWidget *x2go_app_combobox;
 
-        GtkWidget *conn_type_check_btn;
-        GtkWidget *conn_type_combobox;
+    GtkWidget *x2go_session_type_combobox;
 
-        GtkWidget *full_screen_check_btn;
+    GtkWidget *x2go_conn_type_check_btn;
+    GtkWidget *x2go_conn_type_combobox;
 
-        GtkWidget *compress_method_combobox;
-    } x2go;
+    GtkWidget *x2go_full_screen_check_btn;
+
+    GtkWidget *x2go_compress_method_combobox;
 
     // Service
     GtkWidget *btn_archive_logs;
@@ -334,7 +334,7 @@ static void
 on_conn_type_check_btn_toggled(GtkToggleButton *button, ConnectSettingsDialogData *dialog_data)
 {
     gboolean is_toggled = gtk_toggle_button_get_active(button);
-    gtk_widget_set_sensitive(dialog_data->x2go.conn_type_combobox, is_toggled);
+    gtk_widget_set_sensitive(dialog_data->x2go_conn_type_combobox, is_toggled);
 }
 
 static void
@@ -636,17 +636,22 @@ fill_gui(ConnectSettingsDialogData *dialog_data)
     gtk_widget_set_sensitive(dialog_data->rdp_file_name_entry, use_rdp_file);
 
     // X2Go Settings
-    gtk_combo_box_set_active_id(GTK_COMBO_BOX(dialog_data->x2go.session_type_combobox),
+    gtk_combo_box_set_active(GTK_COMBO_BOX(dialog_data->x2go_app_combobox),
+                             (gint)p_conn_data->x2Go_settings.app_type);
+
+    gtk_combo_box_set_active_id(GTK_COMBO_BOX(dialog_data->x2go_session_type_combobox),
             p_conn_data->x2Go_settings.x2go_session_type);
 
     gboolean conn_type_assigned = p_conn_data->x2Go_settings.conn_type_assigned;
-    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(dialog_data->x2go.conn_type_check_btn), conn_type_assigned);
-    gtk_widget_set_sensitive(dialog_data->x2go.conn_type_combobox, conn_type_assigned);
-    gtk_combo_box_set_active_id(GTK_COMBO_BOX(dialog_data->x2go.conn_type_combobox),
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(dialog_data->x2go_conn_type_check_btn), conn_type_assigned);
+    gtk_widget_set_sensitive(dialog_data->x2go_conn_type_combobox, conn_type_assigned);
+    gtk_combo_box_set_active_id(GTK_COMBO_BOX(dialog_data->x2go_conn_type_combobox),
             p_conn_data->x2Go_settings.x2go_conn_type);
 
-    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(dialog_data->x2go.full_screen_check_btn),
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(dialog_data->x2go_full_screen_check_btn),
             p_conn_data->x2Go_settings.full_screen);
+
+
 }
 
 static void
@@ -762,17 +767,20 @@ take_from_gui(ConnectSettingsDialogData *dialog_data)
     g_free(rdp_settings_file_mod);
 
     // X2Go settings
+    conn_data->x2Go_settings.app_type = (X2goApplication)gtk_combo_box_get_active(
+            GTK_COMBO_BOX(dialog_data->x2go_app_combobox));
+
     const gchar *x2go_session_type =
-            gtk_combo_box_get_active_id(GTK_COMBO_BOX(dialog_data->x2go.session_type_combobox));
+            gtk_combo_box_get_active_id(GTK_COMBO_BOX(dialog_data->x2go_session_type_combobox));
     update_string_safely(&conn_data->x2Go_settings.x2go_session_type, x2go_session_type);
 
     conn_data->x2Go_settings.conn_type_assigned = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(
-            dialog_data->x2go.conn_type_check_btn));
-    const gchar *x2go_conn_type = gtk_combo_box_get_active_id(GTK_COMBO_BOX(dialog_data->x2go.conn_type_combobox));
+            dialog_data->x2go_conn_type_check_btn));
+    const gchar *x2go_conn_type = gtk_combo_box_get_active_id(GTK_COMBO_BOX(dialog_data->x2go_conn_type_combobox));
     update_string_safely(&conn_data->x2Go_settings.x2go_conn_type, x2go_conn_type);
 
     conn_data->x2Go_settings.full_screen = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(
-                                                                       dialog_data->x2go.full_screen_check_btn));
+                                                                       dialog_data->x2go_full_screen_check_btn));
 }
 
 static void
@@ -864,15 +872,18 @@ GtkResponseType remote_viewer_start_settings_dialog(RemoteViewer *p_remote_viewe
     usb_selector_widget_enable_auto_toggle(dialog_data.usb_selector_widget);
 
     // X2Go settings
-    dialog_data.x2go.session_type_combobox = get_widget_from_builder(dialog_data.builder, "session_type_combobox");
+    dialog_data.x2go_app_combobox = get_widget_from_builder(dialog_data.builder, "x2go_app_combobox");
+    dialog_data.x2go_session_type_combobox = get_widget_from_builder(dialog_data.builder,
+            "x2go_session_type_combobox");
 
-    dialog_data.x2go.conn_type_check_btn = get_widget_from_builder(dialog_data.builder, "conn_type_check_btn");
-    dialog_data.x2go.conn_type_combobox = get_widget_from_builder(dialog_data.builder, "conn_type_combobox");
+    dialog_data.x2go_conn_type_check_btn = get_widget_from_builder(dialog_data.builder, "x2go_conn_type_check_btn");
+    dialog_data.x2go_conn_type_combobox = get_widget_from_builder(dialog_data.builder, "x2go_conn_type_combobox");
 
-    dialog_data.x2go.full_screen_check_btn = get_widget_from_builder(dialog_data.builder, "full_screen_check_btn");
+    dialog_data.x2go_full_screen_check_btn = get_widget_from_builder(dialog_data.builder,
+            "x2go_full_screen_check_btn");
 
-    dialog_data.x2go.compress_method_combobox =
-            get_widget_from_builder(dialog_data.builder, "compress_method_combobox");
+    dialog_data.x2go_compress_method_combobox =
+            get_widget_from_builder(dialog_data.builder, "x2go_compress_method_combobox");
 
     // Service functions
     dialog_data.btn_archive_logs = get_widget_from_builder(dialog_data.builder, "btn_archive_logs");
@@ -918,7 +929,7 @@ GtkResponseType remote_viewer_start_settings_dialog(RemoteViewer *p_remote_viewe
     g_signal_connect(dialog_data.btn_choose_rdp_file, "clicked",
                      G_CALLBACK(btn_btn_choose_rdp_file_clicked), &dialog_data);
 
-    g_signal_connect(dialog_data.x2go.conn_type_check_btn, "toggled",
+    g_signal_connect(dialog_data.x2go_conn_type_check_btn, "toggled",
                      G_CALLBACK(on_conn_type_check_btn_toggled), &dialog_data);
 
     g_signal_connect(dialog_data.btn_archive_logs, "clicked",

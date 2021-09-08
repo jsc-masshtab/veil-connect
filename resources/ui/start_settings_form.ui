@@ -869,7 +869,8 @@
                             <property name="visible">True</property>
                             <property name="can_focus">False</property>
                             <property name="halign">end</property>
-                            <property name="label" translatable="yes">Тип сессии</property>
+                            <property name="hexpand">False</property>
+                            <property name="label" translatable="yes">X2Go приложение</property>
                           </object>
                           <packing>
                             <property name="expand">False</property>
@@ -878,22 +879,13 @@
                           </packing>
                         </child>
                         <child>
-                          <object class="GtkComboBoxText" id="session_type_combobox">
+                          <object class="GtkComboBoxText" id="x2go_app_combobox">
                             <property name="visible">True</property>
                             <property name="can_focus">False</property>
-                            <property name="active">3</property>
+                            <property name="active">0</property>
                             <items>
-                              <item id="KDE" translatable="yes">KDE</item>
-                              <item id="GNOME" translatable="yes">GNOME</item>
-                              <item id="LXDE" translatable="yes">LXDE</item>
-                              <item id="XFCE" translatable="yes">XFCE</item>
-                              <item id="MATE" translatable="yes">MATE</item>
-                              <item id="UNITY" translatable="yes">UNITY</item>
-                              <item id="CINNAMON" translatable="yes">CINNAMON</item>
-                              <item id="TRINITY" translatable="yes">TRINITY</item>
-                              <item id="OPENBOX" translatable="yes">OPENBOX</item>
-                              <item id="ICEWM" translatable="yes">ICEWM</item>
-                              <item id="remote_app" translatable="yes">Приложение</item>
+                              <item id="0" translatable="yes">x2goclient</item>
+                              <item id="1" translatable="yes">pyhoca-cli</item>
                             </items>
                           </object>
                           <packing>
@@ -930,7 +922,7 @@
                           </packing>
                         </child>
                         <child>
-                          <object class="GtkComboBoxText" id="compress_method_combobox">
+                          <object class="GtkComboBoxText" id="x2go_compress_method_combobox">
                             <property name="visible">True</property>
                             <property name="can_focus">False</property>
                             <property name="active">42</property>
@@ -1022,12 +1014,11 @@
                         <property name="spacing">6</property>
                         <property name="homogeneous">True</property>
                         <child>
-                          <object class="GtkCheckButton" id="conn_type_check_btn">
-                            <property name="label" translatable="yes">Указать сетевое подключение</property>
+                          <object class="GtkLabel">
                             <property name="visible">True</property>
-                            <property name="can_focus">True</property>
-                            <property name="receives_default">False</property>
-                            <property name="draw_indicator">True</property>
+                            <property name="can_focus">False</property>
+                            <property name="halign">end</property>
+                            <property name="label" translatable="yes">Тип сессии</property>
                           </object>
                           <packing>
                             <property name="expand">False</property>
@@ -1036,17 +1027,22 @@
                           </packing>
                         </child>
                         <child>
-                          <object class="GtkComboBoxText" id="conn_type_combobox">
+                          <object class="GtkComboBoxText" id="x2go_session_type_combobox">
                             <property name="visible">True</property>
-                            <property name="sensitive">False</property>
                             <property name="can_focus">False</property>
-                            <property name="active">0</property>
+                            <property name="active">3</property>
                             <items>
-                              <item id="modem" translatable="yes">modem</item>
-                              <item id="isdn" translatable="yes">isdn</item>
-                              <item id="adsl" translatable="yes">adsl</item>
-                              <item id="wan" translatable="yes">wan</item>
-                              <item id="lan" translatable="yes">lan</item>
+                              <item id="KDE" translatable="yes">KDE</item>
+                              <item id="GNOME" translatable="yes">GNOME</item>
+                              <item id="LXDE" translatable="yes">LXDE</item>
+                              <item id="XFCE" translatable="yes">XFCE</item>
+                              <item id="MATE" translatable="yes">MATE</item>
+                              <item id="UNITY" translatable="yes">UNITY</item>
+                              <item id="CINNAMON" translatable="yes">CINNAMON</item>
+                              <item id="TRINITY" translatable="yes">TRINITY</item>
+                              <item id="OPENBOX" translatable="yes">OPENBOX</item>
+                              <item id="ICEWM" translatable="yes">ICEWM</item>
+                              <item id="remote_app" translatable="yes">Приложение</item>
                             </items>
                           </object>
                           <packing>
@@ -1069,11 +1065,62 @@
                         <property name="spacing">6</property>
                         <property name="homogeneous">True</property>
                         <child>
-                          <object class="GtkCheckButton" id="full_screen_check_btn">
+                          <object class="GtkCheckButton" id="x2go_conn_type_check_btn">
+                            <property name="label" translatable="yes">Указать сетевое подключение</property>
+                            <property name="visible">True</property>
+                            <property name="can_focus">True</property>
+                            <property name="receives_default">False</property>
+                            <property name="halign">start</property>
+                            <property name="hexpand">False</property>
+                            <property name="draw_indicator">True</property>
+                          </object>
+                          <packing>
+                            <property name="expand">False</property>
+                            <property name="fill">True</property>
+                            <property name="position">0</property>
+                          </packing>
+                        </child>
+                        <child>
+                          <object class="GtkComboBoxText" id="x2go_conn_type_combobox">
+                            <property name="visible">True</property>
+                            <property name="sensitive">False</property>
+                            <property name="can_focus">False</property>
+                            <property name="active">0</property>
+                            <items>
+                              <item id="modem" translatable="yes">modem</item>
+                              <item id="isdn" translatable="yes">isdn</item>
+                              <item id="adsl" translatable="yes">adsl</item>
+                              <item id="wan" translatable="yes">wan</item>
+                              <item id="lan" translatable="yes">lan</item>
+                            </items>
+                          </object>
+                          <packing>
+                            <property name="expand">False</property>
+                            <property name="fill">True</property>
+                            <property name="position">1</property>
+                          </packing>
+                        </child>
+                      </object>
+                      <packing>
+                        <property name="expand">False</property>
+                        <property name="fill">True</property>
+                        <property name="position">3</property>
+                      </packing>
+                    </child>
+                    <child>
+                      <object class="GtkBox">
+                        <property name="visible">True</property>
+                        <property name="can_focus">False</property>
+                        <property name="spacing">6</property>
+                        <property name="homogeneous">True</property>
+                        <child>
+                          <object class="GtkCheckButton" id="x2go_full_screen_check_btn">
                             <property name="label" translatable="yes">Полный экран</property>
                             <property name="visible">True</property>
                             <property name="can_focus">True</property>
                             <property name="receives_default">False</property>
+                            <property name="halign">start</property>
+                            <property name="hexpand">False</property>
                             <property name="draw_indicator">True</property>
                           </object>
                           <packing>
@@ -1097,7 +1144,7 @@
                       <packing>
                         <property name="expand">False</property>
                         <property name="fill">True</property>
-                        <property name="position">3</property>
+                        <property name="position">4</property>
                       </packing>
                     </child>
                     <child>

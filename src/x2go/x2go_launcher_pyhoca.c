@@ -184,7 +184,11 @@ static void x2go_launcher_launch_process(X2goData *data)
 
     gchar *argv[MAX_PARAM_AMOUNT] = {};
     int index = 0;
+#ifdef G_OS_WIN32
+    argv[index] = g_strdup("pyhoca-cli.exe"); // we suppose it's in PATH
+#elif __linux__
     argv[index] = g_strdup("pyhoca-cli");
+#endif
     argv[++index] = g_strdup("-N");
     argv[++index] = g_strdup("--add-to-known-hosts");
     argv[++index] = g_strdup("--libdebug");
