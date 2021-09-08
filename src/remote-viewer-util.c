@@ -836,7 +836,7 @@ gchar* replace_str(const gchar *src, const gchar *find, const gchar *replace)
 {
     gchar* retval = g_strdup(src);
 
-    if (find != NULL) {
+    if (retval && find) {
 
         gchar *ptr = NULL;
         ptr = g_strstr_len(retval, -1, find);
