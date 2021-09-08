@@ -782,6 +782,14 @@ void update_string_safely(gchar **string_ptr, const gchar *new_string)
     }
 }
 
+gchar *strstrip_safely(gchar *str)
+{
+    if (str == NULL)
+        return str;
+
+    return g_strstrip(str);
+}
+
 void g_source_remove_safely(guint *timeout_id)
 {
     if (*timeout_id) {

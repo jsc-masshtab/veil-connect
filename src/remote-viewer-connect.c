@@ -108,7 +108,9 @@ take_from_gui(RemoteViewerConnData *ci)
 
     if (get_conn_data(ci)->opt_manual_mode) {
         update_string_safely(&get_conn_data(ci)->user, login);
+        strstrip_safely(get_conn_data(ci)->user);
         update_string_safely(&get_conn_data(ci)->password, password);
+        strstrip_safely(get_conn_data(ci)->password);
     } else {
         vdi_session_set_credentials(login, password, disposable_password);
     }

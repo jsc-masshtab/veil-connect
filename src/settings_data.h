@@ -87,6 +87,8 @@ typedef struct{
 
     gboolean full_screen;
 
+    gchar *compress_method;
+
 } VeilX2GoSettings;
 
 

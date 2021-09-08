@@ -9,7 +9,7 @@
 #include "x2go_launcher.h"
 
 extern void x2go_launcher_start_qt_client(const gchar *user, const gchar *password,
-                                          const ConnectSettingsData*con_data);
+        const ConnectSettingsData*con_data);
 extern void x2go_launcher_start_pyhoca(const gchar *user, const gchar *password,
         const ConnectSettingsData *conn_data);
 

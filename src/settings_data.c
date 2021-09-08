@@ -365,6 +365,9 @@ void x2go_settings_read(VeilX2GoSettings *x2go_settings)
                          read_str_from_ini_file_with_def(x2go_group, "conn_type", "modem"));
     x2go_settings->conn_type_assigned = read_int_from_ini_file(x2go_group, "conn_type_assigned", 0);
     x2go_settings->full_screen = read_int_from_ini_file(x2go_group, "full_screen", 1);
+
+    update_string_safely(&x2go_settings->compress_method,
+                         read_str_from_ini_file_with_def(x2go_group, "compress_method", "16m-jpeg"));
 }
 
 void x2go_settings_write(VeilX2GoSettings *x2go_settings)
@@ -377,6 +380,7 @@ void x2go_settings_write(VeilX2GoSettings *x2go_settings)
     write_int_to_ini_file(x2go_group, "conn_type_assigned", x2go_settings->conn_type_assigned);
     write_str_to_ini_file(x2go_group, "conn_type", x2go_settings->x2go_conn_type);
     write_int_to_ini_file(x2go_group, "full_screen", x2go_settings->full_screen);
+    write_str_to_ini_file(x2go_group, "compress_method", x2go_settings->compress_method);
 }
 
 void x2go_settings_clear(VeilX2GoSettings *x2go_settings)

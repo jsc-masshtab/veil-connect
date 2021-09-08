@@ -414,9 +414,9 @@ void vdi_session_set_credentials(const gchar *username, const gchar *password,
     free_memory_safely(&vdi_session_static->vdi_password);
     free_memory_safely(&vdi_session_static->disposable_password);
 
-    vdi_session_static->vdi_username = g_strdup(username);
-    vdi_session_static->vdi_password = g_strdup(password);
-    vdi_session_static->disposable_password = g_strdup(disposable_password);
+    vdi_session_static->vdi_username = strstrip_safely(g_strdup(username));
+    vdi_session_static->vdi_password = strstrip_safely(g_strdup(password));
+    vdi_session_static->disposable_password = strstrip_safely(g_strdup(disposable_password));
 }
 
 void vdi_session_set_conn_data(const gchar *ip, int port, gboolean is_ldap)

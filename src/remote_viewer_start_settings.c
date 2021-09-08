@@ -651,7 +651,8 @@ fill_gui(ConnectSettingsDialogData *dialog_data)
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(dialog_data->x2go_full_screen_check_btn),
             p_conn_data->x2Go_settings.full_screen);
 
-
+    gtk_combo_box_set_active_id(GTK_COMBO_BOX(dialog_data->x2go_compress_method_combobox),
+                                p_conn_data->x2Go_settings.compress_method);
 }
 
 static void
@@ -780,7 +781,11 @@ take_from_gui(ConnectSettingsDialogData *dialog_data)
     update_string_safely(&conn_data->x2Go_settings.x2go_conn_type, x2go_conn_type);
 
     conn_data->x2Go_settings.full_screen = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(
-                                                                       dialog_data->x2go_full_screen_check_btn));
+            dialog_data->x2go_full_screen_check_btn));
+
+    const gchar *x2go_compress_method = gtk_combo_box_get_active_id(
+            GTK_COMBO_BOX(dialog_data->x2go_compress_method_combobox));
+    update_string_safely(&conn_data->x2Go_settings.compress_method, x2go_compress_method);
 }
 
 static void
@@ -884,6 +889,9 @@ GtkResponseType remote_viewer_start_settings_dialog(RemoteViewer *p_remote_viewe
 
     dialog_data.x2go_compress_method_combobox =
             get_widget_from_builder(dialog_data.builder, "x2go_compress_method_combobox");
+    //GtkTreeIter iter;
+    //GtkTreeModel *list_store = gtk_combo_box_get_model(GTK_COMBO_BOX(dialog_data.x2go_compress_method_combobox));
+    //gboolean valid = gtk_tree_model_get_iter_first (list_store, &iter);
 
     // Service functions
     dialog_data.btn_archive_logs = get_widget_from_builder(dialog_data.builder, "btn_archive_logs");
