@@ -827,17 +827,22 @@ gchar *get_log_dir_path()
 gchar* replace_str(const gchar *src, const gchar *find, const gchar *replace)
 {
     gchar* retval = g_strdup(src);
-    gchar* ptr = NULL;
-    ptr = g_strstr_len(retval,-1, find);
-    if (ptr != NULL) {
-        gchar* after_find = replace_str(ptr+strlen(find), find, replace);
-        gchar* before_find = g_strndup(retval,ptr-retval);
-        gchar* temp = g_strconcat(before_find, replace, after_find, NULL);
-        g_free(retval);
-        retval = g_strdup(temp);
-        g_free(before_find);
-        g_free(temp);
+
+    if (find != NULL) {
+
+        gchar *ptr = NULL;
+        ptr = g_strstr_len(retval, -1, find);
+        if (ptr != NULL) {
+            gchar *after_find = replace_str(ptr + strlen(find), find, replace);
+            gchar *before_find = g_strndup(retval, ptr - retval);
+            gchar *temp = g_strconcat(before_find, replace, after_find, NULL);
+            g_free(retval);
+            retval = g_strdup(temp);
+            g_free(before_find);
+            g_free(temp);
+        }
     }
+
     return retval;
 }
 

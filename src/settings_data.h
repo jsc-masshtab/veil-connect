@@ -15,6 +15,12 @@
 #include "remote-viewer-util.h"
 
 
+typedef enum{
+    X2GO_APP_QT_CLIENT,
+    X2GO_APP_PYHOCA_CLI
+} X2goApplication;
+
+
 typedef struct{
 
     gboolean is_spice_client_cursor_visible;
@@ -72,6 +78,8 @@ typedef struct{
 
 
 typedef struct{
+    X2goApplication app_type;
+
     gchar *x2go_session_type;
 
     gboolean conn_type_assigned;

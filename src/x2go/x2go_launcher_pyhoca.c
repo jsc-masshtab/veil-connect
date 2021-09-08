@@ -13,12 +13,11 @@
 
 #include "remote-viewer-util.h"
 #include "settingsfile.h"
-#include "x2go_launcher.h"
+#include "settings_data.h"
 
 // X2go клиент стартует довольно продолжительное время, поэтому необходимо показывать
 // пользователю информациорнное окно
-// WARN: passwordless login for
-// re-trying SSH key discovery now with passphrase for unlocking the key
+
 #define PYLIB_LOG "x2goguardian-pylib" // x2goguardian-pylib
 #define MAX_PARAM_AMOUNT 30
 
@@ -310,7 +309,7 @@ static void x2go_launcher_setup_gui(const gchar *user, const gchar *password, X2
     gtk_widget_show_all(data->window);
 }
 
-void x2go_launcher_start(const gchar *user, const gchar *password, const ConnectSettingsData *conn_data)
+void x2go_launcher_start_pyhoca(const gchar *user, const gchar *password, const ConnectSettingsData *conn_data)
 {
     X2goData data = {};
     data.p_data = conn_data;

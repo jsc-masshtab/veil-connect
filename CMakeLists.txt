@@ -142,6 +142,12 @@ list(APPEND SRC_CODE
         src/qr_code_generation/qr_code_gen.c
         src/qr_code_generation/qr_code_renderer.h
         src/qr_code_generation/qr_code_renderer.c
+
+# x2go
+        src/x2go/x2go_launcher.h
+        src/x2go/x2go_launcher.c
+        src/x2go/x2go_launcher_pyhoca.c
+        src/x2go/x2go_launcher_x2goclient.c
 )
 
 # usb_redirection
@@ -167,21 +173,6 @@ endif (UNIX)
 if (WIN32)
 list(APPEND SRC_CODE
         src/usb_redirection/usbredirserver_win.c
-)
-endif (WIN32)
-
-# x2go
-list(APPEND SRC_CODE
-        src/x2go/x2go_launcher.h
-)
-if (UNIX)
-list(APPEND SRC_CODE
-        src/x2go/x2go_launcher_unix.c
-)
-endif (UNIX)
-if (WIN32)
-    list(APPEND SRC_CODE
-        src/x2go/x2go_launcher_win.c
 )
 endif (WIN32)
 
@@ -316,6 +307,10 @@ target_link_libraries(
 )
 
 #############################CONFIGS###################################
+#x2go template
+file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/doc/x2go_data
+        DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
+
 # rdp template file for Windows native client
 if (WIN32)
     file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/doc/rdp_data
@@ -323,8 +318,6 @@ if (WIN32)
     file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/doc/usb.ids
             DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/share/hwdata)
     file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/doc/ping_no_console.vbs
-            DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
-    file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/doc/x2go_data
             DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 endif (WIN32)
 

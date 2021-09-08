@@ -74,6 +74,8 @@ void settings_data_save_all(ConnectSettingsData *data)
     write_str_to_ini_file(manual_conn_group, "username", data->user);
     if (data->to_save_pswd)
         write_str_to_ini_file(manual_conn_group, "password", data->password);
+    else
+        write_str_to_ini_file(manual_conn_group, "password", "");
     write_str_to_ini_file(manual_conn_group, "ip", data->ip);
     write_int_to_ini_file(manual_conn_group, "port", data->port);
     write_int_to_ini_file(manual_conn_group, "is_ldap", data->is_ldap);
@@ -83,6 +85,8 @@ void settings_data_save_all(ConnectSettingsData *data)
     write_str_to_ini_file(paramToFileGrpoup, "username", vdi_session_get_vdi_username());
     if (data->to_save_pswd)
         write_str_to_ini_file(paramToFileGrpoup, "password", vdi_session_get_vdi_password());
+    else
+        write_str_to_ini_file(paramToFileGrpoup, "password", "");
     write_str_to_ini_file(paramToFileGrpoup, "ip", vdi_session_get_vdi_ip());
     write_int_to_ini_file(paramToFileGrpoup, "port", vdi_session_get_vdi_port());
     write_int_to_ini_file(paramToFileGrpoup, "is_ldap", vdi_session_is_ldap());
@@ -353,6 +357,8 @@ void x2go_settings_read(VeilX2GoSettings *x2go_settings)
 {
     const gchar *x2go_group = "X2GoSettings";
 
+    x2go_settings->app_type = read_int_from_ini_file(x2go_group, "app_type", X2GO_APP_QT_CLIENT);
+
     update_string_safely(&x2go_settings->x2go_session_type,
             read_str_from_ini_file_with_def(x2go_group, "session_type", "XFCE"));
     update_string_safely(&x2go_settings->x2go_conn_type,
@@ -364,6 +370,8 @@ void x2go_settings_read(VeilX2GoSettings *x2go_settings)
 void x2go_settings_write(VeilX2GoSettings *x2go_settings)
 {
     const gchar *x2go_group = "X2GoSettings";
+
+    write_int_to_ini_file(x2go_group, "app_type", x2go_settings->app_type);
 
     write_str_to_ini_file(x2go_group, "session_type", x2go_settings->x2go_session_type);
     write_int_to_ini_file(x2go_group, "conn_type_assigned", x2go_settings->conn_type_assigned);
