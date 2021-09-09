@@ -36,6 +36,14 @@ Compression=lzma
 SolidCompression=yes
 WizardStyle=modern
 
+[Types]
+Name: "full"; Description: "Full installation"
+Name: "custom"; Description: "Custom installation"; Flags: iscustom
+
+[Components]
+Name: "app"; Description: "VeiL Connect"; Types: full custom; Flags: fixed
+Name: "usbdk"; Description: "Spice USB Development Kit (UsbDK)"; Types: full
+
 [Languages]
 ; Name: "english"; MessagesFile: "compiler:Default.isl"
 Name: "russian"; MessagesFile: "compiler:Languages\Russian.isl"
@@ -45,8 +53,10 @@ Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{
 Name: "quicklaunchicon"; Description: "{cm:CreateQuickLaunchIcon}"; GroupDescription: "{cm:AdditionalIcons}"; OnlyBelowVersion: 6.1; Check: not IsAdminInstallMode
 
 [Files]
-Source: "C:\Jenkins\workspace\vdi-connect\build\veil_connect.exe"; DestDir: "{app}"; Flags: ignoreversion
-Source: "C:\Jenkins\workspace\vdi-connect\build\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "C:\Jenkins\workspace\vdi-connect\build\veil_connect.exe"; DestDir: "{app}"; Flags: ignoreversion; Components: app
+Source: "C:\Jenkins\workspace\vdi-connect\build\vc_redist.exe"; DestDir: "{tmp}"; Flags: deleteafterinstall; Components: app
+Source: "C:\Jenkins\workspace\vdi-connect\build\usbdk.msi"; DestDir: "{tmp}"; Flags: deleteafterinstall; Components: usbdk
+Source: "C:\Jenkins\workspace\vdi-connect\build\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs; Components: app
 ; NOTE: Don't use "Flags: ignoreversion" on any shared system files
 
 [Icons]
@@ -57,31 +67,18 @@ Name: "{userappdata}\Microsoft\Internet Explorer\Quick Launch\{#MyAppName}"; Fil
 
 [Run]
 Filename: "{app}\{#MyAppExeName}"; Description: "{cm:LaunchProgram,{#StringChange(MyAppName, '&', '&&')}}"; Flags: nowait postinstall skipifsilent
+Filename: "{tmp}\vc_redist.exe"; Parameters: "/q /norestart"; Check: VCRedistNeedsInstall; Flags: waituntilterminated
+Filename: "msiexec.exe"; Parameters: "/i ""{tmp}\usbdk.msi"" /qb"; WorkingDir: {tmp}; Check: UsbDkNeedsInstall; Flags: waituntilterminated
 
 [Code]
-function isMvcInstalled: Boolean;
+function VCRedistNeedsInstall: Boolean;
 begin
-  Result := RegKeyExists(HKEY_LOCAL_MACHINE, 'SOFTWARE\Microsoft\VisualStudio\14.0\VC');
+  Result := Not RegKeyExists(HKEY_LOCAL_MACHINE, 'SOFTWARE\Microsoft\VisualStudio\14.0\VC');
 end;
 
-function isUsbDkInstalled: Boolean;
+function UsbDkNeedsInstall: Boolean;
 begin
-  Result := FileExists('C:\Program Files\UsbDk Runtime Library\UsbDkController.exe');
-end;
-
-function InitializeSetup(): Boolean;
-begin
-  Result := isMvcInstalled();
-  if Not Result then
-  begin
-    MsgBox('Для корректной работы программы требуется Распространяемый компонент Microsoft Visual C++ 2019. Убедитесь, что он установлен.', mbInformation, MB_OK);
-  end;
-  Result := isUsbDkInstalled();
-  if Not Result then
-  begin
-    MsgBox('Для корректной работы проброса USB-устройств требуется Spice USB Development Kit (UsbDK). Убедитесь, что он установлен.', mbInformation, MB_OK);
-  end;
-  Result := True;
+  Result := WizardIsComponentSelected('usbdk') and Not FileExists('C:\Program Files\UsbDk Runtime Library\UsbDkController.exe');
 end;
 
 function GetProgramFiles(Param: string): string;

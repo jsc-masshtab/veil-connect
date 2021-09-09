@@ -488,7 +488,13 @@ pipeline {
                             copy C:\\msys32\\mingw32\\bin\\gspawn-win32-helper.exe
                             copy C:\\msys32\\mingw32\\bin\\gspawn-win32-helper-console.exe
 
-                            # make installer
+                            REM Add vcredist to installer
+                            curl http://nexus.bazalt.team/repository/files/vcredist/VC_redist.x86.exe --output vc_redist.exe
+
+                            REM Add UsbDk to installer
+                            curl http://mothership.bazalt.team/files/usbdk/UsbDk_1.0.22_x86.msi --output usbdk.msi
+
+                            REM Make installer
                             sed -i -e "s:&&VER&&:%VERSION%:g" -e "s:&&BUILD_VER&&:%BUILD_NUMBER%:g" %WORKSPACE%/devops\\inno-setup\\veil-connect-installer.iss
                             iscc "%WORKSPACE%/devops\\inno-setup\\veil-connect-installer.iss"
                         '''
@@ -530,7 +536,7 @@ pipeline {
 
                             xcopy C:\\msys32\\mingw64\\share\\glib-2.0 share\\glib-2.0 /E /H /I
                             xcopy C:\\msys32\\mingw64\\share\\icons share\\icons /E /H /I /Q
-     
+
                             for %%I in (freerdp2 freerdp-client2 winpr2 winpr-tools2) do (copy C:\\job\\FreeRDP-2.3.2\\Release\\%%I.dll)
 
                             for %%I in (libatk-1.0-0 libbz2-1 libcairo-2 libcairo-gobject-2 libcares-3 libcroco-0.6-3 libcrypto-1_1-x64 ^
@@ -570,7 +576,13 @@ pipeline {
 
                             perl -pi -e 's/crosshair/default\\0\\0/g' libspice-client-gtk-3.0-5.dll
 
-                            rem make installer
+                            REM Add vcredist to installer
+                            curl http://nexus.bazalt.team/repository/files/vcredist/VC_redist.x64.exe --output vc_redist.exe
+
+                            REM Add UsbDk to installer
+                            curl http://mothership.bazalt.team/files/usbdk/UsbDk_1.0.22_x64.msi --output usbdk.msi
+
+                            REM make installer
                             sed -i -e "s:&&VER&&:%VERSION%:g" -e "s:&&BUILD_VER&&:%BUILD_NUMBER%:g" %WORKSPACE%/devops\\inno-setup\\veil-connect-installer.iss
                             iscc "%WORKSPACE%/devops\\inno-setup\\veil-connect-installer.iss"
                         '''
