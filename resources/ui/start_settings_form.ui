@@ -7,6 +7,13 @@
     <property name="step_increment">1</property>
     <property name="page_increment">10</property>
   </object>
+  <object class="GtkAdjustment" id="adjustment_vm_await_timeout">
+    <property name="lower">1</property>
+    <property name="upper">300</property>
+    <property name="value">65</property>
+    <property name="step_increment">1</property>
+    <property name="page_increment">10</property>
+  </object>
   <object class="GtkAdjustment" id="port_ajustment">
     <property name="upper">65535</property>
     <property name="value">443</property>
@@ -88,6 +95,7 @@
                       <object class="GtkBox">
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
+                        <property name="spacing">6</property>
                         <property name="homogeneous">True</property>
                         <child>
                           <object class="GtkLabel" id="serber-ip-">
@@ -129,6 +137,7 @@
                       <object class="GtkBox">
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
+                        <property name="spacing">6</property>
                         <property name="homogeneous">True</property>
                         <child>
                           <object class="GtkLabel">
@@ -178,6 +187,7 @@
                         <property name="name">start-setting-domain</property>
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
+                        <property name="spacing">6</property>
                         <property name="homogeneous">True</property>
                         <child>
                           <object class="GtkLabel">
@@ -857,7 +867,7 @@
                     <property name="can_focus">False</property>
                     <property name="margin_top">3</property>
                     <property name="orientation">vertical</property>
-                    <property name="spacing">6</property>
+                    <property name="spacing">9</property>
                     <child>
                       <object class="GtkBox">
                         <property name="visible">True</property>
@@ -1268,6 +1278,44 @@
                       <packing>
                         <property name="left_attach">0</property>
                         <property name="top_attach">7</property>
+                      </packing>
+                    </child>
+                    <child>
+                      <object class="GtkBox">
+                        <property name="visible">True</property>
+                        <property name="can_focus">False</property>
+                        <property name="spacing">6</property>
+                        <property name="homogeneous">True</property>
+                        <child>
+                          <object class="GtkLabel">
+                            <property name="visible">True</property>
+                            <property name="can_focus">False</property>
+                            <property name="halign">end</property>
+                            <property name="label" translatable="yes">Время ожидания ВМ из пула, сек</property>
+                          </object>
+                          <packing>
+                            <property name="expand">False</property>
+                            <property name="fill">True</property>
+                            <property name="position">0</property>
+                          </packing>
+                        </child>
+                        <child>
+                          <object class="GtkSpinButton" id="vm_await_time_spinbox">
+                            <property name="visible">True</property>
+                            <property name="can_focus">True</property>
+                            <property name="input_purpose">number</property>
+                            <property name="adjustment">adjustment_vm_await_timeout</property>
+                          </object>
+                          <packing>
+                            <property name="expand">False</property>
+                            <property name="fill">True</property>
+                            <property name="position">1</property>
+                          </packing>
+                        </child>
+                      </object>
+                      <packing>
+                        <property name="left_attach">0</property>
+                        <property name="top_attach">8</property>
                       </packing>
                     </child>
                   </object>

@@ -670,7 +670,12 @@ void vdi_session_get_vm_from_pool_task(GTask       *task,
     gchar *body_str = g_strdup_printf("{\"remote_protocol\":\"%s\"}", vdi_session_remote_protocol_to_str(
             vdi_session_static->current_remote_protocol));
 
+    //Установить время ожидания ответа
+    int vm_await_timeout = read_int_from_ini_file("ServiceSettings", "vm_await_timeout", 65);
+    g_object_set(vdi_session_static->soup_session, "timeout", CLAMP(vm_await_timeout, 1, 300), NULL);
+    // Запрос
     gchar *response_body_str = vdi_session_api_call("POST", url_str, body_str, NULL);
+    g_object_set(vdi_session_static->soup_session, "timeout", HTTP_RESPONSE_TIOMEOUT, NULL);
 
     g_free(url_str);
     g_free(body_str);

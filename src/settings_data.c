@@ -63,6 +63,7 @@ void settings_data_read_all(ConnectSettingsData *data)
 
     data->windows_updates_url = read_str_from_ini_file_default("ServiceSettings",
                                                                 "windows_updates_url", VEIL_CONNECT_WIN_RELEASE_URL);
+    data->vm_await_timeout = read_int_from_ini_file("ServiceSettings", "vm_await_timeout", 65);
 }
 
 /*
@@ -106,6 +107,7 @@ void settings_data_save_all(ConnectSettingsData *data)
     // Service
     write_int_to_ini_file("General", "opt_manual_mode", data->opt_manual_mode);
     write_str_to_ini_file("ServiceSettings", "windows_updates_url", data->windows_updates_url);
+    write_int_to_ini_file("ServiceSettings", "vm_await_timeout", data->vm_await_timeout);
 
     g_key_file_save_to_file(get_ini_keyfile(), get_ini_file_name(), NULL);
 }

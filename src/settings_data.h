@@ -117,6 +117,7 @@ typedef struct{
     // Sevice settings
     gboolean opt_manual_mode; // Режим подключения к ВМ наррямую
     gchar *windows_updates_url;
+    int vm_await_timeout;
 
 } ConnectSettingsData;
 
