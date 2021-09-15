@@ -349,6 +349,13 @@ static void on_button_renew_clicked(GtkButton *button G_GNUC_UNUSED, VdiManager 
     unregister_all_pools(self);
     refresh_vdi_pool_data_async(self);
 }
+// cancel pending requests
+static void on_btn_cancel_requests_clicked(GtkButton *button G_GNUC_UNUSED, VdiManager *self G_GNUC_UNUSED) {
+
+    g_info("%s", (const char *)__func__);
+    gtk_label_set_text(GTK_LABEL(self->status_label), "Текущие запросы отменены");
+    vdi_session_cancell_pending_requests();
+}
 // quit button pressed callback
 static void on_button_quit_clicked(GtkButton *button G_GNUC_UNUSED, VdiManager *self)
 {
@@ -450,6 +457,7 @@ static void vdi_manager_init(VdiManager *self)
     self->builder = remote_viewer_util_load_ui("vdi_manager_form.ui");
     self->window = GTK_WIDGET(gtk_builder_get_object(self->builder, "vdi-main-window"));
     self->btn_open_user_settings = GTK_WIDGET(gtk_builder_get_object(self->builder, "btn_open_user_settings"));
+    self->btn_cancel_requests = GTK_WIDGET(gtk_builder_get_object(self->builder, "btn_cancel_requests"));
     self->button_renew = GTK_WIDGET(gtk_builder_get_object(self->builder, "button-renew"));
     self->button_quit = GTK_WIDGET(gtk_builder_get_object(self->builder, "button-quit"));
     self->vm_main_box = GTK_WIDGET(gtk_builder_get_object(self->builder, "vm_main_box"));
@@ -469,6 +477,7 @@ static void vdi_manager_init(VdiManager *self)
     g_signal_connect_swapped(self->window, "delete-event", G_CALLBACK(on_window_deleted_cb), self);
     g_signal_connect(self->btn_open_user_settings, "clicked", G_CALLBACK(btn_open_user_settings_clicked), self);
     g_signal_connect(self->button_renew, "clicked", G_CALLBACK(on_button_renew_clicked), self);
+    g_signal_connect(self->btn_cancel_requests, "clicked", G_CALLBACK(on_btn_cancel_requests_clicked), self);
     g_signal_connect(self->button_quit, "clicked", G_CALLBACK(on_button_quit_clicked), self);
     self->ws_conn_changed_handle = g_signal_connect(get_vdi_session_static(),
                                                       "ws-conn-changed", G_CALLBACK(on_ws_conn_changed), self);

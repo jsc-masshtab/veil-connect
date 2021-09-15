@@ -33,10 +33,13 @@ struct _VdiManager
     GtkBuilder *builder;
 
     GtkWidget *window;
+
     GtkWidget *button_quit;
-    GtkWidget *vm_main_box;
-    GtkWidget *btn_open_user_settings;
     GtkWidget *button_renew;
+    GtkWidget *btn_open_user_settings;
+    GtkWidget *btn_cancel_requests;
+
+    GtkWidget *vm_main_box;
     GtkWidget *gtk_flow_box;
     GtkWidget *status_label;
     GtkWidget *main_vm_spinner;

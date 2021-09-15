@@ -176,7 +176,7 @@ void vdi_ws_client_start(VdiWsClient *vdi_ws_client, const gchar *vdi_ip, int vd
         return;
 
     gboolean ssl_strict = FALSE;
-    vdi_ws_client->ws_soup_session = soup_session_new_with_options("idle-timeout", 25, "timeout", 25,
+    vdi_ws_client->ws_soup_session = soup_session_new_with_options("idle-timeout", 21, "timeout", 21,
                                                                    "ssl-strict", ssl_strict, NULL);
 
     // build URL

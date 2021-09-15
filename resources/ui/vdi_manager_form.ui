@@ -2,15 +2,25 @@
 <!-- Generated with glade 3.22.1 -->
 <interface>
   <requires lib="gtk+" version="3.0"/>
-  <object class="GtkImage" id="image1">
+  <object class="GtkImage" id="image_cancel">
     <property name="visible">True</property>
     <property name="can_focus">False</property>
-    <property name="stock">gtk-refresh</property>
+    <property name="stock">gtk-cancel</property>
   </object>
-  <object class="GtkImage" id="image2">
+  <object class="GtkImage" id="image_quit">
+    <property name="visible">True</property>
+    <property name="can_focus">False</property>
+    <property name="stock">gtk-quit</property>
+  </object>
+  <object class="GtkImage" id="image_settings">
     <property name="visible">True</property>
     <property name="can_focus">False</property>
     <property name="stock">gtk-properties</property>
+  </object>
+  <object class="GtkImage" id="image_update">
+    <property name="visible">True</property>
+    <property name="can_focus">False</property>
+    <property name="stock">gtk-refresh</property>
   </object>
   <object class="GtkWindow" id="vdi-main-window">
     <property name="name">main-window</property>
@@ -40,7 +50,8 @@
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
                 <property name="receives_default">True</property>
-                <property name="image">image2</property>
+                <property name="image">image_settings</property>
+                <property name="always_show_image">True</property>
               </object>
               <packing>
                 <property name="expand">False</property>
@@ -57,7 +68,7 @@
                 <property name="receives_default">True</property>
                 <property name="halign">baseline</property>
                 <property name="valign">baseline</property>
-                <property name="image">image1</property>
+                <property name="image">image_update</property>
                 <property name="always_show_image">True</property>
               </object>
               <packing>
@@ -67,14 +78,19 @@
               </packing>
             </child>
             <child>
-              <object class="GtkLabel">
+              <object class="GtkButton" id="btn_cancel_requests">
+                <property name="label" translatable="yes">Отменить</property>
+                <property name="name">btn_cancel_requests</property>
                 <property name="visible">True</property>
-                <property name="can_focus">False</property>
+                <property name="can_focus">True</property>
+                <property name="receives_default">True</property>
+                <property name="image">image_cancel</property>
+                <property name="always_show_image">True</property>
               </object>
               <packing>
                 <property name="expand">False</property>
                 <property name="fill">True</property>
-                <property name="position">3</property>
+                <property name="position">2</property>
               </packing>
             </child>
             <child>
@@ -84,6 +100,7 @@
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
                 <property name="receives_default">True</property>
+                <property name="image">image_quit</property>
                 <property name="always_show_image">True</property>
               </object>
               <packing>
