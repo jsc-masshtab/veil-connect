@@ -338,7 +338,7 @@ virt_viewer_app_get_monitor_mapping_for_section(VirtViewerApp *self G_GNUC_UNUSE
     gchar **mappings = NULL;
     GHashTable *mapping = NULL;
 
-    GKeyFile *keyfile = get_keyfile();
+    GKeyFile *keyfile = get_ini_keyfile();
     if(keyfile) {
         mappings = g_key_file_get_string_list(keyfile, section, "monitor-mapping", &nmappings, &error);
 
