@@ -29,7 +29,7 @@ mkdir -p %{buildroot}/
 cp -r ./* %{buildroot}/
 
 %post
-perl -pi -e 's/crosshair/default\0\0/g' /usr/lib64/libspice-client-gtk-3.0.so.5
+perl -pi -e 's/crosshair/default\0\0/g' /usr/lib64/libspice-client-gtk-3.0.so.5 || true
 
 %files
 %dir %attr (777,root,root) /opt/veil-connect
