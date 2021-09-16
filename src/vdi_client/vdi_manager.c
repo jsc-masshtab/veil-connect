@@ -6,6 +6,9 @@
  * Author: http://mashtab.org/
  */
 
+#include <time.h>
+#include <stdlib.h>
+
 #include <glib/gi18n.h>
 #include <gdk/gdkkeysyms.h>
 #include <cairo-features.h>
@@ -21,6 +24,7 @@
 #include "vdi_user_settings_widget.h"
 
 #define MAX_POOL_NUMBER 150
+#define  MSG_TRIM_LENGTH 140
 
 G_DEFINE_TYPE( VdiManager, vdi_manager, G_TYPE_OBJECT )
 
@@ -34,6 +38,8 @@ typedef enum
 
 
 // functions declarations
+static void on_vm_prep_progress_received(gpointer data, int request_id, int progress, const gchar *text,
+        VdiManager *self);
 static void set_vdi_client_state(VdiManager *self, VdiClientState vdi_client_state,
         const gchar *message, gboolean is_error_message);
 static void refresh_vdi_pool_data_async(VdiManager *self);
@@ -60,6 +66,7 @@ static void set_vdi_client_state(VdiManager *self, VdiClientState vdi_client_sta
         const gchar *message, gboolean is_error_message)
 {
     gboolean controls_blocked = FALSE;
+    gboolean btn_cancel_sensitive = FALSE;
 
     switch (vdi_client_state) {
         case VDI_RECEIVED_RESPONSE: {
@@ -73,11 +80,13 @@ static void set_vdi_client_state(VdiManager *self, VdiClientState vdi_client_sta
             if (self->main_vm_spinner)
                 gtk_widget_show (GTK_WIDGET(self->main_vm_spinner));
             controls_blocked = FALSE;
+            btn_cancel_sensitive = TRUE;
             break;
         }
 
         case VDI_WAITING_FOR_VM_FROM_POOL: {
             controls_blocked = FALSE;
+            btn_cancel_sensitive = TRUE;
             break;
         }
         default:
@@ -91,11 +100,12 @@ static void set_vdi_client_state(VdiManager *self, VdiClientState vdi_client_sta
         gtk_widget_set_sensitive(self->button_renew, controls_blocked);
     if (self->button_quit)
         gtk_widget_set_sensitive(self->button_quit, controls_blocked);
+    gtk_widget_set_sensitive(self->btn_cancel_requests, btn_cancel_sensitive);
 
     if (self->status_label) {
         // message
         g_autofree gchar *trimmed_msg = NULL;
-        trimmed_msg = g_strndup(message, 140);
+        trimmed_msg = g_strndup(message, MSG_TRIM_LENGTH);
 
         if (is_error_message) {
             gchar *final_message = g_strdup_printf("<span color=\"red\">%s</span>", trimmed_msg);
@@ -244,14 +254,32 @@ static void stop_event_loop_and_go_to_vm(VdiManager *self)
     shutdown_loop(self->ci.loop);
 }
 
+static void enable_vm_prep_progress_messages(VdiManager *self, gboolean enabled)
+{
+    if (enabled) {
+        if (!self->vm_prep_progress_handle)
+            self->vm_prep_progress_handle = g_signal_connect(get_vdi_session_static(),
+                                                             "vm-prep-progress-received",
+                                                             G_CALLBACK(on_vm_prep_progress_received), self);
+    } else {
+        // unsubscribe from progress messages
+        if (self->vm_prep_progress_handle)
+            g_signal_handler_disconnect(get_vdi_session_static(), self->vm_prep_progress_handle);
+        self->vm_prep_progress_handle = 0;
+    }
+}
+
 // callback which is invoked when vm start request finished
 static void on_vdi_session_get_vm_from_pool_finished(GObject *source_object G_GNUC_UNUSED,
                                          GAsyncResult *res, VdiManager *self)
 {
     g_info("%s", (const char *)__func__);
+    enable_vm_prep_progress_messages(self, FALSE);
 
     VdiPoolWidget vdi_pool_widget = get_vdi_pool_widget_by_id(self, vdi_session_get_current_pool_id());
-    enable_spinner_visible(&vdi_pool_widget, FALSE);
+    vdi_pool_widget_enable_spinner(&vdi_pool_widget, FALSE);
+
+    gtk_progress_bar_set_fraction(GTK_PROGRESS_BAR(self->vm_prep_progress_bar), 1);
 
     GError *error = NULL;
     gpointer  ptr_res =  g_task_propagate_pointer (G_TASK (res), &error); // take ownership
@@ -349,6 +377,13 @@ static void on_button_renew_clicked(GtkButton *button G_GNUC_UNUSED, VdiManager 
     unregister_all_pools(self);
     refresh_vdi_pool_data_async(self);
 }
+// cancel pending requests
+static void on_btn_cancel_requests_clicked(GtkButton *button G_GNUC_UNUSED, VdiManager *self G_GNUC_UNUSED) {
+
+    g_info("%s", (const char *)__func__);
+    gtk_label_set_text(GTK_LABEL(self->status_label), "Текущие запросы отменены");
+    vdi_session_cancell_pending_requests();
+}
 // quit button pressed callback
 static void on_button_quit_clicked(GtkButton *button G_GNUC_UNUSED, VdiManager *self)
 {
@@ -386,10 +421,30 @@ on_auth_fail_detected(gpointer data G_GNUC_UNUSED, VdiManager *self)
     shutdown_loop(self->ci.loop);
 }
 
+static void
+on_vm_prep_progress_received(gpointer data G_GNUC_UNUSED, int request_id, int progress, const gchar *text,
+        VdiManager *self)
+{
+    // Игнорируем если данные не соответствуют актуальному запросу
+    if (request_id != self->current_vm_request_id)
+        return;
+
+    //progress
+    gtk_progress_bar_set_fraction(GTK_PROGRESS_BAR(self->vm_prep_progress_bar), (gdouble)progress / 100.0);
+
+    //msg
+    g_autofree gchar *trimmed_msg = NULL;
+    trimmed_msg = g_strndup(text, MSG_TRIM_LENGTH);
+    gtk_label_set_text(GTK_LABEL(self->status_label), trimmed_msg);
+}
+
 // vm start button pressed callback
 static void on_vm_start_button_clicked(GtkButton *button, VdiManager *self)
 {
     vdi_ws_client_send_user_gui(vdi_session_get_ws_client()); // notify server
+
+    // reset progress bar
+    gtk_progress_bar_set_fraction(GTK_PROGRESS_BAR(self->vm_prep_progress_bar), 0);
 
     const gchar *pool_id = g_object_get_data(G_OBJECT(button), "pool_id");
     vdi_session_set_current_pool_id(pool_id);
@@ -398,15 +453,21 @@ static void on_vm_start_button_clicked(GtkButton *button, VdiManager *self)
     set_vdi_client_state(self, VDI_WAITING_FOR_VM_FROM_POOL, "Отправлен запрос на получение вм из пула", FALSE);
     // start spinner on vm widget
     VdiPoolWidget vdi_pool_widget = get_vdi_pool_widget_by_id(self, pool_id);
-    enable_spinner_visible(&vdi_pool_widget, TRUE);
+    vdi_pool_widget_enable_spinner(&vdi_pool_widget, TRUE);
 
     // take from gui currect remote protocol
     VdiVmRemoteProtocol remote_protocol = vdi_pool_widget_get_current_protocol(&vdi_pool_widget);
     g_info("%s remote_protocol %s", (const char *)__func__, vdi_session_remote_protocol_to_str(remote_protocol));
     vdi_session_set_current_remote_protocol(remote_protocol);
+
+    // subscribe to receive progress messages
+    enable_vm_prep_progress_messages(self, TRUE);
+
+    self->current_vm_request_id = CLAMP(rand() % 10000, 1, 10000); // id чтобы распознать ws сообщения
+    // относящиеся к запросу
     // execute task
     execute_async_task(vdi_session_get_vm_from_pool_task,
-            (GAsyncReadyCallback)on_vdi_session_get_vm_from_pool_finished, NULL, self);
+            (GAsyncReadyCallback)on_vdi_session_get_vm_from_pool_finished, &self->current_vm_request_id, self);
 }
 
 static void
@@ -421,7 +482,8 @@ static void vdi_manager_finalize(GObject *object)
     VdiManager *self = VDI_MANAGER(object);
     g_signal_handler_disconnect(get_vdi_session_static(), self->ws_conn_changed_handle);
     g_signal_handler_disconnect(get_vdi_session_static(), self->ws_cmd_received_handle);
-    g_signal_handler_disconnect(get_vdi_session_static(), self->auth_fail_detected);
+    g_signal_handler_disconnect(get_vdi_session_static(), self->auth_fail_detected_handle);
+    enable_vm_prep_progress_messages(self, FALSE);
 
     unregister_all_pools(self);
     g_object_unref(self->builder);
@@ -450,10 +512,12 @@ static void vdi_manager_init(VdiManager *self)
     self->builder = remote_viewer_util_load_ui("vdi_manager_form.ui");
     self->window = GTK_WIDGET(gtk_builder_get_object(self->builder, "vdi-main-window"));
     self->btn_open_user_settings = GTK_WIDGET(gtk_builder_get_object(self->builder, "btn_open_user_settings"));
+    self->btn_cancel_requests = GTK_WIDGET(gtk_builder_get_object(self->builder, "btn_cancel_requests"));
     self->button_renew = GTK_WIDGET(gtk_builder_get_object(self->builder, "button-renew"));
     self->button_quit = GTK_WIDGET(gtk_builder_get_object(self->builder, "button-quit"));
     self->vm_main_box = GTK_WIDGET(gtk_builder_get_object(self->builder, "vm_main_box"));
     self->status_label = GTK_WIDGET(gtk_builder_get_object(self->builder, "status_label"));
+    self->vm_prep_progress_bar = GTK_WIDGET(gtk_builder_get_object(self->builder, "vm_prep_progress_bar"));
 
     self->gtk_flow_box = gtk_flow_box_new();
     gtk_flow_box_set_max_children_per_line(GTK_FLOW_BOX(self->gtk_flow_box), 10);
@@ -469,12 +533,13 @@ static void vdi_manager_init(VdiManager *self)
     g_signal_connect_swapped(self->window, "delete-event", G_CALLBACK(on_window_deleted_cb), self);
     g_signal_connect(self->btn_open_user_settings, "clicked", G_CALLBACK(btn_open_user_settings_clicked), self);
     g_signal_connect(self->button_renew, "clicked", G_CALLBACK(on_button_renew_clicked), self);
+    g_signal_connect(self->btn_cancel_requests, "clicked", G_CALLBACK(on_btn_cancel_requests_clicked), self);
     g_signal_connect(self->button_quit, "clicked", G_CALLBACK(on_button_quit_clicked), self);
     self->ws_conn_changed_handle = g_signal_connect(get_vdi_session_static(),
                                                       "ws-conn-changed", G_CALLBACK(on_ws_conn_changed), self);
     self->ws_cmd_received_handle = g_signal_connect(get_vdi_session_static(), "ws-cmd-received",
                      G_CALLBACK(on_ws_cmd_received), self);
-    self->auth_fail_detected = g_signal_connect(get_vdi_session_static(), "auth-fail-detected",
+    self->auth_fail_detected_handle = g_signal_connect(get_vdi_session_static(), "auth-fail-detected",
                                              G_CALLBACK(on_auth_fail_detected), self);
 }
 

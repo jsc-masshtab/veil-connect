@@ -30,7 +30,7 @@ static void open_ini_file()
     }
 }
 
-GKeyFile *get_keyfile()
+GKeyFile *get_ini_keyfile()
 {
     open_ini_file();
     return keyfile;
@@ -110,7 +110,6 @@ write_str_to_ini_file(const gchar *group_name,  const gchar *key, const gchar *s
     open_ini_file();
     if (keyfile) {
         g_key_file_set_value(keyfile, group_name, key, str_value);
-        g_key_file_save_to_file(keyfile, get_ini_file_name(), NULL);
     }
 }
 
@@ -138,13 +137,11 @@ read_int_from_ini_file(const gchar *group_name,  const gchar *key, gint def_valu
     return value;
 }
 
-
 void
 write_int_to_ini_file(const gchar *group_name,  const gchar *key, gint value)
 {
     open_ini_file();
     if (keyfile) {
         g_key_file_set_integer(keyfile, group_name, key, value);
-        g_key_file_save_to_file(keyfile, get_ini_file_name(), NULL);
     }
 }

@@ -338,7 +338,7 @@ virt_viewer_app_get_monitor_mapping_for_section(VirtViewerApp *self G_GNUC_UNUSE
     gchar **mappings = NULL;
     GHashTable *mapping = NULL;
 
-    GKeyFile *keyfile = get_keyfile();
+    GKeyFile *keyfile = get_ini_keyfile();
     if(keyfile) {
         mappings = g_key_file_get_string_list(keyfile, section, "monitor-mapping", &nmappings, &error);
 
@@ -520,17 +520,15 @@ void virt_viewer_app_hide_all_windows_forced(VirtViewerApp *app)
     g_list_foreach(app->priv->windows, hide_one_window_forced, app);
 }
 
-void virt_viewer_app_set_window_name(VirtViewerApp *app, const gchar *vm_verbose_name)
+void virt_viewer_app_set_window_name(VirtViewerApp *app, const gchar *vm_verbose_name, const gchar *user_name)
 {
-    gchar *username = NULL;
-    g_object_get(app, "username", &username, NULL);
-    g_info("remembered_user %s", username);
+    if (user_name)
+        g_object_set(app, "username", user_name, NULL);
 
     // virt viewer takes its name from guest-name so lets not overcomplicate
-    gchar *window_name = g_strconcat("ВМ: ", vm_verbose_name, "    Пользователь: ", username, NULL);
+    gchar *window_name = g_strconcat("ВМ: ", vm_verbose_name, "    Пользователь: ", user_name, NULL);
     g_object_set(app, "guest-name", window_name, NULL);
     g_free(window_name);
-    g_free(username);
 }
 
 #if defined(HAVE_SOCKETPAIR) && defined(HAVE_FORK)

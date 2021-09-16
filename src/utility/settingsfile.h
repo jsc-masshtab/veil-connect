@@ -14,7 +14,7 @@
 #include <gdk/gdkkeysyms.h>
 #include <glib/gtypes.h>
 
-GKeyFile *get_keyfile(void);
+GKeyFile *get_ini_keyfile(void);
 const gchar *get_ini_file_name(void);
 void close_ini_file(void);
 

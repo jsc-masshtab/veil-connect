@@ -136,7 +136,8 @@
 
 #btn_open_user_settings,
 #button-renew,
-#button-quit {
+#button-quit,
+#btn_cancel_requests{
      background: white;
      border: 0;
      outline: oldlace;
@@ -179,7 +180,9 @@
 #btn_ok:focus,
 #btn_open_user_settings:focus,
 #button-renew:focus,
-#button-quit:focus {
+#button-quit:focus,
+#btn_cancel_requests:focus
+{
      border: 1px solid #2b9c89;
      background: #f3f4f6;
      transition: all 200ms;
@@ -196,7 +199,8 @@
 
 #btn_open_user_settings:hover,
 #button-renew:hover,
-#button-quit:hover {
+#button-quit:hover,
+#btn_cancel_requests:hover{
      color: black;
      background: white;
      transition: all 200ms;

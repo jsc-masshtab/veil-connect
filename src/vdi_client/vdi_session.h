@@ -183,6 +183,7 @@ struct _VdiSessionClass
     void (*ws_cmd_received)(VdiSession *self, const gchar *cmd);
     void (*text_msg_received)(VdiSession *self, const gchar *author, const gchar *text);
     void (*auth_fail_detected)(VdiSession *self);
+    void (*vm_prep_progress_received)(VdiSession *self, int request_id, int progress, const gchar *text);
 };
 
 GType vdi_session_get_type( void ) G_GNUC_CONST;
@@ -199,6 +200,7 @@ void vdi_session_vm_state_change_notify(int power_state);
 void vdi_session_ws_conn_change_notify(int ws_connected);
 void vdi_session_ws_cmd_received_notify(const gchar *cmd);
 void vdi_session_text_msg_received_notify(const gchar *author, const gchar *text);
+void vdi_session_vm_prep_progress_received_notify(int request_id, int progress, const gchar *text);
 
 // get vid server ip
 const gchar *vdi_session_get_vdi_ip(void);
@@ -219,7 +221,7 @@ void vdi_session_cancell_pending_requests(void);
 void vdi_session_set_credentials(const gchar *username, const gchar *password,
                                  const gchar *disposable_password);
 void vdi_session_set_conn_data(const gchar *ip, int port, gboolean is_ldap);
-// set current vm id
+// set current pool id
 void vdi_session_set_current_pool_id(const gchar *current_pool_id);
 // get current vm id
 const gchar *vdi_session_get_current_pool_id(void);

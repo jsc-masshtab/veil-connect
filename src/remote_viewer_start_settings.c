@@ -98,6 +98,7 @@ typedef struct{
     GtkWidget *windows_updates_url_entry;
 
     GtkWidget *direct_connect_mode_check_btn;
+    GtkWidget *vm_await_time_spinbox;
 
     // control buttons
     GtkWidget *bt_cancel;
@@ -525,6 +526,8 @@ fill_gui(ConnectSettingsDialogData *dialog_data)
                                  p_conn_data->opt_manual_mode);
     g_signal_handler_unblock(dialog_data->direct_connect_mode_check_btn, entry_handler_id);
 
+    gtk_spin_button_set_value(GTK_SPIN_BUTTON(dialog_data->vm_await_time_spinbox), p_conn_data->vm_await_timeout);
+
     /// General settings
     // domain
     if (p_conn_data->domain) {
@@ -665,6 +668,8 @@ take_from_gui(ConnectSettingsDialogData *dialog_data)
                          gtk_entry_get_text(GTK_ENTRY(dialog_data->windows_updates_url_entry)));
     conn_data->opt_manual_mode =
             gtk_toggle_button_get_active((GtkToggleButton *)dialog_data->direct_connect_mode_check_btn);
+    conn_data->vm_await_timeout =
+            gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(dialog_data->vm_await_time_spinbox));
 
     // Main
     const gchar *paramToFileGrpoup = get_cur_ini_param_group();
@@ -917,6 +922,8 @@ GtkResponseType remote_viewer_start_settings_dialog(RemoteViewer *p_remote_viewe
 
     dialog_data.direct_connect_mode_check_btn = get_widget_from_builder(
             dialog_data.builder, "direct_connect_mode_check_btn");
+    dialog_data.vm_await_time_spinbox = get_widget_from_builder(
+            dialog_data.builder, "vm_await_time_spinbox");
 
     // Signals
     g_signal_connect_swapped(dialog_data.window, "delete-event", G_CALLBACK(window_deleted_cb), &dialog_data);
