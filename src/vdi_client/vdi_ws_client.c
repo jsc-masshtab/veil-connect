@@ -58,11 +58,24 @@ static void vdi_ws_client_on_message(SoupWebsocketConnection *ws_conn G_GNUC_UNU
         const gchar *msg_type = json_object_get_string_member_safely(root_object, "msg_type");
 
         if (g_strcmp0(msg_type, "data") == 0) {
+
+            const gchar *resource = json_object_get_string_member_safely(root_object, "resource");
             // ретранслированное от вейла сообщение
-            // object
-            JsonObject *vm_member_object = json_object_get_object_member_safely(root_object, "object");
-            int power_state = json_object_get_int_member_safely(vm_member_object, "user_power_state");
-            vdi_session_vm_state_change_notify(power_state);
+            if (g_strcmp0(resource, "/domains/") == 0) {
+                // object
+                JsonObject *vm_member_object = json_object_get_object_member_safely(root_object, "object");
+                int power_state = json_object_get_int_member_safely(vm_member_object, "user_power_state");
+                vdi_session_vm_state_change_notify(power_state);
+
+            } else if (g_strcmp0(resource, "/events_thin_client/") == 0) {
+                const gchar *event = json_object_get_string_member_safely(root_object, "event");
+                if (g_strcmp0(event, "vm_preparation_progress") == 0) {
+                    int request_id = json_object_get_int_member_safely(root_object, "request_id");
+                    int progress = json_object_get_int_member_safely(root_object, "progress");
+                    const gchar *msg = json_object_get_string_member_safely(root_object, "msg");
+                    vdi_session_vm_prep_progress_received_notify(request_id, progress, msg);
+                }
+            }
 
         } else if (g_strcmp0(msg_type, "control") == 0) {
             // команда от администратора  VeiL VDI

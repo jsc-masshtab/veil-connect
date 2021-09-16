@@ -247,10 +247,6 @@ retry_connect_to_vm:
             goto to_exit;
     /// VDI connect mode
     } else {
-        // remember username
-        if (self->conn_data.user)
-            g_object_set(self->virt_viewer_obj, "username", self->conn_data.user, NULL);
-
         //Если is_connect_to_prev_pool true, то подключение к пред. запомненому пулу,
         // минуя vdi manager window
         if (!self->conn_data.is_connect_to_prev_pool) {
@@ -287,7 +283,8 @@ retry_connect_to_vm:
         } else { // spice by default
             virt_viewer_app_set_spice_session_data(self->virt_viewer_obj, self->conn_data.ip, self->conn_data.port,
                                                    self->conn_data.user, self->conn_data.password);
-            virt_viewer_app_set_window_name(self->virt_viewer_obj, self->conn_data.vm_verbose_name);
+            virt_viewer_app_set_window_name(self->virt_viewer_obj, self->conn_data.vm_verbose_name,
+                    vdi_session_get_vdi_username());
             virt_viewer_app_start_connect_attempts(self->virt_viewer_obj);
             next_app_state = virt_viewer_get_next_app_state(self->virt_viewer_obj);
         }

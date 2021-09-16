@@ -28,10 +28,11 @@ typedef struct{
 
     GtkWidget *vm_spinner;
 
-    GtkWidget *vm_name_label;
     GtkWidget *image_widget;
-    GtkWidget *vm_start_button;
+
     GtkWidget *combobox_remote_protocol;
+    GtkWidget *vm_start_button;
+    //GtkWidget *vm_progress_bar;
 
     gulong btn_click_sig_hadle;
 
@@ -41,11 +42,14 @@ typedef struct{
 VdiPoolWidget build_pool_widget(const gchar *pool_id, const gchar *pool_name,
         const gchar *os_type, const gchar *status, JsonArray *conn_types_json_array, GtkWidget *gtk_flow_box);
 
-// get current remore protocol
+// get current remote protocol
 VdiVmRemoteProtocol vdi_pool_widget_get_current_protocol(VdiPoolWidget *vdi_pool_widget);
 
 // start / stop spinner
-void enable_spinner_visible(VdiPoolWidget *vdi_pool_widget, gboolean enable);
+void vdi_pool_widget_enable_spinner(VdiPoolWidget *vdi_pool_widget, gboolean enable);
+
+// Vm preparation progress
+//void vdi_pool_widget_set_progress(VdiPoolWidget *vdi_pool_widget, gdouble fraction);
 
 // destroy widget
 void destroy_vdi_pool_widget(VdiPoolWidget *vdi_pool_widget);

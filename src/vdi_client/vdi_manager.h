@@ -42,6 +42,7 @@ struct _VdiManager
     GtkWidget *vm_main_box;
     GtkWidget *gtk_flow_box;
     GtkWidget *status_label;
+    GtkWidget *vm_prep_progress_bar;
     GtkWidget *main_vm_spinner;
     GtkWidget *label_is_vdi_online;
 
@@ -51,7 +52,10 @@ struct _VdiManager
 
     gulong ws_conn_changed_handle;
     gulong ws_cmd_received_handle;
-    gulong auth_fail_detected;
+    gulong auth_fail_detected_handle;
+    gulong vm_prep_progress_handle;
+
+    int current_vm_request_id;
 
     ConnectSettingsData *p_conn_data;
 };

@@ -91,6 +91,16 @@ static void vdi_session_class_init( VdiSessionClass *klass )
                  NULL,
                  G_TYPE_NONE,
                  0);
+
+    g_signal_new("vm-prep-progress-received",
+                 G_OBJECT_CLASS_TYPE(gobject_class),
+                 G_SIGNAL_RUN_FIRST,
+                 G_STRUCT_OFFSET(VdiSessionClass, vm_prep_progress_received),
+                 NULL, NULL,
+                 NULL,
+                 G_TYPE_NONE,
+                 3,
+                 G_TYPE_INT, G_TYPE_INT, G_TYPE_STRING);
 }
 
 static void vdi_session_init( VdiSession *self G_GNUC_UNUSED)
@@ -361,6 +371,12 @@ void vdi_session_ws_cmd_received_notify(const gchar *cmd)
 void vdi_session_text_msg_received_notify(const gchar *sender_name, const gchar *text)
 {
     g_signal_emit_by_name(vdi_session_static, "text-msg-received", sender_name, text);
+}
+
+void vdi_session_vm_prep_progress_received_notify(int request_id, int progress, const gchar *text)
+{
+    g_signal_emit_by_name(vdi_session_static, "vm-prep-progress-received",
+                          request_id, progress, text);
 }
 
 // Вызывается в главном потоке при получении кода 401
@@ -658,7 +674,7 @@ void vdi_session_get_vdi_pool_data_task(GTask   *task,
 
 void vdi_session_get_vm_from_pool_task(GTask       *task,
                     gpointer       source_object G_GNUC_UNUSED,
-                    gpointer       task_data G_GNUC_UNUSED,
+                    gpointer       task_data,
                     GCancellable  *cancellable G_GNUC_UNUSED)
 {
     // register for licensing if its still not done
@@ -667,8 +683,24 @@ void vdi_session_get_vm_from_pool_task(GTask       *task,
     // get vm from pool
     gchar *url_str = g_strdup_printf("%s/client/pools/%s", vdi_session_static->api_url,
             vdi_session_static->current_pool_id);
-    gchar *body_str = g_strdup_printf("{\"remote_protocol\":\"%s\"}", vdi_session_remote_protocol_to_str(
+
+    // form request body
+    int *current_vm_request_id_ptr = (int *)task_data;
+
+    JsonBuilder *builder = json_builder_new();
+    json_builder_begin_object(builder);
+
+    json_builder_set_member_name(builder, "remote_protocol");
+    json_builder_add_string_value(builder, vdi_session_remote_protocol_to_str(
             vdi_session_static->current_remote_protocol));
+
+    json_builder_set_member_name(builder, "request_id");
+    json_builder_add_int_value(builder, *current_vm_request_id_ptr);
+
+    json_builder_end_object(builder);
+
+    gchar *body_str = json_generate_from_builder(builder);
+    g_object_unref(builder);
 
     //Установить время ожидания ответа
     int vm_await_timeout = read_int_from_ini_file("ServiceSettings", "vm_await_timeout", 65);
@@ -835,7 +867,7 @@ void vdi_session_send_text_msg_task(GTask *task G_GNUC_UNUSED,
     json_builder_end_object(builder);
 
     JsonGenerator *gen = json_generator_new();
-    JsonNode * root = json_builder_get_root(builder);
+    JsonNode *root = json_builder_get_root(builder);
     json_generator_set_root(gen, root);
     gchar *body_str = json_generator_to_data(gen, NULL);
     g_info("%s: body_str: %s", (const char *)__func__, body_str);
