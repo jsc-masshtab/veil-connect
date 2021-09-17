@@ -252,6 +252,9 @@ void vdi_ws_client_stop(VdiWsClient *vdi_ws_client)
     if (!vdi_ws_client->is_running)
         return;
 
+    // set small timeout before closing
+    g_object_set(vdi_ws_client->ws_soup_session, "idle-timeout", 2, "timeout", 2, NULL);
+
     // cancel reconnecting if its active
     if (vdi_ws_client->reconnect_event_source_id)
         g_source_remove(vdi_ws_client->reconnect_event_source_id);
@@ -280,7 +283,7 @@ void vdi_ws_client_stop(VdiWsClient *vdi_ws_client)
 
     vdi_ws_client->is_running = FALSE;
     vdi_ws_client->reconnect_if_conn_lost = FALSE;
-    g_info("%s", (const char *)__func__);
+    g_info("%s end of function", (const char *)__func__);
 }
 
 SoupWebsocketState vdi_ws_client_get_conn_state(VdiWsClient *ws_vdi_client)
