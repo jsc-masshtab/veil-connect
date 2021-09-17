@@ -152,6 +152,7 @@ remote_viewer_init(RemoteViewer *self)
     self->priv = GET_PRIVATE(self);
 
     memset(&self->conn_data, 0, sizeof(ConnectSettingsData));
+    self->conn_data.not_connected_to_prev_pool_yet = TRUE;
 
     // virt-viewer
     self->virt_viewer_obj = virt_viewer_app_new();
@@ -247,23 +248,19 @@ retry_connect_to_vm:
             goto to_exit;
     /// VDI connect mode
     } else {
-        //Если is_connect_to_prev_pool true, то подключение к пред. запомненому пулу,
-        // минуя vdi manager window
-        if (!self->conn_data.is_connect_to_prev_pool) {
-            // show VDI manager window
-            if (self->vdi_manager == NULL)
-                self->vdi_manager = vdi_manager_new();
-            RemoteViewerState next_app_state = vdi_manager_dialog(self->vdi_manager, &self->conn_data);
-            if (next_app_state == APP_STATE_AUTH_DIALOG)
-                goto retry_auth;
-            else if (next_app_state == APP_STATE_EXITING)
-                goto to_exit;
-        }
-        self->conn_data.is_connect_to_prev_pool = FALSE; // reset the flag
+        // show VDI manager window
+        if (self->vdi_manager == NULL)
+            self->vdi_manager = vdi_manager_new();
+        RemoteViewerState next_app_state = vdi_manager_dialog(self->vdi_manager, &self->conn_data);
+        if (next_app_state == APP_STATE_AUTH_DIALOG)
+            goto retry_auth;
+        else if (next_app_state == APP_STATE_EXITING)
+            goto to_exit;
 
+        // Connect to VM
         vdi_ws_client_send_vm_changed(vdi_session_get_ws_client(), vdi_session_get_current_vm_id());
         // connect to vm depending remote protocol
-        RemoteViewerState next_app_state = APP_STATE_VDI_DIALOG;
+        next_app_state = APP_STATE_VDI_DIALOG;
         if (vdi_session_get_current_remote_protocol() == VDI_RDP_PROTOCOL) {
             // Читаем из ini настройки remote_app только если они еще не установлены ранее (они могут быть получены от
             // RDS пула, например)
@@ -275,7 +272,8 @@ retry_connect_to_vm:
         } else if (vdi_session_get_current_remote_protocol() == VDI_RDP_WINDOWS_NATIVE_PROTOCOL) {
             rdp_settings_read_ini_file(&self->conn_data.rdp_settings, !self->conn_data.rdp_settings.is_remote_app);
             rdp_settings_set_connect_data(&self->conn_data.rdp_settings, vdi_session_get_vdi_username(),
-                                          vdi_session_get_vdi_password(), self->conn_data.domain, self->conn_data.ip, 0);
+                                          vdi_session_get_vdi_password(), self->conn_data.domain,
+                                          self->conn_data.ip, 0);
             launch_windows_rdp_client(&self->conn_data.rdp_settings);
 #endif
         } else if (vdi_session_get_current_remote_protocol() == VDI_X2GO_PROTOCOL) {

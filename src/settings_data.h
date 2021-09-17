@@ -119,6 +119,9 @@ typedef struct{
     gchar *windows_updates_url;
     int vm_await_timeout;
 
+    // Параметры актуальные тольео во время работы приложения (не гужно сохранять в файл)
+    gboolean not_connected_to_prev_pool_yet; // Подключалось ли приложение автоматом к предыдущему пулу при старте
+
 } ConnectSettingsData;
 
 
