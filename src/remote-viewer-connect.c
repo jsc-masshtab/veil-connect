@@ -331,7 +331,7 @@ static void remote_viewer_on_updates_checked(gpointer data G_GNUC_UNUSED, int is
     g_info("%s  is_available %i", (const char *)__func__, is_available);
 
     if (is_available) {
-        gtk_image_set_from_icon_name(GTK_IMAGE(ci->new_version_available_image),
+        gtk_image_set_from_stock(GTK_IMAGE(ci->new_version_available_image),
                                      "gtk-dialog-warning", GTK_ICON_SIZE_SMALL_TOOLBAR);
         gtk_widget_set_tooltip_text(ci->new_version_available_image,
             "Доступна новая версия. Чтобы обновиться нажмите Настройки->Служебные->Получить обновления.");
