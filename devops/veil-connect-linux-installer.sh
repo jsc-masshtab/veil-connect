@@ -15,10 +15,13 @@ which dialog > /dev/null && WINDOW=dialog; which whiptail > /dev/null && WINDOW=
 if [ -n "$WINDOW" ]; then
     if [ "$EUID" -ne 0 ]; then
         $WINDOW --title  "$TITLE" --msgbox "$ERROR" $HEIGHT $WIDTH  2>/dev/null
+        clear 2> /dev/null || :
         exit 1
     fi
 
     $WINDOW --title  "$TITLE" --msgbox "$HELLO" $HEIGHT $WIDTH  2>/dev/null
+
+    clear 2> /dev/null || :
 
     # if dialog exists
     OS=$($WINDOW --title  "$TITLE" --menu  "Select your OS:" $HEIGHT $WIDTH 10 \
@@ -32,6 +35,8 @@ if [ -n "$WINDOW" ]; then
     "8" "Astra Linux Orel 2.12" \
     "9" "Astra Linux Smolensk 1.6" \
     "10" "Alt Linux 9"  3>&1 1>&2 2>&3)
+
+    clear 2> /dev/null || :
 
     if [ "$?" -ne 0 ]; then
         exit 1
