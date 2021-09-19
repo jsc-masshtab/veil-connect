@@ -685,8 +685,6 @@ void vdi_session_get_vm_from_pool_task(GTask       *task,
             vdi_session_static->current_pool_id);
 
     // form request body
-    int *current_vm_request_id_ptr = (int *)task_data;
-
     JsonBuilder *builder = json_builder_new();
     json_builder_begin_object(builder);
 
@@ -694,8 +692,11 @@ void vdi_session_get_vm_from_pool_task(GTask       *task,
     json_builder_add_string_value(builder, vdi_session_remote_protocol_to_str(
             vdi_session_static->current_remote_protocol));
 
-    json_builder_set_member_name(builder, "request_id");
-    json_builder_add_int_value(builder, *current_vm_request_id_ptr);
+    if (task_data) {
+        int *current_vm_request_id_ptr = (int *)task_data;
+        json_builder_set_member_name(builder, "request_id");
+        json_builder_add_int_value(builder, *current_vm_request_id_ptr);
+    }
 
     json_builder_end_object(builder);
 
