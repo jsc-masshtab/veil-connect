@@ -240,12 +240,12 @@
                     </child>
                     <child>
                       <object class="GtkCheckButton" id="connect-to-prev-button">
-                        <property name="label" translatable="yes">Автоподключение</property>
+                        <property name="label" translatable="yes">Автоподключение при запуске</property>
                         <property name="name">connect-to-prev-button</property>
                         <property name="visible">True</property>
                         <property name="can_focus">True</property>
                         <property name="receives_default">False</property>
-                        <property name="tooltip_text" translatable="yes">Подключение к предыдущему пулу</property>
+                        <property name="tooltip_text" translatable="yes">Подключение к предыдущему пулу при старте приложения</property>
                         <property name="halign">start</property>
                         <property name="draw_indicator">True</property>
                       </object>

@@ -191,29 +191,9 @@ on_vdi_session_log_in_finished(GObject *source_object G_GNUC_UNUSED,
     g_autofree gchar *token = NULL;
     token = vdi_session_get_token();
     if (token) {
-        // 2 варианта: подключиться к сразу к предыдущему пулу, либо перейти к vdi менеджеру для выбора пула
-        // Если нет информации о предыдущем пуле, то сбрасываем флаг
-        g_autofree gchar *last_pool_id = NULL;
-        last_pool_id = read_str_from_ini_file("RemoteViewerConnect", "last_pool_id");
-        if (!last_pool_id)
-            get_conn_data(ci)->is_connect_to_prev_pool = FALSE;
-
-        if (get_conn_data(ci)->is_connect_to_prev_pool) {
-
-            set_message_to_info_label(GTK_LABEL(ci->message_display_label), "Автоподключение к предыдущему пулу");
-            vdi_session_set_current_pool_id(last_pool_id);
-
-            VdiVmRemoteProtocol remote_protocol = read_int_from_ini_file("General",
-                    "cur_remote_protocol_index", VDI_SPICE_PROTOCOL);
-            vdi_session_set_current_remote_protocol(remote_protocol);
-
-            // start async task  vdi_session_get_vm_from_pool_task
-            execute_async_task(vdi_session_get_vm_from_pool_task, on_vdi_session_get_vm_from_pool_finished, NULL, ci);
-        } else {
-            ci->dialog_window_response = GTK_RESPONSE_OK;
-            take_from_gui(ci);
-            shutdown_loop(ci->loop);
-        }
+        ci->dialog_window_response = GTK_RESPONSE_OK;
+        take_from_gui(ci);
+        shutdown_loop(ci->loop);
     } else {
         set_message_to_info_label(GTK_LABEL(ci->message_display_label), reply_msg);
         set_auth_dialog_state(AUTH_GUI_DEFAULT_STATE, ci);
@@ -336,13 +316,12 @@ fill_gui(RemoteViewerConnData *ci)
 
 // В этом режиме сразу автоматом пытаемся подключиться к предыдущему пулу, не дожидаясь действий пользователя.
 // Поступаем так только один раз при старте приложения, чтоб у пользователя была возможносмть
-// попасть на начальную форму
+// попасть на начальную форму и настройки (not_connected_to_prev_pool_yet)
 static void fast_forward_connect_to_prev_pool_if_enabled(RemoteViewerConnData *ci)
 {
-    static gboolean is_first_time = TRUE;
-    if(get_conn_data(ci)->is_connect_to_prev_pool && is_first_time && !get_conn_data(ci)->opt_manual_mode) {
+    if(get_conn_data(ci)->is_connect_to_prev_pool && !get_conn_data(ci)->opt_manual_mode &&
+            get_conn_data(ci)->not_connected_to_prev_pool_yet) {
         connect_to_vdi_server(ci);
-        is_first_time = FALSE;
     }
 }
 
@@ -352,7 +331,7 @@ static void remote_viewer_on_updates_checked(gpointer data G_GNUC_UNUSED, int is
     g_info("%s  is_available %i", (const char *)__func__, is_available);
 
     if (is_available) {
-        gtk_image_set_from_icon_name(GTK_IMAGE(ci->new_version_available_image),
+        gtk_image_set_from_stock(GTK_IMAGE(ci->new_version_available_image),
                                      "gtk-dialog-warning", GTK_ICON_SIZE_SMALL_TOOLBAR);
         gtk_widget_set_tooltip_text(ci->new_version_available_image,
             "Доступна новая версия. Чтобы обновиться нажмите Настройки->Служебные->Получить обновления.");

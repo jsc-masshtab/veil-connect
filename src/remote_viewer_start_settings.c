@@ -556,7 +556,7 @@ fill_gui(ConnectSettingsDialogData *dialog_data)
     // pswd
     gtk_toggle_button_set_active((GtkToggleButton *)dialog_data->save_password_checkbtn, p_conn_data->to_save_pswd);
 
-    if (dialog_data->remote_protocol_combobox) {
+    if (gtk_widget_get_visible(dialog_data->remote_protocol_combobox)) {
         VdiVmRemoteProtocol protocol = vdi_session_get_current_remote_protocol();
         // Текст и id совпадают
         const gchar *protocol_str = vdi_session_remote_protocol_to_str(protocol);
@@ -694,7 +694,7 @@ take_from_gui(ConnectSettingsDialogData *dialog_data)
     // pswd
     conn_data->to_save_pswd = gtk_toggle_button_get_active((GtkToggleButton *)dialog_data->save_password_checkbtn);
 
-    if (dialog_data->remote_protocol_combobox) {
+    if (gtk_widget_get_visible(dialog_data->remote_protocol_combobox)) {
         const gchar *protocol_str = gtk_combo_box_get_active_id((GtkComboBox*)dialog_data->remote_protocol_combobox);
         VdiVmRemoteProtocol protocol = vdi_session_str_to_remote_protocol(protocol_str);
         vdi_session_set_current_remote_protocol(protocol);
@@ -965,13 +965,12 @@ GtkResponseType remote_viewer_start_settings_dialog(RemoteViewer *p_remote_viewe
     gulong state_hdle = g_signal_connect(p_remote_viewer->app_updater, "state-changed",
                                          G_CALLBACK(on_app_updater_status_changed),&dialog_data);
 
-    fill_gui(&dialog_data);
-
     // show window
     gtk_window_set_transient_for(GTK_WINDOW(dialog_data.window), parent);
     gtk_window_set_position(GTK_WINDOW(dialog_data.window), GTK_WIN_POS_CENTER);
     gtk_widget_show_all(dialog_data.window);
     update_gui_according_to_connect_mode(&dialog_data, get_conn_data(&dialog_data)->opt_manual_mode);
+    fill_gui(&dialog_data);
 #ifndef  _WIN32
     gtk_widget_hide(dialog_data.windows_updates_url_entry);
 #endif

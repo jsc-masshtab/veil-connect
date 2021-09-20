@@ -81,8 +81,8 @@ void settings_data_save_all(ConnectSettingsData *data)
     write_int_to_ini_file(manual_conn_group, "port", data->port);
     write_int_to_ini_file(manual_conn_group, "is_ldap", data->is_ldap);
 
-    const gchar *paramToFileGrpoup = get_cur_ini_param_group();
     // Main
+    const gchar *paramToFileGrpoup = get_cur_ini_param_group();
     write_str_to_ini_file(paramToFileGrpoup, "username", vdi_session_get_vdi_username());
     if (data->to_save_pswd)
         write_str_to_ini_file(paramToFileGrpoup, "password", vdi_session_get_vdi_password());

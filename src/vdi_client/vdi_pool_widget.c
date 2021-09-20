@@ -104,6 +104,7 @@ VdiPoolWidget build_pool_widget(const gchar *pool_id, const gchar *pool_name,
 
     gtk_widget_show_all(vdi_pool_widget.main_widget);
 
+    vdi_pool_widget.is_valid = TRUE;
     return vdi_pool_widget;
 }
 
@@ -120,7 +121,7 @@ VdiVmRemoteProtocol vdi_pool_widget_get_current_protocol(VdiPoolWidget *vdi_pool
 
 void vdi_pool_widget_enable_spinner(VdiPoolWidget *vdi_pool_widget, gboolean enable)
 {
-    if(vdi_pool_widget->vm_spinner == NULL)
+    if(vdi_pool_widget == NULL || vdi_pool_widget->vm_spinner == NULL || !vdi_pool_widget->is_valid)
         return;
 
     if(enable)

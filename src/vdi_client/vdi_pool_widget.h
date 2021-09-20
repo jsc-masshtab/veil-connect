@@ -35,6 +35,7 @@ typedef struct{
     //GtkWidget *vm_progress_bar;
 
     gulong btn_click_sig_hadle;
+    gboolean is_valid;
 
 } VdiPoolWidget;
 

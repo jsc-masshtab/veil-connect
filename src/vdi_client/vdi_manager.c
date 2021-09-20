@@ -119,9 +119,55 @@ static void set_vdi_client_state(VdiManager *self, VdiClientState vdi_client_sta
         gtk_widget_set_tooltip_text(self->status_label, message);
     }
 }
+
+static void enable_vm_prep_progress_messages(VdiManager *self, gboolean enabled)
+{
+    if (enabled) {
+        if (!self->vm_prep_progress_handle)
+            self->vm_prep_progress_handle = g_signal_connect(get_vdi_session_static(),
+                                                             "vm-prep-progress-received",
+                                                             G_CALLBACK(on_vm_prep_progress_received), self);
+    } else {
+        // unsubscribe from progress messages
+        if (self->vm_prep_progress_handle)
+            g_signal_handler_disconnect(get_vdi_session_static(), self->vm_prep_progress_handle);
+        self->vm_prep_progress_handle = 0;
+    }
+}
+
+// Get Vm from pool
+static void refresh_vdi_get_vm_from_pool_async(VdiManager *self, const gchar *pool_id)
+{
+    vdi_session_set_current_pool_id(pool_id);
+    // gui message
+    set_vdi_client_state(self, VDI_WAITING_FOR_VM_FROM_POOL, "Отправлен запрос на получение вм из пула", FALSE);
+    // start spinner on vm widget
+    VdiPoolWidget vdi_pool_widget = get_vdi_pool_widget_by_id(self, pool_id);
+    vdi_pool_widget_enable_spinner(&vdi_pool_widget, TRUE);
+
+    // take from gui correct remote protocol
+    if (vdi_pool_widget.is_valid) {
+        VdiVmRemoteProtocol remote_protocol = vdi_pool_widget_get_current_protocol(&vdi_pool_widget);
+        g_info("%s remote_protocol %s", (const char *) __func__, vdi_session_remote_protocol_to_str(remote_protocol));
+        vdi_session_set_current_remote_protocol(remote_protocol);
+    }
+
+    // subscribe to receive progress messages
+    enable_vm_prep_progress_messages(self, TRUE);
+
+    self->current_vm_request_id = MAX(rand() % 10000, 1); // id чтобы распознать ws сообщения
+    // относящиеся к запросу
+    // execute task
+    execute_async_task(vdi_session_get_vm_from_pool_task,
+                       (GAsyncReadyCallback)on_vdi_session_get_vm_from_pool_finished, &self->current_vm_request_id, self);
+}
+
 // start asynchronous task to get vm data from vdi
 static void refresh_vdi_pool_data_async(VdiManager *self)
 {
+    vdi_session_cancell_pending_requests();
+    unregister_all_pools(self);
+
     set_vdi_client_state(self, VDI_WAITING_FOR_POOL_DATA, "Отправлен запрос на список пулов", FALSE);
     execute_async_task(vdi_session_get_vdi_pool_data_task,
             (GAsyncReadyCallback)on_vdi_session_get_vdi_pool_data_finished,
@@ -254,21 +300,6 @@ static void stop_event_loop_and_go_to_vm(VdiManager *self)
     shutdown_loop(self->ci.loop);
 }
 
-static void enable_vm_prep_progress_messages(VdiManager *self, gboolean enabled)
-{
-    if (enabled) {
-        if (!self->vm_prep_progress_handle)
-            self->vm_prep_progress_handle = g_signal_connect(get_vdi_session_static(),
-                                                             "vm-prep-progress-received",
-                                                             G_CALLBACK(on_vm_prep_progress_received), self);
-    } else {
-        // unsubscribe from progress messages
-        if (self->vm_prep_progress_handle)
-            g_signal_handler_disconnect(get_vdi_session_static(), self->vm_prep_progress_handle);
-        self->vm_prep_progress_handle = 0;
-    }
-}
-
 // callback which is invoked when vm start request finished
 static void on_vdi_session_get_vm_from_pool_finished(GObject *source_object G_GNUC_UNUSED,
                                          GAsyncResult *res, VdiManager *self)
@@ -373,8 +404,6 @@ static void on_button_renew_clicked(GtkButton *button G_GNUC_UNUSED, VdiManager 
     g_info("%s", (const char *)__func__);
     vdi_ws_client_send_user_gui(vdi_session_get_ws_client()); // notify server
 
-    vdi_session_cancell_pending_requests();
-    unregister_all_pools(self);
     refresh_vdi_pool_data_async(self);
 }
 // cancel pending requests
@@ -447,27 +476,9 @@ static void on_vm_start_button_clicked(GtkButton *button, VdiManager *self)
     gtk_progress_bar_set_fraction(GTK_PROGRESS_BAR(self->vm_prep_progress_bar), 0);
 
     const gchar *pool_id = g_object_get_data(G_OBJECT(button), "pool_id");
-    vdi_session_set_current_pool_id(pool_id);
     g_info("%s  %s", (const char *)__func__, pool_id);
-    // start machine
-    set_vdi_client_state(self, VDI_WAITING_FOR_VM_FROM_POOL, "Отправлен запрос на получение вм из пула", FALSE);
-    // start spinner on vm widget
-    VdiPoolWidget vdi_pool_widget = get_vdi_pool_widget_by_id(self, pool_id);
-    vdi_pool_widget_enable_spinner(&vdi_pool_widget, TRUE);
 
-    // take from gui currect remote protocol
-    VdiVmRemoteProtocol remote_protocol = vdi_pool_widget_get_current_protocol(&vdi_pool_widget);
-    g_info("%s remote_protocol %s", (const char *)__func__, vdi_session_remote_protocol_to_str(remote_protocol));
-    vdi_session_set_current_remote_protocol(remote_protocol);
-
-    // subscribe to receive progress messages
-    enable_vm_prep_progress_messages(self, TRUE);
-
-    self->current_vm_request_id = CLAMP(rand() % 10000, 1, 10000); // id чтобы распознать ws сообщения
-    // относящиеся к запросу
-    // execute task
-    execute_async_task(vdi_session_get_vm_from_pool_task,
-            (GAsyncReadyCallback)on_vdi_session_get_vm_from_pool_finished, &self->current_vm_request_id, self);
+    refresh_vdi_get_vm_from_pool_async(self, pool_id);
 }
 
 static void
@@ -557,10 +568,22 @@ RemoteViewerState vdi_manager_dialog(VdiManager *self, ConnectSettingsData *conn
     g_info("%s ws state %i", (const char *)__func__, state);
     set_ws_conn_state(self, state == SOUP_WEBSOCKET_STATE_OPEN);
 
-    // Пытаемся соединиться с vdi и получить список пулов. Получив список пулов нужно сгенерить
-    // соответствующие кнопки  в скрол области.
-    // get pool data
-    refresh_vdi_pool_data_async(self);
+    // connect_to_prev_pool_if_enabled
+    g_autofree gchar *last_pool_id = NULL;
+    last_pool_id = read_str_from_ini_file("RemoteViewerConnect", "last_pool_id");
+    if (!last_pool_id)
+        conn_data->is_connect_to_prev_pool = FALSE;
+
+    if(conn_data->is_connect_to_prev_pool && conn_data->not_connected_to_prev_pool_yet) {
+        // Получение ВМ из предыдущего пула
+        refresh_vdi_get_vm_from_pool_async(self, last_pool_id);
+        conn_data->not_connected_to_prev_pool_yet = FALSE; // lower flag
+    } else {
+        // Пытаемся соединиться с vdi и получить список пулов. Получив список пулов нужно сгенерить
+        // соответствующие кнопки  в скрол области.
+        // get pool data
+        refresh_vdi_pool_data_async(self);
+    }
     // event loop
     create_loop_and_launch(&self->ci.loop);
 
