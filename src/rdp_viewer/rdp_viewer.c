@@ -148,9 +148,6 @@ static void rdp_viewer_show_error_msg_if_required(RemoteViewerData *self)
     }
 
     if (!is_stop_intentional && (last_error != 0 || self->ex_rdp_context->rail_rdp_error != 0)) {
-        if (*self->ex_rdp_context->next_app_state_p == APP_STATE_UNDEFINED)
-            *self->ex_rdp_context->next_app_state_p = APP_STATE_VDI_DIALOG;
-
         gchar *msg = rdp_client_get_full_error_msg(self->ex_rdp_context);
         RdpWindowData *rdp_window_data = g_array_index(self->ex_rdp_context->rdp_windows_array, RdpWindowData *, 0);
         show_msg_box_dialog(GTK_WINDOW(rdp_window_data->rdp_viewer_window), msg);
@@ -277,7 +274,11 @@ RemoteViewerState rdp_viewer_start(RemoteViewer *app, VeilRdpSettings *p_rdp_set
     }
     g_array_free(rdp_windows_array, TRUE);
 
-    if (next_app_state == APP_STATE_UNDEFINED)
-        next_app_state = APP_STATE_EXITING;
+    if (next_app_state == APP_STATE_UNDEFINED) {
+        if (app->conn_data.opt_manual_mode)
+            next_app_state = APP_STATE_AUTH_DIALOG;
+        else
+            next_app_state = APP_STATE_VDI_DIALOG;
+    }
     return next_app_state;
 }
