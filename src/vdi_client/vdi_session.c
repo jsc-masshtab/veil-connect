@@ -149,6 +149,8 @@ VdiSession *vdi_session_new()
             USER_PERMISSION_FOLDERS_REDIR | USER_PERMISSION_SHARED_CLIPBOARD_CLIENT_TO_GUEST |
             USER_PERMISSION_SHARED_CLIPBOARD_GUEST_TO_CLIENT);
 
+    vdi_session->login_time = NULL;
+
     memset(&vdi_session->redis_client, 0, sizeof(RedisClient));
 
     memset(&vdi_session->vdi_ws_client, 0, sizeof(VdiWsClient));
@@ -173,6 +175,8 @@ static void free_session_memory()
     free_memory_safely(&vdi_session_static->current_vm_id);
     free_memory_safely(&vdi_session_static->current_vm_verbose_name);
     free_memory_safely(&vdi_session_static->current_controller_address);
+
+    free_memory_safely(&vdi_session_static->login_time);
 }
 
 static void setup_header_for_vdi_session_api_call(SoupMessage *msg)
@@ -346,9 +350,9 @@ void vdi_session_static_destroy()
     vdi_session_logout();
 
     // free memory
-    atomic_string_deinit(&vdi_session_static->jwt);
     g_object_unref(vdi_session_static->soup_session);
     free_session_memory();
+    atomic_string_deinit(&vdi_session_static->jwt);
     g_object_unref(vdi_session_static);
     vdi_session_static = NULL;
 }
@@ -441,7 +445,7 @@ void vdi_session_set_conn_data(const gchar *ip, int port, gboolean is_ldap)
     free_memory_safely(&vdi_session_static->api_url);
     free_memory_safely(&vdi_session_static->auth_url);
 
-    vdi_session_static->vdi_ip = g_strdup(ip);
+    vdi_session_static->vdi_ip = strstrip_safely(g_strdup(ip));
     vdi_session_static->vdi_port = port;
 
     const gchar *http_protocol = determine_http_protocol_by_port(port);
@@ -592,6 +596,16 @@ gboolean vdi_session_is_shared_clipboard_c_to_g_permitted()
 gboolean vdi_session_is_shared_clipboard_g_to_c_permitted()
 {
     return (get_vdi_session_static()->user_permissions & USER_PERMISSION_SHARED_CLIPBOARD_GUEST_TO_CLIENT);
+}
+
+void vdi_session_refresh_login_time(void)
+{
+    get_vdi_session_static()->login_time = get_current_readable_time();
+}
+
+const gchar *vdi_session_get_login_time(void)
+{
+    return get_vdi_session_static()->login_time;
 }
 
 gchar *vdi_session_api_call(const char *method, const char *uri_string, const gchar *body_str, int *resp_code)

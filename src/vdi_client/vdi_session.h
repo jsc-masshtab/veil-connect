@@ -169,6 +169,8 @@ struct _VdiSession
 
     guint user_permissions; // UserPermission flags
 
+    gchar *login_time;
+
     RedisClient redis_client;
     VdiWsClient vdi_ws_client;
 };
@@ -251,6 +253,10 @@ gboolean vdi_session_is_usb_redir_permitted(void);
 gboolean vdi_session_is_folders_redir_permitted(void);
 gboolean vdi_session_is_shared_clipboard_c_to_g_permitted(void);
 gboolean vdi_session_is_shared_clipboard_g_to_c_permitted(void);
+
+// Login time
+void vdi_session_refresh_login_time(void);
+const gchar *vdi_session_get_login_time(void);
 
 //void gInputStreamToBuffer(GInputStream *inputStream, gchar *responseBuffer);
 // Do api call. Return response body

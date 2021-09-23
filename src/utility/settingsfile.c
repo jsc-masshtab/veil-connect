@@ -51,10 +51,9 @@ get_ini_file_name()
 
         if (!g_file_test(ini_file_path, G_FILE_TEST_EXISTS)) {
             // create file
-            FILE *fp = fopen(ini_file_path, "ab"); fclose(fp);
+            FILE *fp = fopen(ini_file_path, "ab");
+            fclose(fp);
         }
-
-        g_info("ini_file_path %s", ini_file_path);
     }
     return ini_file_path;
 }

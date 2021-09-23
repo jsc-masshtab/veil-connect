@@ -191,6 +191,7 @@ on_vdi_session_log_in_finished(GObject *source_object G_GNUC_UNUSED,
     g_autofree gchar *token = NULL;
     token = vdi_session_get_token();
     if (token) {
+        vdi_session_refresh_login_time();
         ci->dialog_window_response = GTK_RESPONSE_OK;
         take_from_gui(ci);
         shutdown_loop(ci->loop);

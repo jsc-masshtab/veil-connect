@@ -560,6 +560,12 @@ RemoteViewerState vdi_manager_dialog(VdiManager *self, ConnectSettingsData *conn
     self->p_conn_data = conn_data;
 
     // show window
+    g_autofree gchar *title = NULL;
+    title = g_strdup_printf("%s  Время входа: %s  -  %s",
+            vdi_session_get_vdi_username(),
+            vdi_session_get_login_time(),
+            APPLICATION_NAME_WITH_SPACES);
+    gtk_window_set_title(GTK_WINDOW(self->window), title);
     gtk_window_set_position(GTK_WINDOW(self->window), GTK_WIN_POS_CENTER);
     gtk_window_set_default_size(GTK_WINDOW(self->window), 650, 500);
     gtk_widget_show_all(self->window);
