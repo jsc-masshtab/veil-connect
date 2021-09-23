@@ -66,6 +66,17 @@ cmake3 -DCMAKE_BUILD_TYPE=Release ../
 make
 ```
 
+## Building on RedOS 7.2 / 7.3
+```
+yum install -y rpmdevtools spice-gtk3-devel freerdp-devel json-glib-devel libsoup-devel \
+libxml2-devel gcc cmake3 make gtk3-devel hiredis-devel usbredir-devel libusb-devel
+
+mkdir build
+cd build
+cmake3 -DCMAKE_BUILD_TYPE=Release ../
+make
+```
+
 ## Building on Windows
 
 - Установить MSYS2, следуя инструкциям https://www.gtk.org/docs/installations/windows
