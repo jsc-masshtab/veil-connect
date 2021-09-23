@@ -147,11 +147,19 @@ static void rdp_viewer_show_error_msg_if_required(RemoteViewerData *self)
             is_stop_intentional = TRUE;
     }
 
-    if (!is_stop_intentional && (last_error != 0 || self->ex_rdp_context->rail_rdp_error != 0)) {
-        gchar *msg = rdp_client_get_full_error_msg(self->ex_rdp_context);
-        RdpWindowData *rdp_window_data = g_array_index(self->ex_rdp_context->rdp_windows_array, RdpWindowData *, 0);
-        show_msg_box_dialog(GTK_WINDOW(rdp_window_data->rdp_viewer_window), msg);
-        g_free(msg);
+    if (!is_stop_intentional) {
+        RdpWindowData *rdp_window_data = g_array_index(self->ex_rdp_context->rdp_windows_array,
+                                                       RdpWindowData *, 0);
+
+        if (last_error != 0 || self->ex_rdp_context->rail_rdp_error != 0) {
+            gchar *msg = rdp_client_get_full_error_msg(self->ex_rdp_context);
+            show_msg_box_dialog(GTK_WINDOW(rdp_window_data->rdp_viewer_window), msg);
+            g_free(msg);
+        } else if (!self->ex_rdp_context->is_connected_last_time) {
+            show_msg_box_dialog(GTK_WINDOW(rdp_window_data->rdp_viewer_window),
+                    "Не удалось установить соединение. Проверьте разрешен ли удаленный доступ для текущего "
+                    "пользователя");
+        }
     }
 }
 

@@ -361,7 +361,8 @@ void* rdp_client_routine(ExtendedRdpContext *ex_contect)
 
         g_info("RDP. Connect attempt number: %i", conn_try + 1);
         ex_contect->is_connecting = TRUE;
-        if (!freerdp_connect(instance)) {
+        ex_contect->is_connected_last_time = freerdp_connect(instance);
+        if (!ex_contect->is_connected_last_time) {
             g_info("connection failure");
             g_info("After freerdp_connect(instance))1");
             g_usleep(500000);

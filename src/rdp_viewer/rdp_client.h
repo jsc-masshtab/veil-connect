@@ -58,6 +58,7 @@ typedef struct {
     gboolean is_abort_demanded;
     gboolean is_reconnecting; // is reconnect going on
     gboolean is_connecting;
+    gboolean is_connected_last_time; // флаг было ли успешное соединение на последней попытке
 
     // RDP settings
     VeilRdpSettings *p_rdp_settings; // указатель на данные. Не владеет этими данными
