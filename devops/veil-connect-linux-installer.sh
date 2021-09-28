@@ -123,7 +123,7 @@ EOF
     11) tee /etc/yum.repos.d/veil-connect.repo <<EOF
 [veil-connect]
 name=VeiL Connect repository
-baseurl=$REPO_URL/yum/redos7.2/\$basearch
+baseurl=$REPO_URL/yum/el7/\$basearch
 gpgcheck=1
 gpgkey=$REPO_URL/yum/RPM-GPG-KEY-veil-connect
 enabled=1

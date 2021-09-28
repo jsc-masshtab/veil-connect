@@ -50,7 +50,6 @@ pipeline {
         booleanParam(name: 'FOCAL',                defaultValue: true,              description: 'create DEB?')
         booleanParam(name: 'EL7',                  defaultValue: true,              description: 'create RPM?')
         booleanParam(name: 'EL8',                  defaultValue: true,              description: 'create RPM?')
-        booleanParam(name: 'RED7-2',               defaultValue: true,              description: 'create RPM?')
         booleanParam(name: 'RED7-3',               defaultValue: true,              description: 'create RPM?')
         booleanParam(name: 'ALT9',                 defaultValue: true,              description: 'create RPM?')
         booleanParam(name: 'WIN32',                defaultValue: true,              description: 'create EXE?')
@@ -137,16 +136,6 @@ pipeline {
                     }
                     steps {
                         sh "docker build -f devops/docker/Dockerfile.alt9 . -t veil-connect-builder-alt9:${VERSION}"
-                    }
-                }
-
-                stage ('red7-2. docker build') {
-                    when {
-                        beforeAgent true
-                        expression { params.RED7-2 == true }
-                    }
-                    steps {
-                        sh "docker build -f devops/docker/Dockerfile.el7 . -t veil-connect-builder-red7-2:${VERSION}"
                     }
                 }
 
@@ -436,45 +425,6 @@ pipeline {
                             cp doc/veil-connect.desktop rpmbuild-${DISTR}/BUILD/usr/share/applications
                             cd rpmbuild-${DISTR}
                             rpmbuild --define "_topdir `pwd`" -v -bb SPECS/veil-connect-alt.spec
-                        '''
-                    }
-                }
-
-                stage ('red7-2. build') {
-                    when {
-                        beforeAgent true
-                        expression { params.RED7-2 == true }
-                    }
-                    environment { 
-                        DISTR = "redos7.2"
-                    }
-                    agent {
-                        docker {
-                            image "veil-connect-builder-red7-2:${VERSION}"
-                            args '-u root:root'
-                            reuseNode true
-                            label "${AGENT}"
-                        }
-                    }
-                    steps {
-                        sh script: '''
-                            mkdir build-${DISTR}
-                            cd build-${DISTR}
-                            cmake3 -DCMAKE_BUILD_TYPE=Release ../
-                            make
-                            rm -rf CMakeCache.txt  CMakeFiles  Makefile  cmake_install.cmake
-                            cd ${WORKSPACE}
-
-                            # make installer
-                            mkdir -p rpmbuild-${DISTR}/{BUILD,BUILDROOT,RPMS,SOURCES,SPECS,SRPMS}
-                            cp devops/rpm/veil-connect-redos.spec rpmbuild-${DISTR}/SPECS
-                            sed -i -e "s:%%VER%%:${VERSION}:g" rpmbuild-${DISTR}/SPECS/veil-connect-redos.spec
-                            mkdir -p rpmbuild-${DISTR}/BUILD/opt/veil-connect
-                            mkdir -p rpmbuild-${DISTR}/BUILD/usr/share/applications
-                            cp -r build-${DISTR}/* doc/veil-connect.ico rpmbuild-${DISTR}/BUILD/opt/veil-connect
-                            cp doc/veil-connect.desktop rpmbuild-${DISTR}/BUILD/usr/share/applications
-                            cd rpmbuild-${DISTR}
-                            rpmbuild --define "_topdir `pwd`" -v -bb SPECS/veil-connect-redos.spec
                         '''
                     }
                 }
@@ -874,27 +824,6 @@ pipeline {
                             ssh uploader@192.168.10.144 "mkdir -p /local_storage/veil-connect/linux/apt-rpm/${ARCH}/RPMS.${DISTR}"
                             scp ${WORKSPACE}/rpmbuild-${DISTR}/RPMS/${ARCH}/${PRJNAME}-${VERSION}*.rpm uploader@192.168.10.144:/local_storage/veil-connect/linux/apt-rpm/${ARCH}/RPMS.${DISTR}/
                             ssh uploader@192.168.10.144 "cd /local_storage/veil-connect/linux/apt-rpm/${ARCH}/RPMS.${DISTR}; ln -sf ${PRJNAME}-${VERSION}*.rpm ${PRJNAME}-latest.rpm"
-                        '''
-                    }
-                }
-
-                stage ('red7-2. deploy to repo') {
-                    when {
-                        beforeAgent true
-                        expression { params.RED7-2 == true }
-                    }
-                    environment {
-                        DISTR = "redos7.2"
-                    }
-                    steps {
-                        sh script: '''
-                            ssh uploader@192.168.10.144 "mkdir -p /local_storage/veil-connect/linux/yum/${DISTR}/x86_64/Packages"
-                            scp ${WORKSPACE}/rpmbuild-${DISTR}/RPMS/x86_64/*.rpm uploader@192.168.10.144:/local_storage/veil-connect/linux/yum/${DISTR}/x86_64/Packages/
-
-                            ssh uploader@192.168.10.144 "
-                              rpm --resign /local_storage/veil-connect/linux/yum/${DISTR}/x86_64/Packages/*.rpm
-                              createrepo --update /local_storage/veil-connect/linux/yum/${DISTR}/x86_64
-                            "
                         '''
                     }
                 }
