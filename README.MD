@@ -14,6 +14,7 @@
 | Centos 7           |  el7    |
 | Centos 8           |  el8    |
 | Alt Linux 9        |  alt9   |
+| RedOS 7.3          | redos7.3|
 
 
 ## Building on Debian 9
@@ -41,7 +42,7 @@ cmake -DCMAKE_BUILD_TYPE=Release ../
 make
 ```
 
-## Building on Centos 7
+## Building on Centos 7/RedOS 7.2
 ```
 yum install -y epel-release
 yum install -y rpmdevtools spice-gtk3-devel freerdp-devel json-glib-devel libsoup-devel \
@@ -66,9 +67,9 @@ cmake3 -DCMAKE_BUILD_TYPE=Release ../
 make
 ```
 
-## Building on RedOS 7.2 / 7.3
+## Building on RedOS 7.3
 ```
-yum install -y rpmdevtools spice-gtk3-devel freerdp-devel json-glib-devel libsoup-devel \
+dnf install -y rpmdevtools spice-gtk3-devel freerdp-devel json-glib-devel libsoup-devel \
 libxml2-devel gcc cmake3 make gtk3-devel hiredis-devel usbredir-devel libusb-devel
 
 mkdir build
