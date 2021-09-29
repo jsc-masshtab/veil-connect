@@ -50,7 +50,7 @@ pipeline {
         booleanParam(name: 'FOCAL',                defaultValue: true,              description: 'create DEB?')
         booleanParam(name: 'EL7',                  defaultValue: true,              description: 'create RPM?')
         booleanParam(name: 'EL8',                  defaultValue: true,              description: 'create RPM?')
-        booleanParam(name: 'RED7-3',               defaultValue: true,              description: 'create RPM?')
+        booleanParam(name: 'RED73',                defaultValue: true,              description: 'create RPM?')
         booleanParam(name: 'ALT9',                 defaultValue: true,              description: 'create RPM?')
         booleanParam(name: 'WIN32',                defaultValue: true,              description: 'create EXE?')
         booleanParam(name: 'WIN64',                defaultValue: true,              description: 'create EXE?')
@@ -142,10 +142,10 @@ pipeline {
                 stage ('red7-3. docker build') {
                     when {
                         beforeAgent true
-                        expression { params.RED7-3 == true }
+                        expression { params.RED73 == true }
                     }
                     steps {
-                        sh "docker build -f devops/docker/Dockerfile.RED7-3 . -t veil-connect-builder-red7-3:${VERSION}"
+                        sh "docker build -f devops/docker/Dockerfile.RED7-3 . -t veil-connect-builder-redos7.3:${VERSION}"
                     }
                 }
             }
@@ -432,14 +432,14 @@ pipeline {
                 stage ('red7-3. build') {
                     when {
                         beforeAgent true
-                        expression { params.RED7-3 == true }
+                        expression { params.RED73 == true }
                     }
                     environment { 
                         DISTR = "redos7.3"
                     }
                     agent {
                         docker {
-                            image "veil-connect-builder-red7-3:${VERSION}"
+                            image "veil-connect-builder-redos7.3:${VERSION}"
                             args '-u root:root'
                             reuseNode true
                             label "${AGENT}"
@@ -831,7 +831,7 @@ pipeline {
                 stage ('red7-3. deploy to repo') {
                     when {
                         beforeAgent true
-                        expression { params.RED7-3 == true }
+                        expression { params.RED73 == true }
                     }
                     environment {
                         DISTR = "redos7.3"
