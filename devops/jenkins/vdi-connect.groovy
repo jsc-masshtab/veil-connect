@@ -456,7 +456,7 @@ pipeline {
 
                             # make installer
                             mkdir -p rpmbuild-${DISTR}/{BUILD,BUILDROOT,RPMS,SOURCES,SPECS,SRPMS}
-                            cp devops/rpm/veil-connect-redos.spec rpmbuild-${DISTR}/SPECS
+                            cp devops/rpm/veil-connect.spec rpmbuild-${DISTR}/SPECS
                             sed -i -e "s:%%VER%%:${VERSION}:g" rpmbuild-${DISTR}/SPECS/veil-connect-redos.spec
                             mkdir -p rpmbuild-${DISTR}/BUILD/opt/veil-connect
                             mkdir -p rpmbuild-${DISTR}/BUILD/usr/share/applications
