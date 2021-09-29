@@ -24,7 +24,7 @@ if [ -n "$WINDOW" ]; then
     clear 2> /dev/null || :
 
     # if dialog exists
-    OS=$($WINDOW --title  "$TITLE" --menu  "Select your OS:" $HEIGHT $WIDTH 12 \
+    OS=$($WINDOW --title  "$TITLE" --menu  "Select your OS:" $HEIGHT $WIDTH 10 \
     "1" "Debian 9" \
     "2" "Debian 10" \
     "3" "Ubuntu 16.04" \
