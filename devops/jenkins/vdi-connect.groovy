@@ -457,13 +457,13 @@ pipeline {
                             # make installer
                             mkdir -p rpmbuild-${DISTR}/{BUILD,BUILDROOT,RPMS,SOURCES,SPECS,SRPMS}
                             cp devops/rpm/veil-connect.spec rpmbuild-${DISTR}/SPECS
-                            sed -i -e "s:%%VER%%:${VERSION}:g" rpmbuild-${DISTR}/SPECS/veil-connect-redos.spec
+                            sed -i -e "s:%%VER%%:${VERSION}:g" rpmbuild-${DISTR}/SPECS/veil-connect.spec
                             mkdir -p rpmbuild-${DISTR}/BUILD/opt/veil-connect
                             mkdir -p rpmbuild-${DISTR}/BUILD/usr/share/applications
                             cp -r build-${DISTR}/* doc/veil-connect.ico rpmbuild-${DISTR}/BUILD/opt/veil-connect
                             cp doc/veil-connect.desktop rpmbuild-${DISTR}/BUILD/usr/share/applications
                             cd rpmbuild-${DISTR}
-                            rpmbuild --define "_topdir `pwd`" -v -bb SPECS/veil-connect-redos.spec
+                            rpmbuild --define "_topdir `pwd`" -v -bb SPECS/veil-connect.spec
                         '''
                     }
                 }
