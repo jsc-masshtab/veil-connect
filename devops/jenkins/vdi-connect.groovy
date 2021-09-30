@@ -50,8 +50,7 @@ pipeline {
         booleanParam(name: 'FOCAL',                defaultValue: true,              description: 'create DEB?')
         booleanParam(name: 'EL7',                  defaultValue: true,              description: 'create RPM?')
         booleanParam(name: 'EL8',                  defaultValue: true,              description: 'create RPM?')
-        booleanParam(name: 'RED7-2',               defaultValue: true,              description: 'create RPM?')
-        booleanParam(name: 'RED7-3',               defaultValue: true,              description: 'create RPM?')
+        booleanParam(name: 'RED73',                defaultValue: true,              description: 'create RPM?')
         booleanParam(name: 'ALT9',                 defaultValue: true,              description: 'create RPM?')
         booleanParam(name: 'WIN32',                defaultValue: true,              description: 'create EXE?')
         booleanParam(name: 'WIN64',                defaultValue: true,              description: 'create EXE?')
@@ -140,23 +139,13 @@ pipeline {
                     }
                 }
 
-                stage ('red7-2. docker build') {
-                    when {
-                        beforeAgent true
-                        expression { params.RED7-2 == true }
-                    }
-                    steps {
-                        sh "docker build -f devops/docker/Dockerfile.el7 . -t veil-connect-builder-red7-2:${VERSION}"
-                    }
-                }
-
                 stage ('red7-3. docker build') {
                     when {
                         beforeAgent true
-                        expression { params.RED7-3 == true }
+                        expression { params.RED73 == true }
                     }
                     steps {
-                        sh "docker build -f devops/docker/Dockerfile.RED7-3 . -t veil-connect-builder-red7-3:${VERSION}"
+                        sh "docker build -f devops/docker/Dockerfile.RED7-3 . -t veil-connect-builder-redos7.3:${VERSION}"
                     }
                 }
             }
@@ -440,56 +429,17 @@ pipeline {
                     }
                 }
 
-                stage ('red7-2. build') {
-                    when {
-                        beforeAgent true
-                        expression { params.RED7-2 == true }
-                    }
-                    environment { 
-                        DISTR = "redos7.2"
-                    }
-                    agent {
-                        docker {
-                            image "veil-connect-builder-red7-2:${VERSION}"
-                            args '-u root:root'
-                            reuseNode true
-                            label "${AGENT}"
-                        }
-                    }
-                    steps {
-                        sh script: '''
-                            mkdir build-${DISTR}
-                            cd build-${DISTR}
-                            cmake3 -DCMAKE_BUILD_TYPE=Release ../
-                            make
-                            rm -rf CMakeCache.txt  CMakeFiles  Makefile  cmake_install.cmake
-                            cd ${WORKSPACE}
-
-                            # make installer
-                            mkdir -p rpmbuild-${DISTR}/{BUILD,BUILDROOT,RPMS,SOURCES,SPECS,SRPMS}
-                            cp devops/rpm/veil-connect-redos.spec rpmbuild-${DISTR}/SPECS
-                            sed -i -e "s:%%VER%%:${VERSION}:g" rpmbuild-${DISTR}/SPECS/veil-connect-redos.spec
-                            mkdir -p rpmbuild-${DISTR}/BUILD/opt/veil-connect
-                            mkdir -p rpmbuild-${DISTR}/BUILD/usr/share/applications
-                            cp -r build-${DISTR}/* doc/veil-connect.ico rpmbuild-${DISTR}/BUILD/opt/veil-connect
-                            cp doc/veil-connect.desktop rpmbuild-${DISTR}/BUILD/usr/share/applications
-                            cd rpmbuild-${DISTR}
-                            rpmbuild --define "_topdir `pwd`" -v -bb SPECS/veil-connect-redos.spec
-                        '''
-                    }
-                }
-
                 stage ('red7-3. build') {
                     when {
                         beforeAgent true
-                        expression { params.RED7-3 == true }
+                        expression { params.RED73 == true }
                     }
                     environment { 
                         DISTR = "redos7.3"
                     }
                     agent {
                         docker {
-                            image "veil-connect-builder-red7-3:${VERSION}"
+                            image "veil-connect-builder-redos7.3:${VERSION}"
                             args '-u root:root'
                             reuseNode true
                             label "${AGENT}"
@@ -506,14 +456,14 @@ pipeline {
 
                             # make installer
                             mkdir -p rpmbuild-${DISTR}/{BUILD,BUILDROOT,RPMS,SOURCES,SPECS,SRPMS}
-                            cp devops/rpm/veil-connect-redos.spec rpmbuild-${DISTR}/SPECS
-                            sed -i -e "s:%%VER%%:${VERSION}:g" rpmbuild-${DISTR}/SPECS/veil-connect-redos.spec
+                            cp devops/rpm/veil-connect.spec rpmbuild-${DISTR}/SPECS
+                            sed -i -e "s:%%VER%%:${VERSION}:g" rpmbuild-${DISTR}/SPECS/veil-connect.spec
                             mkdir -p rpmbuild-${DISTR}/BUILD/opt/veil-connect
                             mkdir -p rpmbuild-${DISTR}/BUILD/usr/share/applications
                             cp -r build-${DISTR}/* doc/veil-connect.ico rpmbuild-${DISTR}/BUILD/opt/veil-connect
                             cp doc/veil-connect.desktop rpmbuild-${DISTR}/BUILD/usr/share/applications
                             cd rpmbuild-${DISTR}
-                            rpmbuild --define "_topdir `pwd`" -v -bb SPECS/veil-connect-redos.spec
+                            rpmbuild --define "_topdir `pwd`" -v -bb SPECS/veil-connect.spec
                         '''
                     }
                 }
@@ -878,31 +828,10 @@ pipeline {
                     }
                 }
 
-                stage ('red7-2. deploy to repo') {
-                    when {
-                        beforeAgent true
-                        expression { params.RED7-2 == true }
-                    }
-                    environment {
-                        DISTR = "redos7.2"
-                    }
-                    steps {
-                        sh script: '''
-                            ssh uploader@192.168.10.144 "mkdir -p /local_storage/veil-connect/linux/yum/${DISTR}/x86_64/Packages"
-                            scp ${WORKSPACE}/rpmbuild-${DISTR}/RPMS/x86_64/*.rpm uploader@192.168.10.144:/local_storage/veil-connect/linux/yum/${DISTR}/x86_64/Packages/
-
-                            ssh uploader@192.168.10.144 "
-                              rpm --resign /local_storage/veil-connect/linux/yum/${DISTR}/x86_64/Packages/*.rpm
-                              createrepo --update /local_storage/veil-connect/linux/yum/${DISTR}/x86_64
-                            "
-                        '''
-                    }
-                }
-
                 stage ('red7-3. deploy to repo') {
                     when {
                         beforeAgent true
-                        expression { params.RED7-3 == true }
+                        expression { params.RED73 == true }
                     }
                     environment {
                         DISTR = "redos7.3"

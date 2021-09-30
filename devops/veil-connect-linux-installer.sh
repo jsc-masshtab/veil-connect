@@ -24,7 +24,7 @@ if [ -n "$WINDOW" ]; then
     clear 2> /dev/null || :
 
     # if dialog exists
-    OS=$($WINDOW --title  "$TITLE" --menu  "Select your OS:" $HEIGHT $WIDTH 12 \
+    OS=$($WINDOW --title  "$TITLE" --menu  "Select your OS:" $HEIGHT $WIDTH 10 \
     "1" "Debian 9" \
     "2" "Debian 10" \
     "3" "Ubuntu 16.04" \
@@ -123,7 +123,7 @@ EOF
     11) tee /etc/yum.repos.d/veil-connect.repo <<EOF
 [veil-connect]
 name=VeiL Connect repository
-baseurl=$REPO_URL/yum/redos7.2/\$basearch
+baseurl=$REPO_URL/yum/el7/\$basearch
 gpgcheck=1
 gpgkey=$REPO_URL/yum/RPM-GPG-KEY-veil-connect
 enabled=1
