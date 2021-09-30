@@ -36,7 +36,7 @@ if [ -n "$WINDOW" ]; then
     "9" "Astra Linux Smolensk 1.6" \
     "10" "Alt Linux 9" \
     "11" "RedOS 7.2" \
-    "12" "Redos 7.3" 3>&1 1>&2 2>&3)
+    "12" "RedOS 7.3" 3>&1 1>&2 2>&3)
     
 
     clear 2> /dev/null || :
@@ -60,7 +60,7 @@ else
         9.  Astra Linux Smolensk 1.6
         10. Alt Linux 9
         11. RedOS 7.2 
-        12. Redos 7.3
+        12. RedOS 7.3
     "
     echo "My OS is:"
     read OS
