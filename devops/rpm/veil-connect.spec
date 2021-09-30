@@ -8,7 +8,6 @@ Packager: Research institute Mashtab
 License: GPL
 URL: https://mashtab.org/
 
-Requires: epel-release
 Requires: spice-gtk3
 Requires: freerdp-libs
 Requires: json-glib

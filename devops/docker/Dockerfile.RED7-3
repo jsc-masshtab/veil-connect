@@ -1,0 +1,6 @@
+FROM redos:7.3
+
+# install build-deps
+RUN dnf install -y rpmdevtools spice-gtk3-devel freerdp-devel json-glib-devel libsoup-devel \
+    libxml2-devel gcc cmake3 make gtk3-devel hiredis-devel usbredir-devel libusb-devel && \
+    dnf clean all

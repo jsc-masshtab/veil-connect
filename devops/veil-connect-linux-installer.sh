@@ -34,7 +34,10 @@ if [ -n "$WINDOW" ]; then
     "7" "Centos 8" \
     "8" "Astra Linux Orel 2.12" \
     "9" "Astra Linux Smolensk 1.6" \
-    "10" "Alt Linux 9"  3>&1 1>&2 2>&3)
+    "10" "Alt Linux 9" \
+    "11" "RedOS 7.2" \
+    "12" "RedOS 7.3" 3>&1 1>&2 2>&3)
+    
 
     clear 2> /dev/null || :
 
@@ -56,6 +59,8 @@ else
         8.  Astra Linux Orel 2.12
         9.  Astra Linux Smolensk 1.6
         10. Alt Linux 9
+        11. RedOS 7.2 
+        12. RedOS 7.3
     "
     echo "My OS is:"
     read OS
@@ -114,6 +119,31 @@ EOF
         apt-get install ./veil-connect-latest.rpm -y
         result="$?"
         rm -f veil-connect-latest.rpm
+        ;;
+    11) tee /etc/yum.repos.d/veil-connect.repo <<EOF
+[veil-connect]
+name=VeiL Connect repository
+baseurl=$REPO_URL/yum/el7/\$basearch
+gpgcheck=1
+gpgkey=$REPO_URL/yum/RPM-GPG-KEY-veil-connect
+enabled=1
+EOF
+
+        yum install veil-connect -y
+        result="$?"
+        ;;
+
+    12) tee /etc/yum.repos.d/veil-connect.repo <<EOF
+[veil-connect]
+name=VeiL Connect repository
+baseurl=$REPO_URL/yum/redos7.3/\$basearch
+gpgcheck=1
+gpgkey=$REPO_URL/yum/RPM-GPG-KEY-veil-connect
+enabled=1
+EOF
+
+        dnf install veil-connect -y
+        result="$?"
         ;;
     
     *)
