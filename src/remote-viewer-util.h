@@ -151,6 +151,9 @@ gchar *get_current_readable_time(void);
 
 void copy_file_content(FILE *sourceFile, FILE *destFile);
 
+// Extract name and domain from full_user_name (name@domain)
+void extract_name_and_domain(const gchar *full_user_name, gchar **user_name, gchar **domain);
+
 #endif
 
 /*

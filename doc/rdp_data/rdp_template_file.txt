@@ -24,7 +24,7 @@ redirectclipboard:i:1
 redirectposdevices:i:0
 autoreconnection enabled:i:1
 authentication level:i:0
-prompt for credentials:i:1
+prompt for credentials:i:0
 negotiate security layer:i:1
 alternate shell:s:
 shell working directory:s:

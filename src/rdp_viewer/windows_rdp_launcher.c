@@ -11,6 +11,10 @@
 #include <gtk/gtk.h>
 
 #ifdef G_OS_WIN32
+#include <minwindef.h>
+#include <windef.h>
+#include <wincred.h>
+
 #include <windows.h>
 #include <stdio.h>
 #include <tchar.h>
@@ -30,6 +34,77 @@ typedef struct
 } NativeRdpData;
 
 #ifdef _WIN32
+// Конвертирует мультибайт строку в wide characters строку.
+// Возвращаемая строка должна быть освобождена с free
+wchar_t *
+windows_rdp_launcher_multibyte_str_to_wchar_str(const gchar *g_str)
+{
+    if (g_str == NULL)
+        return NULL;
+
+    size_t required_size = mbstowcs(NULL, g_str, 0) + 1;
+    wchar_t *wtext = (wchar_t *)calloc(1, required_size * sizeof(wchar_t)); //Plus null
+    mbstowcs(wtext, g_str, required_size);
+
+    return wtext;
+}
+
+// Сохраняем пароль для возможности входа через нативный клиент без ввода пароля
+static void
+windows_rdp_launcher_store_conn_data(const VeilRdpSettings *p_rdp_settings)
+{
+    g_autofree gchar *user_name = NULL;
+    user_name = g_strdup(p_rdp_settings->user_name);
+    g_autofree gchar *domain = NULL;
+    domain = g_strdup(p_rdp_settings->domain);
+
+    g_autofree gchar *user_name_converted = NULL;
+    g_autofree gchar *password_converted = NULL;
+    g_autofree gchar *target_name_converted = NULL;
+
+    // Если имя в формате name@domain то вычлиянем имя и домен
+    extract_name_and_domain(user_name, &user_name, &domain);
+
+    if (strlen_safely(domain))
+        user_name_converted = g_strdup_printf("%s\\%s", domain, user_name);
+    else
+        user_name_converted = g_strdup(user_name);
+    password_converted = g_strdup(p_rdp_settings->password);
+    target_name_converted = g_strdup_printf("TERMSRV/%s", p_rdp_settings->ip);
+
+    convert_string_from_utf8_to_locale(&user_name_converted);
+    convert_string_from_utf8_to_locale(&password_converted);
+    convert_string_from_utf8_to_locale(&target_name_converted);
+
+    // Convert to wide char strings
+    wchar_t *user_name_converted_w = windows_rdp_launcher_multibyte_str_to_wchar_str(user_name_converted);
+    wchar_t *password_converted_w = windows_rdp_launcher_multibyte_str_to_wchar_str(password_converted);
+    wchar_t *target_name_converted_w = windows_rdp_launcher_multibyte_str_to_wchar_str(target_name_converted);
+
+    // Store credentials
+    DWORD cbCredentialBlobSize = (DWORD)(wcslen(password_converted_w) * sizeof(wchar_t));
+
+    // create credential
+    CREDENTIALW credential = { 0 };
+    credential.Type = CRED_TYPE_DOMAIN_PASSWORD;
+    credential.TargetName = target_name_converted_w;
+    credential.CredentialBlobSize = cbCredentialBlobSize;
+    credential.CredentialBlob = (LPBYTE)password_converted_w;
+    credential.Persist = CRED_PERSIST_LOCAL_MACHINE;
+    credential.UserName = user_name_converted_w;
+
+    // write credential to credential store
+    WINBOOL ok = CredWriteW(&credential, 0);
+    if (!ok) {
+        DWORD error = GetLastError();
+        g_warning("Cant save credentials for native windows client. The last error: %lu", error);
+    }
+
+    free(user_name_converted_w);
+    free(password_converted_w);
+    free(target_name_converted_w);
+}
+
 static void
 windows_rdp_launcher_cb_child_watch( GPid  pid, gint status, NativeRdpData *data)
 {
@@ -125,6 +200,9 @@ launch_windows_rdp_client(const VeilRdpSettings *p_rdp_settings)
     /* Close files to release resources */
     fclose(sourceFile);
     fclose(destFile);
+
+    // Store credentials data
+    windows_rdp_launcher_store_conn_data(p_rdp_settings);
 
     NativeRdpData data = {};
 

@@ -100,24 +100,6 @@ static void add_rdp_param(GArray *rdp_params_dyn_array, gchar *rdp_param)
     g_array_append_val(rdp_params_dyn_array, rdp_param);
 }
 
-static gchar * rdp_client_get_corrected_user_name(ExtendedRdpContext* ex)
-{
-    if (ex->p_rdp_settings->user_name == NULL)
-        return NULL;
-
-    // Логин в формате name@domain не нравится freerdp, поэтому отбрасываем @domain
-    gchar *corrected_user_name = NULL;
-    gchar *sub_string = strchr(ex->p_rdp_settings->user_name, '@');
-    if (sub_string) {
-        int index = (int) (sub_string - ex->p_rdp_settings->user_name);
-        corrected_user_name = g_strndup(ex->p_rdp_settings->user_name, index);
-    } else {
-        corrected_user_name = g_strdup(ex->p_rdp_settings->user_name);
-    }
-
-    return corrected_user_name;
-}
-
 static GArray *rdp_client_create_params_array(ExtendedRdpContext* ex)
 {
     g_info("%s W: %i x H:%i", (const char*)__func__, ex->whole_image_width, ex->whole_image_height);
@@ -129,11 +111,14 @@ static GArray *rdp_client_create_params_array(ExtendedRdpContext* ex)
             g_strdup_printf("/v:%s:%i", ex->p_rdp_settings->ip, ex->p_rdp_settings->port) :
             g_strdup_printf("/v:%s", ex->p_rdp_settings->ip);
     add_rdp_param(rdp_params_dyn_array, full_adress);
-    if (ex->p_rdp_settings->domain)
+
+    // Проверить находится ли имя в формате name@domain и извлечь данные
+    extract_name_and_domain(ex->p_rdp_settings->user_name, &ex->p_rdp_settings->user_name, &ex->p_rdp_settings->domain);
+
+    add_rdp_param(rdp_params_dyn_array, g_strdup_printf("/u:%s", ex->p_rdp_settings->user_name));
+
+    if (strlen_safely(ex->p_rdp_settings->domain))
         add_rdp_param(rdp_params_dyn_array, g_strdup_printf("/d:%s", ex->p_rdp_settings->domain));
-    g_autofree gchar *corrected_user_name = NULL;
-    corrected_user_name = rdp_client_get_corrected_user_name(ex);
-    add_rdp_param(rdp_params_dyn_array, g_strdup_printf("/u:%s", corrected_user_name));
     add_rdp_param(rdp_params_dyn_array, g_strdup_printf("/p:%s", ex->p_rdp_settings->password));
     add_rdp_param(rdp_params_dyn_array, g_strdup_printf("/w:%i", ex->whole_image_width));
     add_rdp_param(rdp_params_dyn_array, g_strdup_printf("/h:%i", ex->whole_image_height));

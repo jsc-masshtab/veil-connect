@@ -1016,6 +1016,22 @@ void copy_file_content(FILE *sourceFile, FILE *destFile)
     }
 }
 
+void extract_name_and_domain(const gchar *full_user_name, gchar **user_name, gchar **domain)
+{
+    if (strchr(full_user_name, '@')) {
+
+        const gint token_amount = 2;
+        gchar **name_domain_array = g_strsplit(full_user_name, "@", token_amount);
+
+        if (g_strv_length(name_domain_array) == token_amount) {
+            update_string_safely(user_name, name_domain_array[0]);
+            update_string_safely(domain, name_domain_array[1]);
+        }
+
+        g_strfreev(name_domain_array);
+    }
+}
+
 /*
  * Local variables:
  *  c-indent-level: 4
