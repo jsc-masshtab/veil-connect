@@ -224,6 +224,7 @@ if (WIN32)
         SET(LIBS_INCLUDE_PATH C:/msys32/mingw32/include/)
         SET(FREERDP_PATH C:/job/FreeRDP-2.0.0-rc4/)
         SET(HIREDIS_PATH C:/job/hiredis-mingw/)
+        SET(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
     else(BUILD_x32) # 64bit
         message(STATUS "Using 64bit dependencies")
         SET(LIBS_INCLUDE_PATH C:/msys32/mingw64/include/)
@@ -231,6 +232,7 @@ if (WIN32)
         #SET(LIBS_INCLUDE_PATH C:/msys64/mingw64/include/)
         #SET(FREERDP_PATH C:/job/freerdp/FreeRDP/)
         SET(HIREDIS_PATH C:/job/hiredis-mingw/)
+        SET(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
     endif(BUILD_x32)
 
     # hiredis port to Windows
