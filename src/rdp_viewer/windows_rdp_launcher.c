@@ -42,8 +42,8 @@ windows_rdp_launcher_multibyte_str_to_wchar_str(const gchar *g_str)
     if (g_str == NULL)
         return NULL;
 
-    size_t required_size = mbstowcs(NULL, g_str, 0) + 1;
-    wchar_t *wtext = (wchar_t *)calloc(1, required_size * sizeof(wchar_t)); //Plus null
+    size_t required_size = mbstowcs(NULL, g_str, 0) + 1; //Plus null
+    wchar_t *wtext = (wchar_t *)calloc(1, required_size * sizeof(wchar_t));
     mbstowcs(wtext, g_str, required_size);
 
     return wtext;

@@ -314,7 +314,8 @@ void* rdp_client_routine(ExtendedRdpContext *ex_contect)
     gchar** argv = malloc((rdp_params_dyn_array->len + 1) * sizeof(gchar*));
     for (guint i = 0; i < rdp_params_dyn_array->len; ++i) {
         argv[i] = g_array_index(rdp_params_dyn_array, gchar*, i);
-        g_info("%i RDP arg: %s", i, argv[i]);
+        if(strstr(argv[i], "/p:") == NULL) // Do not print the password
+            g_info("%i RDP arg: %s", i, argv[i]);
     }
     argv[rdp_params_dyn_array->len] = NULL; // Завершающий NULL
 
