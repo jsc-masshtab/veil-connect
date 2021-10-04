@@ -707,8 +707,8 @@ void vdi_session_get_vm_from_pool_task(GTask       *task,
             vdi_session_static->current_remote_protocol));
 
     if (task_data) {
-        json_builder_set_member_name(builder, "request_id");
         int *current_vm_request_id_ptr = (int *)task_data;
+        json_builder_set_member_name(builder, "request_id");
         json_builder_add_int_value(builder, *current_vm_request_id_ptr);
     }
 
