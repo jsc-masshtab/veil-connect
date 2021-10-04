@@ -138,44 +138,6 @@ set_message_to_info_label(GtkLabel *label, const gchar *message)
     gtk_widget_set_tooltip_text(GTK_WIDGET(label), message);
 }
 
-// get vm from pool callback
-static void
-on_vdi_session_get_vm_from_pool_finished(GObject *source_object G_GNUC_UNUSED,
-                                         GAsyncResult *res,
-                                         gpointer user_data G_GNUC_UNUSED)
-{
-    RemoteViewerConnData *ci = user_data;
-
-    set_auth_dialog_state(AUTH_GUI_DEFAULT_STATE, ci);
-
-    gpointer  ptr_res = g_task_propagate_pointer(G_TASK (res), NULL); // take ownership
-    if (ptr_res == NULL) {
-        set_message_to_info_label(GTK_LABEL(ci->message_display_label), "Не удалось получить вм из пула");
-        return;
-    }
-
-    VdiVmData *vdi_vm_data = ptr_res;
-
-    if (vdi_vm_data->server_reply_type != SERVER_REPLY_TYPE_DATA) {
-        const gchar *user_message = vdi_vm_data->message ? vdi_vm_data->message : "Не удалось получить вм из пула";
-        set_message_to_info_label(GTK_LABEL(ci->message_display_label), user_message);
-
-    } else {
-        ci->dialog_window_response = GTK_RESPONSE_OK;
-
-        update_string_safely(&get_conn_data(ci)->ip, vdi_vm_data->vm_host);
-        get_conn_data(ci)->port = vdi_vm_data->vm_port;
-        free_memory_safely(&get_conn_data(ci)->user);
-        update_string_safely(&get_conn_data(ci)->password, vdi_vm_data->vm_password);
-        update_string_safely(&get_conn_data(ci)->vm_verbose_name, vdi_vm_data->vm_verbose_name);
-        rdp_settings_clear(&get_conn_data(ci)->rdp_settings);
-
-        shutdown_loop(ci->loop);
-    }
-
-    vdi_api_session_free_vdi_vm_data(vdi_vm_data);
-}
-
 // token fetch callback
 static void
 on_vdi_session_log_in_finished(GObject *source_object G_GNUC_UNUSED,

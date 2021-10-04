@@ -150,7 +150,7 @@ make_entry_red(GtkWidget *entry)
 /*Return true if there were no errors otherwise - false  */
 // У виджета есть понятие id имя, котоое уникально и есть понятие имя виджета, которое используется для css.
 static gboolean
-check_parameters(ConnectSettingsData *p_conn_data, ConnectSettingsDialogData *dialog_data)
+check_parameters(ConnectSettingsData *p_conn_data G_GNUC_UNUSED, ConnectSettingsDialogData *dialog_data)
 {
     gboolean is_ok = TRUE;
     const gchar *pattern = "^$|[а-яА-ЯёЁa-zA-Z0-9]+[а-яА-ЯёЁa-zA-Z0-9.\\-_+ ]*$";
@@ -672,7 +672,6 @@ take_from_gui(ConnectSettingsDialogData *dialog_data)
             gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(dialog_data->vm_await_time_spinbox));
 
     // Main
-    const gchar *paramToFileGrpoup = get_cur_ini_param_group();
     // domain
     update_string_safely(&conn_data->domain, gtk_entry_get_text(GTK_ENTRY(dialog_data->domain_entry)));
     const gchar *ip = gtk_entry_get_text(GTK_ENTRY(dialog_data->address_entry));

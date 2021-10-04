@@ -159,7 +159,8 @@ static void refresh_vdi_get_vm_from_pool_async(VdiManager *self, const gchar *po
     // относящиеся к запросу
     // execute task
     execute_async_task(vdi_session_get_vm_from_pool_task,
-                       (GAsyncReadyCallback)on_vdi_session_get_vm_from_pool_finished, &self->current_vm_request_id, self);
+            (GAsyncReadyCallback)on_vdi_session_get_vm_from_pool_finished,
+            &self->current_vm_request_id, self);
 }
 
 // start asynchronous task to get vm data from vdi

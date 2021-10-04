@@ -1023,7 +1023,7 @@ void extract_name_and_domain(const gchar *full_user_name, gchar **user_name, gch
         const gint token_amount = 2;
         gchar **name_domain_array = g_strsplit(full_user_name, "@", token_amount);
 
-        if (g_strv_length(name_domain_array) == token_amount) {
+        if (g_strv_length(name_domain_array) == (guint)token_amount) {
             update_string_safely(user_name, name_domain_array[0]);
             update_string_safely(domain, name_domain_array[1]);
         }
