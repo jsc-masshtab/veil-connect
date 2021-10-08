@@ -506,8 +506,8 @@ pipeline {
                             curl http://mothership.bazalt.team/files/usbdk/UsbDk_1.0.22_x86.msi --output usbdk.msi
 
                             REM ### Make installer ###
-                            sed -i -e "s:&&VER&&:%VERSION%:g" -e "s:&&BUILD_VER&&:%BUILD_NUMBER%:g" %WORKSPACE%/devops\\inno-setup\\veil-connect-installer.iss
-                            iscc "%WORKSPACE%/devops\\inno-setup\\veil-connect-installer.iss"
+                            sed -i -e "s:&&VER&&:%VERSION%:g" -e "s:&&BUILD_VER&&:%BUILD_NUMBER%:g" %WORKSPACE%/devops\\inno-setup\\veil-connect-installer-32.iss
+                            iscc "%WORKSPACE%/devops\\inno-setup\\veil-connect-installer-32.iss"
                         '''
                     }
                 }
@@ -551,9 +551,15 @@ pipeline {
                             REM ### Add UsbDk to installer ###
                             curl http://mothership.bazalt.team/files/usbdk/UsbDk_1.0.22_x64.msi --output usbdk.msi
 
+                            REM ### Add FreeRDP alternative libs to installer
+                            mkdir freerdp_2.2.0
+                            for %%I in (freerdp2 freerdp-client2 winpr2 winpr-tools2) do (curl http://nexus.bazalt.team/repository/files/freerdp/x64/2.2.0/%%I.dll --output freerdp_2.2.0\\%%I.dll)
+                            mkdir freerdp_2.3.2
+                            for %%I in (freerdp2 freerdp-client2 winpr2 winpr-tools2) do (move %%I.dll freerdp_2.3.2)
+
                             REM ### Make installer ###
-                            sed -i -e "s:&&VER&&:%VERSION%:g" -e "s:&&BUILD_VER&&:%BUILD_NUMBER%:g" %WORKSPACE%/devops\\inno-setup\\veil-connect-installer.iss
-                            iscc "%WORKSPACE%/devops\\inno-setup\\veil-connect-installer.iss"
+                            sed -i -e "s:&&VER&&:%VERSION%:g" -e "s:&&BUILD_VER&&:%BUILD_NUMBER%:g" %WORKSPACE%/devops\\inno-setup\\veil-connect-installer-64.iss
+                            iscc "%WORKSPACE%/devops\\inno-setup\\veil-connect-installer-64.iss"
                         '''
                     }
                 }
