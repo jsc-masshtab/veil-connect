@@ -249,14 +249,6 @@ static gchar *vdi_session_auth_request()
 
     // parse response
     g_info("msg->status_code %i", msg->status_code);
-    //g_info("msg->response_body->data %s", msg->response_body->data);
-
-    if(msg->status_code != OK_RESPONSE) {
-        gchar *reply_msg = g_strdup(msg->reason_phrase);
-        g_object_unref(msg);
-        return reply_msg;
-    }
-
     // extract reply
     JsonParser *parser = json_parser_new();
 
@@ -296,7 +288,7 @@ static gchar *vdi_session_auth_request()
     }
 }
 
-// connect to reddis and subscribe for licence handling. Legacy function
+// connect to reddis and subscribe for licence handling. Legacy function. Remove it later
 static void vdi_api_session_register_for_license() {
     if (vdi_session_static->redis_client.is_subscribed)
         return;
@@ -691,9 +683,6 @@ void vdi_session_get_vm_from_pool_task(GTask       *task,
                     gpointer       task_data,
                     GCancellable  *cancellable G_GNUC_UNUSED)
 {
-    // register for licensing if its still not done
-    vdi_api_session_register_for_license(); // Legacy. Remove later
-
     // get vm from pool
     gchar *url_str = g_strdup_printf("%s/client/pools/%s", vdi_session_static->api_url,
             vdi_session_static->current_pool_id);
