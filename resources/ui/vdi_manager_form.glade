@@ -45,7 +45,7 @@
             <property name="homogeneous">True</property>
             <child>
               <object class="GtkButton" id="btn_open_user_settings">
-                <property name="label" translatable="yes">Настройки профиля</property>
+                <property name="label" translatable="yes" comments="Profile settings">Profile settings</property>
                 <property name="name">btn_open_user_settings</property>
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
@@ -61,7 +61,7 @@
             </child>
             <child>
               <object class="GtkButton" id="button-renew">
-                <property name="label">Обновить</property>
+                <property name="label" translatable="yes" comments="Обновить">Update</property>
                 <property name="name">button-renew</property>
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
@@ -79,7 +79,7 @@
             </child>
             <child>
               <object class="GtkButton" id="btn_cancel_requests">
-                <property name="label" translatable="yes">Отменить</property>
+                <property name="label" translatable="yes" comments="Отменить">Cancel</property>
                 <property name="name">btn_cancel_requests</property>
                 <property name="visible">True</property>
                 <property name="sensitive">False</property>
@@ -96,7 +96,7 @@
             </child>
             <child>
               <object class="GtkButton" id="button-quit">
-                <property name="label">Выйти</property>
+                <property name="label" translatable="yes" comments="Выйти">Quit</property>
                 <property name="name">button-quit</property>
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
@@ -180,7 +180,7 @@
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
                 <property name="halign">start</property>
-                <property name="label" translatable="yes">Отправлен запрос на список пулов</property>
+                <property name="label" translatable="yes" comments="Отправлен запрос на список пулов">Pool data request sent</property>
               </object>
               <packing>
                 <property name="expand">False</property>
@@ -193,7 +193,7 @@
                 <property name="name">label-is-vdi-online</property>
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
-                <property name="tooltip_text" translatable="yes">Индикатор доступности VDI сервера</property>
+                <property name="tooltip_text" translatable="yes">VDI server availability indicator</property>
                 <property name="halign">end</property>
                 <property name="hexpand">True</property>
                 <property name="stock">gtk-missing-image</property>

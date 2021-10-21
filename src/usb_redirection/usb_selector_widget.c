@@ -9,6 +9,8 @@
 #include <string.h>
 #include <stdlib.h>
 
+#include <glib/gi18n.h>
+
 #include <libusb.h>
 #include <usbredirparser.h>
 
@@ -115,7 +117,7 @@ usb_selector_widget_add_columns_to_usb_view(UsbSelectorWidget *self)
 
     // column 3
     renderer = gtk_cell_renderer_text_new();
-    column = gtk_tree_view_column_new_with_attributes("Состояние", renderer, "text", COLUMN_USB_REDIR_STATE,
+    column = gtk_tree_view_column_new_with_attributes(_("State"), renderer, "text", COLUMN_USB_REDIR_STATE,
                                                       "foreground-rgba", COLUMN_USB_COLOR, NULL);
     gtk_tree_view_append_column(GTK_TREE_VIEW(self->usb_devices_list_view), column);
 
@@ -160,7 +162,7 @@ UsbSelectorWidget *usb_selector_widget_new()
 {
     UsbSelectorWidget *self = calloc(1, sizeof(UsbSelectorWidget));
 
-    self->builder = remote_viewer_util_load_ui("usb_selector_form.ui");
+    self->builder = remote_viewer_util_load_ui("usb_selector_form.glade");
 
     self->main_window = get_widget_from_builder(self->builder, "main_window");
     self->usb_devices_list_view = get_widget_from_builder(self->builder, "usb_devices_list_view");
@@ -229,9 +231,9 @@ const gchar *usb_selector_widget_get_usb_status_text(UsbSelectorWidget *self, in
 {
     switch (self->usb_dev_data_array[usb_index].usb_state) {
         case USB_STATE_BEING_REDIRECTED:
-            return "USB перенаправляется";
+            return _("Redirecting USB"); // USB перенаправляется
         case USB_STATE_CANCELLING_REDIRECTION:
-            return"Завершаем перенаправление USB. Ожидайте";
+            return _("USB redirection is being finished. Await");
         case USB_STATE_NOT_USED:
         default:
             return "";

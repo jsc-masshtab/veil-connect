@@ -27,7 +27,7 @@
             <property name="layout_style">end</property>
             <child>
               <object class="GtkButton" id="ok_btn">
-                <property name="label" translatable="yes">Закрыть</property>
+                <property name="label" translatable="yes" comments="Закрыть">Close</property>
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
                 <property name="receives_default">True</property>
@@ -59,7 +59,7 @@
                     <property name="visible">True</property>
                     <property name="can_focus">False</property>
                     <property name="xpad">3</property>
-                    <property name="label" translatable="yes"> ip адрес  ТК</property>
+                    <property name="label" translatable="yes" comments="Адрес клиента">Client address(IP)</property>
                   </object>
                   <packing>
                     <property name="left_attach">0</property>

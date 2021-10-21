@@ -32,7 +32,7 @@ void show_about_dialog(GtkWindow *parent_window)
     GtkWidget *dialog;
     GdkPixbuf *icon;
 
-    about = remote_viewer_util_load_ui("virt-viewer-about.ui");
+    about = remote_viewer_util_load_ui("virt-viewer-about.glade");
 
     dialog = GTK_WIDGET(gtk_builder_get_object(about, "about"));
     gtk_about_dialog_set_version ((GtkAboutDialog *)dialog, VERSION);

@@ -6,6 +6,8 @@
  * Author: http://mashtab.org/
  */
 
+#include <glib/gi18n.h>
+
 #include "async.h"
 #include "vdi_session.h"
 #include "remote-viewer-util.h"
@@ -77,14 +79,20 @@ static void on_vdi_session_get_user_data_task_finished(GObject *source_object G_
 
         self->is_2fa_enabled = tk_user_data->two_factor;
         if (tk_user_data->two_factor) {
-            vdi_user_settings_widget_set_status(self, "Двухфакторная аутентификация включена.\n"
-                                                      "Для отключения снимите галочку и нажмите Применить.");
+            // "Двухфакторная аутентификация включена.\n"
+            // "Для отключения снимите галочку и нажмите Применить."
+            vdi_user_settings_widget_set_status(self, _("Two-factor authentication enabled.\n"
+                                                      "Uncheck 2fa and press Apply to disable."));
         } else {
-            vdi_user_settings_widget_set_status(self, "Двухфакторная аутентификация выключена. Для включения:\n"
-                                                      "- поставьте галочку;\n"
-                                                      "- сгенерируйте QR-код;\n"
-                                                      "- отсканируйте QR-код c помощью аутентификатора "
-                                                      "и нажмите Применить."
+            // "Двухфакторная аутентификация выключена. Для включения:\n"
+            // "- поставьте галочку,\n"
+            // "- сгенерируйте QR-код,\n"
+            // "- отсканируйте QR-код c помощью аутентификатора "
+            // "и нажмите Применить."
+            vdi_user_settings_widget_set_status(self, _("Two-factor authentication disabled. To enable:\n"
+                                                      "- check 2fa,\n"
+                                                      "- generate QR-code,\n"
+                                                      "- scan QR-code using an authenticator and press Apply.")
             );
         }
 
@@ -111,8 +119,8 @@ static void on_vdi_session_generate_qr_code_task_finished(GObject *source_object
     VdiUserSettingsWidget *self = (VdiUserSettingsWidget *) user_data;
     gtk_spinner_stop(GTK_SPINNER(self->spinner_status));
 
-    if (ptr_res == NULL) {
-        vdi_user_settings_widget_set_status(self, "Не удалось сгенерировать QR-код");
+    if (ptr_res == NULL) { // "Не удалось сгенерировать QR-код"
+        vdi_user_settings_widget_set_status(self, _("Failed to generate QR-code"));
         return;
     }
 
@@ -123,17 +131,22 @@ static void on_vdi_session_generate_qr_code_task_finished(GObject *source_object
         gtk_widget_set_sensitive(self->btn_apply, TRUE);
 
         // Если 2fa уже включена, то применять ничего не надо
+        // "QR-код сгенерирован.\n"
+        // "Отсканируйте QR-код c помощью аутентификатора\n"
+        // "(пример Яндекс.Ключ, Google Authenticator). %s",
+        // self->is_2fa_enabled ? "" : "Затем нажмите Применить."
         g_autofree gchar *msg = NULL;
-        msg = g_strdup_printf("QR-код сгенерирован.\n"
-                              "Отсканируйте QR-код c помощью аутентификатора\n"
-                              "(пример Яндекс.Ключ, Google Authenticator). %s",
-                              self->is_2fa_enabled ? "" : "Затем нажмите Применить.");
+        msg = g_strdup_printf(_("QR-code generated.\n"
+                              "Scan QR-code using an authenticator\n"
+                              "(Yandex.Key, Google Authenticator). %s"),
+                              self->is_2fa_enabled ? "" : _("Then press Apply."));
 
         vdi_user_settings_widget_set_status(self, msg);
 
     } else {
+        // "Возникла ошибка  %s"
         g_autofree gchar *error_msg = NULL;
-        error_msg = g_strdup_printf("Возникла ошибка: %s", tk_user_data->error_message);
+        error_msg = g_strdup_printf(_("An error occurred  %s"), tk_user_data->error_message);
         vdi_user_settings_widget_set_status(self, error_msg);
     }
 
@@ -154,17 +167,17 @@ static void on_vdi_session_update_user_data_task_finished(GObject *source_object
     VdiUserSettingsWidget *self = (VdiUserSettingsWidget *) user_data;
     gtk_spinner_stop(GTK_SPINNER(self->spinner_status));
 
-    if (ptr_res == NULL) {
-        vdi_user_settings_widget_set_status(self, "Не удалось применить изменения.");
+    if (ptr_res == NULL) { // "Не удалось применить изменения."
+        vdi_user_settings_widget_set_status(self, _("Failed to apply changes."));
         return;
     }
 
     if (tk_user_data->is_success) {
         self->is_2fa_enabled = tk_user_data->two_factor;
-        vdi_user_settings_widget_set_status(self, "Изменения успешно применены.");
+        vdi_user_settings_widget_set_status(self, _("Changes applied successfully."));
     } else {
         g_autofree gchar *error_msg = NULL;
-        error_msg = g_strdup_printf("Возникла ошибка: %s", tk_user_data->error_message);
+        error_msg = g_strdup_printf(_("An error occurred  %s"), tk_user_data->error_message);
         vdi_user_settings_widget_set_status(self, error_msg);
     }
 
@@ -173,7 +186,8 @@ static void on_vdi_session_update_user_data_task_finished(GObject *source_object
 
 static void on_btn_generate_qr_code_clicked(GtkButton *button G_GNUC_UNUSED, VdiUserSettingsWidget *self)
 {
-    vdi_user_settings_widget_set_status(self, "Отправлен запрос на генерацию QR.");
+    // Отправлен запрос на генерацию QR.
+    vdi_user_settings_widget_set_status(self, _("QR generation request sent."));
     gtk_spinner_start(GTK_SPINNER(self->spinner_status));
     execute_async_task(vdi_session_generate_qr_code_task,
                        (GAsyncReadyCallback)on_vdi_session_generate_qr_code_task_finished, NULL, self);
@@ -181,7 +195,8 @@ static void on_btn_generate_qr_code_clicked(GtkButton *button G_GNUC_UNUSED, Vdi
 
 static void on_btn_apply_clicked(GtkButton *button G_GNUC_UNUSED, VdiUserSettingsWidget *self)
 {
-    vdi_user_settings_widget_set_status(self, "Отправлен запрос на применение изменений.");
+    // Отправлен запрос на применение изменений.
+    vdi_user_settings_widget_set_status(self, _("Request to apply changes sent."));
     gtk_spinner_start(GTK_SPINNER(self->spinner_status));
 
     UserData *tk_user_data = calloc(1, sizeof(UserData)); // free in callback!
@@ -196,11 +211,13 @@ static void on_check_btn_2fa_toggled(GtkToggleButton *button, VdiUserSettingsWid
     if (is_active) {
         gtk_widget_set_sensitive(self->btn_generate_qr_code, TRUE);
         gtk_widget_set_sensitive(self->btn_apply, FALSE);
-        vdi_user_settings_widget_set_status(self, "Сгенерируйте QR-код.");
+        // "Сгенерируйте QR-код."
+        vdi_user_settings_widget_set_status(self, _("Generate QR-code."));
     } else {
         gtk_widget_set_sensitive(self->btn_generate_qr_code, FALSE);
         gtk_widget_set_sensitive(self->btn_apply, TRUE);
-        vdi_user_settings_widget_set_status(self, "Для отключения двухфакторной аутентификации нажмите Применить.");
+        // "Для отключения двухфакторной аутентификации нажмите Применить."
+        vdi_user_settings_widget_set_status(self, _("Press Apply to disable 2fa."));
         // clear QR data
         qr_widget_clear(self->qr_widget);
         gtk_label_set_text(GTK_LABEL(self->secret_label), "");
@@ -213,7 +230,7 @@ void vdi_user_settings_widget_show(GtkWindow *parent)
     memset(&self, 0, sizeof(VdiUserSettingsWidget));
     is_widget_active = TRUE;
 
-    self.builder = remote_viewer_util_load_ui("vdi_user_settings_form.ui");
+    self.builder = remote_viewer_util_load_ui("vdi_user_settings_form.glade");
     self.main_window = get_widget_from_builder(self.builder, "main_window");
     //gtk_window_set_deletable(self.main_window, FALSE);
     self.qr_widget_container_box = get_widget_from_builder(self.builder, "qr_widget_container_box");

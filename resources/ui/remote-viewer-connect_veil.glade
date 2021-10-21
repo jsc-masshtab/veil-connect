@@ -78,7 +78,7 @@
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
                 <property name="halign">start</property>
-                <property name="label" translatable="yes">Имя пользователя</property>
+                <property name="label" translatable="yes" comments="Имя пользователя">User name</property>
               </object>
               <packing>
                 <property name="expand">False</property>
@@ -91,7 +91,7 @@
                 <property name="name">login-entry</property>
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
-                <property name="placeholder_text" translatable="yes">Пользователь</property>
+                <property name="placeholder_text" translatable="yes" comments="Пользователь">User</property>
               </object>
               <packing>
                 <property name="expand">True</property>
@@ -105,7 +105,7 @@
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
                 <property name="halign">start</property>
-                <property name="label" translatable="yes">Пароль</property>
+                <property name="label" translatable="yes" comments="Пароль">Password</property>
               </object>
               <packing>
                 <property name="expand">True</property>
@@ -120,7 +120,7 @@
                 <property name="can_focus">True</property>
                 <property name="visibility">False</property>
                 <property name="invisible_char">•</property>
-                <property name="placeholder_text" translatable="yes">Пароль</property>
+                <property name="placeholder_text" translatable="yes" comments="Пароль">Password</property>
               </object>
               <packing>
                 <property name="expand">True</property>
@@ -130,7 +130,7 @@
             </child>
             <child>
               <object class="GtkCheckButton" id="check_btn_2fa_password">
-                <property name="label" translatable="yes">Одноразовый пароль</property>
+                <property name="label" translatable="yes" comments="Одноразовый пароль">One-time password</property>
                 <property name="name">check_btn_2fa_password</property>
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
@@ -199,7 +199,7 @@
             <property name="column_homogeneous">True</property>
             <child>
               <object class="GtkButton" id="connect-button">
-                <property name="label" translatable="yes">Войти</property>
+                <property name="label" translatable="yes" comments="Enter">Enter</property>
                 <property name="name">connect-button</property>
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
@@ -233,7 +233,7 @@
             </child>
             <child>
               <object class="GtkButton" id="btn_settings">
-                <property name="label" translatable="yes">Настройки</property>
+                <property name="label" translatable="yes" comments="Настройки">Settings</property>
                 <property name="name">btn_settings</property>
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>

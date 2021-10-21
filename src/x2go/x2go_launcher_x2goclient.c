@@ -6,6 +6,8 @@
  * Author: http://mashtab.org/
  */
 
+#include <glib/gi18n.h>
+
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -91,7 +93,7 @@ static gboolean x2go_launcher_launch_process(X2goData *data, gchar **error_msg)
     const char *x2go_template_filename = "x2go_data/x2go_sessions";
     FILE *sourceFile = fopen(x2go_template_filename,"r");
     if (sourceFile == NULL) {
-        *error_msg = g_strdup_printf("Unable to open %s", x2go_template_filename);
+        *error_msg = g_strdup_printf(_("Unable to open %s"), x2go_template_filename);
         return FALSE;
     }
     // g_get_user_data_dir
@@ -111,7 +113,7 @@ static gboolean x2go_launcher_launch_process(X2goData *data, gchar **error_msg)
     if (destFile == NULL) {
         // Unable to open
         fclose(sourceFile);
-        *error_msg = g_strdup_printf("\nUnable to open file %s.", x2go_data_file_name);
+        *error_msg = g_strdup_printf(_("\nUnable to open file %s."), x2go_data_file_name);
         return FALSE;
     }
     // Copy file
@@ -120,7 +122,7 @@ static gboolean x2go_launcher_launch_process(X2goData *data, gchar **error_msg)
 
     // Fill settings file
     if(!x2go_launcher_fill_settings_file(data, x2go_data_file_name)) {
-        *error_msg = g_strdup_printf("Unable to prepare x2go config file");
+        *error_msg = g_strdup_printf(_("Unable to prepare x2go config file"));
         return FALSE;
     }
 
@@ -152,7 +154,7 @@ static gboolean x2go_launcher_launch_process(X2goData *data, gchar **error_msg)
             g_warning("%s", error->message);
             g_clear_error(&error);
         }
-        *error_msg = g_strdup_printf("Failed to start process x2goclient");
+        *error_msg = g_strdup_printf(_("Failed to start process x2goclient"));
         return FALSE;
     }
 

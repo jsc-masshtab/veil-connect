@@ -839,8 +839,8 @@ virt_viewer_session_spice_usb_device_selection(VirtViewerSession *session,
     VirtViewerSessionSpicePrivate *priv = self->priv;
     GtkWidget *dialog, *area, *usb_device_widget;
 
-    /* Create the widgets */   // _("Select USB devices for redirection")
-    dialog = gtk_dialog_new_with_buttons(_("Выберите USB устройство для проброса"), parent,
+    // Выберите USB устройство для проброса
+    dialog = gtk_dialog_new_with_buttons(_("Choose USB device for redirection"), parent,
                                          GTK_DIALOG_MODAL | GTK_DIALOG_DESTROY_WITH_PARENT,
                                          _("_Close"), GTK_RESPONSE_ACCEPT,
                                          NULL);

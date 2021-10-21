@@ -137,7 +137,7 @@ AppSelectorResult vdi_app_selector_start(VdiVmData *p_vdi_vm_data, GtkWindow *pa
     self->selector_result.result_type = APP_SELECTOR_RESULT_NONE;
     GArray *farm_array = p_vdi_vm_data->farm_array;
 
-    self->builder = remote_viewer_util_load_ui("vdi_app_selector_form.ui");
+    self->builder = remote_viewer_util_load_ui("vdi_app_selector_form.glade");
     self->window = GTK_WIDGET(gtk_builder_get_object(self->builder, "main_window"));
     self->main_box = GTK_WIDGET(gtk_builder_get_object(self->builder, "main_box"));
 

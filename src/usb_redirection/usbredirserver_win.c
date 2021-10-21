@@ -28,6 +28,8 @@
 #include <sys/types.h>
 #include <sys/time.h>
 
+#include <glib/gi18n.h>
+
 #include "usbredir_util.h"
 #include "usbredirhost.h"
 #include "remote-viewer-util.h"
@@ -395,7 +397,7 @@ void usbredirserver_launch_task(GTask           *task,
     *(priv.p_running_flag) = 1;
 
     if (usbredir_util_init_libusb_and_set_options(&priv.ctx, priv.verbose) == -1) {
-        task_res_data->message = g_strdup("Could not init libusb"); // must be freed
+        task_res_data->message = g_strdup(_("Failed to init libusb")); // must be freed
         g_task_return_pointer(task, task_res_data, NULL);
         free_memory_safely(&usb_task_data->start_data.ipv4_addr);
         return;
@@ -405,7 +407,7 @@ void usbredirserver_launch_task(GTask           *task,
     SOCKET server_fd = usbredirserver_create_server_socket(usb_task_data->start_data.ipv4_addr,
                                                            usb_task_data->start_data.port);
     if (server_fd == INVALID_SOCKET) {
-        task_res_data->message = g_strdup("Error while creating server socket"); // must be freed in the main thread
+        task_res_data->message = g_strdup(_("Error while creating server socket"));
         goto releasing_resources;
     }
     usbredirserver_make_socket_nonblocking(server_fd);
@@ -429,12 +431,12 @@ void usbredirserver_launch_task(GTask           *task,
     // result of vdi_session_attach_usb
     cur_usb_uuid = g_thread_join(attach_usb_func_thread);
     if (!cur_usb_uuid) {
-        task_res_data->message = g_strdup("Cant add tcp usb device");
+        task_res_data->message = g_strdup(_("Failed to add TCP USB device to remote machine"));
         goto releasing_resources;
     }
 
     if (priv.client_fd == INVALID_SOCKET) {
-        task_res_data->message = g_strdup("Error while accepting client connection");
+        task_res_data->message = g_strdup(_("Error while accepting client connection"));
         goto releasing_resources;
     } else {
         fprintf(stdout, "Client accepted\n");
@@ -452,7 +454,7 @@ void usbredirserver_launch_task(GTask           *task,
 
     if (!handle) { // Failed to open USB device.
         fprintf(stdout, "libusb_device_handle !handle. Close client_fd\n");
-        task_res_data->message = g_strdup("Не удалось открыть USB устройство.");
+        task_res_data->message = g_strdup(_("Failed to open USB device."));
         goto releasing_resources;
     }
 
@@ -463,7 +465,7 @@ void usbredirserver_launch_task(GTask           *task,
                                   &priv, SERVER_VERSION, priv.verbose, 0);
     fprintf(stdout, "After priv.host = usbredirhost_open\n");
     if (!priv.host) {
-        task_res_data->message = g_strdup("usbredirhost_open failed");
+        task_res_data->message = g_strdup(_("usbredirhost_open failed"));
         goto releasing_resources;
     }
 
@@ -485,7 +487,7 @@ void usbredirserver_launch_task(GTask           *task,
     g_thread_join(usb_events_thread);
 
     // successsfull finish
-    task_res_data->message = g_strdup("Перенаправление USB завершилось");
+    task_res_data->message = g_strdup(_("USB redirection finished"));
     task_res_data->code = USB_REDIR_FINISH_SUCCESS;
 
 releasing_resources:

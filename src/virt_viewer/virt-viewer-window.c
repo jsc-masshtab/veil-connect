@@ -369,7 +369,7 @@ virt_viewer_window_init (VirtViewerWindow *self)
     priv->notebook = virt_viewer_notebook_new();
     gtk_widget_show(GTK_WIDGET(priv->notebook));
 
-    priv->builder = remote_viewer_util_load_ui("virt-viewer_veil.ui");
+    priv->builder = remote_viewer_util_load_ui("virt-viewer_veil.glade");
 
     gtk_widget_set_sensitive(GTK_WIDGET(gtk_builder_get_object(self->priv->builder, "menu-send")), FALSE);
     gtk_widget_set_sensitive(GTK_WIDGET(gtk_builder_get_object(self->priv->builder, "menu-view-zoom")), FALSE);
@@ -1027,7 +1027,7 @@ virt_viewer_window_menu_file_screenshot(GtkWidget *menu G_GNUC_UNUSED,
 
     g_return_if_fail(priv->display != NULL);
 
-    dialog = gtk_file_chooser_dialog_new("Save screenshot",
+    dialog = gtk_file_chooser_dialog_new(_("Save screenshot"),
                                          NULL,
                                          GTK_FILE_CHOOSER_ACTION_SAVE,
                                          _("_Cancel"), GTK_RESPONSE_CANCEL,
@@ -1084,7 +1084,9 @@ virt_viewer_window_menu_preferences_cb(GtkWidget *menu G_GNUC_UNUSED,
                                        VirtViewerWindow *self)
 {
     if (!vdi_session_is_folders_redir_permitted()) {
-        show_msg_box_dialog(GTK_WINDOW(self->priv->window), "Проброс папок запрещен администратором");
+        // "Проброс папок запрещен администратором"
+        show_msg_box_dialog(GTK_WINDOW(self->priv->window),
+                _("Folder redirection prohibited by administrator"));
         return;
     }
 
@@ -1382,11 +1384,11 @@ virt_viewer_window_update_title(VirtViewerWindow *self)
          * This is "<ungrab (or empty)><space (or empty)><subtitle (or empty)> - <appname>"
          * Such as: "(Press Ctrl+Alt to release pointer) BigCorpTycoon MOTD - Virt Viewer"
          */
-        title = g_strdup_printf(_("%s%s%s - %s"),
+        title = g_strdup_printf("%s%s%s - %s",
                                 /* translators: <ungrab empty> */
                                 ungrab ? ungrab : "",
                                 /* translators: <space> */
-                                ungrab && priv->subtitle ? _(" ") : "",
+                                ungrab && priv->subtitle ? " " : "",
                                 priv->subtitle,
                                 g_get_application_name());
 

@@ -12,7 +12,7 @@
     <property name="type_hint">dialog</property>
     <property name="skip_taskbar_hint">True</property>
     <property name="skip_pager_hint">True</property>
-    <property name="program_name">Veil Connect</property>
+    <property name="program_name">VeiL Connect</property>
     <property name="website">http://mashtab.org/</property>
     <property name="website_label" translatable="yes">mashtab.org</property>
     <property name="authors">АО  "НИИ Масштаб"

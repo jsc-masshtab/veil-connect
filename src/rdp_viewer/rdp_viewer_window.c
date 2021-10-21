@@ -6,6 +6,8 @@
  * Author: http://mashtab.org/
  */
 
+#include <glib/gi18n.h>
+
 #include <freerdp/locale/keyboard.h>
 #include <freerdp/scancode.h>
 
@@ -314,9 +316,10 @@ static void rdp_viewer_item_menu_usb_activated(GtkWidget *menu G_GNUC_UNUSED, gp
     if (usbredir_controller_is_usb_tcp_window_shown())
         return;
 
-    // Не показывать если запрещено в админке
+    // Не показывать если запрещено в админке. Проброс USB запрещен администратором
     if (!vdi_session_is_usb_redir_permitted()) {
-        show_msg_box_dialog(GTK_WINDOW(rdp_window_data->rdp_viewer_window), "Проброс USB запрещен администратором");
+        show_msg_box_dialog(GTK_WINDOW(rdp_window_data->rdp_viewer_window),
+                            _("USB redirection is not allowed"));
         return;
     }
 
@@ -505,7 +508,7 @@ static void rdp_viewer_toolbar_setup(GtkBuilder *builder, RdpWindowData *rdp_win
     gtk_toolbar_set_style(GTK_TOOLBAR(rdp_window_data->overlay_toolbar), GTK_TOOLBAR_BOTH_HORIZ);
 
     // Leave fullscreen
-    button = create_new_button_for_overlay_toolbar(rdp_window_data, "view-restore", "Покинуть полный экран");
+    button = create_new_button_for_overlay_toolbar(rdp_window_data, "view-restore", _("Leave full screen"));
     g_signal_connect(button, "clicked", G_CALLBACK(rdp_viewer_window_toolbar_leave_fullscreen), rdp_window_data);
 
     // Leave fullscreen for all windows at once
@@ -518,10 +521,10 @@ static void rdp_viewer_toolbar_setup(GtkBuilder *builder, RdpWindowData *rdp_win
     }
 
     // Reconnect
-    button = create_new_button_for_overlay_toolbar(rdp_window_data, "system-reboot", "Переподключиться");
+    button = create_new_button_for_overlay_toolbar(rdp_window_data, "system-reboot", _("Reconnect"));
     g_signal_connect(button, "clicked", G_CALLBACK(rdp_viewer_window_menu_reconnect), rdp_window_data);
     // Disconnect
-    button = create_new_button_for_overlay_toolbar(rdp_window_data, "window-close", "Отключиться");
+    button = create_new_button_for_overlay_toolbar(rdp_window_data, "window-close", _("Disconnect"));
     g_signal_connect(button, "clicked", G_CALLBACK(rdp_viewer_window_menu_switch_off), rdp_window_data);
 
     // add tollbar to overlay
@@ -552,7 +555,8 @@ rdp_viewer_window_usb_redir_task_finished(gpointer source G_GNUC_UNUSED, int cod
         return;
 
     g_autofree gchar *msg = NULL;
-    msg = g_strdup_printf("Перенаправление USB /dev/bus/usb/%03i/%03i завершилось с ошибкой.\n%s",
+    // Перенаправление USB /dev/bus/usb/%03i/%03i завершилось с ошибкой. %s
+    msg = g_strdup_printf(_("USB redirection /dev/bus/usb/%03i/%03i finished with errors.\n%s"),
                           usbbus, usbaddr, message);
     show_msg_box_dialog(GTK_WINDOW(rdp_window_data->rdp_viewer_window), msg);
 }
@@ -673,11 +677,12 @@ RdpWindowData *rdp_viewer_window_create(ExtendedRdpContext *ex_rdp_context, int 
     rdp_window_data->monitor_index = index;
 
     // gui
-    GtkBuilder *builder = rdp_window_data->builder = remote_viewer_util_load_ui("virt-viewer_veil.ui");
+    GtkBuilder *builder = rdp_window_data->builder = remote_viewer_util_load_ui("virt-viewer_veil.glade");
 
     GtkWidget *rdp_viewer_window = rdp_window_data->rdp_viewer_window =
             GTK_WIDGET(gtk_builder_get_object(builder, "viewer"));
-    gchar *title = g_strdup_printf("ВМ: %s     Пользователь: %s  -  %s", vdi_session_get_current_vm_name(),
+    // ВМ: %s     Пользователь: %s  -  %s
+    gchar *title = g_strdup_printf(_("VM: %s     User: %s  -  %s"), vdi_session_get_current_vm_name(),
             ex_rdp_context->p_rdp_settings->user_name, APPLICATION_NAME_WITH_SPACES);
     gtk_window_set_title(GTK_WINDOW(rdp_viewer_window), title);
     free_memory_safely(&title);

@@ -8,22 +8,13 @@
                  #if !defined _FORTIFY_SOURCE && defined __OPTIMIZE__ && __OPTIMIZE__
                  # define _FORTIFY_SOURCE 2
                  #endif
-                
 
 /* GETTEXT package name */
-#define GETTEXT_PACKAGE "veil_connect"
+#define GETTEXT_PACKAGE "veil-connect"
 #define  LOCALE_DIR "locale" // folder that placed next to the binary
 
 /* Define to 1 if you have the `bind_textdomain_codeset' function. */
 #define HAVE_BIND_TEXTDOMAIN_CODESET 1
-
-/* Define to 1 if you have the Mac OS X function CFLocaleCopyCurrent in the
-   CoreFoundation framework. */
-/* #undef HAVE_CFLOCALECOPYCURRENT */
-
-/* Define to 1 if you have the Mac OS X function CFPreferencesCopyAppValue in
-   the CoreFoundation framework. */
-/* #undef HAVE_CFPREFERENCESCOPYAPPVALUE */
 
 /* Define to 1 if you have the `dcgettext' function. */
 #define HAVE_DCGETTEXT 1
@@ -55,14 +46,8 @@
 /* Define to 1 if you have the <memory.h> header file. */
 #define HAVE_MEMORY_H 1
 
-/* Have libgovirt? */
-//#define HAVE_OVIRT 1
-
 /* Have rest_proxy_auth_cancel and OVIRT_REST_CALL_ERROR_CANCELLED? */
 #define HAVE_OVIRT_CANCEL 1
-
-/* Define to 1 if you have the `socketpair' function. */
-//#define HAVE_SOCKETPAIR 1
 
 /* Have spice-gtk? */
 #define HAVE_SPICE_GTK 1
@@ -115,19 +100,7 @@
 #define APPLICATION_NAME_WITH_SPACES "VeiL Connect"
 
 /* Name of package */
-#define PACKAGE "veil-connect"
-
-/* Define to the address where bug reports for this package should be sent. */
-#define PACKAGE_BUGREPORT ""
-
-/* Define to the full name of this package. */
-#define PACKAGE_NAME "ECP-Veil-VDI-Thin-client"
-
-/* Define to the full name and version of this package. */
-#define PACKAGE_STRING "ECP-Veil-VDI-Thin-client"
-
-/* Define to the one symbol short name of this package. */
-#define PACKAGE_TARNAME "ECP-Veil-VDI-Thin-client"
+#define PACKAGE GETTEXT_PACKAGE
 
 /* Define to the home page for this package. */
 #define PACKAGE_URL ""
@@ -147,14 +120,12 @@
 /* Enable GNU extensions */
 #define _GNU_SOURCE /**/
 
-/*Vdi Server default port*/
-#define VDI_SERVER_DEFAULT_PORT 8888
-
 /*Endpoint lka thin client in nginx*/
 #define NGINX_VDI_API_PREFIX "api"
 
 /*Product links*/
 #define VEIL_PRODUCT_SITE "https://mashtab.org/files/vdi/index.html"
+
 #define VEIL_CONNECT_DOC_SITE "https://veil.mashtab.org/vdi-docs/connect/operator_guide/annotate/"
 
 #define VEIL_CONNECT_WIN_RELEASE_URL "https://veil-update.mashtab.org/veil-connect/windows/latest/"

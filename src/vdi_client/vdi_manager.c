@@ -13,6 +13,7 @@
 #include <gdk/gdkkeysyms.h>
 #include <cairo-features.h>
 #include <libsoup/soup-session.h>
+#include <glib/gi18n.h>
 
 #include "vdi_manager.h"
 #include "vdi_app_selector.h"
@@ -24,7 +25,7 @@
 #include "vdi_user_settings_widget.h"
 
 #define MAX_POOL_NUMBER 150
-#define  MSG_TRIM_LENGTH 140
+#define MSG_TRIM_LENGTH 140
 
 G_DEFINE_TYPE( VdiManager, vdi_manager, G_TYPE_OBJECT )
 
@@ -139,8 +140,8 @@ static void enable_vm_prep_progress_messages(VdiManager *self, gboolean enabled)
 static void refresh_vdi_get_vm_from_pool_async(VdiManager *self, const gchar *pool_id)
 {
     vdi_session_set_current_pool_id(pool_id);
-    // gui message
-    set_vdi_client_state(self, VDI_WAITING_FOR_VM_FROM_POOL, "Отправлен запрос на получение вм из пула", FALSE);
+    // gui message  "Отправлен запрос на получение вм из пула"
+    set_vdi_client_state(self, VDI_WAITING_FOR_VM_FROM_POOL, _("VM request sent"), FALSE);
     // start spinner on vm widget
     VdiPoolWidget vdi_pool_widget = get_vdi_pool_widget_by_id(self, pool_id);
     vdi_pool_widget_enable_spinner(&vdi_pool_widget, TRUE);
@@ -168,8 +169,8 @@ static void refresh_vdi_pool_data_async(VdiManager *self)
 {
     vdi_session_cancell_pending_requests();
     unregister_all_pools(self);
-
-    set_vdi_client_state(self, VDI_WAITING_FOR_POOL_DATA, "Отправлен запрос на список пулов", FALSE);
+    // "Отправлен запрос на список пулов"
+    set_vdi_client_state(self, VDI_WAITING_FOR_POOL_DATA, _("Pool data request sent"), FALSE);
     execute_async_task(vdi_session_get_vdi_pool_data_task,
             (GAsyncReadyCallback)on_vdi_session_get_vdi_pool_data_finished,
             NULL, self);
@@ -236,9 +237,11 @@ static void on_vdi_session_get_vdi_pool_data_finished(GObject *source_object G_G
     g_info("%s", (const char *)__func__);
 
     GError *error = NULL;
+    g_autofree gchar *err_msg = NULL;
+    err_msg = g_strdup(_("Failed to fetch pool data"));
     gpointer ptr_res = g_task_propagate_pointer(G_TASK(res), &error); // take ownership
-    if(ptr_res == NULL) {
-        set_vdi_client_state(self, VDI_RECEIVED_RESPONSE, "Не удалось получить список пулов", TRUE);
+    if(ptr_res == NULL) { // "Не удалось получить список пулов"
+        set_vdi_client_state(self, VDI_RECEIVED_RESPONSE, err_msg, TRUE);
         return;
     }
 
@@ -260,7 +263,7 @@ static void on_vdi_session_get_vdi_pool_data_finished(GObject *source_object G_G
     if (!json_array) {
         g_object_unref(parser);
         g_free(ptr_res);
-        set_vdi_client_state(self, VDI_RECEIVED_RESPONSE, "Не удалось получить список пулов", TRUE);
+        set_vdi_client_state(self, VDI_RECEIVED_RESPONSE, err_msg, TRUE);
         return;
     }
 
@@ -286,8 +289,8 @@ static void on_vdi_session_get_vdi_pool_data_finished(GObject *source_object G_G
         register_pool(self, pool_id, pool_name, os_type, status, conn_types_json_array);
     }
 
-    //
-    set_vdi_client_state(self, VDI_RECEIVED_RESPONSE, "Получен список пулов", FALSE);
+    // "Получен список пулов"
+    set_vdi_client_state(self, VDI_RECEIVED_RESPONSE, _("Pool data received"), FALSE);
     //
     g_object_unref(parser);
     if(ptr_res)
@@ -314,10 +317,12 @@ static void on_vdi_session_get_vm_from_pool_finished(GObject *source_object G_GN
     gtk_progress_bar_set_fraction(GTK_PROGRESS_BAR(self->vm_prep_progress_bar), 1);
 
     GError *error = NULL;
+    g_autofree gchar *err_msg = NULL;
+    err_msg = g_strdup(_("Failed to get VM fom pool"));
     gpointer  ptr_res =  g_task_propagate_pointer (G_TASK (res), &error); // take ownership
-    if (ptr_res == NULL) {
+    if (ptr_res == NULL) { // "Не удалось получить вм из пула",
         g_info("%s : FAIL", (const char *)__func__);
-        set_vdi_client_state(self, VDI_RECEIVED_RESPONSE, "Не удалось получить вм из пула", TRUE);
+        set_vdi_client_state(self, VDI_RECEIVED_RESPONSE, err_msg, TRUE);
         return;
     }
 
@@ -331,8 +336,8 @@ static void on_vdi_session_get_vm_from_pool_finished(GObject *source_object G_GN
         self->p_conn_data->port = vdi_vm_data->vm_port;
         update_string_safely(&self->p_conn_data->password, vdi_vm_data->vm_password);
         update_string_safely(&self->p_conn_data->vm_verbose_name, vdi_vm_data->vm_verbose_name);
-        //
-        set_vdi_client_state(self, VDI_RECEIVED_RESPONSE, "Получена вм из пула", FALSE);
+        // "Получена вм из пула"
+        set_vdi_client_state(self, VDI_RECEIVED_RESPONSE, _("VM received from pool"), FALSE);
 
         // Если существует список приложений и если протокол RDP, то показываем окно выбора приложений
         rdp_settings_clear(&self->p_conn_data->rdp_settings);
@@ -352,7 +357,7 @@ static void on_vdi_session_get_vm_from_pool_finished(GObject *source_object G_GN
 
     } else {
         const gchar *user_message = (strlen_safely(vdi_vm_data->message) != 0) ?
-                                    vdi_vm_data->message : "Не удалось получить вм из пула";
+                                    vdi_vm_data->message : err_msg;
         set_vdi_client_state(self, VDI_RECEIVED_RESPONSE, user_message, TRUE);
 
         if (strlen_safely(user_message) > MSG_TRIM_LENGTH)
@@ -413,8 +418,8 @@ static void on_button_renew_clicked(GtkButton *button G_GNUC_UNUSED, VdiManager 
 // cancel pending requests
 static void on_btn_cancel_requests_clicked(GtkButton *button G_GNUC_UNUSED, VdiManager *self G_GNUC_UNUSED) {
 
-    g_info("%s", (const char *)__func__);
-    gtk_label_set_text(GTK_LABEL(self->status_label), "Текущие запросы отменены");
+    g_info("%s", (const char *)__func__); // "Текущие запросы отменены"
+    gtk_label_set_text(GTK_LABEL(self->status_label), _("Current requests cancelled"));
     vdi_session_cancell_pending_requests();
 }
 // quit button pressed callback
@@ -524,7 +529,7 @@ static void vdi_manager_init(VdiManager *self)
     self->ci.next_app_state = APP_STATE_AUTH_DIALOG;
 
     /* Create the widgets */
-    self->builder = remote_viewer_util_load_ui("vdi_manager_form.ui");
+    self->builder = remote_viewer_util_load_ui("vdi_manager_form.glade");
     self->window = GTK_WIDGET(gtk_builder_get_object(self->builder, "vdi-main-window"));
     self->btn_open_user_settings = GTK_WIDGET(gtk_builder_get_object(self->builder, "btn_open_user_settings"));
     self->btn_cancel_requests = GTK_WIDGET(gtk_builder_get_object(self->builder, "btn_cancel_requests"));
@@ -564,8 +569,8 @@ RemoteViewerState vdi_manager_dialog(VdiManager *self, ConnectSettingsData *conn
     self->p_conn_data = conn_data;
 
     // show window
-    g_autofree gchar *title = NULL;
-    title = g_strdup_printf("%s  Время входа: %s  -  %s",
+    g_autofree gchar *title = NULL; // %s  Время входа: %s  -  %s
+    title = g_strdup_printf(_("%s  Login time: %s  -  %s"),
             vdi_session_get_vdi_username(),
             vdi_session_get_login_time(),
             APPLICATION_NAME_WITH_SPACES);

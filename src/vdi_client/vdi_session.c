@@ -13,6 +13,7 @@
 
 #include <json-glib/json-glib.h>
 #include <glib/gmacros.h>
+#include <glib/gi18n.h>
 
 #include "remote-viewer-util.h"
 #include "config.h"
@@ -222,8 +223,8 @@ static gchar *vdi_session_auth_request()
 
     // create request message
     SoupMessage *msg = soup_message_new("POST", vdi_session_static->auth_url);
-    if(msg == NULL) {
-        gchar *text_msg = g_strdup_printf("Не удалось сформировать SoupMessage. %s", vdi_session_static->auth_url);
+    if(msg == NULL) { // "Не удалось сформировать SoupMessage. %s"
+        gchar *text_msg = g_strdup_printf(_("Failed to form SoupMessage. %s"), vdi_session_static->auth_url);
         g_info("%s: %s", (const char*)__func__, text_msg);
         return text_msg;
     }
@@ -278,8 +279,8 @@ static gchar *vdi_session_auth_request()
                 reply_msg = g_strdup(message);
             else if (msg->reason_phrase != NULL && strlen_safely(msg->reason_phrase) != 0)
                 reply_msg = g_strdup(msg->reason_phrase);
-            else
-                reply_msg = g_strdup("Не удалось авторизоваться");
+            else // "Не удалось авторизоваться"
+                reply_msg = g_strdup(_("Failed to login"));
 
             g_object_unref(msg);
             g_object_unref(parser);

@@ -103,7 +103,7 @@
                       <object class="GtkLabel">
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
-                        <property name="label" translatable="yes">Имя</property>
+                        <property name="label" translatable="yes" comments="Имя">Name</property>
                       </object>
                       <packing>
                         <property name="expand">False</property>
@@ -115,7 +115,7 @@
                       <object class="GtkEntry" id="user_name_entry">
                         <property name="visible">True</property>
                         <property name="can_focus">True</property>
-                        <property name="tooltip_text" translatable="yes">По умолчанию используются текущие данные авторизации</property>
+                        <property name="tooltip_text" translatable="yes">Current credentials are used by default</property>
                       </object>
                       <packing>
                         <property name="expand">False</property>
@@ -127,7 +127,7 @@
                       <object class="GtkLabel">
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
-                        <property name="label" translatable="yes">Пароль</property>
+                        <property name="label" translatable="yes" comments="Пароль">Password</property>
                       </object>
                       <packing>
                         <property name="expand">False</property>
@@ -206,7 +206,7 @@
                 <property name="spacing">3</property>
                 <child>
                   <object class="GtkButton" id="btn_connect">
-                    <property name="label" translatable="yes">Подключиться</property>
+                    <property name="label" translatable="yes" comments="Подключиться">Connect</property>
                     <property name="visible">True</property>
                     <property name="sensitive">False</property>
                     <property name="can_focus">True</property>
@@ -222,7 +222,7 @@
                 </child>
                 <child>
                   <object class="GtkButton" id="btn_cancel">
-                    <property name="label">Прервать</property>
+                    <property name="label" comments="Прервать">Cancel</property>
                     <property name="visible">True</property>
                     <property name="can_focus">True</property>
                     <property name="receives_default">True</property>
@@ -238,7 +238,7 @@
                 </child>
                 <child>
                   <object class="GtkButton" id="btn_close">
-                    <property name="label" translatable="yes">Закрыть</property>
+                    <property name="label" translatable="yes" comments="Закрыть">Close</property>
                     <property name="visible">True</property>
                     <property name="can_focus">True</property>
                     <property name="receives_default">True</property>

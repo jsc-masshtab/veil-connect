@@ -13,8 +13,6 @@
 #include <stdio.h>
 #include <string.h>
 
-#include <glib.h>
-#include <glib/gstdio.h>
 
 #include <freerdp/freerdp.h>
 #include <freerdp/constants.h>
@@ -29,8 +27,11 @@
 #include <winpr/synch.h>
 #include <freerdp/log.h>
 
+#include <glib.h>
+#include <glib/gstdio.h>
 #include <gio/gio.h>
 #include <gtk/gtk.h>
+#include <glib/gi18n.h>
 
 #include "rdp_channels.h"
 #include "rdp_client.h"
@@ -439,12 +440,13 @@ gchar *rdp_client_get_full_error_msg(ExtendedRdpContext *ex_rdp_context)
     gchar *final_msg = NULL;
     g_autofree gchar *rdp_err_msg = NULL;
     g_autofree gchar *rail_rdp_err_msg = NULL;
-
-    rdp_err_msg = g_strdup_printf(("Нет соединения. Код: 0x%X %s"), ex_rdp_context->last_rdp_error,
+    // "Нет соединения. Код: 0x%X %s"
+    rdp_err_msg = g_strdup_printf(_("No Connection. Code: 0x%X %s"), ex_rdp_context->last_rdp_error,
                                  rdp_util_error_to_str(ex_rdp_context->last_rdp_error));
 
     if (ex_rdp_context->rail_rdp_error) {
-        rail_rdp_err_msg = g_strdup_printf("Ошибка удаленного приложения. 0x%X  %s", ex_rdp_context->rail_rdp_error,
+        // Ошибка удаленного приложения. 0x%X  %s
+        rail_rdp_err_msg = g_strdup_printf(_("Remote app error. 0x%X  %s"), ex_rdp_context->rail_rdp_error,
                               rail_error_to_string(ex_rdp_context->rail_rdp_error));
     } else {
         rail_rdp_err_msg = g_strdup("");

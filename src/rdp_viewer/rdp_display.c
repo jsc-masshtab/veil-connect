@@ -11,6 +11,7 @@
 #include <gio/gio.h>
 #include <gtk/gtk.h>
 #include <glib/garray.h>
+#include <glib/gi18n.h>
 
 #include <freerdp/locale/keyboard.h>
 #include <freerdp/scancode.h>
@@ -164,7 +165,7 @@ static gboolean rdp_display_event_on_draw(GtkWidget* widget G_GNUC_UNUSED, cairo
                 //g_info("Paint time %lli", g_get_monotonic_time() - start);
 
             } else { // Поверхность создается сразу после подключения. Если ее нет, значит мы ожидаем подключение
-                rdp_display_draw_text_message(context, "Ожидаем подключение", 50);
+                rdp_display_draw_text_message(context, _("Waiting for connection"), 50);
             }
 
             g_mutex_unlock(&ex_rdp_context->primary_buffer_mutex);

@@ -6,6 +6,8 @@
  * Author: http://mashtab.org/
  */
 
+#include <glib/gi18n.h>
+
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -84,7 +86,7 @@ x2go_launcher_cb_child_watch( GPid  pid, gint status, X2goData *data )
         shutdown_loop(data->loop);
     } else {
         gtk_widget_set_sensitive(data->btn_connect, TRUE);
-        gtk_label_set_text(GTK_LABEL(data->status_label), "Подключение завершено");
+        gtk_label_set_text(GTK_LABEL(data->status_label), _("Connection closed"));
     }
 }
 
@@ -137,13 +139,13 @@ x2go_launcher_cb_err_watch( GIOChannel *channel, GIOCondition cond, X2goData *da
 
     } else if (strstr(string, "Tunnel closed from")) {
         // Connection is about to end. Show control windows
-        gtk_label_set_text(GTK_LABEL(data->status_label), "Завершаем соединение");
+        gtk_label_set_text(GTK_LABEL(data->status_label), _("Closing the connection"));
         gtk_widget_show_all(data->window);
 
     } else if (strstr(string, "re-trying SSH key discovery now")) {
 
         // Possibly wrong credentials
-        gtk_label_set_text(GTK_LABEL(data->status_label), "Ошибка авторизации");
+        gtk_label_set_text(GTK_LABEL(data->status_label), _("Authorisation Error"));
         gtk_image_set_from_stock(GTK_IMAGE(data->credentials_image),
                 "gtk-dialog-error", GTK_ICON_SIZE_BUTTON);
         x2go_launcher_stop_process(data, SIGINT);
@@ -176,7 +178,8 @@ static void x2go_launcher_launch_process(X2goData *data)
 
     const gchar *user_name = gtk_entry_get_text(GTK_ENTRY(data->user_name_entry));
     if (strlen_safely(user_name) == 0) {
-        gtk_label_set_text(GTK_LABEL(data->status_label), "Не указано имя");
+        // "Не указано имя"
+        gtk_label_set_text(GTK_LABEL(data->status_label), _("Name is not specified"));
         return;
     }
 
@@ -226,7 +229,7 @@ static void x2go_launcher_launch_process(X2goData *data)
         }
         return;
     } else {
-        gtk_label_set_text(GTK_LABEL(data->status_label), "Ожидаем подключение");
+        gtk_label_set_text(GTK_LABEL(data->status_label), _("Waiting for connection"));
     }
 
     /* Add watch function to catch termination of the process. This function
@@ -275,7 +278,7 @@ static void x2go_launcher_setup_gui(const gchar *user, const gchar *password, X2
 {
     const ConnectSettingsData *conn_data = data->p_data;
 
-    data->builder = remote_viewer_util_load_ui("x2go_control_form.ui");
+    data->builder = remote_viewer_util_load_ui("x2go_control_form.glade");
 
     data->window = get_widget_from_builder(data->builder, "main_window");
     gtk_window_set_default_size(GTK_WINDOW(data->window), 700, 400);

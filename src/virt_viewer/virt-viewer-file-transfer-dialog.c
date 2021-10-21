@@ -63,7 +63,7 @@ virt_viewer_file_transfer_dialog_class_init(VirtViewerFileTransferDialogClass *k
     GtkWidgetClass *widget_class = GTK_WIDGET_CLASS(klass);
 
     gtk_widget_class_set_template_from_resource(widget_class,
-                                                VIRT_VIEWER_RESOURCE_PREFIX "/ui/virt-viewer-file-transfer-dialog.ui");
+                                                VIRT_VIEWER_RESOURCE_PREFIX "/ui/virt-viewer-file-transfer-dialog.glade");
     gtk_widget_class_bind_template_child_private(widget_class,
                                                  VirtViewerFileTransferDialog,
                                                  transfer_summary);

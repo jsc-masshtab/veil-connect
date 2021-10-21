@@ -1,0 +1,92 @@
+# Generated with
+
+#from pathlib import Path
+#
+#directory_in_str = "veil-connect/src"
+#pathlist = Path(directory_in_str).glob('**/*.c')
+#for path in pathlist:
+#     # because path is object not string
+#     path_in_str = str(path)
+#     print(path_in_str)
+
+src/conn_info_dialog.c
+src/main.c
+src/remote-viewer-timed-revealer.c
+src/remote-viewer.c
+src/remote_viewer_start_settings.c
+src/about_dialog.c
+src/remote-viewer-util.c
+src/remote-viewer-connect.c
+src/settings_data.c
+src/utility/veil_logger.c
+src/utility/atomic_string.c
+src/utility/async.c
+src/utility/crashhandler.c
+src/utility/settingsfile.c
+src/utility/jsonhandler.c
+src/x2go/x2go_launcher.c
+src/x2go/x2go_launcher_x2goclient.c
+src/x2go/x2go_launcher_pyhoca.c
+src/net_speedometer/net_speedometer.c
+src/messenger/messenger.c
+src/app_updater/app_updater.c
+src/rdp_viewer/rdp_keyboard.c
+src/rdp_viewer/rdp_rail.c
+src/rdp_viewer/rdp_viewer.c
+src/rdp_viewer/windows_rdp_launcher.c
+src/rdp_viewer/rdp_clipboard.c
+src/rdp_viewer/rdp_cursor.c
+src/rdp_viewer/rdp_display.c
+src/rdp_viewer/rdp_channels.c
+src/rdp_viewer/rdp_viewer_window.c
+src/rdp_viewer/rdp_util.c
+src/rdp_viewer/rdp_client.c
+src/usb_redirection/usbredir_util.c
+src/usb_redirection/usbredir_dialog.c
+src/usb_redirection/usbredirserver_lin.c
+src/usb_redirection/usbredirserver_win.c
+src/usb_redirection/usbredirhost.c
+src/usb_redirection/usb_selector_widget.c
+src/usb_redirection/usbredir_controller.c
+src/qr_code_generation/qr_code_renderer.c
+src/qr_code_generation/qr_code_gen.c
+src/vdi_client/vdi_app_selector.c
+src/vdi_client/vdi_user_settings_widget.c
+src/vdi_client/vdi_redis_client.c
+src/vdi_client/vdi_pool_widget.c
+src/vdi_client/vdi_ws_client.c
+src/vdi_client/vdi_manager.c
+src/vdi_client/vdi_session.c
+src/virt_viewer/virt-viewer-file.c
+src/virt_viewer/virt-viewer-window.c
+src/virt_viewer/virt-viewer-session-spice.c
+src/virt_viewer/virt-viewer-display-spice.c
+src/virt_viewer/virt-viewer-enums.c
+src/virt_viewer/virt-viewer-resources.c
+src/virt_viewer/virt-viewer-auth.c
+src/virt_viewer/virt-viewer-session.c
+src/virt_viewer/virt-viewer-session-vnc.c
+src/virt_viewer/virt-viewer-notebook.c
+src/virt_viewer/virt-viewer-vm-connection.c
+src/virt_viewer/virt-viewer-file-transfer-dialog.c
+src/virt_viewer/virt-viewer-app.c
+src/virt_viewer/virt-viewer-display-vnc.c
+src/virt_viewer/virt-viewer-display.c
+src/virt_viewer/windows-cmdline-wrapper.c
+resources/ui/usb_selector_form.glade
+resources/ui/vdi_user_settings_form.glade
+resources/ui/vdi_manager_form.glade
+resources/ui/vdi_messenger_from.glade
+resources/ui/connection_info_dialog.glade
+resources/ui/remote-viewer-connect_veil.glade
+resources/ui/virt-viewer_veil.glade
+resources/ui/ask_pass_form.glade
+resources/ui/text_msg_form.glade
+resources/ui/virt-viewer-vm-connection.glade
+resources/ui/start_settings_form.glade
+resources/ui/x2go_control_form.glade
+resources/ui/vdi_app_selector_form.glade
+resources/ui/virt-viewer-about.glade
+resources/ui/virt-viewer-preferences.glade
+resources/ui/virt-viewer-auth.glade
+resources/ui/virt-viewer-file-transfer-dialog.glade

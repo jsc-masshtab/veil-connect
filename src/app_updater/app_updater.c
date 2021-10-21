@@ -21,6 +21,7 @@
 #endif
 
 #include <glib/gstdio.h>
+#include <glib/gi18n.h>
 #include <glib.h>
 
 #include "remote-viewer-util.h"
@@ -177,8 +178,8 @@ static gboolean app_updater_check_linux_updates(AppUpdater *self,
 
     gboolean cmd_success = g_spawn_command_line_sync(*command_line, standard_output, standard_error,
                                                      &self->_last_exit_status, NULL);
-    if (!cmd_success) {
-        set_status_msg(self, "Не удалось проверить наличие обновлений.");
+    if (!cmd_success) { // Не удалось проверить наличие обновлений.
+        set_status_msg(self, _("Unable to check updates."));
         return FALSE;
     }
 
@@ -193,8 +194,8 @@ static gboolean app_updater_check_linux_updates(AppUpdater *self,
 
     g_regex_unref(regex);
 
-    if (!is_matched) {
-        set_status_msg(self, "Нет доступных обновлений [код: 1].");
+    if (!is_matched) { // Нет доступных обновлений [код: 1]
+        set_status_msg(self, _("No updates found [code: 1]."));
         return FALSE;
     }
 
@@ -204,8 +205,8 @@ static gboolean app_updater_check_linux_updates(AppUpdater *self,
     //gchar **package_str_array = g_strsplit(found_match, " ", max_tokens);
     gchar **package_str_array = g_regex_split_simple("\\s+", found_match, 0, 0);
     free_memory_safely(&found_match);
-    if (package_str_array == NULL) {
-        set_status_msg(self, "Нет доступных обновлений [код: 2].");
+    if (package_str_array == NULL) { // Нет доступных обновлений [код: 2]
+        set_status_msg(self, _("No updates found [code: 2]."));
         return FALSE;
     }
 
@@ -215,8 +216,8 @@ static gboolean app_updater_check_linux_updates(AppUpdater *self,
     }
     g_strfreev(package_str_array);
 
-    if (*last_version == NULL) {
-        set_status_msg(self, "Нет доступных обновлений [код: 3].");
+    if (*last_version == NULL) { // Нет доступных обновлений [код: 3].
+        set_status_msg(self, _("No updates found [code: 3]."));
         return FALSE;
     }
 
@@ -284,19 +285,21 @@ app_updater_get_linux_updates_task(GTask    *task G_GNUC_UNUSED,
 
     // check if update script exists
     if (!g_file_test("update_script.sh", G_FILE_TEST_EXISTS)) {
-        set_status_msg(self, "Отсутствует файл скрипт обновления update_script.sh!\n"
-                             "Попробуйте переустановить приложение");
+        // Отсутствует файл скрипт обновления update_script.sh!\n"
+        //                             "Попробуйте переустановить приложение
+        set_status_msg(self, _("File update_script.sh does not exists!\n"
+                             "Try to reinstall the application."));
         goto clear_mark;
     }
 
-    // Проверка пароля
-    set_status_msg(self, "Проверка sudo пароля.");
+    // Проверка sudo пароля.
+    set_status_msg(self, _("Sudo password checking."));
     command_line = g_strdup_printf("./update_script.sh %s %s", "check_sudo_pass", self->_admin_password);
     GError *error = NULL;
     g_spawn_command_line_sync(command_line, &standard_output, &standard_error, &self->_last_exit_status, &error);
 
-    if (error) {
-        gchar *msg = g_strdup_printf("Не удалось проверить пароль.\n%s", error->message);
+    if (error) { // Не удалось проверить пароль.
+        gchar *msg = g_strdup_printf(_("Unable to check password.\n%s"), error->message);
         set_status_msg(self, msg);
         g_free(msg);
         g_error_free(error);
@@ -304,7 +307,8 @@ app_updater_get_linux_updates_task(GTask    *task G_GNUC_UNUSED,
     }
 
     if (standard_output && !strstr(standard_output, "success_pass")) {
-        set_status_msg(self, "Неправильный пароль.");
+        // Неправильный пароль.
+        set_status_msg(self, _("Wrong password."));
         goto clear_mark;
     }
 
@@ -314,8 +318,8 @@ app_updater_get_linux_updates_task(GTask    *task G_GNUC_UNUSED,
     free_memory_safely(&standard_output);
     free_memory_safely(&standard_error);
 
-    // Получение списка возможных обновлений
-    set_status_msg(self, "Проверка наличия обновлений.");
+    // Получение списка возможных обновлений. Проверка наличия обновлений
+    set_status_msg(self, _("Checking for updates."));
     self->_is_getting_updates = 1;
     gdk_threads_add_idle((GSourceFunc)state_changed, self);
 
@@ -342,7 +346,7 @@ app_updater_get_linux_updates_task(GTask    *task G_GNUC_UNUSED,
     free_memory_safely(&standard_error);
 
     // Запускаем установку обновлений
-    gchar *msg = g_strdup_printf("Устанавливается новая версия %s.", last_version);
+    gchar *msg = g_strdup_printf(_("Installing new version %s."), last_version);
     set_status_msg(self, msg);
     g_free(msg);
 
@@ -356,17 +360,21 @@ app_updater_get_linux_updates_task(GTask    *task G_GNUC_UNUSED,
     gboolean cmd_success = g_spawn_command_line_sync(command_line, &standard_output, &standard_error,
             &self->_last_exit_status, NULL);
     if (!cmd_success) {
-        set_status_msg(self, "Не удалось запустить процесс установки новой версии ПО.");
+        // Не удалось запустить процесс установки новой версии ПО.
+        set_status_msg(self, _("Unable to start installation process."));
         goto clear_mark;
     }
     g_info("2App update standard_output: %s", standard_output);
     g_info("2App update standard_error: %s", standard_error);
     g_info("App update exit_status: %i", self->_last_exit_status);
 
+    // Процесс установки версии %s завершился.
+    //Перезапустите приложение.
     if (self->_last_exit_status == 0)
-        msg = g_strdup_printf("Процесс установки версии %s завершился.\nПерезапустите приложение.", last_version);
+        msg = g_strdup_printf(_("New version %s installed.\nRestart the application."), last_version);
     else
-        msg = g_strdup_printf("Процесс установки версии %s завершился\nс ошибками.", last_version);
+        // Процесс установки версии %s завершился с ошибками.
+        msg = g_strdup_printf(_("Installation of %s\ncompleted with errors."), last_version);
     set_status_msg(self, msg);
     g_free(msg);
 

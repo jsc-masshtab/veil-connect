@@ -13,6 +13,8 @@
 #include <iphlpapi.h>
 #endif
 
+#include <glib/gi18n.h>
+
 #include "vdi_session.h"
 #include "remote-viewer-util.h"
 #include "settingsfile.h"
@@ -186,8 +188,9 @@ usbredir_dialog_on_usb_tcp_reset_finished(GObject *source_object G_GNUC_UNUSED,
     if (is_success) {
         gtk_widget_set_sensitive((GtkWidget*)self->widget->usb_devices_list_view, TRUE);
     } else {
-        gtk_label_set_markup(GTK_LABEL(self->widget->status_label),
-                "<span color=\"red\">Не удалось сбросить USB TCP устройства на виртуальной машине</span>");
+        // "<span color=\"red\">Не удалось сбросить USB TCP устройства на виртуальной машине</span>"
+        gtk_label_set_text(GTK_LABEL(self->widget->status_label),
+                _("Unable to detach USB TCP devices from remote machine"));
     }
 }
 
@@ -205,9 +208,10 @@ static void take_tk_address_from_ini(UsbredirMainDialog *self, GtkEntry* tk_addr
         is_address_correct = FALSE;
     }
 
+    // "<span color=\"red\">Не удалось определить ip адрес ТК. Задайте его вручную</span>"
     if (!is_address_correct)
-        gtk_label_set_markup(GTK_LABEL(self->widget->status_label),
-                             "<span color=\"red\">Не удалось определить ip адрес ТК. Задайте его вручную</span>");
+        gtk_label_set_text(GTK_LABEL(self->widget->status_label),
+                           _("Unable to determine thin client address. Set it manually"));
 }
 
 //Return address In case of success. Must be freed if its not NULL

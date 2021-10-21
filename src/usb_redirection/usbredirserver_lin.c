@@ -30,6 +30,7 @@
 #include <netinet/tcp.h>
 
 #include <glib.h>
+#include <glib/gi18n.h>
 #include <gtk/gtk.h>
 
 #include "usbredir_util.h"
@@ -387,7 +388,7 @@ void usbredirserver_launch_task(GTask           *task,
 
     // usbredirserver_init_libusb_and_set_options
     if (usbredir_util_init_libusb_and_set_options(&priv.ctx, priv.verbose) == -1) {
-        task_res_data->message = g_strdup("Could not init libusb"); // must be freed
+        task_res_data->message = g_strdup(_("Failed to init libusb")); // must be freed
         g_task_return_pointer(task, task_res_data, NULL);
         free_memory_safely(&usb_task_data->start_data.ipv4_addr);
         return;
@@ -397,7 +398,7 @@ void usbredirserver_launch_task(GTask           *task,
     int server_fd = usbredirserver_create_server_socket(usb_task_data->start_data.ipv4_addr,
                                                            usb_task_data->start_data.port);
     if (server_fd == -1) {
-        task_res_data->message = g_strdup("Error while creating server socket");
+        task_res_data->message = g_strdup(_("Error while creating server socket"));
         goto releasing_resources;
     }
     usbredirserver_make_socket_nonblocking(server_fd);
@@ -420,13 +421,13 @@ void usbredirserver_launch_task(GTask           *task,
 
     // result of vdi_session_attach_usb
     cur_usb_uuid = g_thread_join(attach_usb_func_thread);
-    if (!cur_usb_uuid) { // Cant add tcp usb device"
-        task_res_data->message = g_strdup("Не удалось добавить TCP USB устройство к виртуальной машине");
+    if (!cur_usb_uuid) { // Не удалось добавить TCP USB устройство к виртуальной машине
+        task_res_data->message = g_strdup(_("Failed to add TCP USB device to remote machine"));
         goto releasing_resources;
     }
 
     if (priv.client_fd == -1) {
-        task_res_data->message = g_strdup("Error while accepting client connection"); // must be freed
+        task_res_data->message = g_strdup(_("Error while accepting client connection")); // must be freed
         goto releasing_resources;
     } else {
         fprintf(stdout, "Client accepted\n");
@@ -442,10 +443,12 @@ void usbredirserver_launch_task(GTask           *task,
                                                                            usb_task_data->start_data.usbvendor,
                                                                            usb_task_data->start_data.usbproduct);
 
-    if (!handle) { // Failed to open USB device. Possibly permissions problem.
+    if (!handle) {
         fprintf(stdout, "libusb_device_handle !handle. Close client_fd\n");
-        task_res_data->message = g_strdup_printf("Не удалось открыть USB устройство. Нет прав?\n"
-                                                 "Попробуйте выполнить chmod 666 /dev/bus/usb/%03i/%03i",
+        // "Не удалось открыть USB устройство. Нет прав?\n"
+        //                                                 "Попробуйте выполнить chmod 666 /dev/bus/usb/%03i/%03i"
+        task_res_data->message = g_strdup_printf(_("Failed to open USB device. Possibly permissions problem\n"
+                                                 "Try to execute chmod 666 /dev/bus/usb/%03i/%03i"),
                                                  task_res_data->usbbus, task_res_data->usbaddr);
         goto releasing_resources;
     }
@@ -457,7 +460,7 @@ void usbredirserver_launch_task(GTask           *task,
                                   &priv, SERVER_VERSION, priv.verbose, 0);
     fprintf(stdout, "After priv.host = usbredirhost_open\n");
     if (!priv.host) {
-        task_res_data->message = g_strdup("usbredirhost_open failed"); // must be freed
+        task_res_data->message = g_strdup(_("usbredirhost_open failed")); // must be freed
         goto releasing_resources;
     }
 
@@ -473,7 +476,7 @@ void usbredirserver_launch_task(GTask           *task,
     }
 
     // successsfull finish
-    task_res_data->message = g_strdup("Перенаправление USB завершилось");
+    task_res_data->message = g_strdup(_("USB redirection finished"));
     task_res_data->code = USB_REDIR_FINISH_SUCCESS;
 
 releasing_resources:

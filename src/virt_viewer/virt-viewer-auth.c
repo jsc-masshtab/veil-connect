@@ -52,7 +52,7 @@ virt_viewer_auth_collect_credentials(GtkWindow *window,
                                      char **password)
 {
     GtkWidget *dialog = NULL;
-    GtkBuilder *creds = remote_viewer_util_load_ui("virt-viewer-auth.ui");
+    GtkBuilder *creds = remote_viewer_util_load_ui("virt-viewer-auth.glade");
     GtkWidget *credUsername;
     GtkWidget *credPassword;
     GtkWidget *promptUsername;

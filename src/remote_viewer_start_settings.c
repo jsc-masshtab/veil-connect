@@ -9,6 +9,7 @@
 #include <stdio.h>
 #include <ctype.h>
 #include <glib/gstdio.h>
+#include <glib/gi18n.h>
 
 #include <freerdp/codec/color.h>
 
@@ -244,12 +245,12 @@ static void
 btn_add_remote_folder_clicked_cb(GtkButton *button G_GNUC_UNUSED, ConnectSettingsDialogData *dialog_data)
 {
     // get folder name
-    GtkWidget *dialog = gtk_file_chooser_dialog_new ("Open File",
+    GtkWidget *dialog = gtk_file_chooser_dialog_new (_("Open File"),
                                                      GTK_WINDOW(dialog_data->window),
                                                      GTK_FILE_CHOOSER_ACTION_SELECT_FOLDER,
-                                                     "Отмена",
+                                                     _("Cancel"),
                                                      GTK_RESPONSE_CANCEL,
-                                                     "Выбрать",
+                                                     _("Choose"),
                                                      GTK_RESPONSE_ACCEPT,
                                                      NULL);
 
@@ -304,12 +305,12 @@ on_use_rdp_file_check_btn_toggled(GtkToggleButton *button, ConnectSettingsDialog
 static void
 btn_btn_choose_rdp_file_clicked(GtkButton *button G_GNUC_UNUSED, ConnectSettingsDialogData *dialog_data)
 {
-    GtkWidget *dialog = gtk_file_chooser_dialog_new ("Open File",
+    GtkWidget *dialog = gtk_file_chooser_dialog_new (_("Open File"),
                                                      GTK_WINDOW(dialog_data->window),
                                                      GTK_FILE_CHOOSER_ACTION_OPEN,
-                                                     "Отмена",
+                                                     _("Cancel"),
                                                      GTK_RESPONSE_CANCEL,
-                                                     "Выбрать",
+                                                     _("Choose"),
                                                      GTK_RESPONSE_ACCEPT,
                                                      NULL);
 
@@ -393,12 +394,13 @@ on_app_updater_status_changed(gpointer data G_GNUC_UNUSED,
 
         if (app_updater->_last_exit_status != 0 && last_process_output ) {
 
-            GtkBuilder *builder = remote_viewer_util_load_ui("text_msg_form.ui");
+            GtkBuilder *builder = remote_viewer_util_load_ui("text_msg_form.glade");
             GtkWidget *text_msg_dialog = get_widget_from_builder(builder, "text_msg_dialog");
-            gtk_dialog_add_button(GTK_DIALOG(text_msg_dialog), "Ок", GTK_RESPONSE_OK);
+            gtk_dialog_add_button(GTK_DIALOG(text_msg_dialog), _("Ok"), GTK_RESPONSE_OK);
 
             GtkWidget *header_text_label = get_widget_from_builder(builder, "header_text_label");
-            gtk_label_set_text(GTK_LABEL(header_text_label), "Процесс обновления завершился с ошибками");
+            // Процесс обновления завершился с ошибками
+            gtk_label_set_text(GTK_LABEL(header_text_label), _("The update process ended with errors"));
 
             GtkWidget *main_text_view = get_widget_from_builder(builder, "main_text_view");
 
@@ -438,10 +440,10 @@ btn_get_app_updates_clicked_cb(GtkButton *button G_GNUC_UNUSED, ConnectSettingsD
 
 #ifdef __linux__
     // get sudo pass (Нужно показать виджет для ввода пароля sudo)
-    GtkBuilder *builder = remote_viewer_util_load_ui("ask_pass_form.ui");
+    GtkBuilder *builder = remote_viewer_util_load_ui("ask_pass_form.glade");
     GtkWidget *ask_pass_dialog = get_widget_from_builder(builder, "ask_pass_dialog");
-    gtk_dialog_add_button(GTK_DIALOG(ask_pass_dialog), "Ок", GTK_RESPONSE_OK);
-    gtk_dialog_add_button(GTK_DIALOG(ask_pass_dialog), "Отмена", GTK_RESPONSE_CANCEL);
+    gtk_dialog_add_button(GTK_DIALOG(ask_pass_dialog), _("Ok"), GTK_RESPONSE_OK);
+    gtk_dialog_add_button(GTK_DIALOG(ask_pass_dialog), _("Cancel"), GTK_RESPONSE_CANCEL);
     gtk_dialog_set_default_response(GTK_DIALOG(ask_pass_dialog), GTK_RESPONSE_OK);
     gtk_window_set_transient_for(GTK_WINDOW(ask_pass_dialog), GTK_WINDOW(dialog_data->window));
 
@@ -465,7 +467,8 @@ btn_get_app_updates_clicked_cb(GtkButton *button G_GNUC_UNUSED, ConnectSettingsD
     // check if password provided
     gchar *app_updater_admin_password = app_updater_get_admin_password(app_updater);
     if( app_updater_admin_password == NULL) {
-        gtk_label_set_text(GTK_LABEL(dialog_data->check_updates_label), "Необходимо ввести пароль");
+        // "Необходимо ввести пароль"
+        gtk_label_set_text(GTK_LABEL(dialog_data->check_updates_label), _("Password required"));
         return;
     }
     free_memory_safely(&app_updater_admin_password);
@@ -814,7 +817,7 @@ GtkResponseType remote_viewer_start_settings_dialog(RemoteViewer *p_remote_viewe
     dialog_data.dialog_window_response = GTK_RESPONSE_OK;
 
     // gui widgets
-    dialog_data.builder = remote_viewer_util_load_ui("start_settings_form.ui");
+    dialog_data.builder = remote_viewer_util_load_ui("start_settings_form.glade");
 
     dialog_data.window = get_widget_from_builder(dialog_data.builder, "start-settings-window");
     // main buttons

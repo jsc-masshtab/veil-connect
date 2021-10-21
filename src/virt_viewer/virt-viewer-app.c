@@ -526,7 +526,7 @@ void virt_viewer_app_set_window_name(VirtViewerApp *app, const gchar *vm_verbose
         g_object_set(app, "username", user_name, NULL);
 
     // virt viewer takes its name from guest-name so lets not overcomplicate
-    gchar *window_name = g_strconcat("ВМ: ", vm_verbose_name, "    Пользователь: ", user_name, NULL);
+    gchar *window_name = g_strconcat(_("VM: "), vm_verbose_name, _("    User: "), user_name, NULL);
     g_object_set(app, "guest-name", window_name, NULL);
     g_free(window_name);
 }
@@ -702,7 +702,7 @@ virt_viewer_app_set_window_subtitle(VirtViewerApp *app,
             subtitle = g_strdup_printf("%s%d%s", title, nth + 1, d + 2);
             *d = '%';
         } else
-            subtitle = g_strdup_printf("%s   Номер дисплея: %d", title, nth + 1);
+            subtitle = g_strdup_printf(_("%s   Display number: %d"), title, nth + 1);
     }
     g_info("%s: %i subtitle: %s", (const char*)__func__, nth, subtitle);
     g_object_set(window, "subtitle", subtitle, NULL);
@@ -2537,7 +2537,7 @@ static GtkWidget *
 virt_viewer_app_get_preferences(VirtViewerApp *self)
 {
     VirtViewerSession *session = virt_viewer_app_get_session(self);
-    GtkBuilder *builder = remote_viewer_util_load_ui("virt-viewer-preferences.ui");
+    GtkBuilder *builder = remote_viewer_util_load_ui("virt-viewer-preferences.glade");
     gboolean can_share_folder = virt_viewer_session_can_share_folder(session);
     GtkWidget *preferences = self->priv->preferences;
     gchar *path;

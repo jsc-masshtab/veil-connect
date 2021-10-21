@@ -9,6 +9,8 @@
 #include <string.h>
 #include <stdlib.h>
 
+#include <glib/gi18n.h>
+
 #include "messenger.h"
 #include "vdi_session.h"
 #include "remote-viewer-util.h"
@@ -111,14 +113,14 @@ void on_send_text_msg_task_finished(GObject *source_object G_GNUC_UNUSED,
         GtkTextBuffer *message_entry_view_buffer = gtk_text_view_get_buffer(GTK_TEXT_VIEW(self->message_entry_view));
 
         // Insert text into main view
-        insert_text_to_message_main_view(self, text_message_data->message, "Вы", "#99ffeb");
+        insert_text_to_message_main_view(self, text_message_data->message, _("You"), "#99ffeb");
 
         // Очищаем поле ввода текста в случае успешной отправки
         GtkTextIter start, end;
         gtk_text_buffer_get_bounds(message_entry_view_buffer, &start, &end);
         gtk_text_buffer_delete(message_entry_view_buffer, &start, &end);
-
-        gtk_label_set_text(GTK_LABEL(self->label_status), "Сообщение отправлено");
+        // Сообщение отправлено
+        gtk_label_set_text(GTK_LABEL(self->label_status), _("Message sent"));
         g_info("Сообщение отправлено");
         g_info("%s", text_message_data->message);
     }
@@ -147,7 +149,8 @@ static void on_btn_send_message_clicked(GtkButton *button G_GNUC_UNUSED, VeilMes
 
     // setup gui
     gtk_spinner_start(GTK_SPINNER(self->spinner_status));
-    gtk_label_set_text(GTK_LABEL(self->label_status), "Идет отправка сообщения");
+    // Идет отправка сообщения
+    gtk_label_set_text(GTK_LABEL(self->label_status), _("Sending message"));
 
     // Send to the server
     execute_async_task(vdi_session_send_text_msg_task, on_send_text_msg_task_finished,
@@ -184,7 +187,7 @@ static void veil_messenger_init(VeilMessenger *self)
 {
     g_info("%s", (const char *)__func__);
 
-    self->builder = remote_viewer_util_load_ui("vdi_messenger_from.ui");
+    self->builder = remote_viewer_util_load_ui("vdi_messenger_from.glade");
     self->main_window = GTK_WIDGET(gtk_builder_get_object(self->builder, "main_window"));
     self->message_entry_view = GTK_WIDGET(gtk_builder_get_object(self->builder, "message_entry_view"));
     self->btn_send_message = GTK_WIDGET(gtk_builder_get_object(self->builder, "btn_send_message"));

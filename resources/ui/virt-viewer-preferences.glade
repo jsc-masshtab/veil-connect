@@ -5,7 +5,7 @@
   <object class="GtkDialog" id="preferences">
     <property name="can_focus">False</property>
     <property name="border_width">5</property>
-    <property name="title" translatable="yes">Настройка общих папок</property>
+    <property name="title" translatable="yes">Shared folders</property>
     <property name="type_hint">normal</property>
     <signal name="delete-event" handler="gtk_widget_hide_on_delete" swapped="no"/>
     <child>
@@ -47,7 +47,7 @@
                   <object class="GtkLabel" id="label2">
                     <property name="visible">True</property>
                     <property name="can_focus">False</property>
-                    <property name="label" translatable="yes">Общий доступ к папкам</property>
+                    <property name="label" translatable="yes" comments="Общий доступ к папкам">Folders redirection</property>
                     <property name="xalign">0</property>
                     <attributes>
                       <attribute name="weight" value="bold"/>
@@ -70,10 +70,11 @@
                     <property name="row_spacing">6</property>
                     <child>
                       <object class="GtkCheckButton" id="cbsharefolder">
-                        <property name="label" translatable="yes">Общая  папка</property>
+                        <property name="label" translatable="yes" comments="Общая  папка">Shared folder</property>
                         <property name="visible">True</property>
                         <property name="can_focus">True</property>
                         <property name="receives_default">False</property>
+                        <property name="halign">start</property>
                         <property name="draw_indicator">True</property>
                       </object>
                       <packing>
@@ -82,10 +83,11 @@
                     </child>
                     <child>
                       <object class="GtkCheckButton" id="cbsharefolderro">
-                        <property name="label" translatable="yes">Только для чтения</property>
+                        <property name="label" translatable="yes" comments="Только для чтения">Read only</property>
                         <property name="visible">True</property>
                         <property name="can_focus">True</property>
                         <property name="receives_default">False</property>
+                        <property name="halign">start</property>
                         <property name="draw_indicator">True</property>
                       </object>
                       <packing>
@@ -99,6 +101,7 @@
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
                         <property name="action">select-folder</property>
+                        <property name="title" translatable="yes" comments="Выберите файл">Select file</property>
                       </object>
                       <packing>
                         <property name="left_attach">1</property>

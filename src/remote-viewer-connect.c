@@ -185,8 +185,9 @@ handle_connect_event(RemoteViewerConnData *ci)
     if (get_conn_data(ci)->opt_manual_mode) {
 
         if (strlen_safely(get_conn_data(ci)->ip) == 0) {
+            // "Не указан адрес подключения (Настройки->Основные)"
             set_message_to_info_label(GTK_LABEL(ci->message_display_label),
-                                      "Не указан адрес подключения (Настройки->Основные)");
+                                      _("Connection address is not specified"));
             return;
         }
 
@@ -197,7 +198,7 @@ handle_connect_event(RemoteViewerConnData *ci)
 
         if (strlen_safely(vdi_session_get_vdi_ip()) == 0) {
             set_message_to_info_label(GTK_LABEL(ci->message_display_label),
-                                      "Не указан адрес подключения (Настройки->Основные)");
+                                      _("Connection address is not specified"));
             return;
         }
 
@@ -296,8 +297,9 @@ static void remote_viewer_on_updates_checked(gpointer data G_GNUC_UNUSED, int is
     if (is_available) {
         gtk_image_set_from_stock(GTK_IMAGE(ci->new_version_available_image),
                                      "gtk-dialog-warning", GTK_ICON_SIZE_SMALL_TOOLBAR);
+        // Доступна новая версия. Чтобы обновиться нажмите Настройки->Служебные->Получить обновления.
         gtk_widget_set_tooltip_text(ci->new_version_available_image,
-            "Доступна новая версия. Чтобы обновиться нажмите Настройки->Служебные->Получить обновления.");
+            _("A new version available. Press Settings->Service->Get updates"));
     }
 }
 
@@ -318,7 +320,7 @@ remote_viewer_connect_dialog(RemoteViewer *remote_viewer)
     ci.p_remote_viewer = remote_viewer;
 
     /* Create the widgets */
-    builder = remote_viewer_util_load_ui("remote-viewer-connect_veil.ui");
+    builder = remote_viewer_util_load_ui("remote-viewer-connect_veil.glade");
     g_return_val_if_fail(builder != NULL, GTK_RESPONSE_NONE);
 
     ci.window = GTK_WIDGET(gtk_builder_get_object(builder, "remote-viewer-connection-window"));

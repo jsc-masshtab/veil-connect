@@ -9,6 +9,7 @@
 #include <gio/gio.h>
 #include <gtk/gtk.h>
 #include <glib/garray.h>
+#include <glib/gi18n.h>
 
 #include <cairo/cairo.h>
 
@@ -156,9 +157,9 @@ static void rdp_viewer_show_error_msg_if_required(RemoteViewerData *self)
             show_msg_box_dialog(GTK_WINDOW(rdp_window_data->rdp_viewer_window), msg);
             g_free(msg);
         } else if (!self->ex_rdp_context->is_connected_last_time) {
+            // Не удалось установить соединение. Проверьте разрешен ли удаленный доступ для текущего пользователя
             show_msg_box_dialog(GTK_WINDOW(rdp_window_data->rdp_viewer_window),
-                    "Не удалось установить соединение. Проверьте разрешен ли удаленный доступ для текущего "
-                    "пользователя");
+                    _("Unable to connect. Check if remote access allowed for this user."));
         }
     }
 }
@@ -253,10 +254,10 @@ RemoteViewerState rdp_viewer_start(RemoteViewer *app, VeilRdpSettings *p_rdp_set
     int image_height = MIN(max_image_height, monitor_height);
     rdp_client_set_rdp_image_size(self.ex_rdp_context, image_width, image_height);
 
-    // Notify if folders redir is forbidden
+    // Notify if folders redir is forbidden. Проброс папок запрещен администратором
     gchar *shared_folders_str = read_str_from_ini_file("RDPSettings", "rdp_shared_folders");
     if (strlen_safely(shared_folders_str) && !vdi_session_is_folders_redir_permitted()) {
-        show_msg_box_dialog(NULL, "Проброс папок запрещен администратором");
+        show_msg_box_dialog(NULL, _("Folders redirection is not allowed"));
     }
     free_memory_safely(&shared_folders_str);
 

@@ -1,0 +1,1849 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2021-10-21 14:01+0300\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=INTEGER; plural=EXPRESSION;\n"
+
+#. "%.2f Кбайт"
+#: ../src/conn_info_dialog.c:19
+#, c-format
+msgid "%.2f Kbyte "
+msgstr "%.2f Кбайт "
+
+#: ../src/conn_info_dialog.c:81
+#, c-format
+msgid "%.2f ms"
+msgstr "%.2f мс"
+
+#: ../src/remote-viewer.c:117
+#, c-format
+msgid "%s\n"
+msgstr "%s\n"
+
+#. get folder name
+#: ../src/remote_viewer_start_settings.c:248
+#: ../src/remote_viewer_start_settings.c:308
+msgid "Open File"
+msgstr "Открыть файл"
+
+#. Отменить
+#: ../src/remote_viewer_start_settings.c:251
+#: ../src/remote_viewer_start_settings.c:311
+#: ../src/remote_viewer_start_settings.c:446
+#: ../resources/ui/vdi_manager_form.glade.h:5
+#: ../resources/ui/start_settings_form.glade.h:4
+msgid "Cancel"
+msgstr "Отменить"
+
+#: ../src/remote_viewer_start_settings.c:253
+#: ../src/remote_viewer_start_settings.c:313
+msgid "Choose"
+msgstr "Выбрать"
+
+#: ../src/remote_viewer_start_settings.c:399
+#: ../src/remote_viewer_start_settings.c:445
+msgid "Ok"
+msgstr "Ок"
+
+#. Процесс обновления завершился с ошибками
+#: ../src/remote_viewer_start_settings.c:403
+msgid "The update process ended with errors"
+msgstr "Процесс обновления завершился с ошибками"
+
+#. "Необходимо ввести пароль"
+#: ../src/remote_viewer_start_settings.c:471
+msgid "Password required"
+msgstr "Необходимо ввести пароль"
+
+#: ../src/remote-viewer-connect.c:190 ../src/remote-viewer-connect.c:201
+msgid "Connection address is not specified"
+msgstr "Адрес подключения не указан"
+
+#: ../src/remote-viewer-connect.c:302
+msgid "A new version available. Press Settings->Service->Get updates"
+msgstr "Доступна новая версия. Чтобы обновиться нажмите Настройки->Служебные->Получить обновления"
+
+#: ../src/x2go/x2go_launcher_x2goclient.c:96
+#, c-format
+msgid "Unable to open %s"
+msgstr "Не удалось открыть %s"
+
+#: ../src/x2go/x2go_launcher_x2goclient.c:116
+#, c-format
+msgid ""
+"\n"
+"Unable to open file %s."
+msgstr ""
+"\n"
+"Не удалось открыть файл %s."
+
+#: ../src/x2go/x2go_launcher_x2goclient.c:125
+#, c-format
+msgid "Unable to prepare x2go config file"
+msgstr "Не удалось подготовить конфиг файл X2Go"
+
+#: ../src/x2go/x2go_launcher_x2goclient.c:157
+#, c-format
+msgid "Failed to start process x2goclient"
+msgstr "Не удалось запустить процесс x2goclient"
+
+#: ../src/x2go/x2go_launcher_pyhoca.c:89
+msgid "Connection closed"
+msgstr "Соединение завершилось"
+
+#. Connection is about to end. Show control windows
+#: ../src/x2go/x2go_launcher_pyhoca.c:142
+msgid "Closing the connection"
+msgstr "Сединение завершается"
+
+#. Possibly wrong credentials
+#: ../src/x2go/x2go_launcher_pyhoca.c:148
+msgid "Authorisation Error"
+msgstr "Ошибка авторизации"
+
+#. "Не указано имя"
+#: ../src/x2go/x2go_launcher_pyhoca.c:182
+msgid "Name is not specified"
+msgstr "Не указано имя"
+
+#. g_info("Paint time %lli", g_get_monotonic_time() - start);
+#. Поверхность создается сразу после подключения. Если ее нет, значит мы ожидаем подключение
+#: ../src/x2go/x2go_launcher_pyhoca.c:232 ../src/rdp_viewer/rdp_display.c:168
+msgid "Waiting for connection"
+msgstr "Ожидаем подключение"
+
+#. Insert text into main view
+#: ../src/messenger/messenger.c:116
+msgid "You"
+msgstr "Вы"
+
+#. Сообщение отправлено
+#: ../src/messenger/messenger.c:123
+msgid "Message sent"
+msgstr "Сообщение отправлено"
+
+#. Идет отправка сообщения
+#: ../src/messenger/messenger.c:153
+msgid "Sending message"
+msgstr "Идет отправка сообщения"
+
+#. Не удалось проверить наличие обновлений.
+#: ../src/app_updater/app_updater.c:182
+msgid "Unable to check updates."
+msgstr "Не удалось проверить наличие обновлений."
+
+#. Нет доступных обновлений [код: 1]
+#: ../src/app_updater/app_updater.c:198
+msgid "No updates found [code: 1]."
+msgstr "Нет доступных обновлений [код: 1]."
+
+#. Нет доступных обновлений [код: 2]
+#: ../src/app_updater/app_updater.c:209
+msgid "No updates found [code: 2]."
+msgstr "Нет доступных обновлений [код: 2]."
+
+#. Нет доступных обновлений [код: 3].
+#: ../src/app_updater/app_updater.c:220
+msgid "No updates found [code: 3]."
+msgstr "Нет доступных обновлений [код: 3]."
+
+#. Отсутствует файл скрипт обновления update_script.sh!\n"
+#. "Попробуйте переустановить приложение
+#: ../src/app_updater/app_updater.c:290
+msgid ""
+"File update_script.sh does not exists!\n"
+"Try to reinstall the application."
+msgstr ""
+"Отсутствует файл скрипт обновления update_script.sh!\n"
+"Попробуйте переустановить приложение."
+
+#. Проверка sudo пароля.
+#: ../src/app_updater/app_updater.c:296
+msgid "Sudo password checking."
+msgstr "Проверка sudo пароля."
+
+#. Не удалось проверить пароль.
+#: ../src/app_updater/app_updater.c:302
+#, c-format
+msgid ""
+"Unable to check password.\n"
+"%s"
+msgstr ""
+"Не удалось проверить пароль.\n"
+"%s"
+
+#. Неправильный пароль.
+#: ../src/app_updater/app_updater.c:311
+msgid "Wrong password."
+msgstr "Неправильный пароль."
+
+#. Получение списка возможных обновлений. Проверка наличия обновлений
+#: ../src/app_updater/app_updater.c:322
+msgid "Checking for updates."
+msgstr "Проверка наличия обновлений."
+
+#. Запускаем установку обновлений
+#: ../src/app_updater/app_updater.c:349
+#, c-format
+msgid "Installing new version %s."
+msgstr "Запускаем установку обновлений %s."
+
+#. Не удалось запустить процесс установки новой версии ПО.
+#: ../src/app_updater/app_updater.c:364
+msgid "Unable to start installation process."
+msgstr "Не удалось запустить процесс установки новой версии."
+
+#: ../src/app_updater/app_updater.c:374
+#, c-format
+msgid ""
+"New version %s installed.\n"
+"Restart the application."
+msgstr ""
+"Новая версия %s установлена.\n"
+"Перезапустите приложение."
+
+#. Процесс установки версии %s завершился с ошибками.
+#: ../src/app_updater/app_updater.c:377
+#, c-format
+msgid ""
+"Installation of %s\n"
+"completed with errors."
+msgstr ""
+"Процесс установки версии %s\n"
+"завершился с ошибками."
+
+#: ../src/rdp_viewer/rdp_viewer.c:162
+msgid "Unable to connect. Check if remote access allowed for this user."
+msgstr "Не удалось подключиться. Проверьте, разрешен ли удаленный доступ для этого пользователя."
+
+#: ../src/rdp_viewer/rdp_viewer.c:260
+msgid "Folders redirection is not allowed"
+msgstr "Проброс папок запрещен администратором"
+
+#: ../src/rdp_viewer/rdp_viewer_window.c:322
+msgid "USB redirection is not allowed"
+msgstr "Проброс USB запрещен администратором"
+
+#. Leave fullscreen
+#: ../src/rdp_viewer/rdp_viewer_window.c:511
+msgid "Leave full screen"
+msgstr "Покинуть полный экран"
+
+#. Reconnect
+#. Переподключиться
+#: ../src/rdp_viewer/rdp_viewer_window.c:524
+#: ../resources/ui/virt-viewer_veil.glade.h:38
+msgid "Reconnect"
+msgstr "Переподключиться"
+
+#. Disconnect
+#. Отключиться
+#: ../src/rdp_viewer/rdp_viewer_window.c:527
+#: ../src/virt_viewer/virt-viewer-window.c:1269
+#: ../resources/ui/virt-viewer_veil.glade.h:36
+msgid "Disconnect"
+msgstr "Отключиться"
+
+#. Перенаправление USB /dev/bus/usb/%03i/%03i завершилось с ошибкой. %s
+#: ../src/rdp_viewer/rdp_viewer_window.c:559
+#, c-format
+msgid ""
+"USB redirection /dev/bus/usb/%03i/%03i finished with errors.\n"
+"%s"
+msgstr ""
+"Перенаправление USB /dev/bus/usb/%03i/%03i завершилось с ошибками.\n"
+"%s"
+
+#. ВМ: %s     Пользователь: %s  -  %s
+#: ../src/rdp_viewer/rdp_viewer_window.c:685
+#, c-format
+msgid "VM: %s     User: %s  -  %s"
+msgstr "ВМ: %s     Пользователь: %s  -  %s"
+
+#. "Нет соединения. Код: 0x%X %s"
+#: ../src/rdp_viewer/rdp_client.c:444
+#, c-format
+msgid "No Connection. Code: 0x%X %s"
+msgstr "Нет соединения. Код: 0x%X %s"
+
+#. Ошибка удаленного приложения. 0x%X  %s
+#: ../src/rdp_viewer/rdp_client.c:449
+#, c-format
+msgid "Remote app error. 0x%X  %s"
+msgstr "Ошибка удаленного приложения. 0x%X  %s"
+
+#: ../src/usb_redirection/usbredir_dialog.c:193
+msgid "Unable to detach USB TCP devices from remote machine"
+msgstr "Не удалось отсоединить USB TCP устройства на виртуальной машине"
+
+#: ../src/usb_redirection/usbredir_dialog.c:214
+msgid "Unable to determine thin client address. Set it manually"
+msgstr "Не удалось определить ip адрес ТК. Задайте его вручную"
+
+#: ../src/usb_redirection/usbredirserver_lin.c:391
+#: ../src/usb_redirection/usbredirserver_win.c:400
+msgid "Failed to init libusb"
+msgstr "Не удалось инициализировать libusb"
+
+#: ../src/usb_redirection/usbredirserver_lin.c:401
+#: ../src/usb_redirection/usbredirserver_win.c:410
+msgid "Error while creating server socket"
+msgstr "Ошибка во время создания сервера трансляции USB"
+
+#. Не удалось добавить TCP USB устройство к виртуальной машине
+#: ../src/usb_redirection/usbredirserver_lin.c:425
+#: ../src/usb_redirection/usbredirserver_win.c:434
+msgid "Failed to add TCP USB device to remote machine"
+msgstr "Не удалось добавить TCP USB устройство виртуальной машине"
+
+#: ../src/usb_redirection/usbredirserver_lin.c:430
+#: ../src/usb_redirection/usbredirserver_win.c:439
+msgid "Error while accepting client connection"
+msgstr "Error while accepting client connection"
+
+#. "Не удалось открыть USB устройство. Нет прав?\n"
+#. "Попробуйте выполнить chmod 666 /dev/bus/usb/%03i/%03i"
+#: ../src/usb_redirection/usbredirserver_lin.c:450
+#, c-format
+msgid ""
+"Failed to open USB device. Possibly permissions problem\n"
+"Try to execute chmod 666 /dev/bus/usb/%03i/%03i"
+msgstr ""
+"Не удалось открыть USB устройство. Нет прав?\n"
+"Попробуйте выполнить chmod 666 /dev/bus/usb/%03i/%03i"
+
+#: ../src/usb_redirection/usbredirserver_lin.c:463
+#: ../src/usb_redirection/usbredirserver_win.c:468
+msgid "usbredirhost_open failed"
+msgstr "usbredirhost_open failed"
+
+#. successsfull finish
+#: ../src/usb_redirection/usbredirserver_lin.c:479
+#: ../src/usb_redirection/usbredirserver_win.c:490
+msgid "USB redirection finished"
+msgstr "Проброс USB завершился"
+
+#: ../src/usb_redirection/usbredirserver_win.c:457
+msgid "Failed to open USB device."
+msgstr "Не удалось открыть USB устройство."
+
+#: ../src/usb_redirection/usb_selector_widget.c:120
+msgid "State"
+msgstr "Состояние"
+
+#: ../src/usb_redirection/usb_selector_widget.c:234
+msgid "Redirecting USB"
+msgstr "USB перенаправляется"
+
+#: ../src/usb_redirection/usb_selector_widget.c:236
+msgid "USB redirection is being finished. Await"
+msgstr "Проброс USB завершается. Ожидайте"
+
+#. "Двухфакторная аутентификация включена.\n"
+#. "Для отключения снимите галочку и нажмите Применить."
+#: ../src/vdi_client/vdi_user_settings_widget.c:84
+msgid ""
+"Two-factor authentication enabled.\n"
+"Uncheck 2fa and press Apply to disable."
+msgstr ""
+"Двухфакторная аутентификация включена.\n"
+"Для отключения снимите галку и нажмите Применить."
+
+#. "Двухфакторная аутентификация выключена. Для включения:\n"
+#. "- поставьте галочку,\n"
+#. "- сгенерируйте QR-код,\n"
+#. "- отсканируйте QR-код c помощью аутентификатора "
+#. "и нажмите Применить."
+#: ../src/vdi_client/vdi_user_settings_widget.c:92
+msgid ""
+"Two-factor authentication disabled. To enable:\n"
+"- check 2fa,\n"
+"- generate QR-code,\n"
+"- scan QR-code using an authenticator and press Apply."
+msgstr ""
+"Двухфакторная аутентификация выключена. Для включения:\n"
+"- поставьте галку,\n"
+"- сгенерируйте QR-код,\n"
+"- отсканируйте QR-код c помощью аутентификатора и нажмите Применить."
+
+#. "Не удалось сгенерировать QR-код"
+#: ../src/vdi_client/vdi_user_settings_widget.c:123
+msgid "Failed to generate QR-code"
+msgstr "Не удалось сгенерировать QR-код"
+
+#: ../src/vdi_client/vdi_user_settings_widget.c:139
+#, c-format
+msgid ""
+"QR-code generated.\n"
+"Scan QR-code using an authenticator\n"
+"(Yandex.Key, Google Authenticator). %s"
+msgstr ""
+"QR-код сгенерирован.\n"
+"Отсканируйте QR-код c помощью аутентификатора\n"
+"(пример Яндекс.Ключ, Google Authenticator). %s"
+
+#: ../src/vdi_client/vdi_user_settings_widget.c:142
+msgid "Then press Apply."
+msgstr "Далее нажмите Применить."
+
+#: ../src/vdi_client/vdi_user_settings_widget.c:149
+#: ../src/vdi_client/vdi_user_settings_widget.c:180
+#, c-format
+msgid "An error occurred  %s"
+msgstr "Возника ошибка  %s"
+
+#. "Не удалось применить изменения."
+#: ../src/vdi_client/vdi_user_settings_widget.c:171
+msgid "Failed to apply changes."
+msgstr "Не удалось применить изменения."
+
+#: ../src/vdi_client/vdi_user_settings_widget.c:177
+msgid "Changes applied successfully."
+msgstr "Изменения применены."
+
+#. Отправлен запрос на генерацию QR.
+#: ../src/vdi_client/vdi_user_settings_widget.c:190
+msgid "QR generation request sent."
+msgstr "Отправлен запрос на генерацию QR."
+
+#. Отправлен запрос на применение изменений.
+#: ../src/vdi_client/vdi_user_settings_widget.c:199
+msgid "Request to apply changes sent."
+msgstr "Отправлен запрос на применение изменений."
+
+#. "Сгенерируйте QR-код."
+#: ../src/vdi_client/vdi_user_settings_widget.c:215
+msgid "Generate QR-code."
+msgstr "Сгенерируйте QR-код."
+
+#. "Для отключения двухфакторной аутентификации нажмите Применить."
+#: ../src/vdi_client/vdi_user_settings_widget.c:220
+msgid "Press Apply to disable 2fa."
+msgstr "Для отключения двухфакторной аутентификации нажмите Применить."
+
+#. gui message  "Отправлен запрос на получение вм из пула"
+#: ../src/vdi_client/vdi_manager.c:144
+msgid "VM request sent"
+msgstr "Отправлен запрос на получение ВМ из пула"
+
+#. "Отправлен запрос на список пулов"
+#. Отправлен запрос на список пулов
+#: ../src/vdi_client/vdi_manager.c:173
+#: ../resources/ui/vdi_manager_form.glade.h:7
+msgid "Pool data request sent"
+msgstr "Отправлен запрос на список пулов"
+
+#: ../src/vdi_client/vdi_manager.c:241
+msgid "Failed to fetch pool data"
+msgstr "Не удалось получить список пулов"
+
+#. "Получен список пулов"
+#: ../src/vdi_client/vdi_manager.c:293
+msgid "Pool data received"
+msgstr "Получен список пулов"
+
+#: ../src/vdi_client/vdi_manager.c:321
+msgid "Failed to get VM fom pool"
+msgstr "Не удалось получить ВМ из пула"
+
+#. "Получена вм из пула"
+#: ../src/vdi_client/vdi_manager.c:340
+msgid "VM received from pool"
+msgstr "Получена ВМ из пула"
+
+#. "Текущие запросы отменены"
+#: ../src/vdi_client/vdi_manager.c:422
+msgid "Current requests cancelled"
+msgstr "Текущие запросы отменены"
+
+#. show window
+#. %s  Время входа: %s  -  %s
+#: ../src/vdi_client/vdi_manager.c:573
+#, c-format
+msgid "%s  Login time: %s  -  %s"
+msgstr "%s  Время входа: %s  -  %s"
+
+#. "Не удалось сформировать SoupMessage. %s"
+#: ../src/vdi_client/vdi_session.c:227
+#, c-format
+msgid "Failed to form SoupMessage. %s"
+msgstr "Не удалось сформировать SoupMessage. %s"
+
+#. "Не удалось авторизоваться"
+#: ../src/vdi_client/vdi_session.c:283
+msgid "Failed to login"
+msgstr "Не удалось авторизоваться"
+
+#: ../src/virt_viewer/virt-viewer-file.c:843
+#, c-format
+msgid ""
+"At least %s version %s is required to setup this connection, see %s for "
+"details"
+msgstr ""
+"По крайне мере %s версия %s требуется для создания соединения, ознакомтесь с деталями %s "
+""
+
+#: ../src/virt_viewer/virt-viewer-file.c:851
+#, c-format
+msgid "At least %s version %s is required to setup this connection"
+msgstr "По крайне мере %s версия %s требуется для создания соединения"
+
+#: ../src/virt_viewer/virt-viewer-window.c:600
+msgid "Ctrl+Alt+_Del"
+msgstr ""
+
+#: ../src/virt_viewer/virt-viewer-window.c:601
+msgid "Ctrl+Alt+_Backspace"
+msgstr ""
+
+#: ../src/virt_viewer/virt-viewer-window.c:603
+msgid "Ctrl+Alt+F_1"
+msgstr ""
+
+#: ../src/virt_viewer/virt-viewer-window.c:604
+msgid "Ctrl+Alt+F_2"
+msgstr ""
+
+#: ../src/virt_viewer/virt-viewer-window.c:605
+msgid "Ctrl+Alt+F_3"
+msgstr ""
+
+#: ../src/virt_viewer/virt-viewer-window.c:606
+msgid "Ctrl+Alt+F_4"
+msgstr ""
+
+#: ../src/virt_viewer/virt-viewer-window.c:607
+msgid "Ctrl+Alt+F_5"
+msgstr ""
+
+#: ../src/virt_viewer/virt-viewer-window.c:608
+msgid "Ctrl+Alt+F_6"
+msgstr ""
+
+#: ../src/virt_viewer/virt-viewer-window.c:609
+msgid "Ctrl+Alt+F_7"
+msgstr ""
+
+#: ../src/virt_viewer/virt-viewer-window.c:610
+msgid "Ctrl+Alt+F_8"
+msgstr ""
+
+#: ../src/virt_viewer/virt-viewer-window.c:611
+msgid "Ctrl+Alt+F_9"
+msgstr ""
+
+#: ../src/virt_viewer/virt-viewer-window.c:612
+msgid "Ctrl+Alt+F1_0"
+msgstr ""
+
+#: ../src/virt_viewer/virt-viewer-window.c:613
+msgid "Ctrl+Alt+F11"
+msgstr ""
+
+#: ../src/virt_viewer/virt-viewer-window.c:614
+msgid "Ctrl+Alt+F12"
+msgstr ""
+
+#: ../src/virt_viewer/virt-viewer-window.c:1007
+#, c-format
+msgid "Unable to determine image format for file '%s'"
+msgstr "Не удалось определить формат изображения в файле '%s'"
+
+#: ../src/virt_viewer/virt-viewer-window.c:1030
+msgid "Save screenshot"
+msgstr "Сохранить скриншот"
+
+#: ../src/virt_viewer/virt-viewer-window.c:1033
+#: ../resources/ui/virt-viewer-vm-connection.glade.h:2
+#: ../resources/ui/virt-viewer-auth.glade.h:2
+#: ../resources/ui/virt-viewer-file-transfer-dialog.glade.h:1
+msgid "_Cancel"
+msgstr "_Отменить"
+
+#: ../src/virt_viewer/virt-viewer-window.c:1034
+msgid "_Save"
+msgstr "_Сохранить"
+
+#: ../src/virt_viewer/virt-viewer-window.c:1042
+msgid "Screenshot.png"
+msgstr ""
+
+#: ../src/virt_viewer/virt-viewer-window.c:1089
+msgid "Folder redirection prohibited by administrator"
+msgstr "Проброс папок запрещен администратором"
+
+#: ../src/virt_viewer/virt-viewer-window.c:1180
+msgid "Unable to connnect to oVirt"
+msgstr "Не удалось подключиться к oVirt"
+
+#: ../src/virt_viewer/virt-viewer-window.c:1206
+msgid "Reconnecting"
+msgstr "Переподключение"
+
+#: ../src/virt_viewer/virt-viewer-window.c:1278
+#: ../src/virt_viewer/virt-viewer-window.c:1279
+msgid "USB device selection"
+msgstr "Выбор USB устройство"
+
+#: ../src/virt_viewer/virt-viewer-window.c:1287
+msgid "Send key combination"
+msgstr "Послать комбинацию клавиш"
+
+#: ../src/virt_viewer/virt-viewer-window.c:1297
+#: ../src/virt_viewer/virt-viewer-window.c:1298
+msgid "Leave fullscreen"
+msgstr "Покинуть полный экран"
+
+#: ../src/virt_viewer/virt-viewer-window.c:1373
+msgid "Ctrl+Alt"
+msgstr ""
+
+#: ../src/virt_viewer/virt-viewer-window.c:1376
+#, c-format
+msgid "(Press %s to release pointer)"
+msgstr "(Нажмите %s чтобы освободить курсор)"
+
+#: ../src/virt_viewer/virt-viewer-session-spice.c:728
+msgid "Invalid password"
+msgstr "Неправильный пароль"
+
+#. Выберите USB устройство для проброса
+#: ../src/virt_viewer/virt-viewer-session-spice.c:843
+msgid "Choose USB device for redirection"
+msgstr "Выберите USB для перенаправления"
+
+#: ../src/virt_viewer/virt-viewer-session-spice.c:845
+msgid "_Close"
+msgstr "_Закрыть"
+
+#: ../src/virt_viewer/virt-viewer-auth.c:90
+#, c-format
+msgid ""
+"Authentication is required for the %s connection to:\n"
+"\n"
+"<b>%s</b>\n"
+"\n"
+msgstr ""
+"Требуется авторизация для %s подключения к:\n"
+"\n"
+"<b>%s</b>\n"
+"\n"
+
+#: ../src/virt_viewer/virt-viewer-auth.c:94
+#, c-format
+msgid "Authentication is required for the %s connection:\n"
+msgstr "Требуется авторизация для %s подключения к:\n"
+
+#: ../src/virt_viewer/virt-viewer-session-vnc.c:162
+#, c-format
+msgid "Unsupported authentication type %d"
+msgstr "Неподдерживаемый тип аутентификации %d"
+
+#: ../src/virt_viewer/virt-viewer-vm-connection.c:64
+msgid "No virtual machine found"
+msgstr "Виртуальные машины не найдены"
+
+#: ../src/virt_viewer/virt-viewer-vm-connection.c:93
+msgid "No virtual machine was chosen"
+msgstr "Виртуальная машина не выбрана"
+
+#: ../src/virt_viewer/virt-viewer-file-transfer-dialog.c:128
+msgid "File Transfers"
+msgstr "Передача файлов"
+
+#: ../src/virt_viewer/virt-viewer-file-transfer-dialog.c:154
+msgid "Transferring 1 file..."
+msgstr "Передача файла 1..."
+
+#: ../src/virt_viewer/virt-viewer-file-transfer-dialog.c:156
+#, c-format
+msgid "Transferring %d file of %d..."
+msgid_plural "Transferring %d files of %d..."
+msgstr[0] "Передача файла %d  %d..."
+msgstr[1] "Передача файлов %d  %d..."
+
+#: ../src/virt_viewer/virt-viewer-file-transfer-dialog.c:228
+#, c-format
+msgid "An error caused the following file transfers to fail:%s"
+msgstr "Передача файла не удалась из-за ошибки:%s"
+
+#: ../src/virt_viewer/virt-viewer-app.c:428
+msgid "Do you want to close the session?"
+msgstr "Вы хотите закрыть сессию?"
+
+#: ../src/virt_viewer/virt-viewer-app.c:430
+msgid "Do not ask me again"
+msgstr "Не спрашивать снова"
+
+#. virt viewer takes its name from guest-name so lets not overcomplicate
+#: ../src/virt_viewer/virt-viewer-app.c:529
+msgid "VM: "
+msgstr "ВМ: "
+
+#: ../src/virt_viewer/virt-viewer-app.c:529
+msgid "    User: "
+msgstr "    Пользователь: "
+
+#: ../src/virt_viewer/virt-viewer-app.c:627
+#, c-format
+msgid "Address is too long for unix socket_path: %s"
+msgstr "Адрес слишком длинный для unix socket_path: %s"
+
+#: ../src/virt_viewer/virt-viewer-app.c:637
+#, c-format
+msgid "Creating unix socket failed: %s"
+msgstr "Не удалось создать unix сокет: %s"
+
+#: ../src/virt_viewer/virt-viewer-app.c:643
+#, c-format
+msgid "Connecting to unix socket failed: %s"
+msgstr "Не удалось подключиться к unix сокету: %s"
+
+#: ../src/virt_viewer/virt-viewer-app.c:705
+#, c-format
+msgid "%s   Display number: %d"
+msgstr "%s   Номер дисплея: %d"
+
+#: ../src/virt_viewer/virt-viewer-app.c:925
+#, c-format
+msgid "Waiting for display %d..."
+msgstr "Ожидаем дисплей %d..."
+
+#: ../src/virt_viewer/virt-viewer-app.c:1035
+#, c-format
+msgid "Unsupported graphic type '%s'"
+msgstr "Неподдерживаемый графический тип '%s'"
+
+#: ../src/virt_viewer/virt-viewer-app.c:1119
+msgid "Connect to ssh failed."
+msgstr "Не удалось подключиться по SSH."
+
+#: ../src/virt_viewer/virt-viewer-app.c:1134
+#, c-format
+msgid "Can't connect to channel: %s"
+msgstr "Не удалось подключиться к каналу: %s"
+
+#: ../src/virt_viewer/virt-viewer-app.c:1136
+msgid "only SSH or unix socket connection supported."
+msgstr "Поддерживаются только SSH и unix socket подключение."
+
+#: ../src/virt_viewer/virt-viewer-app.c:1149
+msgid "Connect to channel unsupported."
+msgstr "Подключение к каналу не поддерживается."
+
+#: ../src/virt_viewer/virt-viewer-app.c:1211
+msgid "Display can only be attached through libvirt with --attach"
+msgstr "Дисплей может быть присоединен только через libvirt с --attach"
+
+#: ../src/virt_viewer/virt-viewer-app.c:1238
+msgid "Connecting to graphic server"
+msgstr "Подключение к графическому серверу"
+
+#: ../src/virt_viewer/virt-viewer-app.c:1337
+msgid "Guest domain has shutdown"
+msgstr "Гостевая машина выключилась"
+
+#: ../src/virt_viewer/virt-viewer-app.c:1390
+#: ../src/virt_viewer/virt-viewer-app.c:1401
+#, c-format
+msgid "Unable to connect: %s"
+msgstr "Не удалось подключиться: %s"
+
+#: ../src/virt_viewer/virt-viewer-app.c:1398
+msgid "Failed to initiate connection"
+msgstr "Не удалось инициировать соединение"
+
+#: ../src/virt_viewer/virt-viewer-app.c:1500
+msgid "Connected to graphic server"
+msgstr "Подключен к графическому серверу"
+
+#: ../src/virt_viewer/virt-viewer-app.c:1534
+#, c-format
+msgid "Unable to connect to the graphic server %s"
+msgstr "Не удалось подключиться к графическому серверу %s"
+
+#: ../src/virt_viewer/virt-viewer-app.c:1561
+#, c-format
+msgid "Unable to authenticate with remote desktop server at %s: %s\n"
+msgstr "Не удалось пройти аутентификацию на сервере удаленного рабочего стола в %s: %s\n"
+
+#: ../src/virt_viewer/virt-viewer-app.c:1578
+#, c-format
+msgid "Unable to authenticate with remote desktop server: %s"
+msgstr "Не удалось пройти аутентификацию на сервере удаленного рабочего стола: %s"
+
+#: ../src/virt_viewer/virt-viewer-app.c:1588
+#, c-format
+msgid "USB redirection error: %s"
+msgstr "Ошибка проброса USB: %s"
+
+#: ../src/virt_viewer/virt-viewer-app.c:1893
+#, c-format
+msgid "Zoom level must be within %d-%d\n"
+msgstr "Масштаб должен быть в пределах %d-%d\n"
+
+#: ../src/virt_viewer/virt-viewer-app.c:2364
+#, c-format
+msgid "Display _%d"
+msgstr "Дисплей _%d"
+
+#: ../src/virt_viewer/virt-viewer-display-vnc.c:134
+msgid "VNC does not provide GUID"
+msgstr "VNC не предоставляет GUID"
+
+#. Закрыть
+#: ../resources/ui/usb_selector_form.glade.h:2
+#: ../resources/ui/virt-viewer_veil.glade.h:12
+#: ../resources/ui/x2go_control_form.glade.h:9
+msgid "Close"
+msgstr "Закрыть"
+
+#. Обновить
+#: ../resources/ui/vdi_manager_form.glade.h:5
+msgid "Update"
+msgstr "Обновить"
+
+#. Выйти
+#: ../resources/ui/vdi_manager_form.glade.h:9
+msgid "Quit"
+msgstr "Выйти"
+
+#. Адрес клиента
+#: ../resources/ui/usb_selector_form.glade.h:4
+msgid "Client address(IP)"
+msgstr "Адрес клиента(IP)"
+
+#: ../resources/ui/usb_selector_form.glade.h:5
+msgid "192.168.6.250"
+msgstr ""
+
+#: ../resources/ui/vdi_user_settings_form.glade.h:1
+msgid "Profile settings"
+msgstr "Настройки профиля"
+
+#. Двухфакторная аутентификация
+#: ../resources/ui/vdi_user_settings_form.glade.h:3
+msgid "Two-factor authentication"
+msgstr "Двухфакторная аутентификация"
+
+#. Сгенерировать новый QR код
+#: ../resources/ui/vdi_user_settings_form.glade.h:5
+msgid "Generate a new QR code"
+msgstr "Сгенерировать новый QR код"
+
+#. Применить
+#: ../resources/ui/vdi_user_settings_form.glade.h:7
+msgid "Apply"
+msgstr "Применить"
+
+#: ../resources/ui/vdi_manager_form.glade.h:1
+msgid "VeiL Connect"
+msgstr ""
+
+#: ../resources/ui/vdi_manager_form.glade.h:8
+msgid "VDI server availability indicator"
+msgstr "Индикатор доступности VDI сервера"
+
+#: ../resources/ui/vdi_messenger_from.glade.h:1
+msgid "Dialog with administrator - VeilL Connect"
+msgstr "Диалог с администратором - VeilL Connect"
+
+#. Отправить
+#: ../resources/ui/vdi_messenger_from.glade.h:3
+msgid "Send"
+msgstr "Отправить"
+
+#. Информация о скоростях обновляется раз в 5 секунд. &#10;Информация о потерях и RTT обновляется раз в 30 секунд.
+#: ../resources/ui/connection_info_dialog.glade.h:2
+msgid ""
+"Speed data is being updated every 5 seconds. \n"
+"Losses and RTT are being updated every 30 seconds"
+msgstr ""
+"Информация о скоростях обновляется раз в 5 секунд. \n"
+"Информация о потерях и RTT обновляется раз в 30 секунд"
+
+#. Информация о соединении - VeilL Connect
+#: ../resources/ui/connection_info_dialog.glade.h:5
+msgid "Connection information - VeilL Connect"
+msgstr "Информация о соединении - VeilL Connect"
+
+#. Протокол
+#: ../resources/ui/connection_info_dialog.glade.h:7
+msgid "Protocol"
+msgstr "Протокол"
+
+#. Время подключения к VeiL VDI
+#: ../resources/ui/connection_info_dialog.glade.h:9
+msgid "Connection time to VeiL VDI"
+msgstr "Время подключения к VeiL VDI"
+
+#. Время подключения к ВМ
+#: ../resources/ui/connection_info_dialog.glade.h:11
+msgid "Connection time to VM"
+msgstr "Время подключения к ВМ"
+
+#. Скорость получения данных
+#: ../resources/ui/connection_info_dialog.glade.h:13
+msgid "Data receiving speed "
+msgstr "Скорость получения данных "
+
+#. Скорость отправки данных
+#: ../resources/ui/connection_info_dialog.glade.h:15
+msgid "Data sending speed"
+msgstr "Скорость отправки данных"
+
+#. Средний RTT
+#: ../resources/ui/connection_info_dialog.glade.h:17
+msgid "Average RTT"
+msgstr "Средний RTT"
+
+#. Процент сетевых потерь
+#: ../resources/ui/connection_info_dialog.glade.h:19
+msgid "Network losses percentage"
+msgstr "Процент сетевых потерь"
+
+#: ../resources/ui/remote-viewer-connect_veil.glade.h:1
+msgid "VEIL CONNECT"
+msgstr ""
+
+#. Имя пользователя
+#: ../resources/ui/remote-viewer-connect_veil.glade.h:3
+msgid "User name"
+msgstr "Имя пользователя"
+
+#. Пользователь
+#: ../resources/ui/remote-viewer-connect_veil.glade.h:5
+msgid "User"
+msgstr "Пользователь"
+
+#. Пароль
+#: ../resources/ui/remote-viewer-connect_veil.glade.h:7
+#: ../resources/ui/ask_pass_form.glade.h:4
+#: ../resources/ui/x2go_control_form.glade.h:5
+msgid "Password"
+msgstr "Пароль"
+
+#. Одноразовый пароль
+#: ../resources/ui/remote-viewer-connect_veil.glade.h:9
+msgid "One-time password"
+msgstr "Одноразовый пароль"
+
+#. Enter
+#: ../resources/ui/remote-viewer-connect_veil.glade.h:11
+msgid "Enter"
+msgstr "Войти"
+
+#. Настройки
+#: ../resources/ui/remote-viewer-connect_veil.glade.h:13
+#: ../resources/ui/virt-viewer_veil.glade.h:2
+#: ../resources/ui/start_settings_form.glade.h:2
+msgid "Settings"
+msgstr "Настройки"
+
+#. Вставить смарткарту
+#: ../resources/ui/virt-viewer_veil.glade.h:4
+msgid "Smartcard insertion"
+msgstr "Вставить смарткарту"
+
+#. Удалить смарткарту
+#: ../resources/ui/virt-viewer_veil.glade.h:6
+msgid "Smartcard removal"
+msgstr "Удалить смарткарту"
+
+#. Изменить CD
+#: ../resources/ui/virt-viewer_veil.glade.h:8
+msgid "Change CD"
+msgstr "Изменить CD"
+
+#. Общие папки
+#: ../resources/ui/virt-viewer_veil.glade.h:10
+#: ../resources/ui/virt-viewer-preferences.glade.h:1
+msgid "Shared folders"
+msgstr "Общие папки"
+
+#. Вид
+#: ../resources/ui/virt-viewer_veil.glade.h:14
+msgid "View"
+msgstr "Вид"
+
+#. Полный экран
+#: ../resources/ui/virt-viewer_veil.glade.h:16
+#: ../resources/ui/start_settings_form.glade.h:184
+msgid "Full screen"
+msgstr "Полный экран"
+
+#. Масштаб
+#: ../resources/ui/virt-viewer_veil.glade.h:18
+msgid "Zoom"
+msgstr ""
+
+#. Увеличить
+#: ../resources/ui/virt-viewer_veil.glade.h:20
+msgid "Zoom in"
+msgstr "Увеличить"
+
+#. Уменьшить
+#: ../resources/ui/virt-viewer_veil.glade.h:22
+msgid "Zoom out"
+msgstr "Уменьшить"
+
+#. К размеру виртуальной машины
+#: ../resources/ui/virt-viewer_veil.glade.h:24
+msgid "Adjust to remote machine size"
+msgstr "К размеру виртуальной машины"
+
+#. Дисплеи
+#: ../resources/ui/virt-viewer_veil.glade.h:26
+msgid "Displays"
+msgstr "Дисплеи"
+
+#. Освободить курсор
+#: ../resources/ui/virt-viewer_veil.glade.h:28
+msgid "Release cursor"
+msgstr "Освободить курсор"
+
+#. USB устройства
+#: ../resources/ui/virt-viewer_veil.glade.h:30
+msgid "USB devices"
+msgstr "USB устройства"
+
+#. Проброс USB
+#: ../resources/ui/virt-viewer_veil.glade.h:32
+msgid "USB redirection"
+msgstr "Проброс USB"
+
+#. Соединение
+#: ../resources/ui/virt-viewer_veil.glade.h:34
+msgid "Connection"
+msgstr "Соединение"
+
+#. Управление ВМ
+#: ../resources/ui/virt-viewer_veil.glade.h:40
+msgid "VM control"
+msgstr "Управление ВМ"
+
+#. Включить
+#: ../resources/ui/virt-viewer_veil.glade.h:42
+msgid "Start"
+msgstr "Включить"
+
+#. Приостановить
+#: ../resources/ui/virt-viewer_veil.glade.h:44
+msgid "Suspend"
+msgstr "Приостановить"
+
+#. Выключить
+#: ../resources/ui/virt-viewer_veil.glade.h:46
+msgid "Power off"
+msgstr "Выключить"
+
+#. Выключить форсировано
+#: ../resources/ui/virt-viewer_veil.glade.h:48
+msgid "Power off forced"
+msgstr "Выключить форсирован"
+
+#. Перезагрузить
+#: ../resources/ui/virt-viewer_veil.glade.h:50
+msgid "Reboot"
+msgstr "Перезагрузить"
+
+#. Перезагрузить форсировано
+#: ../resources/ui/virt-viewer_veil.glade.h:52
+msgid "Reboot forced"
+msgstr "Перезагрузить форсировано"
+
+#. Послать сочетания клавиш
+#: ../resources/ui/virt-viewer_veil.glade.h:54
+msgid "Send keyboard shortcut"
+msgstr "Послать сочетания клавиш"
+
+#. Помощь
+#: ../resources/ui/virt-viewer_veil.glade.h:56
+msgid "Help"
+msgstr "Помощь"
+
+#. Открыть диалог с администратором
+#: ../resources/ui/virt-viewer_veil.glade.h:58
+msgid "Open dialog with administrator"
+msgstr "Открыть диалог с администратором"
+
+#. Официальная страница ECP VeiL
+#: ../resources/ui/virt-viewer_veil.glade.h:60
+msgid " ECP VeiL official page"
+msgstr "Официальная страница ECP VeiL"
+
+#. Документация
+#: ../resources/ui/virt-viewer_veil.glade.h:62
+msgid "Documentation"
+msgstr "Документация"
+
+#. Информация о соединении
+#: ../resources/ui/virt-viewer_veil.glade.h:64
+msgid "Connection information"
+msgstr "Информация о соединении"
+
+#. О программе
+#: ../resources/ui/virt-viewer_veil.glade.h:66
+msgid "About program"
+msgstr "О программе"
+
+#. Введите пароль sudo
+#: ../resources/ui/ask_pass_form.glade.h:2
+msgid "Enter sudo password"
+msgstr "Введите пароль sudo"
+
+#: ../resources/ui/virt-viewer-vm-connection.glade.h:1
+msgid "Choose a virtual machine"
+msgstr "Выберит виртуальную машину"
+
+#. Подключиться
+#: ../resources/ui/virt-viewer-vm-connection.glade.h:3
+#: ../resources/ui/x2go_control_form.glade.h:7
+msgid "Connect"
+msgstr "Подключиться"
+
+#. Имя
+#: ../resources/ui/virt-viewer-vm-connection.glade.h:4
+#: ../resources/ui/x2go_control_form.glade.h:2
+msgid "Name"
+msgstr "Имя"
+
+#: ../resources/ui/virt-viewer-vm-connection.glade.h:5
+msgid "Available virtual machines"
+msgstr "Доступные виртуальные машины"
+
+#. Сохранить
+#: ../resources/ui/start_settings_form.glade.h:6
+msgid "Save"
+msgstr "Сохранить"
+
+#. Адрес сервера
+#: ../resources/ui/start_settings_form.glade.h:8
+msgid "Server address"
+msgstr "Адрес сервера"
+
+#. Порт сервера
+#: ../resources/ui/start_settings_form.glade.h:10
+msgid "Server port"
+msgstr "Порт сервера"
+
+#: ../resources/ui/start_settings_form.glade.h:11
+msgid "30"
+msgstr ""
+
+#. Домен
+#: ../resources/ui/start_settings_form.glade.h:13
+msgid "Domain"
+msgstr "Домен"
+
+#. Внешняя служба авторизации
+#: ../resources/ui/start_settings_form.glade.h:15
+msgid "LDAP"
+msgstr "Внешняя служба авторизации"
+
+#. Автоподключение при запуске
+#: ../resources/ui/start_settings_form.glade.h:17
+msgid "Auto connection upon startup"
+msgstr "Автоподключение при запуске"
+
+#. Подключение к предыдущему пулу при старте приложения
+#: ../resources/ui/start_settings_form.glade.h:19
+msgid "Connection to the previous pool upon application startup"
+msgstr "Подключение к предыдущему пулу при старте приложения"
+
+#. Сохранять пароль
+#: ../resources/ui/start_settings_form.glade.h:21
+msgid "Save password"
+msgstr "Сохранять пароль"
+
+#: ../resources/ui/start_settings_form.glade.h:22
+msgid "Save password in ini file"
+msgstr "Сохранять ли пароль в ini файл"
+
+#: ../resources/ui/start_settings_form.glade.h:23
+msgid "SPICE"
+msgstr ""
+
+#: ../resources/ui/start_settings_form.glade.h:24
+msgid "RDP"
+msgstr ""
+
+#: ../resources/ui/start_settings_form.glade.h:25
+msgid "X2GO"
+msgstr ""
+
+#. Основные
+#: ../resources/ui/start_settings_form.glade.h:27
+msgid "General"
+msgstr "Основные"
+
+#. Показывать клиентский курсор
+#: ../resources/ui/start_settings_form.glade.h:29
+msgid "Show client cursor"
+msgstr "Показывать клиентский курсор"
+
+#. Мультимониторность
+#: ../resources/ui/start_settings_form.glade.h:31
+msgid "Use multiple monitors"
+msgstr "Мультимониторность"
+
+#. Открыть приложение на доступных мониторах (максимум 3)&#10;Мониторы должны образовывать прямоугольник (иметь одинаковую высоту изображения)
+#: ../resources/ui/start_settings_form.glade.h:33
+msgid "Monitors should have the same height"
+msgstr "Открыть приложение на доступных мониторах (максимум 3). Мониторы должны образовывать прямоугольник (иметь одинаковую высоту изображения)"
+
+#. Удаленное приложение
+#: ../resources/ui/start_settings_form.glade.h:35
+msgid "Remote application"
+msgstr "Удаленное приложение"
+
+#. Режим, в котором доступно только одно заданное приложение
+#: ../resources/ui/start_settings_form.glade.h:37
+msgid "Remote application mode"
+msgstr "Режим, в котором доступно только одно заданное приложение"
+
+#. название
+#: ../resources/ui/start_settings_form.glade.h:39
+msgid "name"
+msgstr "название"
+
+#. параметры
+#: ../resources/ui/start_settings_form.glade.h:41
+msgid "options"
+msgstr "параметры"
+
+#. Сжатие видеопотока
+#: ../resources/ui/start_settings_form.glade.h:43
+msgid "Video stream compression"
+msgstr "Сжатие видеопотока"
+
+#. Указать кодек сжатия видеопотока
+#: ../resources/ui/start_settings_form.glade.h:45
+msgid "Specify compression codec"
+msgstr "Указать кодек сжатия видеопотока"
+
+#: ../resources/ui/start_settings_form.glade.h:46
+msgid "RemoteFX"
+msgstr ""
+
+#: ../resources/ui/start_settings_form.glade.h:47
+msgid "AVC420"
+msgstr ""
+
+#: ../resources/ui/start_settings_form.glade.h:48
+msgid "AVC444"
+msgstr ""
+
+#: ../resources/ui/start_settings_form.glade.h:49
+msgid "modem"
+msgstr ""
+
+#: ../resources/ui/start_settings_form.glade.h:50
+msgid "broadband"
+msgstr ""
+
+#: ../resources/ui/start_settings_form.glade.h:51
+msgid "broadband-low"
+msgstr ""
+
+#: ../resources/ui/start_settings_form.glade.h:52
+msgid "broadband-high"
+msgstr ""
+
+#: ../resources/ui/start_settings_form.glade.h:53
+msgid "wan"
+msgstr ""
+
+#: ../resources/ui/start_settings_form.glade.h:54
+msgid "lan"
+msgstr ""
+
+#: ../resources/ui/start_settings_form.glade.h:55
+msgid "Auto"
+msgstr ""
+
+#. Отключить декорации окон
+#: ../resources/ui/start_settings_form.glade.h:57
+msgid "Disable window decorations"
+msgstr "Отключить декорации окон"
+
+#. Отключить гладкие шрифты
+#: ../resources/ui/start_settings_form.glade.h:59
+msgid "Disable smooth fonts "
+msgstr "Отключить гладкие шрифты"
+
+#. Отключить Windows темы
+#: ../resources/ui/start_settings_form.glade.h:61
+msgid "Disable Windows themes"
+msgstr "Отключить Windows темы"
+
+#. Указать сетевое подключение
+#: ../resources/ui/start_settings_form.glade.h:63
+msgid "Specify network connection"
+msgstr "Указать сетевое подключение"
+
+#. Сервер RDP будет адаптировать настройки и режимы работы  самостоятельно в зависимости от выбранного типа подключения
+#: ../resources/ui/start_settings_form.glade.h:65
+msgid ""
+"RDP server will adapt the settings according to the specified connection"
+msgstr ""
+"Сервер RDP будет адаптировать настройки и режимы работы самостоятельно в зависимости от выбранного типа подключения"
+
+#. Выбрать USB для&#10;перенаправления
+#: ../resources/ui/start_settings_form.glade.h:67
+msgid "Select USB for redirection"
+msgstr ""
+"Выбрать USB для\n"
+"перенаправления"
+
+#. Перенаправление USB устройств (веб камеры, микрофоны).&#10;Для работы необходимы поддержка RemoteFX на стороне удаленной машины и разрешение на открытие USB на текущем клиенте.&#10;Перенаправление flash накопителей не поддерживается: используйте перенаправление папок.
+#: ../resources/ui/start_settings_form.glade.h:69
+msgid "USB devices redirection"
+msgstr "Перенаправление USB устройств (веб камеры, микрофоны)\n"
+"Для работы необходимы поддержка RemoteFX на стороне удаленной машины\n"
+"и разрешение на открытие USB на текущем клиенте\n"
+"Перенаправление flash накопителей не поддерживается: используйте перенаправление папок."
+
+#. Формат изображения
+#: ../resources/ui/start_settings_form.glade.h:71
+msgid "Image format"
+msgstr "Формат изображения"
+
+#: ../resources/ui/start_settings_form.glade.h:72
+msgid "BGRA16"
+msgstr ""
+
+#: ../resources/ui/start_settings_form.glade.h:73
+msgid "BGRA32"
+msgstr ""
+
+#. Частота обновления изображения (1-60).&#10;Перерисовываются только изменившиеся участки. Значение влияет на загрузку CPU клиента и не влияет на сетевой трафик.
+#: ../resources/ui/start_settings_form.glade.h:75
+msgid "Image update frequency (1-60)."
+msgstr "Частота обновления изображения (1-60).\n"
+"Перерисовываются только изменившиеся участки.\n"
+"Значение влияет на загрузку CPU клиента и\n"
+"не влияет на сетевой трафик."
+
+#: ../resources/ui/start_settings_form.glade.h:76
+msgid "FPS"
+msgstr ""
+
+#: ../resources/ui/start_settings_form.glade.h:77
+msgid "NLA"
+msgstr ""
+
+#: ../resources/ui/start_settings_form.glade.h:78
+msgid "TLS"
+msgstr ""
+
+#: ../resources/ui/start_settings_form.glade.h:79
+msgid "EXT"
+msgstr ""
+
+#. Указать протокол безопасности
+#: ../resources/ui/start_settings_form.glade.h:81
+msgid "Specify security protocol"
+msgstr "Указать протокол безопасности"
+
+#. Если не указан, то будет выбран автоматически
+#: ../resources/ui/start_settings_form.glade.h:83
+msgid "Protocol will be selected automatically if not specified"
+msgstr "Если не указан, то будет выбран автоматически"
+
+#. Перенаправить принтеры
+#: ../resources/ui/start_settings_form.glade.h:85
+msgid "Redirect printers"
+msgstr "Перенаправить принтеры"
+
+#: ../resources/ui/start_settings_form.glade.h:86
+msgid "Network scanners and printers redirection"
+msgstr "Проброс сетевых сканеров и принтеров"
+
+#. Добавить папку
+#: ../resources/ui/start_settings_form.glade.h:99
+msgid "Add folder"
+msgstr "Добавить"
+
+#. Очистить
+#: ../resources/ui/start_settings_form.glade.h:101
+msgid "Clear"
+msgstr "Очистить"
+
+#. RDP файл
+#: ../resources/ui/start_settings_form.glade.h:88
+msgid "RDP file"
+msgstr "RDP файл"
+
+#. Режим чтения настроек RDP из стандартного файла настроек (.rdp)&#10;Текущие данные графической формы игнорируются
+#: ../resources/ui/start_settings_form.glade.h:90
+msgid ""
+"Reading the settings from standard RDP file (.rdp)\n"
+"GUI data will be ignored"
+msgstr ""
+"Режим чтения настроек RDP из стандартного файла настроек\n"
+"Текущие данные графической формы игнорируются"
+
+#. Выбрать
+#: ../resources/ui/start_settings_form.glade.h:93
+msgid "Select"
+msgstr "Выбрать"
+
+#. Перечислите папки через точку с запятой, либо выберите их с помощью селектора
+#: ../resources/ui/start_settings_form.glade.h:95
+msgid "Add folders to redirect"
+msgstr "Перечислите папки через точку с запятой, либо выберите их с помощью селектора"
+
+#. Перенаправляемые папки
+#. Общий доступ к папкам
+#: ../resources/ui/start_settings_form.glade.h:97
+#: ../resources/ui/virt-viewer-preferences.glade.h:3
+msgid "Folders redirection"
+msgstr "Перенаправление папок"
+
+#. X2Go приложение
+#: ../resources/ui/start_settings_form.glade.h:99
+msgid "X2Go application"
+msgstr "X2Go приложение"
+
+#: ../resources/ui/start_settings_form.glade.h:100
+msgid "x2goclient"
+msgstr ""
+
+#: ../resources/ui/start_settings_form.glade.h:101
+msgid "pyhoca-cli"
+msgstr ""
+
+#. Метод сжатия
+#: ../resources/ui/start_settings_form.glade.h:103
+msgid "Compression method"
+msgstr "Метод сжатия"
+
+#: ../resources/ui/start_settings_form.glade.h:104
+msgid "nopack"
+msgstr ""
+
+#: ../resources/ui/start_settings_form.glade.h:105
+msgid "adaptive"
+msgstr ""
+
+#: ../resources/ui/start_settings_form.glade.h:106
+msgid "8"
+msgstr ""
+
+#: ../resources/ui/start_settings_form.glade.h:107
+msgid "64"
+msgstr ""
+
+#: ../resources/ui/start_settings_form.glade.h:108
+msgid "256"
+msgstr ""
+
+#: ../resources/ui/start_settings_form.glade.h:109
+msgid "512"
+msgstr ""
+
+#: ../resources/ui/start_settings_form.glade.h:110
+msgid "4k"
+msgstr ""
+
+#: ../resources/ui/start_settings_form.glade.h:111
+msgid "32k"
+msgstr ""
+
+#: ../resources/ui/start_settings_form.glade.h:112
+msgid "64k"
+msgstr ""
+
+#: ../resources/ui/start_settings_form.glade.h:113
+msgid "256k"
+msgstr ""
+
+#: ../resources/ui/start_settings_form.glade.h:114
+msgid "2m"
+msgstr ""
+
+#: ../resources/ui/start_settings_form.glade.h:115
+msgid "16m"
+msgstr ""
+
+#: ../resources/ui/start_settings_form.glade.h:116
+msgid "256-rdp"
+msgstr ""
+
+#: ../resources/ui/start_settings_form.glade.h:117
+msgid "256-rdp-compressed"
+msgstr ""
+
+#: ../resources/ui/start_settings_form.glade.h:118
+msgid "32k-rdp"
+msgstr ""
+
+#: ../resources/ui/start_settings_form.glade.h:119
+msgid "32k-rdp-compressed"
+msgstr ""
+
+#: ../resources/ui/start_settings_form.glade.h:120
+msgid "64k-rdp"
+msgstr ""
+
+#: ../resources/ui/start_settings_form.glade.h:121
+msgid "64k-rdp-compressed"
+msgstr ""
+
+#: ../resources/ui/start_settings_form.glade.h:122
+msgid "16m-rdp"
+msgstr ""
+
+#: ../resources/ui/start_settings_form.glade.h:123
+msgid "16m-rdp-compressed"
+msgstr ""
+
+#: ../resources/ui/start_settings_form.glade.h:124
+msgid "rfb-hextile"
+msgstr ""
+
+#: ../resources/ui/start_settings_form.glade.h:125
+msgid "rfb-tight"
+msgstr ""
+
+#: ../resources/ui/start_settings_form.glade.h:126
+msgid "rfb-tight-compressed"
+msgstr ""
+
+#: ../resources/ui/start_settings_form.glade.h:127
+msgid "8-tight"
+msgstr ""
+
+#: ../resources/ui/start_settings_form.glade.h:128
+msgid "64-tight"
+msgstr ""
+
+#: ../resources/ui/start_settings_form.glade.h:129
+msgid "256-tight"
+msgstr ""
+
+#: ../resources/ui/start_settings_form.glade.h:130
+msgid "512-tight"
+msgstr ""
+
+#: ../resources/ui/start_settings_form.glade.h:131
+msgid "4k-tight"
+msgstr ""
+
+#: ../resources/ui/start_settings_form.glade.h:132
+msgid "32k-tight"
+msgstr ""
+
+#: ../resources/ui/start_settings_form.glade.h:133
+msgid "64k-tight"
+msgstr ""
+
+#: ../resources/ui/start_settings_form.glade.h:134
+msgid "256k-tight"
+msgstr ""
+
+#: ../resources/ui/start_settings_form.glade.h:135
+msgid "2m-tight"
+msgstr ""
+
+#: ../resources/ui/start_settings_form.glade.h:136
+msgid "16m-tight"
+msgstr ""
+
+#: ../resources/ui/start_settings_form.glade.h:137
+msgid "8-jpeg"
+msgstr ""
+
+#: ../resources/ui/start_settings_form.glade.h:138
+msgid "64-jpeg"
+msgstr ""
+
+#: ../resources/ui/start_settings_form.glade.h:139
+msgid "256-jpeg"
+msgstr ""
+
+#: ../resources/ui/start_settings_form.glade.h:140
+msgid "512-jpeg"
+msgstr ""
+
+#: ../resources/ui/start_settings_form.glade.h:141
+msgid "4k-jpeg"
+msgstr ""
+
+#: ../resources/ui/start_settings_form.glade.h:142
+msgid "32k-jpeg"
+msgstr ""
+
+#: ../resources/ui/start_settings_form.glade.h:143
+msgid "64k-jpeg"
+msgstr ""
+
+#: ../resources/ui/start_settings_form.glade.h:144
+msgid "256k-jpeg"
+msgstr ""
+
+#: ../resources/ui/start_settings_form.glade.h:145
+msgid "2m-jpeg"
+msgstr ""
+
+#: ../resources/ui/start_settings_form.glade.h:146
+msgid "16m-jpeg"
+msgstr ""
+
+#: ../resources/ui/start_settings_form.glade.h:147
+msgid "8-png-jpeg"
+msgstr ""
+
+#: ../resources/ui/start_settings_form.glade.h:148
+msgid "64-png-jpeg"
+msgstr ""
+
+#: ../resources/ui/start_settings_form.glade.h:149
+msgid "256-png-jpeg"
+msgstr ""
+
+#: ../resources/ui/start_settings_form.glade.h:150
+msgid "512-png-jpeg"
+msgstr ""
+
+#: ../resources/ui/start_settings_form.glade.h:151
+msgid "4k-png-jpeg"
+msgstr ""
+
+#: ../resources/ui/start_settings_form.glade.h:152
+msgid "32k-png-jpeg"
+msgstr ""
+
+#: ../resources/ui/start_settings_form.glade.h:153
+msgid "64k-png-jpeg"
+msgstr ""
+
+#: ../resources/ui/start_settings_form.glade.h:154
+msgid "256k-png-jpeg"
+msgstr ""
+
+#: ../resources/ui/start_settings_form.glade.h:155
+msgid "2m-png-jpeg"
+msgstr ""
+
+#: ../resources/ui/start_settings_form.glade.h:156
+msgid "16m-png-jpeg"
+msgstr ""
+
+#: ../resources/ui/start_settings_form.glade.h:157
+msgid "8-png"
+msgstr ""
+
+#: ../resources/ui/start_settings_form.glade.h:158
+msgid "64-png"
+msgstr ""
+
+#: ../resources/ui/start_settings_form.glade.h:159
+msgid "256-png"
+msgstr ""
+
+#: ../resources/ui/start_settings_form.glade.h:160
+msgid "512-png"
+msgstr ""
+
+#: ../resources/ui/start_settings_form.glade.h:161
+msgid "4k-png"
+msgstr ""
+
+#: ../resources/ui/start_settings_form.glade.h:162
+msgid "32k-png"
+msgstr ""
+
+#: ../resources/ui/start_settings_form.glade.h:163
+msgid "64k-png"
+msgstr ""
+
+#: ../resources/ui/start_settings_form.glade.h:164
+msgid "256k-png"
+msgstr ""
+
+#: ../resources/ui/start_settings_form.glade.h:165
+msgid "2m-png"
+msgstr ""
+
+#: ../resources/ui/start_settings_form.glade.h:166
+msgid "16m-png"
+msgstr ""
+
+#: ../resources/ui/start_settings_form.glade.h:167
+msgid "16m-rgb"
+msgstr ""
+
+#: ../resources/ui/start_settings_form.glade.h:168
+msgid "16m-rle"
+msgstr ""
+
+#. Тип сессии
+#: ../resources/ui/start_settings_form.glade.h:170
+msgid "Session type (desktop)"
+msgstr "Тип сессии"
+
+#: ../resources/ui/start_settings_form.glade.h:171
+msgid "KDE"
+msgstr ""
+
+#: ../resources/ui/start_settings_form.glade.h:172
+msgid "GNOME"
+msgstr ""
+
+#: ../resources/ui/start_settings_form.glade.h:173
+msgid "LXDE"
+msgstr ""
+
+#: ../resources/ui/start_settings_form.glade.h:174
+msgid "XFCE"
+msgstr ""
+
+#: ../resources/ui/start_settings_form.glade.h:175
+msgid "MATE"
+msgstr ""
+
+#: ../resources/ui/start_settings_form.glade.h:176
+msgid "UNITY"
+msgstr ""
+
+#: ../resources/ui/start_settings_form.glade.h:177
+msgid "CINNAMON"
+msgstr ""
+
+#: ../resources/ui/start_settings_form.glade.h:178
+msgid "TRINITY"
+msgstr ""
+
+#: ../resources/ui/start_settings_form.glade.h:179
+msgid "OPENBOX"
+msgstr ""
+
+#: ../resources/ui/start_settings_form.glade.h:180
+msgid "ICEWM"
+msgstr ""
+
+#: ../resources/ui/start_settings_form.glade.h:181
+msgid "isdn"
+msgstr ""
+
+#: ../resources/ui/start_settings_form.glade.h:182
+msgid "adsl"
+msgstr ""
+
+#. Архивировать логи
+#: ../resources/ui/start_settings_form.glade.h:186
+msgid "Archive logs"
+msgstr "Архивировать логи"
+
+#. Создать архив папки с логами
+#: ../resources/ui/start_settings_form.glade.h:188
+msgid "Create log archive"
+msgstr "Создать архив папки с логами"
+
+#. Получить обновления
+#: ../resources/ui/start_settings_form.glade.h:190
+msgid "Get updates"
+msgstr "Получить обновления"
+
+#. Путь к Windows хранилищу обновлений
+#: ../resources/ui/start_settings_form.glade.h:192
+msgid "Windows updates URL"
+msgstr "Путь к Windows хранилищу обновлений"
+
+#. Открыть документацию
+#: ../resources/ui/start_settings_form.glade.h:194
+msgid "Open documentation (in browser)"
+msgstr "Открыть документацию (в браузере)"
+
+#. Подключение к удаленной машине напрямую
+#: ../resources/ui/start_settings_form.glade.h:196
+msgid "Connect to a remote machine directly"
+msgstr "Подключение к удаленной машине напрямую"
+
+#. Режим, в котором подключение будет производиться не к VDI серверу, а напрямую к удаленной машине
+#: ../resources/ui/start_settings_form.glade.h:198
+msgid "Direct VM connection mode"
+msgstr "Режим, в котором подключение будет производиться не к VDI серверу, а напрямую к удаленной машине"
+
+#. Время ожидания ВМ из пула, сек
+#: ../resources/ui/start_settings_form.glade.h:200
+msgid "VM waiting time, sec"
+msgstr "Время ожидания ВМ из пула, сек"
+
+#. Служебные
+#: ../resources/ui/start_settings_form.glade.h:202
+msgid "Service"
+msgstr "Служебные"
+
+#: ../resources/ui/x2go_control_form.glade.h:3
+msgid "Current credentials are used by default"
+msgstr "По умолчанию используются текущие учетные данные"
+
+#. Удаленные приложения  и рабочие столы
+#: ../resources/ui/vdi_app_selector_form.glade.h:2
+msgid "Remote applications and desktops"
+msgstr "Удаленные приложения  и рабочие столы"
+
+#: ../resources/ui/virt-viewer-about.glade.h:1
+msgid "mashtab.org"
+msgstr ""
+
+#. Общая  папка
+#: ../resources/ui/virt-viewer-preferences.glade.h:5
+msgid "Shared folder"
+msgstr "Общая  папка"
+
+#. Только для чтения
+#: ../resources/ui/virt-viewer-preferences.glade.h:7
+msgid "Read only"
+msgstr "Только для чтения"
+
+#. Выберите файл
+#: ../resources/ui/virt-viewer-preferences.glade.h:9
+msgid "Select file"
+msgstr "Выберите файл"
+
+#: ../resources/ui/virt-viewer-preferences.glade.h:10
+msgid "Spice"
+msgstr ""
+
+#: ../resources/ui/virt-viewer-auth.glade.h:1
+msgid "Authentication required"
+msgstr "Необходима аутентификация"
+
+#: ../resources/ui/virt-viewer-auth.glade.h:3
+msgid "_OK"
+msgstr "_ОК"
+
+#: ../resources/ui/virt-viewer-auth.glade.h:4
+#: ../resources/ui/virt-viewer-file-transfer-dialog.glade.h:2
+msgid "label"
+msgstr ""
+
+#: ../resources/ui/virt-viewer-auth.glade.h:5
+msgid "Password:"
+msgstr "Пароль:"
+
+#: ../resources/ui/virt-viewer-auth.glade.h:6
+msgid "Username:"
+msgstr "Имя:"
+
+#: ../resources/ui/virt-viewer-auth.glade.h:7
+msgid "Show password"
+msgstr "Показывать пароль"

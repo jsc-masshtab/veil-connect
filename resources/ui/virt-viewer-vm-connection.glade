@@ -35,7 +35,7 @@
             </child>
             <child>
               <object class="GtkButton" id="button-connect">
-                <property name="label" translatable="yes">C_onnect</property>
+                <property name="label" translatable="yes">Connect</property>
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
                 <property name="can_default">True</property>

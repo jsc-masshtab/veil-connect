@@ -22,7 +22,7 @@
   </object>
   <object class="GtkDialog" id="start-settings-window">
     <property name="can_focus">False</property>
-    <property name="title" translatable="yes">Настройки</property>
+    <property name="title" translatable="yes" comments="Настройки">Settings</property>
     <property name="modal">True</property>
     <property name="destroy_with_parent">True</property>
     <property name="type_hint">dialog</property>
@@ -40,7 +40,7 @@
             <property name="layout_style">end</property>
             <child>
               <object class="GtkButton" id="btn_cancel">
-                <property name="label" translatable="yes">Отменить</property>
+                <property name="label" translatable="yes" comments="Отменить">Cancel</property>
                 <property name="name">btn_cancel</property>
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
@@ -54,7 +54,7 @@
             </child>
             <child>
               <object class="GtkButton" id="btn_ok">
-                <property name="label" translatable="yes">Сохранить</property>
+                <property name="label" translatable="yes" comments="Сохранить">Save</property>
                 <property name="name">btn_ok</property>
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
@@ -104,7 +104,7 @@
                             <property name="halign">end</property>
                             <property name="margin_right">10</property>
                             <property name="hexpand">True</property>
-                            <property name="label" translatable="yes">Адрес сервера</property>
+                            <property name="label" translatable="yes" comments="Адрес сервера">Server address</property>
                           </object>
                           <packing>
                             <property name="expand">False</property>
@@ -146,7 +146,7 @@
                             <property name="halign">end</property>
                             <property name="margin_right">10</property>
                             <property name="hexpand">False</property>
-                            <property name="label" translatable="yes">Порт сервера</property>
+                            <property name="label" translatable="yes" comments="Порт сервера">Server port</property>
                           </object>
                           <packing>
                             <property name="expand">False</property>
@@ -195,7 +195,7 @@
                             <property name="can_focus">False</property>
                             <property name="halign">end</property>
                             <property name="margin_right">10</property>
-                            <property name="label" translatable="yes">Домен</property>
+                            <property name="label" translatable="yes" comments="Домен">Domain</property>
                           </object>
                           <packing>
                             <property name="expand">False</property>
@@ -224,7 +224,7 @@
                     </child>
                     <child>
                       <object class="GtkCheckButton" id="ldap-button">
-                        <property name="label" translatable="yes">Внешняя служба авторизации</property>
+                        <property name="label" translatable="yes" comments="Внешняя служба авторизации">LDAP</property>
                         <property name="name">ldap-button</property>
                         <property name="visible">True</property>
                         <property name="can_focus">True</property>
@@ -240,12 +240,12 @@
                     </child>
                     <child>
                       <object class="GtkCheckButton" id="connect-to-prev-button">
-                        <property name="label" translatable="yes">Автоподключение при запуске</property>
+                        <property name="label" translatable="yes" comments="Автоподключение при запуске">Auto connection upon startup</property>
                         <property name="name">connect-to-prev-button</property>
                         <property name="visible">True</property>
                         <property name="can_focus">True</property>
                         <property name="receives_default">False</property>
-                        <property name="tooltip_text" translatable="yes">Подключение к предыдущему пулу при старте приложения</property>
+                        <property name="tooltip_text" translatable="yes" comments="Подключение к предыдущему пулу при старте приложения">Connection to the previous pool upon application startup</property>
                         <property name="halign">start</property>
                         <property name="draw_indicator">True</property>
                       </object>
@@ -257,12 +257,13 @@
                     </child>
                     <child>
                       <object class="GtkCheckButton" id="save_password_btn">
-                        <property name="label" translatable="yes">Сохранять пароль</property>
+                        <property name="label" translatable="yes" comments="Сохранять пароль">Save password</property>
                         <property name="name">save_password_btn</property>
                         <property name="visible">True</property>
                         <property name="can_focus">True</property>
                         <property name="receives_default">False</property>
-                        <property name="tooltip_text" translatable="yes">Сохранять ли пароль в ini файл</property>
+                        <property name="tooltip_text" translatable="yes">Save password in ini file</property>
+                        <property name="halign">start</property>
                         <property name="draw_indicator">True</property>
                       </object>
                       <packing>
@@ -295,7 +296,7 @@
                   <object class="GtkLabel">
                     <property name="visible">True</property>
                     <property name="can_focus">False</property>
-                    <property name="label" translatable="yes">Основные</property>
+                    <property name="label" translatable="yes" comments="Основные">General</property>
                   </object>
                   <packing>
                     <property name="tab_fill">False</property>
@@ -311,7 +312,7 @@
                     <property name="baseline_position">top</property>
                     <child>
                       <object class="GtkCheckButton" id="menu-show-client-cursor">
-                        <property name="label" translatable="yes">Показывать клиентский курсор</property>
+                        <property name="label" translatable="yes" comments="Показывать клиентский курсор">Show client cursor</property>
                         <property name="visible">True</property>
                         <property name="can_focus">True</property>
                         <property name="receives_default">False</property>
@@ -363,13 +364,12 @@
                             <property name="column_homogeneous">True</property>
                             <child>
                               <object class="GtkCheckButton" id="is_multimon_check_btn">
-                                <property name="label" translatable="yes">Мультимониторность</property>
+                                <property name="label" translatable="yes" comments="Мультимониторность">Use multiple monitors</property>
                                 <property name="name">is_multimon_check_btn</property>
                                 <property name="visible">True</property>
                                 <property name="can_focus">True</property>
                                 <property name="receives_default">False</property>
-                                <property name="tooltip_text" translatable="yes">Открыть приложение на доступных мониторах (максимум 3)
-Мониторы должны образовывать прямоугольник (иметь одинаковую высоту изображения)</property>
+                                <property name="tooltip_text" translatable="yes" comments="Открыть приложение на доступных мониторах (максимум 3)&#10;Мониторы должны образовывать прямоугольник (иметь одинаковую высоту изображения)">Monitors should have the same height</property>
                                 <property name="halign">start</property>
                                 <property name="hexpand">True</property>
                                 <property name="draw_indicator">True</property>
@@ -381,12 +381,12 @@
                             </child>
                             <child>
                               <object class="GtkCheckButton" id="remote_app_check_btn">
-                                <property name="label" translatable="yes">Запустить приложение</property>
+                                <property name="label" translatable="yes" comments="Удаленное приложение">Remote application</property>
                                 <property name="name">remote_app_check_btn</property>
                                 <property name="visible">True</property>
                                 <property name="can_focus">True</property>
                                 <property name="receives_default">False</property>
-                                <property name="tooltip_text" translatable="yes">Режим, в котором доступно только одно заданное приложение</property>
+                                <property name="tooltip_text" translatable="yes" comments="Режим, в котором доступно только одно заданное приложение">Remote application mode</property>
                                 <property name="halign">start</property>
                                 <property name="hexpand">False</property>
                                 <property name="draw_indicator">True</property>
@@ -402,7 +402,7 @@
                                 <property name="visible">True</property>
                                 <property name="sensitive">False</property>
                                 <property name="can_focus">True</property>
-                                <property name="placeholder_text" translatable="yes">название</property>
+                                <property name="placeholder_text" translatable="yes" comments="название">name</property>
                               </object>
                               <packing>
                                 <property name="left_attach">1</property>
@@ -426,7 +426,7 @@
                                 <property name="visible">True</property>
                                 <property name="sensitive">False</property>
                                 <property name="can_focus">True</property>
-                                <property name="placeholder_text" translatable="yes">параметры</property>
+                                <property name="placeholder_text" translatable="yes" comments="параметры">options</property>
                               </object>
                               <packing>
                                 <property name="left_attach">1</property>
@@ -435,12 +435,12 @@
                             </child>
                             <child>
                               <object class="GtkCheckButton" id="is_rdp_vid_comp_used_check_btn">
-                                <property name="label" translatable="yes">Сжатие видеопотока</property>
+                                <property name="label" translatable="yes" comments="Сжатие видеопотока">Video stream compression</property>
                                 <property name="name">is_rdp_vid_comp_used_check_btn</property>
                                 <property name="visible">True</property>
                                 <property name="can_focus">True</property>
                                 <property name="receives_default">False</property>
-                                <property name="tooltip_text" translatable="yes">Указать кодек сжатия видеопотока</property>
+                                <property name="tooltip_text" translatable="yes" comments="Указать кодек сжатия видеопотока">Specify compression codec</property>
                                 <property name="halign">start</property>
                                 <property name="draw_indicator">True</property>
                               </object>
@@ -479,7 +479,7 @@
                                   <item id="broadband-high" translatable="yes">broadband-high</item>
                                   <item id="wan" translatable="yes">wan</item>
                                   <item id="lan" translatable="yes">lan</item>
-                                  <item id="auto" translatable="yes">Авто</item>
+                                  <item id="auto" translatable="yes">Auto</item>
                                 </items>
                               </object>
                               <packing>
@@ -489,7 +489,7 @@
                             </child>
                             <child>
                               <object class="GtkCheckButton" id="rdp_decorations_check_btn">
-                                <property name="label" translatable="yes">Отключить декорации окон</property>
+                                <property name="label" translatable="yes" comments="Отключить декорации окон">Disable window decorations</property>
                                 <property name="visible">True</property>
                                 <property name="can_focus">True</property>
                                 <property name="receives_default">False</property>
@@ -503,7 +503,7 @@
                             </child>
                             <child>
                               <object class="GtkCheckButton" id="rdp_fonts_check_btn">
-                                <property name="label" translatable="yes">Отключить гладкие шрифты</property>
+                                <property name="label" translatable="yes" comments="Отключить гладкие шрифты">Disable smooth fonts </property>
                                 <property name="visible">True</property>
                                 <property name="can_focus">True</property>
                                 <property name="receives_default">False</property>
@@ -517,7 +517,7 @@
                             </child>
                             <child>
                               <object class="GtkCheckButton" id="rdp_themes_check_btn">
-                                <property name="label" translatable="yes">Отключить Windows темы</property>
+                                <property name="label" translatable="yes" comments="Отключить Windows темы">Disable Windows themes</property>
                                 <property name="visible">True</property>
                                 <property name="can_focus">True</property>
                                 <property name="receives_default">False</property>
@@ -531,11 +531,11 @@
                             </child>
                             <child>
                               <object class="GtkCheckButton" id="rdp_network_check_btn">
-                                <property name="label" translatable="yes">Указать сетевое подключение</property>
+                                <property name="label" translatable="yes" comments="Указать сетевое подключение">Specify network connection</property>
                                 <property name="visible">True</property>
                                 <property name="can_focus">True</property>
                                 <property name="receives_default">False</property>
-                                <property name="tooltip_text" translatable="yes">Сервер RDP будет адаптировать настройки и режимы работы  самостоятельно в зависимости от выбранного типа подключения</property>
+                                <property name="tooltip_text" translatable="yes" comments="Сервер RDP будет адаптировать настройки и режимы работы  самостоятельно в зависимости от выбранного типа подключения">RDP server will adapt the settings according to the specified connection</property>
                                 <property name="halign">start</property>
                                 <property name="hexpand">True</property>
                                 <property name="draw_indicator">True</property>
@@ -547,14 +547,11 @@
                             </child>
                             <child>
                               <object class="GtkButton" id="select_usb_btn">
-                                <property name="label" translatable="yes">Выбрать USB для
-перенаправления</property>
+                                <property name="label" translatable="yes" comments="Выбрать USB для&#10;перенаправления">Select USB for redirection</property>
                                 <property name="visible">True</property>
                                 <property name="can_focus">True</property>
                                 <property name="receives_default">True</property>
-                                <property name="tooltip_text" translatable="yes">Перенаправление USB устройств (веб камеры, микрофоны).
-Для работы необходимы поддержка RemoteFX на стороне удаленной машины и разрешение на открытие USB на текущем клиенте.
-Перенаправление flash накопителей не поддерживается: используйте перенаправление папок.</property>
+                                <property name="tooltip_text" translatable="yes" comments="Перенаправление USB устройств (веб камеры, микрофоны).&#10;Для работы необходимы поддержка RemoteFX на стороне удаленной машины и разрешение на открытие USB на текущем клиенте.&#10;Перенаправление flash накопителей не поддерживается: используйте перенаправление папок.">USB devices redirection</property>
                               </object>
                               <packing>
                                 <property name="left_attach">0</property>
@@ -589,7 +586,7 @@
                                 <property name="can_focus">False</property>
                                 <property name="halign">end</property>
                                 <property name="margin_right">10</property>
-                                <property name="label" translatable="yes">Формат изображения</property>
+                                <property name="label" translatable="yes" comments="Формат изображения">Image format</property>
                                 <property name="justify">right</property>
                               </object>
                               <packing>
@@ -635,8 +632,7 @@
                               <object class="GtkLabel">
                                 <property name="visible">True</property>
                                 <property name="can_focus">False</property>
-                                <property name="tooltip_text" translatable="yes">Частота обновления изображения (1-60).
-Перерисовываются только изменившиеся участки. Значение влияет на загрузку CPU клиента и не влияет на сетевой трафик.</property>
+                                <property name="tooltip_text" translatable="yes" comments="Частота обновления изображения (1-60).&#10;Перерисовываются только изменившиеся участки. Значение влияет на загрузку CPU клиента и не влияет на сетевой трафик.">Image update frequency (1-60).</property>
                                 <property name="halign">end</property>
                                 <property name="margin_right">10</property>
                                 <property name="label" translatable="yes">FPS</property>
@@ -666,11 +662,11 @@
                             </child>
                             <child>
                               <object class="GtkCheckButton" id="rdp_sec_protocol_check_btn">
-                                <property name="label" translatable="yes">Указать протокол безопасности</property>
+                                <property name="label" translatable="yes" comments="Указать протокол безопасности">Specify security protocol</property>
                                 <property name="visible">True</property>
                                 <property name="can_focus">True</property>
                                 <property name="receives_default">False</property>
-                                <property name="tooltip_text" translatable="yes">Если не указан, то будет выбран автоматически</property>
+                                <property name="tooltip_text" translatable="yes" comments="Если не указан, то будет выбран автоматически">Protocol will be selected automatically if not specified</property>
                                 <property name="halign">start</property>
                                 <property name="hexpand">True</property>
                                 <property name="draw_indicator">True</property>
@@ -682,12 +678,12 @@
                             </child>
                             <child>
                               <object class="GtkCheckButton" id="redirect_printers_check_btn">
-                                <property name="label" translatable="yes">Перенаправить принтеры</property>
+                                <property name="label" translatable="yes" comments="Перенаправить принтеры">Redirect printers</property>
                                 <property name="name">redirect_printers_check_btn</property>
                                 <property name="visible">True</property>
                                 <property name="can_focus">True</property>
                                 <property name="receives_default">False</property>
-                                <property name="tooltip_text" translatable="yes">Перенаправление сетевых сканеров и принтеров</property>
+                                <property name="tooltip_text" translatable="yes">Network scanners and printers redirection</property>
                                 <property name="halign">start</property>
                                 <property name="hexpand">True</property>
                                 <property name="draw_indicator">True</property>
@@ -704,12 +700,12 @@
                                 <property name="homogeneous">True</property>
                                 <child>
                                   <object class="GtkCheckButton" id="use_rdp_file_check_btn">
-                                    <property name="label" translatable="yes">RDP файл</property>
+                                    <property name="label" translatable="yes" comments="RDP файл">RDP file</property>
                                     <property name="visible">True</property>
                                     <property name="can_focus">True</property>
                                     <property name="receives_default">False</property>
-                                    <property name="tooltip_text" translatable="yes">Режим чтения настроек RDP из стандартного файла настроек (.rdp)
-Текущие данные графической формы игнорируются</property>
+                                    <property name="tooltip_text" translatable="yes" comments="Режим чтения настроек RDP из стандартного файла настроек (.rdp)&#10;Текущие данные графической формы игнорируются">Reading the settings from standard RDP file (.rdp)
+GUI data will be ignored</property>
                                     <property name="halign">start</property>
                                     <property name="hexpand">False</property>
                                     <property name="draw_indicator">True</property>
@@ -722,7 +718,7 @@
                                 </child>
                                 <child>
                                   <object class="GtkButton" id="btn_choose_rdp_file">
-                                    <property name="label" translatable="yes">Выбрать</property>
+                                    <property name="label" translatable="yes" comments="Выбрать">Select</property>
                                     <property name="visible">True</property>
                                     <property name="can_focus">True</property>
                                     <property name="receives_default">True</property>
@@ -754,10 +750,10 @@
                               <object class="GtkLabel">
                                 <property name="visible">True</property>
                                 <property name="can_focus">False</property>
-                                <property name="tooltip_text" translatable="yes">Перечислите папки через точку с запятой, либо выберите их с помощью селектора</property>
+                                <property name="tooltip_text" translatable="yes" comments="Перечислите папки через точку с запятой, либо выберите их с помощью селектора">Add folders to redirect</property>
                                 <property name="halign">end</property>
                                 <property name="margin_right">10</property>
-                                <property name="label" translatable="yes">Перенаправляемые папки</property>
+                                <property name="label" translatable="yes" comments="Перенаправляемые папки">Folders redirection</property>
                               </object>
                               <packing>
                                 <property name="left_attach">0</property>
@@ -771,7 +767,7 @@
                                 <property name="homogeneous">True</property>
                                 <child>
                                   <object class="GtkButton" id="btn_add_remote_folder">
-                                    <property name="label">Добавить папку</property>
+                                    <property name="label" translatable="yes" comments="Добавить папку">Add folder</property>
                                     <property name="visible">True</property>
                                     <property name="can_focus">True</property>
                                     <property name="receives_default">True</property>
@@ -786,7 +782,7 @@
                                 </child>
                                 <child>
                                   <object class="GtkButton" id="btn_remove_remote_folder">
-                                    <property name="label">Очистить</property>
+                                    <property name="label" translatable="yes" comments="Очистить">Clear</property>
                                     <property name="visible">True</property>
                                     <property name="can_focus">True</property>
                                     <property name="receives_default">True</property>
@@ -880,7 +876,7 @@
                             <property name="can_focus">False</property>
                             <property name="halign">end</property>
                             <property name="hexpand">False</property>
-                            <property name="label" translatable="yes">X2Go приложение</property>
+                            <property name="label" translatable="yes" comments="X2Go приложение">X2Go application</property>
                           </object>
                           <packing>
                             <property name="expand">False</property>
@@ -923,7 +919,7 @@
                             <property name="can_focus">False</property>
                             <property name="halign">end</property>
                             <property name="hexpand">False</property>
-                            <property name="label" translatable="yes">Метод сжатия</property>
+                            <property name="label" translatable="yes" comments="Метод сжатия">Compression method</property>
                           </object>
                           <packing>
                             <property name="expand">False</property>
@@ -1028,7 +1024,7 @@
                             <property name="visible">True</property>
                             <property name="can_focus">False</property>
                             <property name="halign">end</property>
-                            <property name="label" translatable="yes">Тип сессии</property>
+                            <property name="label" translatable="yes" comments="Тип сессии">Session type (desktop)</property>
                           </object>
                           <packing>
                             <property name="expand">False</property>
@@ -1052,7 +1048,6 @@
                               <item id="TRINITY" translatable="yes">TRINITY</item>
                               <item id="OPENBOX" translatable="yes">OPENBOX</item>
                               <item id="ICEWM" translatable="yes">ICEWM</item>
-                              <item id="remote_app" translatable="yes">Приложение</item>
                             </items>
                           </object>
                           <packing>
@@ -1076,7 +1071,7 @@
                         <property name="homogeneous">True</property>
                         <child>
                           <object class="GtkCheckButton" id="x2go_conn_type_check_btn">
-                            <property name="label" translatable="yes">Указать сетевое подключение</property>
+                            <property name="label" translatable="yes" comments="Указать сетевое подключение">Specify network connection</property>
                             <property name="visible">True</property>
                             <property name="can_focus">True</property>
                             <property name="receives_default">False</property>
@@ -1125,7 +1120,7 @@
                         <property name="homogeneous">True</property>
                         <child>
                           <object class="GtkCheckButton" id="x2go_full_screen_check_btn">
-                            <property name="label" translatable="yes">Полный экран</property>
+                            <property name="label" translatable="yes" comments="Полный экран">Full screen</property>
                             <property name="visible">True</property>
                             <property name="can_focus">True</property>
                             <property name="receives_default">False</property>
@@ -1188,12 +1183,12 @@
                     <property name="column_homogeneous">True</property>
                     <child>
                       <object class="GtkButton" id="btn_archive_logs">
-                        <property name="label" translatable="yes">Архивировать логи</property>
+                        <property name="label" translatable="yes" comments="Архивировать логи">Archive logs</property>
                         <property name="name">btn_archive_logs</property>
                         <property name="visible">True</property>
                         <property name="can_focus">True</property>
                         <property name="receives_default">True</property>
-                        <property name="tooltip_text" translatable="yes">Создать архив папки с логами</property>
+                        <property name="tooltip_text" translatable="yes" comments="Создать архив папки с логами">Create log archive</property>
                       </object>
                       <packing>
                         <property name="left_attach">0</property>
@@ -1212,7 +1207,7 @@
                     </child>
                     <child>
                       <object class="GtkButton" id="btn_get_app_updates">
-                        <property name="label" translatable="yes">Получить обновления</property>
+                        <property name="label" translatable="yes" comments="Получить обновления">Get updates</property>
                         <property name="visible">True</property>
                         <property name="can_focus">True</property>
                         <property name="receives_default">True</property>
@@ -1246,7 +1241,7 @@
                       <object class="GtkEntry" id="windows_updates_url_entry">
                         <property name="visible">True</property>
                         <property name="can_focus">True</property>
-                        <property name="placeholder_text" translatable="yes">Путь к Windows хранилищу обновлений</property>
+                        <property name="placeholder_text" translatable="yes" comments="Путь к Windows хранилищу обновлений">Windows updates URL</property>
                       </object>
                       <packing>
                         <property name="left_attach">0</property>
@@ -1255,7 +1250,7 @@
                     </child>
                     <child>
                       <object class="GtkButton" id="btn_open_doc">
-                        <property name="label" translatable="yes">Открыть документацию</property>
+                        <property name="label" translatable="yes" comments="Открыть документацию">Open documentation (in browser)</property>
                         <property name="visible">True</property>
                         <property name="can_focus">True</property>
                         <property name="receives_default">True</property>
@@ -1267,11 +1262,11 @@
                     </child>
                     <child>
                       <object class="GtkCheckButton" id="direct_connect_mode_check_btn">
-                        <property name="label" translatable="yes">Подключение к удаленной машине напрямую</property>
+                        <property name="label" translatable="yes" comments="Подключение к удаленной машине напрямую">Connect to a remote machine directly</property>
                         <property name="visible">True</property>
                         <property name="can_focus">True</property>
                         <property name="receives_default">False</property>
-                        <property name="tooltip_text" translatable="yes">Режим, в котором подключение будет производиться не к VDI серверу, а напрямую к удаленной машине</property>
+                        <property name="tooltip_text" translatable="yes" comments="Режим, в котором подключение будет производиться не к VDI серверу, а напрямую к удаленной машине">Direct VM connection mode</property>
                         <property name="halign">start</property>
                         <property name="draw_indicator">True</property>
                       </object>
@@ -1291,7 +1286,7 @@
                             <property name="visible">True</property>
                             <property name="can_focus">False</property>
                             <property name="halign">end</property>
-                            <property name="label" translatable="yes">Время ожидания ВМ из пула, сек</property>
+                            <property name="label" translatable="yes" comments="Время ожидания ВМ из пула, сек">VM waiting time, sec</property>
                           </object>
                           <packing>
                             <property name="expand">False</property>
@@ -1327,7 +1322,7 @@
                   <object class="GtkLabel">
                     <property name="visible">True</property>
                     <property name="can_focus">False</property>
-                    <property name="label" translatable="yes">Служебные</property>
+                    <property name="label" translatable="yes" comments="Служебные">Service</property>
                   </object>
                   <packing>
                     <property name="position">4</property>

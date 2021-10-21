@@ -46,7 +46,7 @@
               <object class="GtkLabel">
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
-                <property name="label" translatable="yes">Введите пароль sudo</property>
+                <property name="label" translatable="yes" comments="Введите пароль sudo">Enter sudo password</property>
               </object>
               <packing>
                 <property name="left_attach">0</property>
@@ -59,7 +59,7 @@
                 <property name="can_focus">True</property>
                 <property name="visibility">False</property>
                 <property name="invisible_char">*</property>
-                <property name="placeholder_text" translatable="yes">Пароль</property>
+                <property name="placeholder_text" translatable="yes" comments="Пароль">Password</property>
               </object>
               <packing>
                 <property name="left_attach">0</property>

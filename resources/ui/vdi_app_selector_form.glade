@@ -24,7 +24,7 @@
             <property name="name">app_selector_header_label</property>
             <property name="visible">True</property>
             <property name="can_focus">False</property>
-            <property name="label" translatable="yes">Удаленные приложения  и рабочие столы</property>
+            <property name="label" translatable="yes" comments="Удаленные приложения  и рабочие столы">Remote applications and desktops</property>
           </object>
           <packing>
             <property name="expand">False</property>

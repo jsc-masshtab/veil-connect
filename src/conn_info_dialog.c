@@ -7,6 +7,7 @@
  */
 
 #include <gtk/gtk.h>
+#include <glib/gi18n.h>
 
 #include "remote-viewer-util.h"
 #include "conn_info_dialog.h"
@@ -14,14 +15,15 @@
 
 static gchar *convert_speed_to_kbytes_str(gulong speed_in_bytes)
 {
-    return g_strdup_printf("%.2f кбайт", (float)speed_in_bytes / 1024.0);
+    // "%.2f Кбайт"
+    return g_strdup_printf(_("%.2f Kbyte "), (float)speed_in_bytes / 1024.0);
 }
 
 ConnInfoDialog *conn_info_dialog_create()
 {
     ConnInfoDialog *self = calloc(1, sizeof(ConnInfoDialog));
 
-    self->builder = remote_viewer_util_load_ui("connection_info_dialog.ui");
+    self->builder = remote_viewer_util_load_ui("connection_info_dialog.glade");
     self->dialog = get_widget_from_builder(self->builder, "connection_info_dialog");
     gtk_dialog_add_button(GTK_DIALOG(self->dialog), "Ок", GTK_RESPONSE_OK);
     gtk_dialog_set_default_response(GTK_DIALOG(self->dialog), GTK_RESPONSE_OK);
@@ -76,7 +78,7 @@ void conn_info_dialog_update(ConnInfoDialog *self, VdiVmRemoteProtocol protocol,
 
     // quality
     g_autofree gchar *avg_rtt_str = NULL;
-    avg_rtt_str = g_strdup_printf("%.2f мс", nw_data->avg_rtt);
+    avg_rtt_str = g_strdup_printf(_("%.2f ms"), nw_data->avg_rtt); // "%.2f мс"
     gtk_label_set_text(GTK_LABEL(self->avg_rtt_label), avg_rtt_str);
 
     g_autofree gchar *network_loss_str = NULL;

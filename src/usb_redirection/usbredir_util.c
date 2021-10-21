@@ -6,6 +6,7 @@
  * Author: http://mashtab.org/
  */
 
+#include <glib/gi18n.h>
 #include <glib-object.h>
 #include <ctype.h>
 #include <stdlib.h>
@@ -273,10 +274,12 @@ gboolean usbredir_util_check_if_usbdk_installed(GtkWindow *parent)
     gboolean is_usbdk_installed = (g_file_test(usbdk_file, G_FILE_TEST_EXISTS));
     g_free(usbdk_file);
 
+    // Для корректной работы проброса USB-устройств требуется "
+    //                                    "USB Development Kit (UsbDK). "
+    //                                    "Убедитесь, что он установлен"
     if (!is_usbdk_installed)
-        show_msg_box_dialog(parent, "Для корректной работы проброса USB-устройств требуется "
-                                    "USB Development Kit (UsbDK). "
-                                    "Убедитесь, что он установлен");
+        show_msg_box_dialog(parent, "USB Development Kit (UsbDK) is required to be installed. "
+                                    "Make sure it is installed");
 
     return is_usbdk_installed;
 }
