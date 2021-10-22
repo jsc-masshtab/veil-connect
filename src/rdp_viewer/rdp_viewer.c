@@ -73,7 +73,7 @@ static gboolean rdp_viewer_update_images(gpointer user_data)
         for (guint i = 0; i < ex_rdp_context->rdp_windows_array->len; ++i) {
             RdpWindowData *rdp_window_data = g_array_index(ex_rdp_context->rdp_windows_array, RdpWindowData *, i);
             RdpDisplay *rdp_display = rdp_window_data->rdp_display;
-            if (rdp_display) {
+            if (rdp_display && gtk_widget_is_drawable(GTK_WIDGET(rdp_display))) {
                 gtk_widget_queue_draw_area(GTK_WIDGET(rdp_display),
                                            ex_rdp_context->invalid_region.x - rdp_display->geometry.x,
                                            ex_rdp_context->invalid_region.y - rdp_display->geometry.y,
