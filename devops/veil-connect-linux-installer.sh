@@ -1,7 +1,7 @@
 #!/bin/bash
 
 TITLE="VeiL Connect installer"
-HEIGHT=17
+HEIGHT=18
 WIDTH=82
 HELLO="Welcome to VeiL Connect installer"
 ERROR="ERROR: VeiL Connect installer must be run as root!"
@@ -129,7 +129,7 @@ gpgkey=$REPO_URL/yum/RPM-GPG-KEY-veil-connect
 enabled=1
 EOF
 
-        yum install veil-connect -y
+        yum install veil-connect freerdp-libs -y
         result="$?"
         ;;
 
