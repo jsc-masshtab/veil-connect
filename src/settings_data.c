@@ -162,30 +162,38 @@ void rdp_settings_set_connect_data(VeilRdpSettings *rdp_settings, const gchar *u
 void rdp_settings_read_ini_file(VeilRdpSettings *rdp_settings, gboolean rewrite_remote_app_settings)
 {
     const gchar *rdp_group = "RDPSettings";
-
-    update_string_safely(&rdp_settings->rdp_pixel_format_str, read_str_from_ini_file(rdp_group, "rdp_pixel_format"));
+    g_autofree gchar *rdp_pixel_format = NULL;
+    rdp_pixel_format = read_str_from_ini_file_with_def(rdp_group, "rdp_pixel_format", "BGRA32");
+    update_string_safely(&rdp_settings->rdp_pixel_format_str, rdp_pixel_format);
 
     rdp_settings->rdp_fps = CLAMP(read_int_from_ini_file(rdp_group, "rdp_fps", 30), 1, 60);
 
     rdp_settings->is_rdp_vid_comp_used = read_int_from_ini_file(rdp_group, "is_rdp_vid_comp_used", TRUE);
-    update_string_safely(&rdp_settings->rdp_vid_comp_codec, read_str_from_ini_file(rdp_group, "rdp_vid_comp_codec"));
+    g_autofree gchar *rdp_vid_comp_codec = NULL;
+    rdp_vid_comp_codec = read_str_from_ini_file_with_def(rdp_group, "rdp_vid_comp_codec", "RFX");
+    update_string_safely(&rdp_settings->rdp_vid_comp_codec, rdp_vid_comp_codec);
 
-    update_string_safely(&rdp_settings->shared_folders_str, read_str_from_ini_file(rdp_group, "rdp_shared_folders"));
+    g_autofree gchar *rdp_shared_folders = NULL;
+    rdp_shared_folders = read_str_from_ini_file(rdp_group, "rdp_shared_folders");
+    update_string_safely(&rdp_settings->shared_folders_str, rdp_shared_folders);
 
     if (rewrite_remote_app_settings) {
         rdp_settings->is_remote_app = read_int_from_ini_file(rdp_group, "is_remote_app", 0);
-        update_string_safely(&rdp_settings->remote_app_program,
-                             read_str_from_ini_file(rdp_group, "remote_app_program"));
-        update_string_safely(&rdp_settings->remote_app_options,
-                             read_str_from_ini_file(rdp_group, "remote_app_options"));
+        g_autofree gchar *remote_app_program = NULL;
+        remote_app_program = read_str_from_ini_file(rdp_group, "remote_app_program");
+        update_string_safely(&rdp_settings->remote_app_program, remote_app_program);
+        g_autofree gchar *remote_app_options = NULL;
+        remote_app_options = read_str_from_ini_file(rdp_group, "remote_app_options");
+        update_string_safely(&rdp_settings->remote_app_options, remote_app_options);
     }
 
     rdp_settings->is_multimon = read_int_from_ini_file(rdp_group, "is_multimon", 0);
     rdp_settings->redirectsmartcards = read_int_from_ini_file(rdp_group, "redirectsmartcards", 1);
     rdp_settings->redirectprinters = read_int_from_ini_file(rdp_group, "redirect_printers", 1);
 
-    update_string_safely(&rdp_settings->alternate_shell,
-                         read_str_from_ini_file(rdp_group, "alternate_shell"));
+    g_autofree gchar *alternate_shell = NULL;
+    alternate_shell = read_str_from_ini_file(rdp_group, "alternate_shell");
+    update_string_safely(&rdp_settings->alternate_shell, alternate_shell);
 
     rdp_settings->disable_rdp_fonts = read_int_from_ini_file(rdp_group, "disable_rdp_fonts", 0);
     rdp_settings->disable_rdp_themes = read_int_from_ini_file(rdp_group, "disable_rdp_themes", 0);
@@ -195,20 +203,26 @@ void rdp_settings_read_ini_file(VeilRdpSettings *rdp_settings, gboolean rewrite_
 
     rdp_settings->is_rdp_network_assigned = read_int_from_ini_file(rdp_group, "is_rdp_network_assigned", 0);
     if (rdp_settings->is_rdp_network_assigned) {
-        update_string_safely(&rdp_settings->rdp_network_type,
-                             read_str_from_ini_file(rdp_group, "rdp_network_type"));
+        g_autofree gchar *rdp_network_type = NULL;
+        rdp_network_type = read_str_from_ini_file(rdp_group, "rdp_network_type");
+        update_string_safely(&rdp_settings->rdp_network_type, rdp_network_type);
     }
 
     rdp_settings->is_sec_protocol_assigned = read_int_from_ini_file(rdp_group, "is_sec_protocol_assigned", 0);
     if (rdp_settings->is_sec_protocol_assigned) {
-        update_string_safely(&rdp_settings->sec_protocol_type,
-                             read_str_from_ini_file(rdp_group, "sec_protocol_type"));
+        g_autofree gchar *sec_protocol_type = NULL;
+        sec_protocol_type = read_str_from_ini_file(rdp_group, "sec_protocol_type");
+        update_string_safely(&rdp_settings->sec_protocol_type, sec_protocol_type);
     }
 
-    update_string_safely(&rdp_settings->usb_devices, read_str_from_ini_file(rdp_group, "usb_devices"));
+    g_autofree gchar *usb_devices = NULL;
+    usb_devices = read_str_from_ini_file(rdp_group, "usb_devices");
+    update_string_safely(&rdp_settings->usb_devices, usb_devices);
 
     rdp_settings->use_rdp_file = read_int_from_ini_file(rdp_group, "use_rdp_file", 0);
-    update_string_safely(&rdp_settings->rdp_settings_file, read_str_from_ini_file(rdp_group, "rdp_settings_file"));
+    g_autofree gchar *rdp_settings_file = NULL;
+    rdp_settings_file = read_str_from_ini_file(rdp_group, "rdp_settings_file");
+    update_string_safely(&rdp_settings->rdp_settings_file, rdp_settings_file);
 }
 
 /*
@@ -339,7 +353,7 @@ void rdp_settings_clear(VeilRdpSettings *rdp_settings)
 
     free_memory_safely(&rdp_settings->rdp_pixel_format_str);
     free_memory_safely(&rdp_settings->rdp_vid_comp_codec);
-    free_memory_safely(&rdp_settings->rdp_vid_comp_codec);
+    free_memory_safely(&rdp_settings->shared_folders_str);
 
     free_memory_safely(&rdp_settings->user_name);
     free_memory_safely(&rdp_settings->password);
@@ -363,15 +377,18 @@ void x2go_settings_read(VeilX2GoSettings *x2go_settings)
 
     x2go_settings->app_type = read_int_from_ini_file(x2go_group, "app_type", X2GO_APP_QT_CLIENT);
 
-    update_string_safely(&x2go_settings->x2go_session_type,
-            read_str_from_ini_file_with_def(x2go_group, "session_type", "XFCE"));
-    update_string_safely(&x2go_settings->x2go_conn_type,
-                         read_str_from_ini_file_with_def(x2go_group, "conn_type", "modem"));
+    g_autofree gchar *session_type = NULL;
+    session_type = read_str_from_ini_file_with_def(x2go_group, "session_type", "XFCE");
+    update_string_safely(&x2go_settings->x2go_session_type, session_type);
+    g_autofree gchar *conn_type = NULL;
+    conn_type = read_str_from_ini_file_with_def(x2go_group, "conn_type", "modem");
+    update_string_safely(&x2go_settings->x2go_conn_type, conn_type);
     x2go_settings->conn_type_assigned = read_int_from_ini_file(x2go_group, "conn_type_assigned", 0);
     x2go_settings->full_screen = read_int_from_ini_file(x2go_group, "full_screen", 1);
 
-    update_string_safely(&x2go_settings->compress_method,
-                         read_str_from_ini_file_with_def(x2go_group, "compress_method", "16m-jpeg"));
+    g_autofree gchar *compress_method = NULL;
+    compress_method = read_str_from_ini_file_with_def(x2go_group, "compress_method", "16m-jpeg");
+    update_string_safely(&x2go_settings->compress_method, compress_method);
 }
 
 void x2go_settings_write(VeilX2GoSettings *x2go_settings)
