@@ -36,8 +36,7 @@ perl -pi -e 's/crosshair/default\0\0/g' /usr/lib64/libspice-client-gtk-3.0.so.5 
 %dir %attr (777,root,root) /opt/veil-connect/locale
 %dir %attr (777,root,root) /opt/veil-connect/x2go_data/
 %attr (777,root,root) /opt/veil-connect/css_style.css
-%attr (777,root,root) /opt/veil-connect/locale/ru/LC_MESSAGES/thin_client_veil.gmo
-%attr (777,root,root) /opt/veil-connect/locale/ru/LC_MESSAGES/thin_client_veil.mo
+%attr (777,root,root) /opt/veil-connect/locale/ru/LC_MESSAGES/veil-connect.mo
 %attr (777,root,root) /opt/veil-connect/start_vdi_client.sh
 %attr (777,root,root) /opt/veil-connect/veil_connect
 %attr (777,root,root) /opt/veil-connect/veil-connect.ico
