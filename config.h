@@ -106,7 +106,7 @@
 #define PACKAGE_URL ""
 
 /* Define to the version of this package. */
-#define PACKAGE_VERSION "1.8.4"
+#define PACKAGE_VERSION "1.8.5"
 
 /* OS ID for this build */
 /* #undef REMOTE_VIEWER_OS_ID */
