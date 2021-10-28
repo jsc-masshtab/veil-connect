@@ -90,7 +90,7 @@ windows_rdp_launcher_store_conn_data(const VeilRdpSettings *p_rdp_settings)
     credential.TargetName = target_name_converted_w;
     credential.CredentialBlobSize = cbCredentialBlobSize;
     credential.CredentialBlob = (LPBYTE)password_converted_w;
-    credential.Persist = CRED_PERSIST_LOCAL_MACHINE;
+    credential.Persist = CRED_PERSIST_SESSION;
     credential.UserName = user_name_converted_w;
 
     // write credential to credential store
