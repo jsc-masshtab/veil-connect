@@ -96,7 +96,7 @@
             </child>
             <child>
               <object class="GtkButton" id="button-quit">
-                <property name="label" translatable="yes" comments="Выйти">Quit</property>
+                <property name="label" translatable="yes" comments="Sign out">Sign out</property>
                 <property name="name">button-quit</property>
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>

@@ -819,7 +819,7 @@ msgstr "Обновить"
 
 #. Выйти
 #: ../resources/ui/vdi_manager_form.glade.h:9
-msgid "Quit"
+msgid "Sign out"
 msgstr "Выйти"
 
 #. Адрес клиента
@@ -922,8 +922,8 @@ msgstr ""
 
 #. Имя пользователя
 #: ../resources/ui/remote-viewer-connect_veil.glade.h:3
-msgid "User name"
-msgstr "Имя пользователя"
+msgid "Login"
+msgstr "Логин"
 
 #. Пользователь
 #: ../resources/ui/remote-viewer-connect_veil.glade.h:5
@@ -944,7 +944,7 @@ msgstr "Одноразовый пароль"
 
 #. Enter
 #: ../resources/ui/remote-viewer-connect_veil.glade.h:11
-msgid "Enter"
+msgid "Sign in"
 msgstr "Войти"
 
 #. Настройки
