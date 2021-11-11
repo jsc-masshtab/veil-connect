@@ -223,6 +223,11 @@ void rdp_settings_read_ini_file(VeilRdpSettings *rdp_settings, gboolean rewrite_
     g_autofree gchar *rdp_settings_file = NULL;
     rdp_settings_file = read_str_from_ini_file(rdp_group, "rdp_settings_file");
     update_string_safely(&rdp_settings->rdp_settings_file, rdp_settings_file);
+
+    rdp_settings->use_gateway = read_int_from_ini_file(rdp_group, "use_gateway", 0);
+    g_autofree gchar *gateway_address = NULL;
+    gateway_address = read_str_from_ini_file(rdp_group, "gateway_address");
+    update_string_safely(&rdp_settings->gateway_address, gateway_address);
 }
 
 /*
@@ -344,6 +349,9 @@ void rdp_settings_write(VeilRdpSettings *rdp_settings)
     gchar *rdp_settings_file_mod = replace_str(rdp_settings->rdp_settings_file, "\\", "/");
     write_str_to_ini_file(rdp_group, "rdp_settings_file", rdp_settings_file_mod);
     g_free(rdp_settings_file_mod);
+
+    write_int_to_ini_file(rdp_group, "use_gateway", rdp_settings->use_gateway);
+    write_str_to_ini_file(rdp_group, "gateway_address", rdp_settings->gateway_address);
 }
 
 void rdp_settings_clear(VeilRdpSettings *rdp_settings)
@@ -369,6 +377,8 @@ void rdp_settings_clear(VeilRdpSettings *rdp_settings)
     free_memory_safely(&rdp_settings->sec_protocol_type);
     free_memory_safely(&rdp_settings->rdp_settings_file);
     free_memory_safely(&rdp_settings->usb_devices);
+
+    free_memory_safely(&rdp_settings->gateway_address);
 }
 
 void x2go_settings_read(VeilX2GoSettings *x2go_settings)

@@ -47,12 +47,6 @@ void veil_logger_setup()
         return;
     }
 
-    // crash handler
-    gchar *bt_file_name = g_build_filename(cur_log_path, "backtrace.txt", NULL);
-    convert_string_from_utf8_to_locale(&bt_file_name);
-    install_crash_handler(bt_file_name);
-    g_free(bt_file_name);
-
 #ifdef NDEBUG // logging errors  in release mode
     //error output
     gchar *stderr_file_name = g_build_filename(cur_log_path, "stderr.txt", NULL);
@@ -66,10 +60,19 @@ void veil_logger_setup()
     out_file_desc = freopen(stdout_file_name, "w", stdout);
     g_free(stdout_file_name);
 #endif
+
+    // crash handler
+    gchar *bt_file_name = g_build_filename(cur_log_path, "backtrace.txt", NULL);
+    convert_string_from_utf8_to_locale(&bt_file_name);
+    convert_string_from_utf8_to_locale(&cur_log_path);
+    install_crash_handler(bt_file_name, cur_log_path);
+    g_free(bt_file_name);
 }
 
 void veil_logger_free()
 {
+    uninstall_crash_handler();
+
     if(err_file_desc)
         fclose(err_file_desc);
     if(out_file_desc)

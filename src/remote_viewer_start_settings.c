@@ -77,6 +77,9 @@ typedef struct{
 
     UsbSelectorWidget *usb_selector_widget;
 
+    GtkWidget *use_rd_gateway_check_btn;
+    GtkWidget *gateway_address_entry;
+
     // X2GO settings
     GtkWidget *x2go_app_combobox;
 
@@ -301,6 +304,13 @@ on_use_rdp_file_check_btn_toggled(GtkToggleButton *button, ConnectSettingsDialog
     gboolean use_rdp_file = gtk_toggle_button_get_active(button);
     gtk_widget_set_sensitive(dialog_data->btn_choose_rdp_file, use_rdp_file);
     gtk_widget_set_sensitive(dialog_data->rdp_file_name_entry, use_rdp_file);
+}
+
+static void
+on_use_rd_gateway_check_btn_toggled(GtkToggleButton *button, ConnectSettingsDialogData *dialog_data)
+{
+    gboolean is_btn_active = gtk_toggle_button_get_active(button);
+    gtk_widget_set_sensitive(dialog_data->gateway_address_entry, is_btn_active);
 }
 
 static void
@@ -633,15 +643,16 @@ fill_gui(ConnectSettingsDialogData *dialog_data)
     usb_selector_widget_set_selected_usb_str(dialog_data->usb_selector_widget, p_conn_data->rdp_settings.usb_devices);
 
     gboolean use_rdp_file = p_conn_data->rdp_settings.use_rdp_file;
-    p_conn_data->rdp_settings.use_rdp_file = read_int_from_ini_file("RDPSettings", "use_rdp_file", 0);
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(dialog_data->use_rdp_file_check_btn), use_rdp_file);
-    gchar *rdp_settings_file = read_str_from_ini_file("RDPSettings", "rdp_settings_file");
-    if (rdp_settings_file) {
-        gtk_entry_set_text(GTK_ENTRY(dialog_data->rdp_file_name_entry), rdp_settings_file);
-        g_free(rdp_settings_file);
-    }
+    if (p_conn_data->rdp_settings.rdp_settings_file)
+        gtk_entry_set_text(GTK_ENTRY(dialog_data->rdp_file_name_entry), p_conn_data->rdp_settings.rdp_settings_file);
     gtk_widget_set_sensitive(dialog_data->btn_choose_rdp_file, use_rdp_file);
     gtk_widget_set_sensitive(dialog_data->rdp_file_name_entry, use_rdp_file);
+
+    gboolean use_gateway = p_conn_data->rdp_settings.use_gateway;
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(dialog_data->use_rd_gateway_check_btn), use_gateway);
+    if (p_conn_data->rdp_settings.gateway_address)
+        gtk_entry_set_text(GTK_ENTRY(dialog_data->gateway_address_entry), p_conn_data->rdp_settings.gateway_address);
 
     // X2Go Settings
     gtk_combo_box_set_active(GTK_COMBO_BOX(dialog_data->x2go_app_combobox),
@@ -776,6 +787,11 @@ take_from_gui(ConnectSettingsDialogData *dialog_data)
     update_string_safely(&conn_data->rdp_settings.rdp_settings_file, rdp_settings_file_mod);
     g_free(rdp_settings_file_mod);
 
+    conn_data->rdp_settings.use_gateway =
+            gtk_toggle_button_get_active((GtkToggleButton *)dialog_data->use_rd_gateway_check_btn);
+    const gchar *gateway_address = gtk_entry_get_text(GTK_ENTRY(dialog_data->gateway_address_entry));
+    update_string_safely(&conn_data->rdp_settings.gateway_address, gateway_address);
+
     // X2Go settings
     conn_data->x2Go_settings.app_type = (X2goApplication)gtk_combo_box_get_active(
             GTK_COMBO_BOX(dialog_data->x2go_app_combobox));
@@ -885,6 +901,9 @@ GtkResponseType remote_viewer_start_settings_dialog(RemoteViewer *p_remote_viewe
     gtk_widget_destroy(dialog_data.usb_selector_widget->tk_address_header);
     usb_selector_widget_enable_auto_toggle(dialog_data.usb_selector_widget);
 
+    dialog_data.use_rd_gateway_check_btn = get_widget_from_builder(dialog_data.builder, "use_rd_gateway_check_btn");
+    dialog_data.gateway_address_entry = get_widget_from_builder(dialog_data.builder, "gateway_address_entry");
+
     // X2Go settings
     dialog_data.x2go_app_combobox = get_widget_from_builder(dialog_data.builder, "x2go_app_combobox");
     dialog_data.x2go_session_type_combobox = get_widget_from_builder(dialog_data.builder,
@@ -947,6 +966,8 @@ GtkResponseType remote_viewer_start_settings_dialog(RemoteViewer *p_remote_viewe
                      G_CALLBACK(on_use_rdp_file_check_btn_toggled), &dialog_data);
     g_signal_connect(dialog_data.btn_choose_rdp_file, "clicked",
                      G_CALLBACK(btn_btn_choose_rdp_file_clicked), &dialog_data);
+    g_signal_connect(dialog_data.use_rd_gateway_check_btn, "toggled",
+                     G_CALLBACK(on_use_rd_gateway_check_btn_toggled), &dialog_data);
 
     g_signal_connect(dialog_data.x2go_conn_type_check_btn, "toggled",
                      G_CALLBACK(on_conn_type_check_btn_toggled), &dialog_data);
