@@ -19,6 +19,7 @@
 #include "usb_selector_widget.h"
 
 #include "remote_viewer_start_settings.h"
+#include "veil_logger.h"
 
 
 typedef struct{
@@ -355,7 +356,8 @@ btn_archive_logs_clicked_cb(GtkButton *button G_GNUC_UNUSED, ConnectSettingsDial
     free_memory_safely(&cur_dir);
 #elif _WIN32
     gchar *app_data_dir = get_windows_app_data_location();
-    gchar *tar_cmd = g_strdup_printf("cd \"%s\" && tar.exe -czvf log.tar.gz \"%s\"", app_data_dir, log_dir);
+    gchar *tar_cmd = g_strdup_printf("tar.exe --exclude=%s -czvf \"%s\\log.tar.gz\" \"%s\"",
+                                     veil_logger_get_log_start_date(), app_data_dir, log_dir);
     //
     int res = system(tar_cmd);
 

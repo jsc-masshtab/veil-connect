@@ -19,6 +19,7 @@
 
 static FILE *err_file_desc = NULL;
 static FILE *out_file_desc = NULL;
+static gchar *data_time_string_s = NULL;
 static gchar *cur_log_path = NULL;
 static gchar *prev_clipboard_text = NULL;
 static gint clipboard_log_enabled = 1;
@@ -32,11 +33,10 @@ void veil_logger_setup()
     log_dir = get_log_dir_path();
 
     // current log dir
-    GDateTime *datetime = g_date_time_new_now_local();
-    g_autofree gchar *data_time_string = NULL;
-    data_time_string = g_date_time_format(datetime, "%Y_%m_%d___%H_%M_%S");
+    GDateTime *datetime = g_date_time_new_now_local();;
+    data_time_string_s = g_date_time_format(datetime, "%Y_%m_%d___%H_%M_%S");
     g_date_time_unref(datetime);
-    cur_log_path = g_build_filename(log_dir, data_time_string, NULL);
+    cur_log_path = g_build_filename(log_dir, data_time_string_s, NULL);
 
     // create log dir
     g_mkdir_with_parents(cur_log_path, 0755);
@@ -76,6 +76,12 @@ void veil_logger_free()
         fclose(out_file_desc);
     g_free(cur_log_path);
     g_free(prev_clipboard_text);
+    g_free(data_time_string_s);
+}
+
+const gchar *veil_logger_get_log_start_date()
+{
+    return data_time_string_s;
 }
 
 void logger_save_clipboard_data(const gchar *data, guint size, ClipboardLoggerDataType data_type)
@@ -102,7 +108,7 @@ void logger_save_clipboard_data(const gchar *data, guint size, ClipboardLoggerDa
 
         // write time
         GDateTime *datetime = g_date_time_new_now_local();
-        g_autofree gchar *data_time_string = NULL ;
+        g_autofree gchar *data_time_string = NULL;
         data_time_string = g_date_time_format(datetime, "%T");
         g_date_time_unref(datetime);
 

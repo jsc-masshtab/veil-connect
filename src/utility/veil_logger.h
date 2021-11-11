@@ -14,6 +14,7 @@ typedef enum {
 
 void veil_logger_setup(void);
 void veil_logger_free(void);
+const gchar *veil_logger_get_log_start_date(void);
 
 void logger_save_clipboard_data(const gchar *data, guint size, ClipboardLoggerDataType data_type);
 
