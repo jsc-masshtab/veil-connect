@@ -47,7 +47,7 @@
 const gchar *rdp_util_error_to_str(UINT32 rdp_error)
 {
     if (rdp_error == WRONG_FREERDP_ARGUMENTS)
-        return "Невалидные агрументы Freerdp";
+        return "Невалидные агрументы FreeRDP";
 
     //rdp_error = (rdp_error >= 0x10000 && rdp_error < 0x00020000) ? (rdp_error & 0xFFFF) : rdp_error;
     if (rdp_error >= 0x10000 && rdp_error < 0x00020000) {

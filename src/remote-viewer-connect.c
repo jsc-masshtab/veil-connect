@@ -372,6 +372,10 @@ remote_viewer_connect_dialog(RemoteViewer *remote_viewer)
 
     create_loop_and_launch(&ci.loop);
 
+    // forget password if required
+    if(!get_conn_data(&ci)->to_save_pswd)
+        free_memory_safely(&get_conn_data(&ci)->password);
+
     // save data to ini file
     settings_data_save_all(get_conn_data(&ci));
 
