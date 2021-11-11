@@ -229,10 +229,13 @@ if (WIN32)
         message(STATUS "Using 64bit dependencies")
         SET(LIBS_INCLUDE_PATH C:/msys32/mingw64/include/)
         SET(FREERDP_PATH C:/job/FreeRDP-2.3.2/)
-        #SET(LIBS_INCLUDE_PATH C:/msys64/mingw64/include/)
-        #SET(FREERDP_PATH C:/job/freerdp/FreeRDP/)
         SET(HIREDIS_PATH C:/job/hiredis-mingw/)
         SET(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
+
+        # breakpad wrapper
+        add_subdirectory(breakpad_wrapper)
+        SET(LIBS ${LIBS} ${CMAKE_CURRENT_BINARY_DIR}/breakpad_wrapper/libbreakpad_wrapper.dll.a)
+
     endif(BUILD_x32)
 
     # hiredis port to Windows
@@ -298,7 +301,7 @@ endif (WIN32)
     INCLUDE_DIRECTORIES(${LIBS_INCLUDE_PATH}libusb-1.0)
     SET(LIBS ${LIBS} usb-1.0) # libusb-1.0.a
 
-    # usbredirparser
+    # usbredir parser
     SET(LIBS ${LIBS} usbredirparser) #
 
 ###########################APP LINKING#################################

@@ -74,6 +74,10 @@ typedef struct{
     gboolean use_rdp_file;
     gchar *rdp_settings_file;
 
+    // RD Gateway
+    gboolean use_gateway;
+    gchar *gateway_address;
+
 } VeilRdpSettings;
 
 

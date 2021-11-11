@@ -78,7 +78,7 @@
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
                 <property name="halign">start</property>
-                <property name="label" translatable="yes" comments="Имя пользователя">User name</property>
+                <property name="label" translatable="yes" comments="Login">Login</property>
               </object>
               <packing>
                 <property name="expand">False</property>
@@ -199,7 +199,7 @@
             <property name="column_homogeneous">True</property>
             <child>
               <object class="GtkButton" id="connect-button">
-                <property name="label" translatable="yes" comments="Enter">Enter</property>
+                <property name="label" translatable="yes" comments="Sign in">Sign in</property>
                 <property name="name">connect-button</property>
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>

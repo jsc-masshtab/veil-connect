@@ -824,7 +824,7 @@ msgstr ""
 
 #. Выйти
 #: ../resources/ui/vdi_manager_form.glade.h:9
-msgid "Quit"
+msgid "Sign out"
 msgstr ""
 
 #: ../resources/ui/vdi_manager_form.glade.h:12
@@ -893,7 +893,7 @@ msgstr ""
 
 #. Имя пользователя
 #: ../resources/ui/remote-viewer-connect_veil.glade.h:3
-msgid "User name"
+msgid "Login"
 msgstr ""
 
 #. Пользователь
@@ -915,7 +915,7 @@ msgstr ""
 
 #. Enter
 #: ../resources/ui/remote-viewer-connect_veil.glade.h:11
-msgid "Enter"
+msgid "Sign in"
 msgstr ""
 
 #. Настройки

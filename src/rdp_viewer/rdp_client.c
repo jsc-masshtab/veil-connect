@@ -223,6 +223,10 @@ static GArray *rdp_client_create_params_array(ExtendedRdpContext* ex)
     if (vdi_session_is_usb_redir_permitted() && strlen_safely(ex->p_rdp_settings->usb_devices))
         add_rdp_param(rdp_params_dyn_array, g_strdup_printf("/usb:addr:%s", ex->p_rdp_settings->usb_devices));
 
+    // RD Gateway
+    if (ex->p_rdp_settings->use_gateway)
+        add_rdp_param(rdp_params_dyn_array, g_strdup_printf("/g:%s", ex->p_rdp_settings->gateway_address));
+
     return rdp_params_dyn_array;
 }
 
