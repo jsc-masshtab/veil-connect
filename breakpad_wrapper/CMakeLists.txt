@@ -1,7 +1,5 @@
 CMAKE_MINIMUM_REQUIRED(VERSION 3.4)
 
-PROJECT(breakpad_wrapper)
-
 SET(CMAKE_C_STANDARD 99)
 
 ############################SOURCE CODE################################

@@ -234,7 +234,7 @@ if (WIN32)
 
         # breakpad wrapper
         add_subdirectory(breakpad_wrapper)
-        SET(LIBS ${LIBS} ${CMAKE_CURRENT_BINARY_DIR}/breakpad_wrapper/libbreakpad_wrapper.dll.a)
+        SET(LIBS ${LIBS} breakpad_wrapper)
 
     endif(BUILD_x32)
 
