@@ -547,7 +547,7 @@
                             </child>
                             <child>
                               <object class="GtkButton" id="select_usb_btn">
-                                <property name="label" translatable="yes" comments="Выбрать USB для&#10;перенаправления">Select USB for redirection</property>
+                                <property name="label" translatable="yes" comments="Выбрать USB для&#10;перенаправления">Select RemoteFX USB for redirection</property>
                                 <property name="visible">True</property>
                                 <property name="can_focus">True</property>
                                 <property name="receives_default">True</property>

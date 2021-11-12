@@ -1275,7 +1275,7 @@ msgstr ""
 
 #. Выбрать USB для&#10;перенаправления
 #: ../resources/ui/start_settings_form.glade.h:67
-msgid "Select USB for redirection"
+msgid "Select RemoteFX USB for redirection"
 msgstr ""
 
 #. Перенаправление USB устройств (веб камеры, микрофоны).&#10;Для работы необходимы поддержка RemoteFX на стороне удаленной машины и разрешение на открытие USB на текущем клиенте.&#10;Перенаправление flash накопителей не поддерживается: используйте перенаправление папок.

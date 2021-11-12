@@ -126,10 +126,9 @@ static GArray *rdp_client_create_params_array(ExtendedRdpContext* ex)
     add_rdp_param(rdp_params_dyn_array, g_strdup("/cert-ignore"));
     add_rdp_param(rdp_params_dyn_array, g_strdup("/sound:rate:44100,channel:2"));
     add_rdp_param(rdp_params_dyn_array, g_strdup("/relax-order-checks"));
-    add_rdp_param(rdp_params_dyn_array, g_strdup("/rfx"));
 #ifdef __linux__
 #elif _WIN32
-    add_rdp_param(rdp_params_dyn_array, g_strdup("+glyph-cache"));
+    //add_rdp_param(rdp_params_dyn_array, g_strdup("+glyph-cache"));
 #endif
     if (ex->p_rdp_settings->redirectsmartcards)
         add_rdp_param(rdp_params_dyn_array, g_strdup("/smartcard"));
