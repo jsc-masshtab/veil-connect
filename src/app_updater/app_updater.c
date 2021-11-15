@@ -122,7 +122,7 @@ static void app_updater_finalize( GObject *object )
     free_memory_safely(&self->_windows_releases_url);
     g_mutex_unlock(&self->priv_members_mutex);
 
-    wair_for_mutex_and_clear(&self->priv_members_mutex);
+    wait_for_mutex_and_clear(&self->priv_members_mutex);
 
     // если сильно захотеть можно еще сделать отмену загрузки обновления, если она происходит;
 

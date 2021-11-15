@@ -35,9 +35,9 @@ void cancellable_sleep(gulong microseconds, volatile gboolean *running_flag)
     }
 }
 
-void wair_for_mutex_and_clear(GMutex *cursor_mutex)
+void wait_for_mutex_and_clear(GMutex *mutex)
 {
-    g_mutex_lock(cursor_mutex);
-    g_mutex_unlock(cursor_mutex);
-    g_mutex_clear(cursor_mutex);
+    g_mutex_lock(mutex);
+    g_mutex_unlock(mutex);
+    g_mutex_clear(mutex);
 }

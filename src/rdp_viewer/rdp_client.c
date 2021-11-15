@@ -279,11 +279,14 @@ void destroy_rdp_context(ExtendedRdpContext* ex_rdp_context)
         // stop cursor updating
         g_source_remove_safely(&ex_rdp_context->cursor_update_timeout_id);
 
-        wair_for_mutex_and_clear(&ex_rdp_context->invalid_region_mutex);
-        wair_for_mutex_and_clear(&ex_rdp_context->cursor_mutex);
+        g_info("%s: wai for mutex (invalid_region_mutex)", (const char *)__func__);
+        wait_for_mutex_and_clear(&ex_rdp_context->invalid_region_mutex);
+        g_info("%s: wai for mutex (cursor_mutex)", (const char *)__func__);
+        wait_for_mutex_and_clear(&ex_rdp_context->cursor_mutex);
 
-        g_info("%s: context free now: %i", (const char *)__func__, ex_rdp_context->test_int);
+        g_info("%s: context free no ", (const char *)__func__);
         freerdp_client_context_free((rdpContext*)ex_rdp_context);
+        g_info("%s: context freed", (const char *)__func__);
         ex_rdp_context = NULL;
     }
 }
@@ -362,7 +365,7 @@ void* rdp_client_routine(ExtendedRdpContext *ex_contect)
         ex_contect->is_connecting = FALSE;
         conn_try = 0;
 
-        g_info("After freerdp_connect(instance))2");
+        g_info("RDP successfully connected");
         while (!freerdp_shall_disconnect(instance)) {
 
             if (ex_contect->is_abort_demanded)
@@ -390,12 +393,14 @@ void* rdp_client_routine(ExtendedRdpContext *ex_contect)
                 /* Only auto reconnect on network disconnects. */
                 if (freerdp_error_info(instance) != 0)
                     ex_contect->is_abort_demanded = TRUE;
+                g_info("freerdp_check_event_handles. Br. is_abort_demanded: %i", ex_contect->is_abort_demanded);
                 break;
             }
         }
 
+        g_info("Before freerdp_disconnect");
         BOOL diss_res = freerdp_disconnect(instance);
-        g_info("dissconn res: %i", diss_res);
+        g_info("After freerdp_disconnect res: %i", diss_res);
     }
 end:
     g_info("%s: g_mutex_unlock", (const char *)__func__);
@@ -429,10 +434,12 @@ void rdp_client_stop_routine_thread(ExtendedRdpContext *ex_rdp_context)
         rdp_viewer_window_send_key_shortcut(context, 14); // 14 - index in keyCombos
     }
 
-    //g_info("%s: abort now: %i", (const char *)__func__, ex_rdp_context->test_int);
+    g_info("%s: rdp abort now", (const char *)__func__);
     rdp_client_abort_connection(ex_rdp_context->context.instance);
     // wait until rdp thread finishes (it should happen after abort)
+    g_info("%s: waiting for rdp thread completion", (const char *)__func__);
     g_thread_join(ex_rdp_context->rdp_client_routine_thread);
+    g_info("%s: rdp thread stopped", (const char *)__func__);
     ex_rdp_context->rdp_client_routine_thread = NULL;
     // reset errors
     freerdp_set_last_error(context, FREERDP_ERROR_SUCCESS);
@@ -730,7 +737,7 @@ static void rdp_client_free(freerdp* instance G_GNUC_UNUSED, rdpContext* context
     // some clean.
     ExtendedRdpContext* ex_rdp_context = (ExtendedRdpContext*)context;
 
-    wair_for_mutex_and_clear(&ex_rdp_context->primary_buffer_mutex);
+    wait_for_mutex_and_clear(&ex_rdp_context->primary_buffer_mutex);
 }
 
 static int rdp_client_start(rdpContext* context)

@@ -68,6 +68,7 @@ static BOOL xf_Pointer_Set(rdpContext* context, const rdpPointer* pointer)
     // create cursor
     GdkDisplay *display = gdk_display_get_default();
     if (!display) {
+        g_object_unref(pix_buff);
         return TRUE;
     }
 

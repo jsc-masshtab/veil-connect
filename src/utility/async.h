@@ -20,6 +20,6 @@ void execute_async_task(GTaskThreadFunc  task_func,
 // sleep which can be cancelled so user will not notice any freeze
 void cancellable_sleep(gulong microseconds, volatile gboolean *running_flag);
 
-void wair_for_mutex_and_clear(GMutex *cursor_mutex);
+void wait_for_mutex_and_clear(GMutex *mutex);
 
 #endif // ASYNC_H
