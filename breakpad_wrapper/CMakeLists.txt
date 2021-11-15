@@ -9,7 +9,7 @@ INCLUDE_DIRECTORIES(
 
 # breakpad_wrapper.o создается вручную вызовом в терминале компилятора C++ с указанием пути
 # к хедерам google breakpad в msys2 (breakpad есть в репозитории msys2)
-# g++ breakpad_wrapper.cpp -o breakpad_wrapper.o -c -std=c++1z  -I C:/msys64/mingw64/include/breakpad
+# g++ breakpad_wrapper.cpp -o win64/breakpad_wrapper.o -c -std=c++1z  -I C:/msys64/mingw64/include/breakpad
 FILE(GLOB SRC_FILES
         breakpad_wrapper_data.c
         win64/breakpad_wrapper.o

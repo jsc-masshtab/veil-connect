@@ -48,7 +48,7 @@ typedef struct{
     GThread *ping_job_thread;
     gboolean is_ping_job_running;
 
-    gint stats_check_event_source_id;
+    guint stats_check_event_source_id;
     VirtViewerApp *p_virt_viewer_app;
     rdpRdp* p_rdp; // Pointer to a rdp_rdp structure used to keep RDP connection's parameters.
 

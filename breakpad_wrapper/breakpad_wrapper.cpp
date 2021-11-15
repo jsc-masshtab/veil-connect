@@ -22,10 +22,12 @@ static bool dumpCallback(const wchar_t* dump_path,
     return succeeded;
 }
 
-bool filterCallback(void* context, EXCEPTION_POINTERS* exinfo, MDRawAssertionInfo* assertion) {
+bool filterCallback(void* context, EXCEPTION_POINTERS* exinfo, MDRawAssertionInfo* assertion)
+{
     printf("filterCallback\n");
     return true;
 }
+
 extern "C" CExceptionHandler newCExceptionHandler(const char *dump_path)
 {
     std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>> converter;
@@ -33,7 +35,7 @@ extern "C" CExceptionHandler newCExceptionHandler(const char *dump_path)
 
     return reinterpret_cast<void *>(
             new google_breakpad::ExceptionHandler(dump_path_w,
-                                                  NULL,
+                                                  filterCallback,
                                                   NULL,
                                                   NULL,
                                                   (int)google_breakpad::ExceptionHandler::HANDLER_ALL));
