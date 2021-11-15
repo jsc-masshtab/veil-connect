@@ -56,7 +56,11 @@ static const struct keyComboDef keyCombos[] = {
     { { RDP_SCANCODE_LCONTROL, RDP_SCANCODE_LMENU, RDP_SCANCODE_F12, GDK_KEY_VoidSymbol }, "Ctrl+Alt+F12", NULL},
     { { RDP_SCANCODE_LMENU, RDP_SCANCODE_F4, GDK_KEY_VoidSymbol }, "Alt+F_4", NULL},
     { { RDP_SCANCODE_LMENU, RDP_SCANCODE_TAB, GDK_KEY_VoidSymbol }, "Alt+Tab", NULL},
-};
+    { { RDP_SCANCODE_LWIN, GDK_KEY_VoidSymbol }, "WIN", NULL},
+    { { RDP_SCANCODE_LWIN, RDP_SCANCODE_KEY_R, GDK_KEY_VoidSymbol }, "WIN+R", NULL},
+    { { RDP_SCANCODE_LWIN, RDP_SCANCODE_KEY_P, GDK_KEY_VoidSymbol }, "WIN+P", NULL},
+    { { RDP_SCANCODE_LWIN, RDP_SCANCODE_KEY_E, GDK_KEY_VoidSymbol }, "WIN+E", NULL},
+}; // Добавлять новые только в конец.
 
 #ifdef G_OS_WIN32
 static HWND win32_window = NULL;
@@ -368,6 +372,16 @@ rdp_viewer_window_menu_switch_off(GtkWidget *menu G_GNUC_UNUSED, gpointer userda
 }
 
 static void
+rdp_viewer_window_menu_show_shortcuts(GtkWidget *btn, gpointer userdata)
+{
+    g_info("%s", (const char *)__func__);
+    RdpWindowData *rdp_window_data = (RdpWindowData *)userdata;
+    gtk_widget_show_all(rdp_window_data->menu_send_shortcut);
+    gtk_menu_popup_at_widget(GTK_MENU(rdp_window_data->menu_send_shortcut), btn,
+                             GDK_GRAVITY_SOUTH, GDK_GRAVITY_SOUTH, NULL);
+}
+
+static void
 rdp_viewer_window_menu_reconnect(GtkWidget *menu G_GNUC_UNUSED, gpointer userdata)
 {
     g_info("%s", (const char *)__func__);
@@ -497,6 +511,20 @@ create_new_button_for_overlay_toolbar(RdpWindowData *rdp_window_data, const gcha
     return button;
 }
 
+static void fill_shortcuts_menu(GtkMenu *sub_menu_send, ExtendedRdpContext* ex_rdp_context)
+{
+    int num_of_shortcuts = G_N_ELEMENTS(keyCombos);
+    for (int i = 0; i < num_of_shortcuts; ++i) {
+        GtkWidget *menu_item = gtk_menu_item_new_with_mnemonic(keyCombos[i].label);
+        gtk_container_add(GTK_CONTAINER(sub_menu_send), menu_item);
+
+        int *key_shortcut_index = malloc(sizeof(int));
+        *key_shortcut_index = i;
+        g_object_set_data_full(G_OBJECT(menu_item), "key_shortcut_index", key_shortcut_index, g_free);
+        g_signal_connect(menu_item, "activate", G_CALLBACK(rdp_viewer_window_menu_send), ex_rdp_context);
+    }
+}
+
 static void rdp_viewer_toolbar_setup(GtkBuilder *builder, RdpWindowData *rdp_window_data)
 {
     GtkWidget *button;
@@ -526,25 +554,18 @@ static void rdp_viewer_toolbar_setup(GtkBuilder *builder, RdpWindowData *rdp_win
     // Disconnect
     button = create_new_button_for_overlay_toolbar(rdp_window_data, "window-close", _("Disconnect"));
     g_signal_connect(button, "clicked", G_CALLBACK(rdp_viewer_window_menu_switch_off), rdp_window_data);
+    // Send key combination
+    button = create_new_button_for_overlay_toolbar(rdp_window_data, "preferences-desktop-keyboard-shortcuts",
+                                                   _("Send key combination"));
+    rdp_window_data->menu_send_shortcut = gtk_menu_new();
+    fill_shortcuts_menu(GTK_MENU(rdp_window_data->menu_send_shortcut), rdp_window_data->ex_rdp_context);
+    g_signal_connect(button, "clicked", G_CALLBACK(rdp_viewer_window_menu_show_shortcuts),
+                     rdp_window_data);
 
-    // add tollbar to overlay
+    // add toolbar to overlay
     rdp_window_data->revealer = virt_viewer_timed_revealer_new(rdp_window_data->overlay_toolbar);
     GtkWidget *overlay = GTK_WIDGET(gtk_builder_get_object(builder, "viewer-overlay"));
     gtk_overlay_add_overlay(GTK_OVERLAY(overlay), GTK_WIDGET(rdp_window_data->revealer));
-}
-
-static void fill_shortcuts_menu(GtkMenu *sub_menu_send, ExtendedRdpContext* ex_rdp_context)
-{
-    int num_of_shortcuts = G_N_ELEMENTS(keyCombos);
-    for (int i = 0; i < num_of_shortcuts; ++i) {
-        GtkWidget *menu_item = gtk_menu_item_new_with_mnemonic(keyCombos[i].label);
-        gtk_container_add(GTK_CONTAINER(sub_menu_send), menu_item);
-
-        int *key_shortcut_index = malloc(sizeof(int));
-        *key_shortcut_index = i;
-        g_object_set_data_full(G_OBJECT(menu_item), "key_shortcut_index", key_shortcut_index, free);
-        g_signal_connect(menu_item, "activate", G_CALLBACK(rdp_viewer_window_menu_send), ex_rdp_context);
-    }
 }
 
 static void
@@ -727,9 +748,9 @@ RdpWindowData *rdp_viewer_window_create(ExtendedRdpContext *ex_rdp_context, int 
     GtkWidget *item_fullscreen = GTK_WIDGET(gtk_builder_get_object(builder, "menu-view-fullscreen"));
 
     // shortcuts
-    GtkWidget *menu_send = GTK_WIDGET(gtk_builder_get_object(builder, "menu-send"));
+    GtkWidget *menu_send_shortcut = GTK_WIDGET(gtk_builder_get_object(builder, "menu-send"));
     GtkMenu *sub_menu_send = GTK_MENU(gtk_menu_new());
-    gtk_menu_item_set_submenu(GTK_MENU_ITEM(menu_send), (GtkWidget*)sub_menu_send);
+    gtk_menu_item_set_submenu(GTK_MENU_ITEM(menu_send_shortcut), (GtkWidget*)sub_menu_send);
     fill_shortcuts_menu(sub_menu_send, ex_rdp_context);
 
     // help menu
@@ -797,6 +818,7 @@ void rdp_viewer_window_destroy(RdpWindowData *rdp_window_data)
     conn_info_dialog_destroy(rdp_window_data->conn_info_dialog);
 
     g_object_unref(rdp_window_data->builder);
+    gtk_widget_destroy(rdp_window_data->menu_send_shortcut);
     gtk_widget_destroy(rdp_window_data->overlay_toolbar);
     gtk_widget_destroy(rdp_window_data->rdp_viewer_window);
     free(rdp_window_data);

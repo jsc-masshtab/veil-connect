@@ -43,8 +43,8 @@ Name: "custom"; Description: "Custom installation"; Flags: iscustom
 [Components]
 Name: "app"; Description: "VeiL Connect"; Types: full custom; Flags: fixed
 Name: "freerdp"; Description: "FreeRDP libraries"; Types: full custom; Flags: fixed
-Name: "freerdp\232"; Description: "2.3.2 (Media Foundation)"; Types: full custom; Flags: exclusive
-Name: "freerdp\220"; Description: "2.2.0 (OpenH264)"; Types: custom; Flags: exclusive
+Name: "freerdp\220"; Description: "2.2.0 (OpenH264)"; Types: full custom; Flags: exclusive
+Name: "freerdp\232"; Description: "2.3.2 (Media Foundation)"; Types: custom; Flags: exclusive
 Name: "usbdk"; Description: "Spice USB Development Kit (UsbDK)"; Types: full
 
 [Languages]
@@ -64,8 +64,8 @@ Source: "C:\Jenkins\workspace\vdi-connect\build\rdp_data\*"; DestDir: "{app}\rdp
 Source: "C:\Jenkins\workspace\vdi-connect\build\share\*"; DestDir: "{app}\share"; Flags: ignoreversion recursesubdirs createallsubdirs; Components: app
 Source: "C:\Jenkins\workspace\vdi-connect\build\x2go_data\*"; DestDir: "{app}\x2go_data"; Flags: ignoreversion recursesubdirs createallsubdirs; Components: app
 ; FreeRDP
-Source: "C:\Jenkins\workspace\vdi-connect\build\freerdp_2.3.2\*.dll"; DestDir: "{app}"; Flags: ignoreversion deleteafterinstall; Components: freerdp\232
 Source: "C:\Jenkins\workspace\vdi-connect\build\freerdp_2.2.0\*.dll"; DestDir: "{app}"; Flags: ignoreversion deleteafterinstall; Components: freerdp\220
+Source: "C:\Jenkins\workspace\vdi-connect\build\freerdp_2.3.2\*.dll"; DestDir: "{app}"; Flags: ignoreversion deleteafterinstall; Components: freerdp\232
 ; Files
 Source: "C:\Jenkins\workspace\vdi-connect\build\veil_connect.exe"; DestDir: "{app}"; Flags: ignoreversion; Components: app
 Source: "C:\Jenkins\workspace\vdi-connect\build\vc_redist.exe"; DestDir: "{tmp}"; Flags: deleteafterinstall; Components: app

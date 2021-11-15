@@ -27,6 +27,8 @@ typedef struct{
     VirtViewerTimedRevealer *revealer;
     GtkWidget *top_menu;
 
+    GtkWidget *menu_send_shortcut;
+
     RdpDisplay *rdp_display;
 
     ConnInfoDialog *conn_info_dialog;
