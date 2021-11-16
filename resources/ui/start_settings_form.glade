@@ -76,6 +76,7 @@
         <child>
           <object class="GtkBox">
             <property name="name">start-setting-box</property>
+            <property name="height_request">650</property>
             <property name="visible">True</property>
             <property name="can_focus">False</property>
             <property name="orientation">vertical</property>
@@ -349,7 +350,6 @@
                     <property name="hscrollbar_policy">never</property>
                     <property name="shadow_type">in</property>
                     <property name="overlay_scrolling">False</property>
-                    <property name="propagate_natural_height">True</property>
                     <child>
                       <object class="GtkViewport">
                         <property name="visible">True</property>
@@ -1379,7 +1379,7 @@ GUI data will be ignored</property>
           </object>
           <packing>
             <property name="expand">False</property>
-            <property name="fill">True</property>
+            <property name="fill">False</property>
             <property name="position">1</property>
           </packing>
         </child>
