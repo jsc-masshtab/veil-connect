@@ -17,6 +17,6 @@
 #include <gtk/gtk.h>
 
 const gchar *rdp_util_error_to_str(UINT32 rdp_error);
-
+gboolean is_disconnect_intentional(UINT32 last_error);
 
 #endif // RDP_UTIL_H

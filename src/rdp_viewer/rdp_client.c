@@ -49,7 +49,7 @@
 
 #define PROGRAMM_NAME "rdp_gtk_client"
 #define TAG CLIENT_TAG(PROGRAMM_NAME)
-#define CONN_TRY_NUMBER 2
+#define MAX_CONN_TRY_NUMBER 2 // Число попыток подключиться перед завершением сессии
 
 
 static int rdp_client_entry(RDP_CLIENT_ENTRY_POINTS* pEntryPoints);
@@ -344,26 +344,31 @@ void* rdp_client_routine(ExtendedRdpContext *ex_contect)
 
     // MAIN RDP LOOP
     freerdp* instance = (freerdp*)ex_contect->context.instance;
-    DWORD nCount;
     HANDLE handles[64];
+    UINT32 conn_try = 0;
 
-    for(int conn_try = 0; conn_try < CONN_TRY_NUMBER; conn_try++) {
-
+    while (TRUE) {
         if (ex_contect->is_abort_demanded)
             break;
 
         g_info("RDP. Connect attempt number: %i", conn_try + 1);
         ex_contect->is_connecting = TRUE;
         ex_contect->is_connected_last_time = freerdp_connect(instance);
+        ex_contect->is_connecting = FALSE;
         if (!ex_contect->is_connected_last_time) {
             g_info("connection failure");
-            g_info("After freerdp_connect(instance))1");
-            g_usleep(500000);
-            ex_contect->is_connecting = FALSE;
-            continue; // to the next attempt
+            // следующая попытка
+            conn_try++;
+            if (conn_try < MAX_CONN_TRY_NUMBER) {
+                g_usleep(500000);
+                continue; // to the next attempt
+            } else {
+                break;
+            }
         }
-        ex_contect->is_connecting = FALSE;
-        conn_try = 0;
+        // Подключение удачно
+        conn_try = 0; // Сброс счетчика
+        ex_contect->last_rdp_error = 0; // Сброс инфы о последней ошибке
 
         g_info("RDP successfully connected");
         while (!freerdp_shall_disconnect(instance)) {
@@ -376,7 +381,7 @@ void* rdp_client_routine(ExtendedRdpContext *ex_contect)
                 rdp_keyboard_focus_in(ex_contect);
             }
 
-            nCount = freerdp_get_event_handles(instance->context, &handles[0], 64);
+            DWORD nCount = freerdp_get_event_handles(instance->context, &handles[0], 64);
 
             if (nCount == 0) {
                 WLog_ERR(TAG, "%s: freerdp_get_event_handles failed", __FUNCTION__);
@@ -389,11 +394,14 @@ void* rdp_client_routine(ExtendedRdpContext *ex_contect)
                 break;
             }
 
+            // выполнение следующего условия говорит о потере связи
             if (!freerdp_check_event_handles(instance->context)) {
-                /* Only auto reconnect on network disconnects. */
-                if (freerdp_error_info(instance) != 0)
+                // выполнение следующего условия говорит о намеренном завершении сессии
+                UINT32 error_info = freerdp_error_info(instance);
+                if (error_info != 0)
                     ex_contect->is_abort_demanded = TRUE;
-                g_info("freerdp_check_event_handles. Br. is_abort_demanded: %i", ex_contect->is_abort_demanded);
+                g_info("freerdp_check_event_handles. Br. is_abort_demanded: %i  error_info: %i",
+                       ex_contect->is_abort_demanded, error_info);
                 break;
             }
         }
@@ -406,6 +414,7 @@ end:
     g_info("%s: g_mutex_unlock", (const char *)__func__);
     ex_contect->is_running = FALSE;
     rdp_client_demand_image_update(ex_contect, 0, 0, ex_contect->whole_image_width, ex_contect->whole_image_height);
+    shutdown_loop(*(ex_contect->p_loop));
     return NULL;
 }
 
@@ -672,11 +681,6 @@ static void rdp_post_disconnect(freerdp* instance)
     g_info("%s last_error_code: %u", (const char *)__func__, last_error);
 
     gdi_free(instance);
-
-    if (!ex_rdp_context->is_reconnecting) {
-        // Stop event loop
-        shutdown_loop(*(ex_rdp_context->p_loop));
-    }
 }
 
 static BOOL rdp_client_global_init(void)

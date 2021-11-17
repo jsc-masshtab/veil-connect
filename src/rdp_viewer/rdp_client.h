@@ -56,7 +56,6 @@ typedef struct {
 
     gboolean is_running; // is rdp routine running
     gboolean is_abort_demanded;
-    gboolean is_reconnecting; // is reconnect going on
     gboolean is_connecting;
     gboolean is_connected_last_time; // флаг было ли успешное соединение на последней попытке
 

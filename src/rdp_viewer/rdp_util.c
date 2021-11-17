@@ -156,3 +156,15 @@ const gchar *rdp_util_error_to_str(UINT32 rdp_error)
         }
     }
 }
+
+gboolean is_disconnect_intentional(UINT32 last_error)
+{
+    gboolean is_stop_intentional = FALSE;
+    if (last_error >= 0x10000 && last_error < 0x00020000) {
+        if ((last_error & 0xFFFF) == ERRINFO_LOGOFF_BY_USER ||
+            (last_error & 0xFFFF) == ERRINFO_RPC_INITIATED_DISCONNECT_BY_USER)
+            is_stop_intentional = TRUE;
+    }
+
+    return is_stop_intentional;
+}

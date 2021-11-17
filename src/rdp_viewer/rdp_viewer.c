@@ -18,6 +18,7 @@
 
 #include "virt-viewer-auth.h"
 
+#include "rdp_util.h"
 #include "rdp_viewer.h"
 #include "rdp_client.h"
 #include "rdp_viewer_window.h"
@@ -140,13 +141,8 @@ static void rdp_viewer_stats_data_updated(gpointer data G_GNUC_UNUSED, VdiVmRemo
 
 static void rdp_viewer_show_error_msg_if_required(RemoteViewerData *self)
 {
-    gboolean is_stop_intentional = FALSE;
     UINT32 last_error = self->ex_rdp_context->last_rdp_error;
-    if (last_error >= 0x10000 && last_error < 0x00020000) {
-        if ((last_error & 0xFFFF) == ERRINFO_LOGOFF_BY_USER ||
-            (last_error & 0xFFFF) == ERRINFO_RPC_INITIATED_DISCONNECT_BY_USER)
-            is_stop_intentional = TRUE;
-    }
+    gboolean is_stop_intentional = is_disconnect_intentional(last_error);
 
     if (!is_stop_intentional) {
         RdpWindowData *rdp_window_data = g_array_index(self->ex_rdp_context->rdp_windows_array,
