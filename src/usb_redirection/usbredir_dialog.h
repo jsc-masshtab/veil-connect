@@ -11,6 +11,6 @@
 
 #include <gtk/gtk.h>
 
-void usbredir_dialog_start(GtkWindow *parent);
+void usbredir_dialog_start(GtkWindow *parent, const gchar *title);
 
 #endif //VEIL_CONNECT_USBREDIR_DIALOG_H

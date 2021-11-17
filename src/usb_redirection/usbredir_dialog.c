@@ -414,12 +414,12 @@ static void usbredir_dialog_set_initial_gui_state(UsbredirMainDialog *self)
 }
 
 void
-usbredir_dialog_start(GtkWindow *parent)
+usbredir_dialog_start(GtkWindow *parent, const gchar *title)
 {
     usbredir_controller_set_usb_tcp_window_shown(TRUE);
 
     UsbredirMainDialog *self = calloc(1, sizeof(UsbredirMainDialog));
-    self->widget = usb_selector_widget_new();
+    self->widget = usb_selector_widget_new(title);
 
     // set initial gui state
     usbredir_dialog_set_initial_gui_state(self);

@@ -332,7 +332,9 @@ static void rdp_viewer_item_menu_usb_activated(GtkWidget *menu G_GNUC_UNUSED, gp
         return;
 #endif
 
-    usbredir_dialog_start(GTK_WINDOW(rdp_window_data->rdp_viewer_window));
+    g_autofree gchar *title = NULL;
+    title = g_strdup_printf("%s  -  usbredir", APPLICATION_NAME_WITH_SPACES);
+    usbredir_dialog_start(GTK_WINDOW(rdp_window_data->rdp_viewer_window), title);
 }
 
 static void rdp_viewer_window_menu_send(GtkWidget *menu, gpointer userdata)

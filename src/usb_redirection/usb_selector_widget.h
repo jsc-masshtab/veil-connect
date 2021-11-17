@@ -67,7 +67,7 @@ typedef struct {
 
 } UsbSelectorWidget;
 
-UsbSelectorWidget *usb_selector_widget_new();
+UsbSelectorWidget *usb_selector_widget_new(const gchar *title);
 void usb_selector_widget_enable_auto_toggle(UsbSelectorWidget *self);
 void usb_selector_widget_show_and_start_loop(UsbSelectorWidget *self, GtkWindow *parent);
 void usb_selector_widget_free(UsbSelectorWidget *self);

@@ -896,7 +896,9 @@ GtkResponseType remote_viewer_start_settings_dialog(RemoteViewer *p_remote_viewe
     dialog_data.btn_choose_rdp_file = get_widget_from_builder(dialog_data.builder, "btn_choose_rdp_file");
     dialog_data.rdp_file_name_entry = get_widget_from_builder(dialog_data.builder, "rdp_file_name_entry");
 
-    dialog_data.usb_selector_widget = usb_selector_widget_new();
+    g_autofree gchar *title = NULL;
+    title = g_strdup_printf("%s  -  RemoteFX USB", APPLICATION_NAME_WITH_SPACES);
+    dialog_data.usb_selector_widget = usb_selector_widget_new(title);
     gtk_widget_destroy(dialog_data.usb_selector_widget->tk_address_entry);
     gtk_widget_destroy(dialog_data.usb_selector_widget->tk_address_header);
     usb_selector_widget_enable_auto_toggle(dialog_data.usb_selector_widget);

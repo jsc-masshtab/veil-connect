@@ -158,13 +158,14 @@ static gchar *get_usb_addr_str(UsbSelectorWidget *self, guint i)
                            self->usb_dev_data_array[i].usbaddr);
 }
 
-UsbSelectorWidget *usb_selector_widget_new()
+UsbSelectorWidget *usb_selector_widget_new(const gchar *title)
 {
     UsbSelectorWidget *self = calloc(1, sizeof(UsbSelectorWidget));
 
     self->builder = remote_viewer_util_load_ui("usb_selector_form.glade");
 
     self->main_window = get_widget_from_builder(self->builder, "main_window");
+    gtk_window_set_title(GTK_WINDOW(self->main_window), title);
     self->usb_devices_list_view = get_widget_from_builder(self->builder, "usb_devices_list_view");
 
     self->tk_address_header = get_widget_from_builder(self->builder, "tk_address_header");
