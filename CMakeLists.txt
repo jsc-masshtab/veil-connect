@@ -265,6 +265,7 @@ if (WIN32)
 
     SET(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)
     SET(GUI_TYPE WIN32) # switch off console
+    SET(APP_ICON_RESOURCE_WINDOWS resources/appicon.o) # Created with 'windres.exe appicon.rc -o appicon.o'
 endif (WIN32)
 
     # GLIB
@@ -305,7 +306,7 @@ endif (WIN32)
     SET(LIBS ${LIBS} usbredirparser) #
 
 ###########################APP LINKING#################################
-ADD_EXECUTABLE(veil_connect ${GUI_TYPE} ${SRC_CODE} src/main.c)
+ADD_EXECUTABLE(veil_connect ${GUI_TYPE} ${SRC_CODE} src/main.c ${APP_ICON_RESOURCE_WINDOWS})
 target_link_libraries(
     veil_connect # exec
     ${LIBS} # libs
