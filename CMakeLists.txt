@@ -236,6 +236,7 @@ if (WIN32)
         add_subdirectory(breakpad_wrapper)
         SET(LIBS ${LIBS} breakpad_wrapper)
 
+        SET(APP_ICON_RESOURCE_WINDOWS resources/appicon.o) # Created with 'windres.exe appicon.rc -o appicon.o'
     endif(BUILD_x32)
 
     # hiredis port to Windows
@@ -265,7 +266,6 @@ if (WIN32)
 
     SET(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)
     SET(GUI_TYPE WIN32) # switch off console
-    SET(APP_ICON_RESOURCE_WINDOWS resources/appicon.o) # Created with 'windres.exe appicon.rc -o appicon.o'
 endif (WIN32)
 
     # GLIB
