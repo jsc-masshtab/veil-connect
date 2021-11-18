@@ -22,6 +22,57 @@
 
 #define WS_RECONNECT_TIMEOUT 5000
 
+// Данные события
+typedef struct{
+    gchar *event;
+
+    gchar *vm_id;
+
+    gchar *conn_error_str;
+    int conn_error_code;
+
+} TkEventData;
+
+static void free_tk_event_data(TkEventData *event_data)
+{
+    g_free(event_data->event);
+    g_free(event_data->vm_id);
+    g_free(event_data->conn_error_str);
+    free(event_data);
+}
+
+// Выполняется в основном потоке при возникновении событий
+static gboolean rdp_client_event_occurred(TkEventData *event_data)
+{
+    // В основном потоке шлем сообщения VDI серверу
+    if (g_strcmp0(event_data->event, "vm_changed") == 0)
+        vdi_ws_client_send_vm_changed(vdi_session_get_ws_client(), event_data->vm_id);
+    else if(g_strcmp0(event_data->event, "conn_error") == 0)
+        ;
+
+    free_tk_event_data(event_data);
+    return FALSE;
+}
+
+static void rdp_client_vm_changed_notify(const gchar *vm_id)
+{
+    TkEventData *event_data = calloc(1, sizeof(TkEventData));
+    event_data->event = g_strdup("vm_changed");
+    event_data->vm_id = g_strdup(vm_id);
+
+    gdk_threads_add_idle((GSourceFunc)rdp_client_event_occurred, event_data);
+}
+
+static void rdp_client_conn_error_notify(int conn_error_code)
+{
+    TkEventData *event_data = calloc(1, sizeof(TkEventData));
+    event_data->event = g_strdup("conn_error");
+    event_data->conn_error_code = conn_error_code;
+
+    gdk_threads_add_idle((GSourceFunc)rdp_client_event_occurred, event_data);
+}
+
+
 // static functions declarations
 static gboolean vdi_ws_client_ws_connect(VdiWsClient *vdi_ws_client);
 static void vdi_ws_client_ws_reconnect_if_allowed(VdiWsClient *vdi_ws_client);

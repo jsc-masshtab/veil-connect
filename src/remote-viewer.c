@@ -257,8 +257,6 @@ retry_connect_to_vm:
         else if (next_app_state == APP_STATE_EXITING)
             goto to_exit;
 
-        // Connect to VM
-        vdi_ws_client_send_vm_changed(vdi_session_get_ws_client(), vdi_session_get_current_vm_id());
         // connect to vm depending remote protocol
         next_app_state = APP_STATE_VDI_DIALOG;
         if (vdi_session_get_current_remote_protocol() == VDI_RDP_PROTOCOL) {
@@ -286,8 +284,6 @@ retry_connect_to_vm:
             virt_viewer_app_start_connect_attempts(self->virt_viewer_obj);
             next_app_state = virt_viewer_get_next_app_state(self->virt_viewer_obj);
         }
-
-        vdi_ws_client_send_vm_changed(vdi_session_get_ws_client(), NULL);
 
         if (next_app_state == APP_STATE_EXITING)
             goto to_exit;

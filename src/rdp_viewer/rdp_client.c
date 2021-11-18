@@ -363,6 +363,7 @@ void* rdp_client_routine(ExtendedRdpContext *ex_contect)
                 g_usleep(500000);
                 continue; // to the next attempt
             } else {
+                rdp_client_vm_changed_notify("conn_error");
                 break;
             }
         }
