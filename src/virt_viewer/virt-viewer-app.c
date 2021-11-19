@@ -1441,7 +1441,7 @@ void virt_viewer_app_hide_and_deactivate(VirtViewerApp *self)
     // hide monitor windows
     virt_viewer_app_hide_all_windows_forced(self);
     //deactivare app
-    virt_viewer_app_deactivate(self, TRUE);
+    virt_viewer_app_deactivate(self, FALSE);
 }
 
 void virt_viewer_app_set_hide_windows_on_disconnect(VirtViewerApp *self, gboolean hide_windows_on_disconnect)
@@ -1484,7 +1484,8 @@ virt_viewer_app_deactivate(VirtViewerApp *self, gboolean connect_error)
         virt_viewer_app_deactivated(self, connect_error);
     }
 
-    vdi_event_vm_changed_notify(NULL);
+    if (!connect_error)
+        vdi_event_vm_changed_notify(NULL);
 }
 
 static void
@@ -1530,6 +1531,8 @@ virt_viewer_app_disconnected(VirtViewerSession *session G_GNUC_UNUSED, const gch
     VirtViewerAppPrivate *priv = self->priv;
     gboolean connect_error = !priv->connected && !priv->cancelled;
 
+    g_autofree gchar *err_msg = NULL;
+
     if (!priv->is_polling) {
         if (!priv->kiosk)
             virt_viewer_app_hide_all_windows(self);
@@ -1539,12 +1542,10 @@ virt_viewer_app_disconnected(VirtViewerSession *session G_GNUC_UNUSED, const gch
 
     if (!priv->is_polling && connect_error) {
         // Попадание сюда говорит о том, что соединение не удалось
-        g_autofree gchar *err_msg = NULL;
         err_msg = g_strdup_printf(_("Unable to connect to the graphic server %s"), priv->pretty_address);
         vdi_event_conn_error_notify(connect_error, err_msg);
 
         GtkWidget *dialog = virt_viewer_app_make_message_dialog(self, err_msg);
-
         g_object_set(dialog, "secondary-text", msg, NULL);
         gtk_dialog_run(GTK_DIALOG(dialog));
         gtk_widget_destroy(dialog);
@@ -1557,6 +1558,7 @@ virt_viewer_app_disconnected(VirtViewerSession *session G_GNUC_UNUSED, const gch
 static void virt_viewer_app_cancelled(VirtViewerSession *session,
                                       VirtViewerApp *self)
 {
+    g_info("%s", (const char *)__func__);
     VirtViewerAppPrivate *priv = self->priv;
     priv->cancelled = TRUE;
     virt_viewer_app_disconnected(session, NULL, self);
