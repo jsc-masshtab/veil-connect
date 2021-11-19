@@ -19,71 +19,29 @@
 #include "vdi_ws_client.h"
 #include "settingsfile.h"
 #include "vdi_session.h"
+#include "vdi_event_types.h"
 
 #define WS_RECONNECT_TIMEOUT 5000
-
-// Данные события
-typedef struct{
-    gchar *event;
-
-    gchar *vm_id;
-
-    gchar *conn_error_str;
-    int conn_error_code;
-
-} TkEventData;
-
-static void free_tk_event_data(TkEventData *event_data)
-{
-    g_free(event_data->event);
-    g_free(event_data->vm_id);
-    g_free(event_data->conn_error_str);
-    free(event_data);
-}
-
-// Выполняется в основном потоке при возникновении событий
-static gboolean rdp_client_event_occurred(TkEventData *event_data)
-{
-    // В основном потоке шлем сообщения VDI серверу
-    if (g_strcmp0(event_data->event, "vm_changed") == 0)
-        vdi_ws_client_send_vm_changed(vdi_session_get_ws_client(), event_data->vm_id);
-    else if(g_strcmp0(event_data->event, "conn_error") == 0)
-        ;
-
-    free_tk_event_data(event_data);
-    return FALSE;
-}
-
-static void rdp_client_vm_changed_notify(const gchar *vm_id)
-{
-    TkEventData *event_data = calloc(1, sizeof(TkEventData));
-    event_data->event = g_strdup("vm_changed");
-    event_data->vm_id = g_strdup(vm_id);
-
-    gdk_threads_add_idle((GSourceFunc)rdp_client_event_occurred, event_data);
-}
-
-static void rdp_client_conn_error_notify(int conn_error_code)
-{
-    TkEventData *event_data = calloc(1, sizeof(TkEventData));
-    event_data->event = g_strdup("conn_error");
-    event_data->conn_error_code = conn_error_code;
-
-    gdk_threads_add_idle((GSourceFunc)rdp_client_event_occurred, event_data);
-}
 
 
 // static functions declarations
 static gboolean vdi_ws_client_ws_connect(VdiWsClient *vdi_ws_client);
 static void vdi_ws_client_ws_reconnect_if_allowed(VdiWsClient *vdi_ws_client);
 
-// implementations
-//static void vdi_ws_client_on_pong(SoupWebsocketConnection *self,
-//               GBytes                  *message,
-//               gpointer                 user_data) {
-//
-//    g_info("!!!!!on_pong");
-//}
+
+static const gchar *vdi_ws_client_vi_event_to_str(VdiEventType vd_event_type)
+{
+    switch (vd_event_type) {
+        case VDI_EVENT_TYPE_UNKNOWN:
+            return "";
+        case VDI_EVENT_TYPE_VM_CHANGED:
+            return "vm_changed";
+        case VDI_EVENT_TYPE_CONN_ERROR:
+            return "conn_error";
+        default:
+            return "";
+    }
+}
 
 // ws сообщения от брокера. Ожидаем json
 static void vdi_ws_client_on_message(SoupWebsocketConnection *ws_conn G_GNUC_UNUSED, gint type, GBytes *message,
@@ -363,7 +321,7 @@ void vdi_ws_client_send_vm_changed(VdiWsClient *ws_vdi_client, const gchar *vm_i
     json_builder_add_string_value(builder, "UPDATED");
 
     json_builder_set_member_name(builder, "event");
-    json_builder_add_string_value(builder, "vm_changed");
+    json_builder_add_string_value(builder, vdi_ws_client_vi_event_to_str(VDI_EVENT_TYPE_VM_CHANGED));
 
     json_builder_set_member_name(builder, "vm_id");
     json_builder_add_string_value(builder, vm_id);
@@ -384,6 +342,51 @@ void vdi_ws_client_send_vm_changed(VdiWsClient *ws_vdi_client, const gchar *vm_i
         gboolean is_connection_secure = (protocol == VDI_RDP_PROTOCOL || protocol == VDI_RDP_WINDOWS_NATIVE_PROTOCOL);
         json_builder_add_boolean_value(builder, is_connection_secure);
     }
+
+    json_builder_end_object(builder);
+
+    gchar *tk_data = json_generate_from_builder(builder);
+    g_info("%s: %s", (const char *)__func__, tk_data);
+
+    // Send
+    vdi_ws_client_send_text(ws_vdi_client, tk_data);
+
+    // Free
+    g_free(tk_data);
+    g_object_unref(builder);
+}
+
+void vdi_ws_client_send_conn_error(VdiWsClient *ws_vdi_client, guint32 conn_error_code, const gchar *conn_error_str)
+{
+    if (!ws_vdi_client->ws_conn)
+        return;
+
+    // Generate
+    JsonBuilder *builder = json_builder_new();
+    json_builder_begin_object(builder);
+
+    json_builder_set_member_name(builder, "msg_type");
+    json_builder_add_string_value(builder, "UPDATED");
+
+    json_builder_set_member_name(builder, "event");
+    json_builder_add_string_value(builder, vdi_ws_client_vi_event_to_str(VDI_EVENT_TYPE_CONN_ERROR));
+
+    json_builder_set_member_name(builder, "vm_id");
+    const gchar *vm_id = vdi_session_get_current_vm_id();
+    json_builder_add_string_value(builder, vm_id);
+
+    json_builder_set_member_name(builder, "connection_type");
+    VdiVmRemoteProtocol protocol = vdi_session_get_current_remote_protocol();
+    if (vm_id == NULL || protocol == VDI_ANOTHER_REMOTE_PROTOCOL)
+        json_builder_add_null_value(builder);
+    else
+        json_builder_add_string_value(builder, vdi_session_remote_protocol_to_str(protocol));
+
+    json_builder_set_member_name(builder, "conn_error_code");
+    json_builder_add_int_value(builder, conn_error_code);
+
+    json_builder_set_member_name(builder, "conn_error_str");
+    json_builder_add_string_value(builder, conn_error_str);
 
     json_builder_end_object(builder);
 

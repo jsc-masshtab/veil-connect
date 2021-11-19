@@ -101,8 +101,5 @@ BOOL rdp_client_abort_connection(freerdp* instance);
 void rdp_client_start_routine_thread(ExtendedRdpContext *ex_rdp_context);
 void rdp_client_stop_routine_thread(ExtendedRdpContext *ex_rdp_context);
 
-// Create full error message. Allocate memory. Используется после дисконнекта
-gchar *rdp_client_get_full_error_msg(ExtendedRdpContext *ex_rdp_context);
-
 
 #endif /* FREERDP_CLIENT_SAMPLE_H */

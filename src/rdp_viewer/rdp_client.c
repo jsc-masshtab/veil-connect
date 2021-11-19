@@ -46,6 +46,7 @@
 
 #include "async.h"
 #include "vdi_session.h"
+#include "vdi_event.h"
 
 #define PROGRAMM_NAME "rdp_gtk_client"
 #define TAG CLIENT_TAG(PROGRAMM_NAME)
@@ -362,14 +363,18 @@ void* rdp_client_routine(ExtendedRdpContext *ex_contect)
             if (conn_try < MAX_CONN_TRY_NUMBER) {
                 g_usleep(500000);
                 continue; // to the next attempt
-            } else {
-                rdp_client_vm_changed_notify("conn_error");
+            } else { // unable to connect
+                UINT32 error_code = freerdp_get_last_error(instance->context);
+                g_autofree gchar *err_str = NULL;
+                err_str = rdp_util_get_full_error_msg(error_code, 0);
+                vdi_event_conn_error_notify(error_code, err_str);
                 break;
             }
         }
         // Подключение удачно
         conn_try = 0; // Сброс счетчика
         ex_contect->last_rdp_error = 0; // Сброс инфы о последней ошибке
+        vdi_event_vm_changed_notify(vdi_session_get_current_vm_id()); // Событие подключения к ВМ
 
         g_info("RDP successfully connected");
         while (!freerdp_shall_disconnect(instance)) {
@@ -415,6 +420,10 @@ end:
     g_info("%s: g_mutex_unlock", (const char *)__func__);
     ex_contect->is_running = FALSE;
     rdp_client_demand_image_update(ex_contect, 0, 0, ex_contect->whole_image_width, ex_contect->whole_image_height);
+
+    // Если соединение было успешным то сигнализируем об отключении от ВМ
+    if (ex_contect->is_connected_last_time)
+        vdi_event_vm_changed_notify(NULL);
     shutdown_loop(*(ex_contect->p_loop));
     return NULL;
 }
@@ -454,32 +463,6 @@ void rdp_client_stop_routine_thread(ExtendedRdpContext *ex_rdp_context)
     // reset errors
     freerdp_set_last_error(context, FREERDP_ERROR_SUCCESS);
 }
-
-gchar *rdp_client_get_full_error_msg(ExtendedRdpContext *ex_rdp_context)
-{
-    gchar *final_msg = NULL;
-    g_autofree gchar *rdp_err_msg = NULL;
-    g_autofree gchar *rail_rdp_err_msg = NULL;
-    // "Нет соединения. Код: 0x%X %s"
-    rdp_err_msg = g_strdup_printf(_("No Connection. Code: 0x%X %s"), ex_rdp_context->last_rdp_error,
-                                 rdp_util_error_to_str(ex_rdp_context->last_rdp_error));
-
-    if (ex_rdp_context->rail_rdp_error) {
-        // Ошибка удаленного приложения. 0x%X  %s
-        rail_rdp_err_msg = g_strdup_printf(_("Remote app error. 0x%X  %s"), ex_rdp_context->rail_rdp_error,
-                              rail_error_to_string(ex_rdp_context->rail_rdp_error));
-    } else {
-        rail_rdp_err_msg = g_strdup("");
-    }
-
-    final_msg = g_strdup_printf("%s %s", rdp_err_msg, rail_rdp_err_msg);
-    return final_msg;
-}
-
-//static BOOL update_send_synchronize(rdpContext* context)
-//{
-//    //g_info("%s\n", (const char *)__func__);
-//}
 
 /* This function is called whenever a new frame starts.
 */

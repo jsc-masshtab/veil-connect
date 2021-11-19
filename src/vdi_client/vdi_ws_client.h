@@ -45,6 +45,8 @@ const gchar *vdi_ws_client_get_conn_time(VdiWsClient *ws_vdi_client);
 
 // Сообщить  vdi серверу что произошло событие смены ВМ
 void vdi_ws_client_send_vm_changed(VdiWsClient *ws_vdi_client, const gchar *vm_id);
+// Сообщить  vdi серверу что произошла ошибка подключения
+void vdi_ws_client_send_conn_error(VdiWsClient *ws_vdi_client, guint32 conn_error_code, const gchar *conn_error_str);
 // Сообщить  vdi серверу что юзер взаимодействовал с gui
 // В Qt очень просто можно установить фильтр ивентов сразу на все приложение, в gtk такого не нашел.
 // Поэтому вызываем этот метод везде, где хотим оповестить сервер об активности клиета

@@ -149,7 +149,8 @@ static void rdp_viewer_show_error_msg_if_required(RemoteViewerData *self)
                                                        RdpWindowData *, 0);
 
         if (last_error != 0 || self->ex_rdp_context->rail_rdp_error != 0) {
-            gchar *msg = rdp_client_get_full_error_msg(self->ex_rdp_context);
+            gchar *msg = rdp_util_get_full_error_msg(
+                    self->ex_rdp_context->last_rdp_error, self->ex_rdp_context->rail_rdp_error);
             show_msg_box_dialog(GTK_WINDOW(rdp_window_data->rdp_viewer_window), msg);
             g_free(msg);
         } else if (!self->ex_rdp_context->is_connected_last_time) {

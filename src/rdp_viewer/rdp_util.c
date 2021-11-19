@@ -6,6 +6,12 @@
  * Author: http://mashtab.org/
  */
 
+#include <glib.h>
+#include <glib/gstdio.h>
+#include <gio/gio.h>
+#include <gtk/gtk.h>
+#include <glib/gi18n.h>
+
 #include <freerdp/locale/keyboard.h>
 #include <freerdp/scancode.h>
 #include <freerdp/error.h>
@@ -43,6 +49,24 @@
 #define ERRCONNECT_NO_OR_MISSING_CREDENTIALS 0x0000001B
 #endif
 
+#define RAIL_ERROR_ARRAY_SIZE 7
+static const char* error_code_names[RAIL_ERROR_ARRAY_SIZE] = {
+        "RAIL_EXEC_S_OK",
+        "RAIL_EXEC_E_HOOK_NOT_LOADED (The server is not monitoring the current input desktop)",
+        "RAIL_EXEC_E_DECODE_FAILED (The request PDU was malformed). Wrong app name?",
+        "RAIL_EXEC_E_NOT_IN_ALLOWLIST (The requested application was blocked by policy from being launched on the server)",
+        "RAIL_EXEC_E_FILE_NOT_FOUND (The application or file path could not be found)",
+        "RAIL_EXEC_E_FAIL (Wrong application name?)",
+        "RAIL_EXEC_E_SESSION_LOCKED (The remote session is locked)"
+};
+
+const gchar *rail_error_to_string(UINT16 rail_error)
+{
+    if (rail_error < RAIL_ERROR_ARRAY_SIZE)
+        return error_code_names[rail_error];
+    else
+        return "RAIL exec error: Unknown error";
+}
 
 const gchar *rdp_util_error_to_str(UINT32 rdp_error)
 {
@@ -167,4 +191,25 @@ gboolean is_disconnect_intentional(UINT32 last_error)
     }
 
     return is_stop_intentional;
+}
+
+gchar *rdp_util_get_full_error_msg(UINT32 last_rdp_error, UINT32 rail_rdp_error)
+{
+    gchar *final_msg = NULL;
+    g_autofree gchar *rdp_err_msg = NULL;
+    g_autofree gchar *rail_rdp_err_msg = NULL;
+    // "Нет соединения. Код: 0x%X %s"
+    rdp_err_msg = g_strdup_printf(_("No Connection. Code: 0x%X %s"), last_rdp_error,
+                                  rdp_util_error_to_str(last_rdp_error));
+
+    if (rail_rdp_error) {
+        // Ошибка удаленного приложения. 0x%X  %s
+        rail_rdp_err_msg = g_strdup_printf(_("Remote app error. 0x%X  %s"), rail_rdp_error,
+                                           rail_error_to_string(rail_rdp_error));
+    } else {
+        rail_rdp_err_msg = g_strdup("");
+    }
+
+    final_msg = g_strdup_printf("%s %s", rdp_err_msg, rail_rdp_err_msg);
+    return final_msg;
 }

@@ -171,7 +171,7 @@ static gboolean rdp_display_event_on_draw(GtkWidget* widget G_GNUC_UNUSED, cairo
             g_mutex_unlock(&ex_rdp_context->primary_buffer_mutex);
         } else {
             /* Draw text */
-            gchar *msg = rdp_client_get_full_error_msg(ex_rdp_context);
+            gchar *msg = rdp_util_get_full_error_msg(ex_rdp_context->last_rdp_error, ex_rdp_context->rail_rdp_error);
             rdp_display_draw_text_message(context, msg, 50);
             g_free(msg);
 

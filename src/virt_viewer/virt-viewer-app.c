@@ -65,6 +65,8 @@
 #include "virt-viewer-session-spice.h"
 #endif
 
+#include "vdi_event.h"
+
 #define RECONNECT_TIMEOUT 3000
 
 gboolean doDebug = FALSE;
@@ -1455,6 +1457,7 @@ gboolean virt_viewer_app_hide_windows_on_disconnect(VirtViewerApp *self)
 /*static */void
 virt_viewer_app_deactivate(VirtViewerApp *self, gboolean connect_error)
 {
+    g_info("%s", (const char *)__func__);
     VirtViewerAppPrivate *priv = self->priv;
 
     if (priv->active) {
@@ -1480,6 +1483,8 @@ virt_viewer_app_deactivate(VirtViewerApp *self, gboolean connect_error)
     } else { // If app is not active then just go to preveous state
         virt_viewer_app_deactivated(self, connect_error);
     }
+
+    vdi_event_vm_changed_notify(NULL);
 }
 
 static void
@@ -1505,6 +1510,9 @@ virt_viewer_app_connected(VirtViewerSession *session G_GNUC_UNUSED,
     for (GList *l = self->priv->windows; l; l = l->next) {
         virt_viewer_window_update_vm_conn_time(VIRT_VIEWER_WINDOW(l->data), cur_time);
     }
+
+    // notify vdi server
+    vdi_event_vm_changed_notify(vdi_session_get_current_vm_id());
 }
 
 static void
@@ -1530,8 +1538,12 @@ virt_viewer_app_disconnected(VirtViewerSession *session G_GNUC_UNUSED, const gch
     }
 
     if (!priv->is_polling && connect_error) {
-        GtkWidget *dialog = virt_viewer_app_make_message_dialog(self,
-            _("Unable to connect to the graphic server %s"), priv->pretty_address);
+        // Попадание сюда говорит о том, что соединение не удалось
+        g_autofree gchar *err_msg = NULL;
+        err_msg = g_strdup_printf(_("Unable to connect to the graphic server %s"), priv->pretty_address);
+        vdi_event_conn_error_notify(connect_error, err_msg);
+
+        GtkWidget *dialog = virt_viewer_app_make_message_dialog(self, err_msg);
 
         g_object_set(dialog, "secondary-text", msg, NULL);
         gtk_dialog_run(GTK_DIALOG(dialog));
