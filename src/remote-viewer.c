@@ -281,7 +281,7 @@ retry_connect_to_vm:
                                                    self->conn_data.user, self->conn_data.password);
             virt_viewer_app_set_window_name(self->virt_viewer_obj, self->conn_data.vm_verbose_name,
                     vdi_session_get_vdi_username());
-            virt_viewer_app_start_connect_attempts(self->virt_viewer_obj);
+            virt_viewer_app_instant_start(self->virt_viewer_obj);
             next_app_state = virt_viewer_get_next_app_state(self->virt_viewer_obj);
         }
 

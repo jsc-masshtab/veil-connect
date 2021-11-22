@@ -343,14 +343,14 @@ on_ws_cmd_received (gpointer data G_GNUC_UNUSED,
 {
     if (g_strcmp0(cmd, "DISCONNECT") == 0 && virt_viewer_app_is_active(self->priv->app)) {
         virt_viewer_set_next_app_state(self->priv->app, APP_STATE_AUTH_DIALOG);
-        virt_viewer_app_hide_and_deactivate(self->priv->app);
+        virt_viewer_app_stop(self->priv->app);
     }
 }
 
 static void
 on_auth_fail_detected (gpointer data G_GNUC_UNUSED, VirtViewerWindow *self) {
     virt_viewer_set_next_app_state(self->priv->app, APP_STATE_AUTH_DIALOG);
-    virt_viewer_app_hide_and_deactivate(self->priv->app);
+    virt_viewer_app_stop(self->priv->app);
 }
 
 static void
@@ -1190,7 +1190,7 @@ virt_viewer_window_menu_switch_off(GtkWidget *menu G_GNUC_UNUSED, VirtViewerWind
 {
     // Завершаем соединение, закрываем окно
     g_info("%s\n", (const char *)__func__);
-    virt_viewer_app_hide_and_deactivate(self->priv->app);
+    virt_viewer_app_stop(self->priv->app);
 }
 
 G_MODULE_EXPORT void
@@ -1200,11 +1200,9 @@ virt_viewer_window_menu_reconnect(GtkWidget *menu G_GNUC_UNUSED, VirtViewerWindo
     g_info("%s\n", (const char *)__func__);
     VirtViewerApp *app = self->priv->app;
 
-    virt_viewer_app_set_hide_windows_on_disconnect(app, FALSE);
-    virt_viewer_app_stop_reconnect_poll(app);
     virt_viewer_app_deactivate(app, FALSE);
     virt_viewer_app_show_status(app, _("Reconnecting"));
-    virt_viewer_app_start_reconnect_poll(app);
+    virt_viewer_connect_attempt(app);
 }
 
 G_MODULE_EXPORT void
@@ -1213,7 +1211,7 @@ virt_viewer_window_menu_start_vm(GtkWidget *menu G_GNUC_UNUSED, VirtViewerWindow
     g_info("%s\n", (const char *)__func__);
     vdi_api_session_execute_task_do_action_on_vm("start", FALSE);
     // start connect atempts
-    virt_viewer_app_start_reconnect_poll(self->priv->app);
+    virt_viewer_connect_attempt(self->priv->app);
 }
 
 G_MODULE_EXPORT void

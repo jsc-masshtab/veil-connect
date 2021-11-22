@@ -110,8 +110,6 @@ void virt_viewer_app_set_enable_accel(VirtViewerApp *app, gboolean enable);
 void virt_viewer_app_show_preferences(VirtViewerApp *app, GtkWidget *parent);
 void virt_viewer_app_set_menus_sensitive(VirtViewerApp *self, gboolean sensitive);
 
-void virt_viewer_app_start_reconnect_poll(VirtViewerApp *self);
-void virt_viewer_app_stop_reconnect_poll(VirtViewerApp *self);
 
 gboolean virt_viewer_app_get_session_cancelled(VirtViewerApp *self);
 gboolean virt_viewer_app_is_quitting(VirtViewerApp *self);
@@ -120,10 +118,8 @@ void virt_viewer_app_hide_all_windows_forced(VirtViewerApp *app);
 
 void virt_viewer_app_set_window_name(VirtViewerApp *app, const gchar *vm_verbose_name, const gchar *user_name);
 
-void virt_viewer_app_hide_and_deactivate(VirtViewerApp *self);
+void virt_viewer_app_stop(VirtViewerApp *self);
 
-void virt_viewer_app_set_hide_windows_on_disconnect(VirtViewerApp *self, gboolean hide_windows_on_disconnect);
-gboolean virt_viewer_app_hide_windows_on_disconnect(VirtViewerApp *self);
 //
 void virt_viewer_app_deactivate(VirtViewerApp *self, gboolean connect_error);
 void virt_viewer_set_next_app_state(VirtViewerApp *self, RemoteViewerState next_app_state);
@@ -133,8 +129,8 @@ void virt_viewer_app_enable_auto_clipboard(VirtViewerApp *self, gboolean enabled
 
 void virt_viewer_app_start_loop(VirtViewerApp *self);
 
+gboolean virt_viewer_connect_attempt(VirtViewerApp *self);
 void virt_viewer_app_instant_start(VirtViewerApp *self);
-void virt_viewer_app_start_connect_attempts(VirtViewerApp *self);
 
 
 G_END_DECLS
