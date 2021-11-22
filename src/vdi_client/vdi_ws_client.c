@@ -37,7 +37,7 @@ static const gchar *vdi_ws_client_vi_event_to_str(VdiEventType vd_event_type)
         case VDI_EVENT_TYPE_VM_CHANGED:
             return "vm_changed";
         case VDI_EVENT_TYPE_CONN_ERROR:
-            return "conn_error";
+            return "vm_connection_error";
         default:
             return "";
     }

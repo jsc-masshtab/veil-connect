@@ -1460,6 +1460,9 @@ virt_viewer_app_deactivate(VirtViewerApp *self, gboolean connect_error)
     g_info("%s", (const char *)__func__);
     VirtViewerAppPrivate *priv = self->priv;
 
+    if (priv->connected)
+        vdi_event_vm_changed_notify(NULL); // notify vdi server about disconnect
+
     if (priv->active) {
 
         if (priv->session) {
@@ -1483,9 +1486,6 @@ virt_viewer_app_deactivate(VirtViewerApp *self, gboolean connect_error)
     } else { // If app is not active then just go to preveous state
         virt_viewer_app_deactivated(self, connect_error);
     }
-
-    if (!connect_error)
-        vdi_event_vm_changed_notify(NULL);
 }
 
 static void
@@ -1512,7 +1512,7 @@ virt_viewer_app_connected(VirtViewerSession *session G_GNUC_UNUSED,
         virt_viewer_window_update_vm_conn_time(VIRT_VIEWER_WINDOW(l->data), cur_time);
     }
 
-    // notify vdi server
+    // notify vdi server about connect
     vdi_event_vm_changed_notify(vdi_session_get_current_vm_id());
 }
 
@@ -1571,9 +1571,11 @@ static void virt_viewer_app_auth_refused(VirtViewerSession *session,
 {
     VirtViewerAppPrivate *priv = self->priv;
 
-    virt_viewer_app_simple_message_dialog(self,
-                                          _("Unable to authenticate with remote desktop server at %s: %s\n"),
-                                          priv->pretty_address, msg);
+    g_autofree gchar *err_msg = NULL;
+    err_msg = g_strdup_printf(_("Unable to authenticate with remote desktop server at %s: %s\n"),
+                              priv->pretty_address, msg);
+    vdi_event_conn_error_notify(1, err_msg);
+    virt_viewer_app_simple_message_dialog(self, err_msg);
 
     /* if the session implementation cannot retry auth automatically, the
      * VirtViewerApp needs to schedule a new connection to retry */
@@ -1588,9 +1590,10 @@ static void virt_viewer_app_auth_unsupported(VirtViewerSession *session G_GNUC_U
                                         const char *msg,
                                         VirtViewerApp *self)
 {
-    virt_viewer_app_simple_message_dialog(self,
-                                          _("Unable to authenticate with remote desktop server: %s"),
-                                          msg);
+    g_autofree gchar *err_msg = NULL;
+    err_msg = g_strdup_printf(_("Unable to authenticate with remote desktop server: %s"), msg);
+    vdi_event_conn_error_notify(1, err_msg);
+    virt_viewer_app_simple_message_dialog(self, err_msg);
 
     virt_viewer_app_stop_reconnect_poll(self);
 }
