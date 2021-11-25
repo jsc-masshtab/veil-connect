@@ -65,7 +65,11 @@ remote_viewer_startup(GApplication *app)
     G_APPLICATION_CLASS(remote_viewer_parent_class)->startup(app);
 
     RemoteViewer *self = REMOTE_VIEWER(app);
-    virt_viewer_app_setup(self->virt_viewer_obj);
+
+    // read ini file
+    settings_data_read_all(&self->conn_data);
+
+    virt_viewer_app_setup(self->virt_viewer_obj, &self->conn_data);
 
     GtkCssProvider *css_provider = setup_css(); // CSS setup
     remote_viewer_start(self);
@@ -197,8 +201,6 @@ void remote_viewer_free_resources(RemoteViewer *self)
 static void
 remote_viewer_start(RemoteViewer *self)
 {
-    // read ini file
-    settings_data_read_all(&self->conn_data);
     //create veil messenger
     self->veil_messenger = veil_messenger_new();
     // remote connect dialog
@@ -257,8 +259,6 @@ retry_connect_to_vm:
         else if (next_app_state == APP_STATE_EXITING)
             goto to_exit;
 
-        // Connect to VM
-        vdi_ws_client_send_vm_changed(vdi_session_get_ws_client(), vdi_session_get_current_vm_id());
         // connect to vm depending remote protocol
         next_app_state = APP_STATE_VDI_DIALOG;
         if (vdi_session_get_current_remote_protocol() == VDI_RDP_PROTOCOL) {
@@ -283,11 +283,9 @@ retry_connect_to_vm:
                                                    self->conn_data.user, self->conn_data.password);
             virt_viewer_app_set_window_name(self->virt_viewer_obj, self->conn_data.vm_verbose_name,
                     vdi_session_get_vdi_username());
-            virt_viewer_app_start_connect_attempts(self->virt_viewer_obj);
+            virt_viewer_app_instant_start(self->virt_viewer_obj);
             next_app_state = virt_viewer_get_next_app_state(self->virt_viewer_obj);
         }
-
-        vdi_ws_client_send_vm_changed(vdi_session_get_ws_client(), NULL);
 
         if (next_app_state == APP_STATE_EXITING)
             goto to_exit;

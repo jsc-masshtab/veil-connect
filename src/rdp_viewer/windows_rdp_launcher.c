@@ -191,6 +191,10 @@ launch_windows_rdp_client(const VeilRdpSettings *p_rdp_settings)
     }
 
     append_rdp_data(destFile, "use multimon:i", p_rdp_settings->is_multimon ? "1" : "0");
+    append_rdp_data(destFile, "screen mode id:i", p_rdp_settings->full_screen ? "2" : "1");
+    if (strlen_safely(p_rdp_settings->selectedmonitors))
+        append_rdp_data(destFile, "selectedmonitors:s", p_rdp_settings->selectedmonitors);
+
     append_rdp_data(destFile, "redirectsmartcards:i", p_rdp_settings->redirectsmartcards ? "1" : "0");
     append_rdp_data(destFile, "redirectprinters:i", p_rdp_settings->redirectprinters ? "1" : "0");
     append_rdp_data(destFile, "allow font smoothing:i",

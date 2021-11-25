@@ -330,7 +330,7 @@ static void on_vdi_session_get_vm_from_pool_finished(GObject *source_object G_GN
 
     if (vdi_vm_data->server_reply_type == SERVER_REPLY_TYPE_DATA) {
         // save to settings file the last pool we connected to
-        write_str_to_ini_file("RemoteViewerConnect", "last_pool_id", vdi_session_get_current_pool_id());
+        write_str_to_ini_file("RemoteViewerConnect", "pool_id", vdi_session_get_current_pool_id());
 
         update_string_safely(&self->p_conn_data->ip, vdi_vm_data->vm_host);
         self->p_conn_data->port = vdi_vm_data->vm_port;
@@ -585,7 +585,7 @@ RemoteViewerState vdi_manager_dialog(VdiManager *self, ConnectSettingsData *conn
 
     // connect_to_prev_pool_if_enabled
     g_autofree gchar *last_pool_id = NULL;
-    last_pool_id = read_str_from_ini_file("RemoteViewerConnect", "last_pool_id");
+    last_pool_id = read_str_from_ini_file("RemoteViewerConnect", "pool_id");
     if (!last_pool_id)
         conn_data->is_connect_to_prev_pool = FALSE;
 

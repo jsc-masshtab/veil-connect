@@ -40,6 +40,8 @@ typedef struct{
 
     // spice settings
     GtkWidget *client_cursor_visible_checkbutton;
+    GtkWidget *spice_full_screen_check_btn;
+    GtkWidget *spice_monitor_mapping_entry;
 
     // RDP settings
     GtkWidget *rdp_image_pixel_format_combobox;
@@ -53,6 +55,9 @@ typedef struct{
     GtkWidget *btn_remove_remote_folder;
 
     GtkWidget *is_multimon_check_btn;
+    GtkWidget *rdp_full_screen_check_btn;
+    GtkWidget *rdp_selected_monitors_entry;
+
     GtkWidget *redirect_printers_check_btn;
 
     GtkWidget *remote_app_check_btn;
@@ -581,6 +586,12 @@ fill_gui(ConnectSettingsDialogData *dialog_data)
     /// Spice settings
     gtk_toggle_button_set_active((GtkToggleButton*)dialog_data->client_cursor_visible_checkbutton,
                                  p_conn_data->spice_settings.is_spice_client_cursor_visible);
+    gtk_toggle_button_set_active((GtkToggleButton*)dialog_data->spice_full_screen_check_btn,
+                                 p_conn_data->spice_settings.full_screen);
+    if (p_conn_data->spice_settings.monitor_mapping) {
+        gtk_entry_set_text(GTK_ENTRY(dialog_data->spice_monitor_mapping_entry),
+                           p_conn_data->spice_settings.monitor_mapping);
+    }
 
     /// RDP settings
     UINT32 freerdp_pix_index = (g_strcmp0(p_conn_data->rdp_settings.rdp_pixel_format_str, "BGRA32") == 0) ? 1 : 0;
@@ -603,6 +614,11 @@ fill_gui(ConnectSettingsDialogData *dialog_data)
 
     gtk_toggle_button_set_active((GtkToggleButton *)dialog_data->is_multimon_check_btn,
             p_conn_data->rdp_settings.is_multimon);
+    gtk_toggle_button_set_active((GtkToggleButton *)dialog_data->rdp_full_screen_check_btn,
+                                 p_conn_data->rdp_settings.full_screen);
+    if (p_conn_data->rdp_settings.selectedmonitors)
+        gtk_entry_set_text(GTK_ENTRY(dialog_data->rdp_selected_monitors_entry),
+                p_conn_data->rdp_settings.selectedmonitors);
 
     gtk_toggle_button_set_active((GtkToggleButton *)dialog_data->redirect_printers_check_btn,
             p_conn_data->rdp_settings.redirectprinters);
@@ -718,6 +734,10 @@ take_from_gui(ConnectSettingsDialogData *dialog_data)
     /// Spice debug cursor enabling
     conn_data->spice_settings.is_spice_client_cursor_visible =
             gtk_toggle_button_get_active((GtkToggleButton *)dialog_data->client_cursor_visible_checkbutton);
+    conn_data->spice_settings.full_screen =
+            gtk_toggle_button_get_active((GtkToggleButton *)dialog_data->spice_full_screen_check_btn);
+    update_string_safely(&conn_data->spice_settings.monitor_mapping,
+                         gtk_entry_get_text(GTK_ENTRY(dialog_data->spice_monitor_mapping_entry)));
 
     /// RDP settings
     update_string_safely(&conn_data->rdp_settings.rdp_pixel_format_str,
@@ -740,8 +760,12 @@ take_from_gui(ConnectSettingsDialogData *dialog_data)
     update_string_safely(&conn_data->rdp_settings.shared_folders_str, folder_name);
     free_memory_safely(&folder_name);
 
-    gboolean is_rdp_multimon = gtk_toggle_button_get_active((GtkToggleButton *)dialog_data->is_multimon_check_btn);
-    conn_data->rdp_settings.is_multimon = is_rdp_multimon;
+    conn_data->rdp_settings.is_multimon = gtk_toggle_button_get_active(
+            (GtkToggleButton *)dialog_data->is_multimon_check_btn);
+    conn_data->rdp_settings.full_screen = gtk_toggle_button_get_active(
+            (GtkToggleButton *)dialog_data->rdp_full_screen_check_btn);
+    update_string_safely(&conn_data->rdp_settings.selectedmonitors,
+                         gtk_entry_get_text(GTK_ENTRY(dialog_data->rdp_selected_monitors_entry)));
 
     conn_data->rdp_settings.redirectprinters = gtk_toggle_button_get_active(
             (GtkToggleButton *)dialog_data->redirect_printers_check_btn);
@@ -854,6 +878,10 @@ GtkResponseType remote_viewer_start_settings_dialog(RemoteViewer *p_remote_viewe
     // spice settings
     dialog_data.client_cursor_visible_checkbutton =
             get_widget_from_builder(dialog_data.builder, "menu-show-client-cursor");
+    dialog_data.spice_full_screen_check_btn =
+            get_widget_from_builder(dialog_data.builder, "spice_full_screen_check_btn");
+    dialog_data.spice_monitor_mapping_entry =
+            get_widget_from_builder(dialog_data.builder, "spice_monitor_mapping_entry");
 
     // rdp settings
     dialog_data.rdp_image_pixel_format_combobox =
@@ -872,6 +900,10 @@ GtkResponseType remote_viewer_start_settings_dialog(RemoteViewer *p_remote_viewe
     dialog_data.btn_remove_remote_folder = get_widget_from_builder(dialog_data.builder, "btn_remove_remote_folder");
 
     dialog_data.is_multimon_check_btn = get_widget_from_builder(dialog_data.builder, "is_multimon_check_btn");
+    dialog_data.rdp_full_screen_check_btn = get_widget_from_builder(
+            dialog_data.builder, "rdp_full_screen_check_btn");
+    dialog_data.rdp_selected_monitors_entry = get_widget_from_builder(
+            dialog_data.builder, "rdp_selected_monitors_entry");
     dialog_data.redirect_printers_check_btn =
             get_widget_from_builder(dialog_data.builder, "redirect_printers_check_btn");
 

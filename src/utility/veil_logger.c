@@ -48,17 +48,20 @@ void veil_logger_setup()
     }
 
 #ifdef NDEBUG // logging errors  in release mode
-    //error output
-    gchar *stderr_file_name = g_build_filename(cur_log_path, "stderr.txt", NULL);
-    convert_string_from_utf8_to_locale(&stderr_file_name);
-    err_file_desc = freopen(stderr_file_name, "w", stderr);
-    g_free(stderr_file_name);
+    gboolean log_output_to_file = read_int_from_ini_file("General", "log_output_to_file", TRUE);
+    if (log_output_to_file) {
+        //error output
+        gchar *stderr_file_name = g_build_filename(cur_log_path, "stderr.txt", NULL);
+        convert_string_from_utf8_to_locale(&stderr_file_name);
+        err_file_desc = freopen(stderr_file_name, "w", stderr);
+        g_free(stderr_file_name);
 
-    //stdout output
-    gchar *stdout_file_name = g_build_filename(cur_log_path, "stdout.txt", NULL);
-    convert_string_from_utf8_to_locale(&stdout_file_name);
-    out_file_desc = freopen(stdout_file_name, "w", stdout);
-    g_free(stdout_file_name);
+        //stdout output
+        gchar *stdout_file_name = g_build_filename(cur_log_path, "stdout.txt", NULL);
+        convert_string_from_utf8_to_locale(&stdout_file_name);
+        out_file_desc = freopen(stdout_file_name, "w", stdout);
+        g_free(stdout_file_name);
+    }
 #endif
 
     // crash handler

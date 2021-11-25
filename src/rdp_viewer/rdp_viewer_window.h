@@ -34,7 +34,8 @@ typedef struct{
     ConnInfoDialog *conn_info_dialog;
 
     // monitor data
-    int monitor_index;
+    int monitor_index; // порядковый номер монитора
+    int monitor_number; // номер монитора в gdk glib
 
     ExtendedRdpContext *ex_rdp_context;
 
@@ -54,7 +55,8 @@ typedef struct{
 } RdpWindowData;
 
 
-RdpWindowData *rdp_viewer_window_create(ExtendedRdpContext *ex_rdp_context, int index, GdkRectangle geometry);
+RdpWindowData *rdp_viewer_window_create(ExtendedRdpContext *ex_rdp_context,
+        int index,  int monitor_num, GdkRectangle geometry);
 void rdp_viewer_window_destroy(RdpWindowData *rdp_window_data);
 void rdp_viewer_window_stop(RdpWindowData *rdp_window_data, RemoteViewerState next_app_state);
 

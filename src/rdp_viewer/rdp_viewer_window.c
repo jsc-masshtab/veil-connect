@@ -228,14 +228,15 @@ static gboolean rdp_viewer_window_event_on_mapped(GtkWidget *widget G_GNUC_UNUSE
 {
     g_info("%s", (const char *)__func__);
     RdpWindowData *rdp_window_data = (RdpWindowData *)user_data;
-#ifndef __APPLE__
-    rdp_viewer_window_toggle_fullscreen(rdp_window_data, TRUE);
+    gboolean full_screen = rdp_window_data->ex_rdp_context->p_rdp_settings->full_screen;
+#ifndef __APPLE__ // Адекватный фул скрин не реализован для MacOs
+    rdp_viewer_window_toggle_fullscreen(rdp_window_data, full_screen);
 #endif
     return FALSE;
 }
 
 // it seems focus-in-event and focus-out-event don’t work when keyboard is grabbed
-gboolean rdp_viewer_window_on_state_event(GtkWidget *widget G_GNUC_UNUSED, GdkEventWindowState  *event,
+gboolean rdp_viewer_window_on_state_event(GtkWidget *widget G_GNUC_UNUSED, GdkEventWindowState *event,
         gpointer user_data)
 {
     //g_info("%s %p event->type: %i", (const char *)__func__, widget, event->type);
@@ -660,13 +661,15 @@ static void rdp_viewer_window_show(RdpWindowData *rdp_window_data, GdkRectangle 
     gtk_widget_show_all(rdp_window_data->rdp_viewer_window);
 }
 
-RdpWindowData *rdp_viewer_window_create(ExtendedRdpContext *ex_rdp_context, int index, GdkRectangle geometry)
+RdpWindowData *rdp_viewer_window_create(ExtendedRdpContext *ex_rdp_context,
+        int index, int monitor_num, GdkRectangle geometry)
 {
     RdpWindowData *rdp_window_data = malloc(sizeof(RdpWindowData));
     memset(rdp_window_data, 0, sizeof(RdpWindowData));
 
     rdp_window_data->ex_rdp_context = ex_rdp_context;
     rdp_window_data->monitor_index = index;
+    rdp_window_data->monitor_number = monitor_num;
 
     // gui
     GtkBuilder *builder = rdp_window_data->builder = remote_viewer_util_load_ui("virt-viewer_veil.glade");
@@ -674,8 +677,9 @@ RdpWindowData *rdp_viewer_window_create(ExtendedRdpContext *ex_rdp_context, int 
     GtkWidget *rdp_viewer_window = rdp_window_data->rdp_viewer_window =
             GTK_WIDGET(gtk_builder_get_object(builder, "viewer"));
     // ВМ: %s     Пользователь: %s  -  %s
-    gchar *title = g_strdup_printf(_("VM: %s     User: %s  -  %s"), vdi_session_get_current_vm_name(),
-            ex_rdp_context->p_rdp_settings->user_name, APPLICATION_NAME_WITH_SPACES);
+    gchar *title = g_strdup_printf(_("VM: %s     User: %s     Monitor number: %i  -  %s"),
+            vdi_session_get_current_vm_name(), ex_rdp_context->p_rdp_settings->user_name,
+            rdp_window_data->monitor_number, APPLICATION_NAME_WITH_SPACES);
     gtk_window_set_title(GTK_WINDOW(rdp_viewer_window), title);
     free_memory_safely(&title);
 

@@ -65,14 +65,15 @@
 #include "virt-viewer-session-spice.h"
 #endif
 
+#include "vdi_event.h"
+
 #define RECONNECT_TIMEOUT 3000
+#define MAX_CONN_TRY_NUMBER 3
 
 gboolean doDebug = FALSE;
 static int opt_zoom = NORMAL_ZOOM_LEVEL;
 static gchar *opt_hotkeys = NULL;
 static gboolean opt_verbose = FALSE;
-// static gboolean opt_debug = FALSE;
-static gboolean opt_fullscreen = FALSE;
 static gboolean opt_kiosk = FALSE;
 static gboolean opt_kiosk_quit = FALSE;
 
@@ -165,9 +166,9 @@ struct _VirtViewerAppPrivate {
     GdkModifierType remove_smartcard_accel_mods;
     gboolean quit_on_disconnect;
 
-    gboolean is_polling; // flag for session polling (attempts to connect)
     guint reconnect_poll; // id for reconnect timer
-    gboolean hide_windows_on_disconnect; // whether hide or not windows on disconnect
+    guint conn_try; // Номер попытки подключения
+    gboolean is_polling_enabled;
 
     GMainLoop *virt_viewer_loop;
 };
@@ -248,7 +249,7 @@ virt_viewer_app_quit(VirtViewerApp *self)
     g_return_if_fail(!self->priv->kiosk);
     VirtViewerAppPrivate *priv = self->priv;
 
-    virt_viewer_app_hide_and_deactivate(self);
+    virt_viewer_app_stop(self);
     priv->quitting = TRUE;
     priv->next_app_state = APP_STATE_EXITING;
 
@@ -368,7 +369,7 @@ void virt_viewer_app_apply_monitor_mapping(VirtViewerApp *self)
     mapping = virt_viewer_app_get_monitor_mapping_for_section(self, self->priv->uuid);
     if (!mapping) {
         g_debug("No guest-specific fullscreen config, using fallback");
-        mapping = virt_viewer_app_get_monitor_mapping_for_section(self, "fallback");
+        mapping = virt_viewer_app_get_monitor_mapping_for_section(self, "SpiceSettings");
     }
 
     if (self->priv->initial_display_map)
@@ -492,16 +493,16 @@ virt_viewer_app_window_set_visible(VirtViewerApp *self,
     return FALSE;
 }
 
-static void hide_one_window(gpointer value,
-                            gpointer user_data G_GNUC_UNUSED)
-{
-    VirtViewerApp* self = VIRT_VIEWER_APP(user_data);
-    VirtViewerAppPrivate *priv = self->priv;
-    gboolean connect_error = !priv->connected && !priv->cancelled;
-
-    if (connect_error || self->priv->main_window != value)
-        virt_viewer_window_hide(VIRT_VIEWER_WINDOW(value));
-}
+//static void hide_one_window(gpointer value,
+//                            gpointer user_data G_GNUC_UNUSED)
+//{
+//    VirtViewerApp* self = VIRT_VIEWER_APP(user_data);
+//    VirtViewerAppPrivate *priv = self->priv;
+//    gboolean connect_error = !priv->connected && !priv->cancelled;
+//
+//    if (connect_error || self->priv->main_window != value)
+//        virt_viewer_window_hide(VIRT_VIEWER_WINDOW(value));
+//}
 
 static void hide_one_window_forced(gpointer value,
                             gpointer user_data G_GNUC_UNUSED)
@@ -509,11 +510,11 @@ static void hide_one_window_forced(gpointer value,
     virt_viewer_window_hide(VIRT_VIEWER_WINDOW(value));
 }
 
-static void
-virt_viewer_app_hide_all_windows(VirtViewerApp *app)
-{
-    g_list_foreach(app->priv->windows, hide_one_window, app);
-}
+//static void
+//virt_viewer_app_hide_all_windows(VirtViewerApp *app)
+//{
+//    g_list_foreach(app->priv->windows, hide_one_window, app);
+//}
 
 void virt_viewer_app_hide_all_windows_forced(VirtViewerApp *app)
 {
@@ -699,10 +700,20 @@ virt_viewer_app_set_window_subtitle(VirtViewerApp *app,
         gchar *d = strstr(title, "%d");
         if (d != NULL) {
             *d = '\0';
-            subtitle = g_strdup_printf("%s%d%s", title, nth + 1, d + 2);
+            subtitle = g_strdup_printf("%s%d%s", title, nth, d + 2);
             *d = '%';
-        } else
-            subtitle = g_strdup_printf(_("%s   Display number: %d"), title, nth + 1);
+        } else {
+        //    VirtViewerDisplay *display = virt_viewer_window_get_display(window);
+        //    gint monitor_number = virt_viewer_display_get_monitor(display);
+        //    if (monitor_number == -1) {
+        //        GdkScreen *screen = gtk_widget_get_screen(GTK_WIDGET(display));
+        //        monitor_number = gdk_screen_get_monitor_at_window(screen,
+        //                                 gtk_widget_get_window(GTK_WIDGET(display)));
+        //    }
+        //    subtitle = g_strdup_printf(_("%s   Display: %d   Monitor: %i"),
+        //            title, nth, monitor_number);
+            subtitle = g_strdup_printf(_("%s   Display number: %d"), title, nth);
+        }
     }
     g_info("%s: %i subtitle: %s", (const char*)__func__, nth, subtitle);
     g_object_set(window, "subtitle", subtitle, NULL);
@@ -1338,14 +1349,6 @@ virt_viewer_app_default_deactivated(VirtViewerApp *self, gboolean connect_error)
         virt_viewer_app_trace(self, "Guest %s display has disconnected, shutting down",
                               priv->guest_name);
     }
-
-    if (virt_viewer_app_hide_windows_on_disconnect(self)) {
-        // Закрыть окно virt-viewer и остановить луп
-        virt_viewer_app_hide_all_windows_forced(self);
-        shutdown_loop(self->priv->virt_viewer_loop);
-    }
-    // Далее закрывать окна пока не будет явно указано обратное
-    virt_viewer_app_set_hide_windows_on_disconnect(self, TRUE);
 }
 
 static void
@@ -1380,43 +1383,40 @@ void virt_viewer_app_start_loop(VirtViewerApp *self)
 }
 
 /*
- * Производиться разовая попытка соединения
+ * Производиться попытка соединения
  */
-void virt_viewer_app_instant_start(VirtViewerApp *self)
+gboolean virt_viewer_connect_attempt(VirtViewerApp *self)
 {
-    GError *error = NULL;
-    // Создание сессии
-    if (!virt_viewer_app_create_session(self, "spice", &error)) {
-        virt_viewer_app_simple_message_dialog(self, _("Unable to connect: %s"), error->message);
-        g_clear_error(&error);
-        return;
-    }
-    // Коннект к машине/*
-    if (!virt_viewer_app_initial_connect(self, &error)) {
-        if (error == NULL) {
-            g_set_error_literal(&error, VIRT_VIEWER_ERROR, VIRT_VIEWER_ERROR_FAILED,
-                                _("Failed to initiate connection"));
-        }
-
-        virt_viewer_app_simple_message_dialog(self, _("Unable to connect: %s"), error->message);
-        g_clear_error(&error);
-        return;
+    if (self->priv->reconnect_poll) {
+        g_source_remove(self->priv->reconnect_poll);
+        self->priv->reconnect_poll = 0;
     }
 
-    virt_viewer_app_set_hide_windows_on_disconnect(self, TRUE);
-    virt_viewer_app_show_main_window(self);
-    virt_viewer_app_start_loop(self);
+    if (virt_viewer_app_is_active(self))
+        return FALSE;
+
+    g_debug("%s", (const char *)__func__);
+
+    gboolean created = FALSE;
+    gboolean is_connected = FALSE;
+
+    created = virt_viewer_app_create_session(self, "spice", NULL);
+    if (!created)
+        return TRUE;
+
+    is_connected = virt_viewer_app_initial_connect(self, NULL);
+
+    g_info("%s active %i created %i is_connected %i",
+           (const char *)__func__, virt_viewer_app_is_active(self), created, is_connected);
+
+    return FALSE;
 }
 
-/*
- * Начинаются попытки соединения с необльшим интервалом.
- */
-void virt_viewer_app_start_connect_attempts(VirtViewerApp *self)
+void virt_viewer_app_instant_start(VirtViewerApp *self)
 {
-    // start connect attempt timer
-    virt_viewer_app_set_hide_windows_on_disconnect(self, TRUE);
-    virt_viewer_app_start_reconnect_poll(self);
-    // Показывается окно virt viewer
+    self->priv->is_polling_enabled = TRUE;
+    virt_viewer_connect_attempt(self);
+
     virt_viewer_app_show_main_window(self);
     virt_viewer_app_start_loop(self);
 }
@@ -1432,30 +1432,32 @@ static void virt_viewer_app_stats_data_updated(gpointer data G_GNUC_UNUSED, VdiV
     }
 }
 
-void virt_viewer_app_hide_and_deactivate(VirtViewerApp *self)
+void virt_viewer_app_stop(VirtViewerApp *self)
 {
-    // turn off polling if its in process
-    virt_viewer_app_stop_reconnect_poll(self);
     // hide monitor windows
     virt_viewer_app_hide_all_windows_forced(self);
-    //deactivare app
-    virt_viewer_app_deactivate(self, TRUE);
-}
 
-void virt_viewer_app_set_hide_windows_on_disconnect(VirtViewerApp *self, gboolean hide_windows_on_disconnect)
-{
-    self->priv->hide_windows_on_disconnect = hide_windows_on_disconnect;
-}
+    // cancel connect polling
+    self->priv->is_polling_enabled = FALSE;
+    self->priv->conn_try = 0;
+    if (self->priv->reconnect_poll) {
+        g_source_remove(self->priv->reconnect_poll);
+        self->priv->reconnect_poll = 0;
+    }
 
-gboolean virt_viewer_app_hide_windows_on_disconnect(VirtViewerApp *self)
-{
-    return self->priv->hide_windows_on_disconnect;
+    //deactivate app
+    virt_viewer_app_deactivate(self, FALSE);
+    shutdown_loop(self->priv->virt_viewer_loop);
 }
 
 /*static */void
 virt_viewer_app_deactivate(VirtViewerApp *self, gboolean connect_error)
 {
+    g_info("%s", (const char *)__func__);
     VirtViewerAppPrivate *priv = self->priv;
+
+    if (priv->connected)
+        vdi_event_vm_changed_notify(NULL); // notify vdi server about disconnect
 
     if (priv->active) {
 
@@ -1473,9 +1475,7 @@ virt_viewer_app_deactivate(VirtViewerApp *self, gboolean connect_error)
             g_idle_add(virt_viewer_app_retryauth, self);
         } else {
             g_clear_object(&priv->session);
-            // Go to beginning if no polling
-            if (!priv->is_polling)
-                virt_viewer_app_deactivated(self, connect_error);
+            virt_viewer_app_deactivated(self, connect_error);
         }
     } else { // If app is not active then just go to preveous state
         virt_viewer_app_deactivated(self, connect_error);
@@ -1489,10 +1489,8 @@ virt_viewer_app_connected(VirtViewerSession *session G_GNUC_UNUSED,
     g_info("%s", (const char *)__func__);
     VirtViewerAppPrivate *priv = self->priv;
 
-    // turn off polling
-    virt_viewer_app_stop_reconnect_poll(self);
-
     priv->connected = TRUE;
+    priv->conn_try = 0; // reset connection attempt count
 
     if (self->priv->kiosk)
         virt_viewer_app_show_status(self, "");
@@ -1505,6 +1503,9 @@ virt_viewer_app_connected(VirtViewerSession *session G_GNUC_UNUSED,
     for (GList *l = self->priv->windows; l; l = l->next) {
         virt_viewer_window_update_vm_conn_time(VIRT_VIEWER_WINDOW(l->data), cur_time);
     }
+
+    // notify vdi server about connect
+    vdi_event_vm_changed_notify(vdi_session_get_current_vm_id());
 }
 
 static void
@@ -1522,29 +1523,44 @@ virt_viewer_app_disconnected(VirtViewerSession *session G_GNUC_UNUSED, const gch
     VirtViewerAppPrivate *priv = self->priv;
     gboolean connect_error = !priv->connected && !priv->cancelled;
 
-    if (!priv->is_polling) {
-        if (!priv->kiosk)
-            virt_viewer_app_hide_all_windows(self);
-        else if (priv->cancelled)
-            priv->authretry = TRUE;
-    }
+    g_autofree gchar *err_msg = NULL;
 
-    if (!priv->is_polling && connect_error) {
-        GtkWidget *dialog = virt_viewer_app_make_message_dialog(self,
-            _("Unable to connect to the graphic server %s"), priv->pretty_address);
+    if (priv->cancelled)
+        priv->authretry = TRUE;
 
-        g_object_set(dialog, "secondary-text", msg, NULL);
-        gtk_dialog_run(GTK_DIALOG(dialog));
-        gtk_widget_destroy(dialog);
+    if (connect_error) {
+        // Попадание сюда говорит о том, что соединение не удалось
+        // Следующая попытка переподключения
+        if (priv->is_polling_enabled && priv->conn_try < MAX_CONN_TRY_NUMBER) {
+
+            virt_viewer_app_deactivate(self, connect_error);
+
+            priv->conn_try++;
+            g_info("Attempt to connect. Number: %i", priv->conn_try);
+            priv->reconnect_poll = g_timeout_add(RECONNECT_TIMEOUT, (GSourceFunc)virt_viewer_connect_attempt, self);
+        } else {
+            err_msg = g_strdup_printf(_("Unable to connect to the graphic server %s"), priv->pretty_address);
+            // Msg to the server
+            vdi_event_conn_error_notify(connect_error, err_msg);
+            // Dialog with error msg
+            GtkWidget *dialog = virt_viewer_app_make_message_dialog(self, err_msg);
+            g_object_set(dialog, "secondary-text", msg, NULL);
+            gtk_dialog_run(GTK_DIALOG(dialog));
+            gtk_widget_destroy(dialog);
+            // Stop
+            virt_viewer_app_stop(self);
+        }
+    } else {
+        virt_viewer_app_stop(self);
     }
 
     virt_viewer_app_set_usb_options_sensitive(self, FALSE);
-    virt_viewer_app_deactivate(self, connect_error);
 }
 
 static void virt_viewer_app_cancelled(VirtViewerSession *session,
                                       VirtViewerApp *self)
 {
+    g_info("%s", (const char *)__func__);
     VirtViewerAppPrivate *priv = self->priv;
     priv->cancelled = TRUE;
     virt_viewer_app_disconnected(session, NULL, self);
@@ -1557,28 +1573,29 @@ static void virt_viewer_app_auth_refused(VirtViewerSession *session,
 {
     VirtViewerAppPrivate *priv = self->priv;
 
-    virt_viewer_app_simple_message_dialog(self,
-                                          _("Unable to authenticate with remote desktop server at %s: %s\n"),
-                                          priv->pretty_address, msg);
+    g_autofree gchar *err_msg = NULL;
+    err_msg = g_strdup_printf(_("Unable to authenticate with remote desktop server at %s: %s\n"),
+                              priv->pretty_address, msg);
+    vdi_event_conn_error_notify(1, err_msg);
+    virt_viewer_app_simple_message_dialog(self, err_msg);
+    virt_viewer_app_stop(self);
 
     /* if the session implementation cannot retry auth automatically, the
      * VirtViewerApp needs to schedule a new connection to retry */
     priv->authretry = (!virt_viewer_session_can_retry_auth(session) &&
                        !virt_viewer_session_get_file(session));
 
-    // no point to try to connect if credentials are wrong
-    virt_viewer_app_stop_reconnect_poll(self);
 }
 
 static void virt_viewer_app_auth_unsupported(VirtViewerSession *session G_GNUC_UNUSED,
                                         const char *msg,
                                         VirtViewerApp *self)
 {
-    virt_viewer_app_simple_message_dialog(self,
-                                          _("Unable to authenticate with remote desktop server: %s"),
-                                          msg);
-
-    virt_viewer_app_stop_reconnect_poll(self);
+    g_autofree gchar *err_msg = NULL;
+    err_msg = g_strdup_printf(_("Unable to authenticate with remote desktop server: %s"), msg);
+    vdi_event_conn_error_notify(1, err_msg);
+    virt_viewer_app_simple_message_dialog(self, err_msg);
+    virt_viewer_app_stop(self);
 }
 
 static void virt_viewer_app_usb_failed(VirtViewerSession *session G_GNUC_UNUSED,
@@ -1871,12 +1888,12 @@ void virt_viewer_app_set_spice_session_data(VirtViewerApp *self, const gchar *ip
     net_speedometer_update_vm_ip(self->net_speedometer, ip);
 }
 
-void virt_viewer_app_setup(VirtViewerApp *self)
+void virt_viewer_app_setup(VirtViewerApp *self, ConnectSettingsData *conn_data)
 {
     self->priv->resource = virt_viewer_get_resource();
 
     //virt_viewer_app_set_debug(opt_debug);virt_viewer_app_set_debug
-    virt_viewer_app_set_fullscreen(self, opt_fullscreen);
+    virt_viewer_app_set_fullscreen(self, conn_data->spice_settings.full_screen);
 
     self->priv->verbose = opt_verbose;
     self->priv->quit_on_disconnect = opt_kiosk ? opt_kiosk_quit : TRUE;
@@ -1884,7 +1901,7 @@ void virt_viewer_app_setup(VirtViewerApp *self)
     self->priv->main_window = virt_viewer_app_window_new(self,
                                                          virt_viewer_app_get_first_monitor(self));
     self->priv->main_notebook = GTK_WIDGET(virt_viewer_window_get_notebook(self->priv->main_window));
-    self->priv->initial_display_map = virt_viewer_app_get_monitor_mapping_for_section(self, "fallback");
+    self->priv->initial_display_map = virt_viewer_app_get_monitor_mapping_for_section(self, "SpiceSettings");
 
     virt_viewer_app_set_kiosk(self, opt_kiosk);
     virt_viewer_app_set_hotkeys(self, opt_hotkeys);
@@ -2601,69 +2618,6 @@ virt_viewer_app_show_preferences(VirtViewerApp *self, GtkWidget *parent)
                                  GTK_WINDOW(parent));
 
     gtk_window_present(GTK_WINDOW(preferences));
-}
-
-// connection polling
-static gboolean
-virt_viewer_connect_timer(VirtViewerApp *self)
-{
-    VirtViewerAppPrivate *app_priv = self->priv;
-    // stop polling if app->is_polling is false. it happens when spice session connected
-    if (!app_priv->is_polling){
-        virt_viewer_app_stop_reconnect_poll(self);
-        return FALSE;
-    }
-
-    g_debug("Connect timer fired");
-    // if app is not active then trying to connect
-    gboolean created = FALSE;
-    gboolean is_connected = FALSE;
-
-    created = virt_viewer_app_create_session(self, "spice", NULL);
-    if (!created)
-        return TRUE;
-
-    // session options
-    //virt_viewer_app_enable_auto_clipboard(self, vdi_session_is_shared_clipboard_permitted());
-
-    is_connected = virt_viewer_app_initial_connect(self, NULL);
-
-    g_info("%s active %i created %i is_connected %i",
-           (const char *)__func__, virt_viewer_app_is_active(self), created, is_connected);
-
-    return TRUE;
-}
-
-void
-virt_viewer_app_start_reconnect_poll(VirtViewerApp *self)
-{
-    VirtViewerAppPrivate *app_priv = self->priv;
-    if (virt_viewer_app_is_active(self))
-        return;
-
-
-    g_debug("reconnect_poll: %d", app_priv->reconnect_poll);
-
-    if (app_priv->reconnect_poll != 0)
-        return;
-
-    app_priv->is_polling = TRUE;
-    app_priv->reconnect_poll = g_timeout_add(RECONNECT_TIMEOUT, (GSourceFunc)virt_viewer_connect_timer, self);
-}
-
-void
-virt_viewer_app_stop_reconnect_poll(VirtViewerApp *self)
-{
-    VirtViewerAppPrivate *app_priv = self->priv;
-    app_priv->is_polling = FALSE;
-
-    g_debug("reconnect_poll: %d", app_priv->reconnect_poll);
-
-    if (app_priv->reconnect_poll == 0)
-        return;
-
-    g_source_remove(app_priv->reconnect_poll);
-    app_priv->reconnect_poll = 0;
 }
 
 gboolean virt_viewer_app_get_session_cancelled(VirtViewerApp *self)

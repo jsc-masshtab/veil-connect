@@ -124,6 +124,9 @@ list(APPEND SRC_CODE
         src/vdi_client/vdi_app_selector.h
         src/vdi_client/vdi_user_settings_widget.h
         src/vdi_client/vdi_user_settings_widget.c
+        src/vdi_client/vdi_event.h
+        src/vdi_client/vdi_event.c
+        src/vdi_client/vdi_event_types.h
 
 # app_updater
         src/app_updater/app_updater.h
