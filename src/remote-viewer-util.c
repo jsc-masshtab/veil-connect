@@ -706,27 +706,23 @@ virt_viewer_parse_monitor_mappings(gchar **mappings, const gsize nmappings, cons
         }
 
         display = strtol(tokens[0], &endptr, 10);
-        if ((endptr && *endptr != '\0') || display < 1) {
+        if ((endptr && *endptr != '\0') || display < 0) {
             g_warning("Invalid monitor-mapping configuration: display id is invalid: %s %p='%s'", tokens[0], endptr, endptr);
             g_strfreev(tokens);
             goto configerror;
         }
         monitor = strtol(tokens[1], &endptr, 10);
-        if ((endptr && *endptr != '\0') || monitor < 1) {
+        if ((endptr && *endptr != '\0') || monitor < 0) {
             g_warning("Invalid monitor-mapping configuration: monitor id '%s' is invalid", tokens[1]);
             g_strfreev(tokens);
             goto configerror;
         }
         g_strfreev(tokens);
 
-        if (monitor > nmonitors) {
+        if (monitor >= nmonitors) {
             g_warning("Invalid monitor-mapping configuration: monitor #%i for display #%i does not exist", monitor, display);
             goto configerror;
         }
-
-        /* config file format is 1-based, not 0-based */
-        display--;
-        monitor--;
 
         if (g_hash_table_lookup_extended(displaymap, GINT_TO_POINTER(display), NULL, NULL) ||
             g_hash_table_lookup_extended(monitormap, GINT_TO_POINTER(monitor), NULL, NULL)) {
@@ -741,7 +737,7 @@ virt_viewer_parse_monitor_mappings(gchar **mappings, const gsize nmappings, cons
 
     for (i = 0; i < max_display_id; i++) {
         if (!g_hash_table_lookup_extended(displaymap, GINT_TO_POINTER(i), NULL, NULL)) {
-            g_warning("Invalid monitor-mapping configuration: display #%d was not specified", i+1);
+            g_warning("Invalid monitor-mapping configuration: display #%d was not specified", i);
             goto configerror;
         }
     }

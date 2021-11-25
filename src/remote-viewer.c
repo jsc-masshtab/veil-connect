@@ -65,7 +65,11 @@ remote_viewer_startup(GApplication *app)
     G_APPLICATION_CLASS(remote_viewer_parent_class)->startup(app);
 
     RemoteViewer *self = REMOTE_VIEWER(app);
-    virt_viewer_app_setup(self->virt_viewer_obj);
+
+    // read ini file
+    settings_data_read_all(&self->conn_data);
+
+    virt_viewer_app_setup(self->virt_viewer_obj, &self->conn_data);
 
     GtkCssProvider *css_provider = setup_css(); // CSS setup
     remote_viewer_start(self);
@@ -197,8 +201,6 @@ void remote_viewer_free_resources(RemoteViewer *self)
 static void
 remote_viewer_start(RemoteViewer *self)
 {
-    // read ini file
-    settings_data_read_all(&self->conn_data);
     //create veil messenger
     self->veil_messenger = veil_messenger_new();
     // remote connect dialog

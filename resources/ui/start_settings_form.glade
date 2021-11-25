@@ -326,6 +326,62 @@
                         <property name="position">0</property>
                       </packing>
                     </child>
+                    <child>
+                      <object class="GtkCheckButton" id="spice_full_screen_check_btn">
+                        <property name="label" translatable="yes">Full screen</property>
+                        <property name="visible">True</property>
+                        <property name="can_focus">True</property>
+                        <property name="receives_default">False</property>
+                        <property name="tooltip_text" translatable="yes">Full screen. Application restart required to apply changes.</property>
+                        <property name="draw_indicator">True</property>
+                      </object>
+                      <packing>
+                        <property name="expand">False</property>
+                        <property name="fill">True</property>
+                        <property name="position">1</property>
+                      </packing>
+                    </child>
+                    <child>
+                      <object class="GtkBox">
+                        <property name="visible">True</property>
+                        <property name="can_focus">False</property>
+                        <property name="spacing">6</property>
+                        <property name="homogeneous">True</property>
+                        <child>
+                          <object class="GtkLabel" id="spice_monitor_mapping_label">
+                            <property name="visible">True</property>
+                            <property name="can_focus">False</property>
+                            <property name="halign">end</property>
+                            <property name="hexpand">False</property>
+                            <property name="label" translatable="yes">Monitor mapping (Display:Monitor)</property>
+                          </object>
+                          <packing>
+                            <property name="expand">False</property>
+                            <property name="fill">True</property>
+                            <property name="position">0</property>
+                          </packing>
+                        </child>
+                        <child>
+                          <object class="GtkEntry" id="spice_monitor_mapping_entry">
+                            <property name="visible">True</property>
+                            <property name="can_focus">True</property>
+                            <property name="tooltip_text" translatable="yes">The value is a list of mappings between a guest display and a client monitor. For example, to map guest displays 0 and 1 to client monitors 1 and 2 use:
+0:1;1:2. The monitor-mapping must contain ids of all displays from 0 to the last desired display id, e.g. "2:2" is invalid because mappings for displays 0 and 1 are not specified. This configuration only takes effect when full screen is enabled.
+Application restart required to apply changes.</property>
+                          </object>
+                          <packing>
+                            <property name="expand">False</property>
+                            <property name="fill">True</property>
+                            <property name="position">1</property>
+                          </packing>
+                        </child>
+                      </object>
+                      <packing>
+                        <property name="expand">False</property>
+                        <property name="fill">True</property>
+                        <property name="position">2</property>
+                      </packing>
+                    </child>
                   </object>
                   <packing>
                     <property name="position">1</property>
@@ -349,7 +405,6 @@
                     <property name="can_focus">True</property>
                     <property name="hscrollbar_policy">never</property>
                     <property name="shadow_type">in</property>
-                    <property name="overlay_scrolling">False</property>
                     <child>
                       <object class="GtkViewport">
                         <property name="visible">True</property>
@@ -362,23 +417,6 @@
                             <property name="row_spacing">9</property>
                             <property name="column_spacing">3</property>
                             <property name="column_homogeneous">True</property>
-                            <child>
-                              <object class="GtkCheckButton" id="is_multimon_check_btn">
-                                <property name="label" translatable="yes" comments="Мультимониторность">Use multiple monitors</property>
-                                <property name="name">is_multimon_check_btn</property>
-                                <property name="visible">True</property>
-                                <property name="can_focus">True</property>
-                                <property name="receives_default">False</property>
-                                <property name="tooltip_text" translatable="yes" comments="Открыть приложение на доступных мониторах (максимум 3)&#10;Мониторы должны образовывать прямоугольник (иметь одинаковую высоту изображения)">Monitors should have the same height</property>
-                                <property name="halign">start</property>
-                                <property name="hexpand">True</property>
-                                <property name="draw_indicator">True</property>
-                              </object>
-                              <packing>
-                                <property name="left_attach">0</property>
-                                <property name="top_attach">6</property>
-                              </packing>
-                            </child>
                             <child>
                               <object class="GtkCheckButton" id="remote_app_check_btn">
                                 <property name="label" translatable="yes" comments="Удаленное приложение">Remote application</property>
@@ -467,27 +505,6 @@
                               </packing>
                             </child>
                             <child>
-                              <object class="GtkComboBoxText" id="rdp_network_type_combobox">
-                                <property name="visible">True</property>
-                                <property name="sensitive">False</property>
-                                <property name="can_focus">False</property>
-                                <property name="active">6</property>
-                                <items>
-                                  <item id="modem" translatable="yes">modem</item>
-                                  <item id="broadband" translatable="yes">broadband</item>
-                                  <item id="broadband-low" translatable="yes">broadband-low</item>
-                                  <item id="broadband-high" translatable="yes">broadband-high</item>
-                                  <item id="wan" translatable="yes">wan</item>
-                                  <item id="lan" translatable="yes">lan</item>
-                                  <item id="auto" translatable="yes">Auto</item>
-                                </items>
-                              </object>
-                              <packing>
-                                <property name="left_attach">1</property>
-                                <property name="top_attach">5</property>
-                              </packing>
-                            </child>
-                            <child>
                               <object class="GtkCheckButton" id="rdp_decorations_check_btn">
                                 <property name="label" translatable="yes" comments="Отключить декорации окон">Disable window decorations</property>
                                 <property name="visible">True</property>
@@ -527,22 +544,6 @@
                               <packing>
                                 <property name="left_attach">0</property>
                                 <property name="top_attach">13</property>
-                              </packing>
-                            </child>
-                            <child>
-                              <object class="GtkCheckButton" id="rdp_network_check_btn">
-                                <property name="label" translatable="yes" comments="Указать сетевое подключение">Specify network connection</property>
-                                <property name="visible">True</property>
-                                <property name="can_focus">True</property>
-                                <property name="receives_default">False</property>
-                                <property name="tooltip_text" translatable="yes" comments="Сервер RDP будет адаптировать настройки и режимы работы  самостоятельно в зависимости от выбранного типа подключения">RDP server will adapt the settings according to the specified connection</property>
-                                <property name="halign">start</property>
-                                <property name="hexpand">True</property>
-                                <property name="draw_indicator">True</property>
-                              </object>
-                              <packing>
-                                <property name="left_attach">0</property>
-                                <property name="top_attach">5</property>
                               </packing>
                             </child>
                             <child>
@@ -640,40 +641,6 @@
                               <packing>
                                 <property name="left_attach">0</property>
                                 <property name="top_attach">1</property>
-                              </packing>
-                            </child>
-                            <child>
-                              <object class="GtkComboBoxText" id="sec_type_combobox">
-                                <property name="visible">True</property>
-                                <property name="sensitive">False</property>
-                                <property name="can_focus">False</property>
-                                <property name="active">0</property>
-                                <items>
-                                  <item id="nla" translatable="yes">NLA</item>
-                                  <item id="rdp" translatable="yes">RDP</item>
-                                  <item id="tls" translatable="yes">TLS</item>
-                                  <item id="ext" translatable="yes">EXT</item>
-                                </items>
-                              </object>
-                              <packing>
-                                <property name="left_attach">1</property>
-                                <property name="top_attach">4</property>
-                              </packing>
-                            </child>
-                            <child>
-                              <object class="GtkCheckButton" id="rdp_sec_protocol_check_btn">
-                                <property name="label" translatable="yes" comments="Указать протокол безопасности">Specify security protocol</property>
-                                <property name="visible">True</property>
-                                <property name="can_focus">True</property>
-                                <property name="receives_default">False</property>
-                                <property name="tooltip_text" translatable="yes" comments="Если не указан, то будет выбран автоматически">Protocol will be selected automatically if not specified</property>
-                                <property name="halign">start</property>
-                                <property name="hexpand">True</property>
-                                <property name="draw_indicator">True</property>
-                              </object>
-                              <packing>
-                                <property name="left_attach">0</property>
-                                <property name="top_attach">4</property>
                               </packing>
                             </child>
                             <child>
@@ -842,13 +809,131 @@ GUI data will be ignored</property>
                               </packing>
                             </child>
                             <child>
-                              <placeholder/>
+                              <object class="GtkCheckButton" id="is_multimon_check_btn">
+                                <property name="label" translatable="yes" comments="Мультимониторность">Use multiple monitors</property>
+                                <property name="name">is_multimon_check_btn</property>
+                                <property name="visible">True</property>
+                                <property name="can_focus">True</property>
+                                <property name="receives_default">False</property>
+                                <property name="tooltip_text" translatable="yes" comments="Открыть приложение на доступных мониторах (максимум 3)&#10;Мониторы должны образовывать прямоугольник (иметь одинаковую высоту изображения)">Monitors should have the same height</property>
+                                <property name="halign">start</property>
+                                <property name="hexpand">True</property>
+                                <property name="draw_indicator">True</property>
+                              </object>
+                              <packing>
+                                <property name="left_attach">0</property>
+                                <property name="top_attach">3</property>
+                              </packing>
                             </child>
                             <child>
-                              <placeholder/>
+                              <object class="GtkCheckButton" id="rdp_full_screen_check_btn">
+                                <property name="label" translatable="yes">Full screen</property>
+                                <property name="visible">True</property>
+                                <property name="can_focus">True</property>
+                                <property name="receives_default">False</property>
+                                <property name="halign">start</property>
+                                <property name="hexpand">False</property>
+                                <property name="draw_indicator">True</property>
+                              </object>
+                              <packing>
+                                <property name="left_attach">0</property>
+                                <property name="top_attach">2</property>
+                              </packing>
                             </child>
                             <child>
-                              <placeholder/>
+                              <object class="GtkCheckButton" id="rdp_network_check_btn">
+                                <property name="label" translatable="yes" comments="Указать сетевое подключение">Specify network connection</property>
+                                <property name="visible">True</property>
+                                <property name="can_focus">True</property>
+                                <property name="receives_default">False</property>
+                                <property name="tooltip_text" translatable="yes" comments="Сервер RDP будет адаптировать настройки и режимы работы  самостоятельно в зависимости от выбранного типа подключения">RDP server will adapt the settings according to the specified connection</property>
+                                <property name="halign">start</property>
+                                <property name="hexpand">True</property>
+                                <property name="draw_indicator">True</property>
+                              </object>
+                              <packing>
+                                <property name="left_attach">0</property>
+                                <property name="top_attach">6</property>
+                              </packing>
+                            </child>
+                            <child>
+                              <object class="GtkComboBoxText" id="rdp_network_type_combobox">
+                                <property name="visible">True</property>
+                                <property name="sensitive">False</property>
+                                <property name="can_focus">False</property>
+                                <property name="active">6</property>
+                                <items>
+                                  <item id="modem" translatable="yes">modem</item>
+                                  <item id="broadband" translatable="yes">broadband</item>
+                                  <item id="broadband-low" translatable="yes">broadband-low</item>
+                                  <item id="broadband-high" translatable="yes">broadband-high</item>
+                                  <item id="wan" translatable="yes">wan</item>
+                                  <item id="lan" translatable="yes">lan</item>
+                                  <item id="auto" translatable="yes">Auto</item>
+                                </items>
+                              </object>
+                              <packing>
+                                <property name="left_attach">1</property>
+                                <property name="top_attach">6</property>
+                              </packing>
+                            </child>
+                            <child>
+                              <object class="GtkCheckButton" id="rdp_sec_protocol_check_btn">
+                                <property name="label" translatable="yes" comments="Указать протокол безопасности">Specify security protocol</property>
+                                <property name="visible">True</property>
+                                <property name="can_focus">True</property>
+                                <property name="receives_default">False</property>
+                                <property name="tooltip_text" translatable="yes" comments="Если не указан, то будет выбран автоматически">Protocol will be selected automatically if not specified</property>
+                                <property name="halign">start</property>
+                                <property name="hexpand">True</property>
+                                <property name="draw_indicator">True</property>
+                              </object>
+                              <packing>
+                                <property name="left_attach">0</property>
+                                <property name="top_attach">5</property>
+                              </packing>
+                            </child>
+                            <child>
+                              <object class="GtkComboBoxText" id="sec_type_combobox">
+                                <property name="visible">True</property>
+                                <property name="sensitive">False</property>
+                                <property name="can_focus">False</property>
+                                <property name="active">0</property>
+                                <items>
+                                  <item id="nla" translatable="yes">NLA</item>
+                                  <item id="rdp" translatable="yes">RDP</item>
+                                  <item id="tls" translatable="yes">TLS</item>
+                                  <item id="ext" translatable="yes">EXT</item>
+                                </items>
+                              </object>
+                              <packing>
+                                <property name="left_attach">1</property>
+                                <property name="top_attach">5</property>
+                              </packing>
+                            </child>
+                            <child>
+                              <object class="GtkEntry" id="rdp_selected_monitors_entry">
+                                <property name="visible">True</property>
+                                <property name="can_focus">True</property>
+                                <property name="tooltip_text" translatable="yes">Specifies which local displays to use from the remote session. The selected displays must be contiguous. Comma separated list of machine-specific display IDs. Exampe: 0,1</property>
+                              </object>
+                              <packing>
+                                <property name="left_attach">1</property>
+                                <property name="top_attach">4</property>
+                              </packing>
+                            </child>
+                            <child>
+                              <object class="GtkLabel">
+                                <property name="visible">True</property>
+                                <property name="can_focus">False</property>
+                                <property name="halign">end</property>
+                                <property name="hexpand">False</property>
+                                <property name="label" translatable="yes">Selected monitors</property>
+                              </object>
+                              <packing>
+                                <property name="left_attach">0</property>
+                                <property name="top_attach">4</property>
+                              </packing>
                             </child>
                             <child>
                               <placeholder/>

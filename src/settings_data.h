@@ -24,6 +24,8 @@ typedef enum{
 typedef struct{
 
     gboolean is_spice_client_cursor_visible;
+    gboolean full_screen;
+    gchar *monitor_mapping;
 
 } VeilSpiceSettings;
 
@@ -52,6 +54,10 @@ typedef struct{
     gchar *remote_app_options;
 
     gboolean is_multimon;
+    gboolean full_screen;
+    gchar *selectedmonitors; // список через запятую номеров используемых мониторов.
+    // В случает is_multimon == false берется первый указаннй номер (если он валиден)
+
     gboolean redirectsmartcards;
     gboolean redirectprinters;
 

@@ -74,8 +74,6 @@ gboolean doDebug = FALSE;
 static int opt_zoom = NORMAL_ZOOM_LEVEL;
 static gchar *opt_hotkeys = NULL;
 static gboolean opt_verbose = FALSE;
-// static gboolean opt_debug = FALSE;
-static gboolean opt_fullscreen = FALSE;
 static gboolean opt_kiosk = FALSE;
 static gboolean opt_kiosk_quit = FALSE;
 
@@ -371,7 +369,7 @@ void virt_viewer_app_apply_monitor_mapping(VirtViewerApp *self)
     mapping = virt_viewer_app_get_monitor_mapping_for_section(self, self->priv->uuid);
     if (!mapping) {
         g_debug("No guest-specific fullscreen config, using fallback");
-        mapping = virt_viewer_app_get_monitor_mapping_for_section(self, "fallback");
+        mapping = virt_viewer_app_get_monitor_mapping_for_section(self, "SpiceSettings");
     }
 
     if (self->priv->initial_display_map)
@@ -702,10 +700,20 @@ virt_viewer_app_set_window_subtitle(VirtViewerApp *app,
         gchar *d = strstr(title, "%d");
         if (d != NULL) {
             *d = '\0';
-            subtitle = g_strdup_printf("%s%d%s", title, nth + 1, d + 2);
+            subtitle = g_strdup_printf("%s%d%s", title, nth, d + 2);
             *d = '%';
-        } else
-            subtitle = g_strdup_printf(_("%s   Display number: %d"), title, nth + 1);
+        } else {
+        //    VirtViewerDisplay *display = virt_viewer_window_get_display(window);
+        //    gint monitor_number = virt_viewer_display_get_monitor(display);
+        //    if (monitor_number == -1) {
+        //        GdkScreen *screen = gtk_widget_get_screen(GTK_WIDGET(display));
+        //        monitor_number = gdk_screen_get_monitor_at_window(screen,
+        //                                 gtk_widget_get_window(GTK_WIDGET(display)));
+        //    }
+        //    subtitle = g_strdup_printf(_("%s   Display: %d   Monitor: %i"),
+        //            title, nth, monitor_number);
+            subtitle = g_strdup_printf(_("%s   Display number: %d"), title, nth);
+        }
     }
     g_info("%s: %i subtitle: %s", (const char*)__func__, nth, subtitle);
     g_object_set(window, "subtitle", subtitle, NULL);
@@ -1570,6 +1578,7 @@ static void virt_viewer_app_auth_refused(VirtViewerSession *session,
                               priv->pretty_address, msg);
     vdi_event_conn_error_notify(1, err_msg);
     virt_viewer_app_simple_message_dialog(self, err_msg);
+    virt_viewer_app_stop(self);
 
     /* if the session implementation cannot retry auth automatically, the
      * VirtViewerApp needs to schedule a new connection to retry */
@@ -1586,6 +1595,7 @@ static void virt_viewer_app_auth_unsupported(VirtViewerSession *session G_GNUC_U
     err_msg = g_strdup_printf(_("Unable to authenticate with remote desktop server: %s"), msg);
     vdi_event_conn_error_notify(1, err_msg);
     virt_viewer_app_simple_message_dialog(self, err_msg);
+    virt_viewer_app_stop(self);
 }
 
 static void virt_viewer_app_usb_failed(VirtViewerSession *session G_GNUC_UNUSED,
@@ -1878,12 +1888,12 @@ void virt_viewer_app_set_spice_session_data(VirtViewerApp *self, const gchar *ip
     net_speedometer_update_vm_ip(self->net_speedometer, ip);
 }
 
-void virt_viewer_app_setup(VirtViewerApp *self)
+void virt_viewer_app_setup(VirtViewerApp *self, ConnectSettingsData *conn_data)
 {
     self->priv->resource = virt_viewer_get_resource();
 
     //virt_viewer_app_set_debug(opt_debug);virt_viewer_app_set_debug
-    virt_viewer_app_set_fullscreen(self, opt_fullscreen);
+    virt_viewer_app_set_fullscreen(self, conn_data->spice_settings.full_screen);
 
     self->priv->verbose = opt_verbose;
     self->priv->quit_on_disconnect = opt_kiosk ? opt_kiosk_quit : TRUE;
@@ -1891,7 +1901,7 @@ void virt_viewer_app_setup(VirtViewerApp *self)
     self->priv->main_window = virt_viewer_app_window_new(self,
                                                          virt_viewer_app_get_first_monitor(self));
     self->priv->main_notebook = GTK_WIDGET(virt_viewer_window_get_notebook(self->priv->main_window));
-    self->priv->initial_display_map = virt_viewer_app_get_monitor_mapping_for_section(self, "fallback");
+    self->priv->initial_display_map = virt_viewer_app_get_monitor_mapping_for_section(self, "SpiceSettings");
 
     virt_viewer_app_set_kiosk(self, opt_kiosk);
     virt_viewer_app_set_hotkeys(self, opt_hotkeys);

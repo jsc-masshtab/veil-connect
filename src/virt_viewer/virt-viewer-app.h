@@ -31,6 +31,7 @@
 #include "remote-viewer-util.h"
 #include "vdi_session.h"
 #include "net_speedometer.h"
+#include "settings_data.h"
 
 G_BEGIN_DECLS
 
@@ -69,7 +70,7 @@ void virt_viewer_app_set_app_pointer(VirtViewerApp *self, GtkApplication *applic
 void virt_viewer_app_set_spice_session_data(VirtViewerApp *self, const gchar *ip, int port,
                                             const gchar *user, const gchar *password);
 
-void virt_viewer_app_setup(VirtViewerApp *self);
+void virt_viewer_app_setup(VirtViewerApp *self, ConnectSettingsData *conn_data);
 gboolean virt_viewer_app_show_main_window(VirtViewerApp *self);
 void virt_viewer_app_maybe_quit(VirtViewerApp *self, VirtViewerWindow *window);
 VirtViewerWindow* virt_viewer_app_get_main_window(VirtViewerApp *self);

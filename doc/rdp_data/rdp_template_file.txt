@@ -1,4 +1,3 @@
-screen mode id:i:2
 desktopwidth:i:1366
 desktopheight:i:768
 session bpp:i:15

@@ -145,3 +145,12 @@ sudo /opt/local/bin/port install hiredis
 
 ## Структурная схема
 ![Alt text](doc/diagram.svg)
+
+## Обновление переводов
+
+Выполнить в терминале в папке po
+```
+intltool-update --pot --gettext-package=veil-connect
+msgmerge ru.po veil-connect.pot -o ru.po
+msgfmt ru.po -o ru/LC_MESSAGES/veil-connect.mo
+```

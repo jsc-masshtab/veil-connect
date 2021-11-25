@@ -45,7 +45,7 @@ void settings_data_read_all(ConnectSettingsData *data)
 
     data->domain = read_str_from_ini_file(paramToFileGrpoup, "domain");
     data->is_connect_to_prev_pool =
-            read_int_from_ini_file(paramToFileGrpoup, "is_conn_to_prev_pool_btn_checked", 0);
+            read_int_from_ini_file(paramToFileGrpoup, "connect_to_pool", 0);
     data->to_save_pswd = read_int_from_ini_file(paramToFileGrpoup, "to_save_pswd", 1);
 
     vdi_session_set_current_remote_protocol(
@@ -93,7 +93,7 @@ void settings_data_save_all(ConnectSettingsData *data)
     write_int_to_ini_file(paramToFileGrpoup, "is_ldap", vdi_session_is_ldap());
 
     write_str_to_ini_file(paramToFileGrpoup, "domain", data->domain);
-    write_int_to_ini_file(paramToFileGrpoup, "is_conn_to_prev_pool_btn_checked", data->is_connect_to_prev_pool);
+    write_int_to_ini_file(paramToFileGrpoup, "connect_to_pool", data->is_connect_to_prev_pool);
     write_int_to_ini_file(paramToFileGrpoup, "to_save_pswd", data->to_save_pswd);
     write_int_to_ini_file("General", "cur_remote_protocol_index", vdi_session_get_current_remote_protocol());
 
@@ -129,20 +129,32 @@ void settings_data_clear(ConnectSettingsData *data)
 
 void spice_settings_read(VeilSpiceSettings *spice_settings)
 {
+    const gchar *spice_group = "SpiceSettings";
+
     spice_settings->is_spice_client_cursor_visible =
-            read_int_from_ini_file("SpiceSettings", "is_spice_client_cursor_visible", FALSE);
+            read_int_from_ini_file(spice_group, "is_spice_client_cursor_visible", FALSE);
     set_client_spice_cursor_visible(spice_settings->is_spice_client_cursor_visible);
+
+    spice_settings->full_screen = read_int_from_ini_file(spice_group, "full_screen", FALSE);
+
+    g_autofree gchar *monitor_mapping = NULL;
+    monitor_mapping = read_str_from_ini_file(spice_group, "monitor-mapping");
+    update_string_safely(&spice_settings->monitor_mapping, monitor_mapping);
 }
 
 void spice_settings_write(VeilSpiceSettings *spice_settings)
 {
-    write_int_to_ini_file("SpiceSettings", "is_spice_client_cursor_visible",
+    const gchar *spice_group = "SpiceSettings";
+
+    write_int_to_ini_file(spice_group, "is_spice_client_cursor_visible",
             spice_settings->is_spice_client_cursor_visible);
+    write_int_to_ini_file(spice_group, "full_screen", spice_settings->full_screen);
+    write_str_to_ini_file(spice_group, "monitor-mapping", spice_settings->monitor_mapping);
 }
 
 void spice_settings_clear(VeilSpiceSettings *spice_settings)
 {
-    (void)spice_settings;
+    free_memory_safely(&spice_settings->monitor_mapping);
 }
 
 void rdp_settings_set_connect_data(VeilRdpSettings *rdp_settings, const gchar *user_name, const gchar *password,
@@ -188,6 +200,11 @@ void rdp_settings_read_ini_file(VeilRdpSettings *rdp_settings, gboolean rewrite_
     }
 
     rdp_settings->is_multimon = read_int_from_ini_file(rdp_group, "is_multimon", 0);
+    rdp_settings->full_screen = read_int_from_ini_file(rdp_group, "full_screen", 1);
+    g_autofree gchar *selectedmonitors = NULL;
+    selectedmonitors = read_str_from_ini_file(rdp_group, "selectedmonitors");
+    update_string_safely(&rdp_settings->selectedmonitors, selectedmonitors);
+
     rdp_settings->redirectsmartcards = read_int_from_ini_file(rdp_group, "redirectsmartcards", 1);
     rdp_settings->redirectprinters = read_int_from_ini_file(rdp_group, "redirect_printers", 1);
 
@@ -285,7 +302,10 @@ void rdp_settings_read_standard_file(VeilRdpSettings *rdp_settings, const gchar 
 
             } else if (g_strcmp0(name, "use multimon") == 0) {
                 rdp_settings->is_multimon = atoi(value);
-            } else if (g_strcmp0(name, "redirectsmartcards") == 0) {
+            } else if (g_strcmp0(name, "selectedmonitors") == 0) {
+                update_string_safely(&rdp_settings->selectedmonitors, value);
+
+            }else if (g_strcmp0(name, "redirectsmartcards") == 0) {
                 rdp_settings->redirectsmartcards = atoi(value);
             } else if (g_strcmp0(name, "redirectprinters") == 0) {
                 rdp_settings->redirectprinters = atoi(value);
@@ -322,6 +342,9 @@ void rdp_settings_write(VeilRdpSettings *rdp_settings)
     free_memory_safely(&folder_name);
 
     write_int_to_ini_file(rdp_group, "is_multimon", rdp_settings->is_multimon);
+    write_int_to_ini_file(rdp_group, "full_screen", rdp_settings->full_screen);
+    write_str_to_ini_file(rdp_group, "selectedmonitors", rdp_settings->selectedmonitors);
+
     write_int_to_ini_file(rdp_group, "redirect_printers", rdp_settings->redirectprinters);
 
     write_int_to_ini_file(rdp_group, "is_remote_app", rdp_settings->is_remote_app);
