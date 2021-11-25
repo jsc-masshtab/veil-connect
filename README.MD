@@ -148,9 +148,14 @@ sudo /opt/local/bin/port install hiredis
 
 ## Обновление переводов
 
-Выполнить в терминале в папке po
+- Выполнить в терминале в папке po.
 ```
 intltool-update --pot --gettext-package=veil-connect
 msgmerge ru.po veil-connect.pot -o ru.po
+```
+- Написать перевод в файле ru.po.
+
+- Выполнить в терминале в папке po.
+```
 msgfmt ru.po -o ru/LC_MESSAGES/veil-connect.mo
 ```

@@ -224,7 +224,7 @@ RemoteViewerState rdp_viewer_start(RemoteViewer *app, VeilRdpSettings *p_rdp_set
     if (p_rdp_settings->is_multimon) {
         // Берем из настроек
         if (monitor_configs_len > 0) {
-            for (int i = 0; i < monitor_configs_len; i++) {
+            for (guint i = 0; i < monitor_configs_len; i++) {
                 int monitor_num = atoi(monitor_configs[i]);
                 // Проверить что monitor_num валидный и добавить в массив
                 GdkMonitor *monitor = gdk_display_get_monitor(display, monitor_num);
@@ -275,7 +275,7 @@ RemoteViewerState rdp_viewer_start(RemoteViewer *app, VeilRdpSettings *p_rdp_set
     // это представить, что мониторы образуют прямоугольник и запросить картинку, шириной равной суммарной ширине
     // мониторов.
     int monitor_height = 0;
-    for (int i = 0; i < monitor_num_array->len; ++i) {
+    for (int i = 0; i < (int)monitor_num_array->len; ++i) {
 
         int monitor_num = g_array_index(monitor_num_array, int, i);
         // get monitor data

@@ -1221,7 +1221,13 @@ msgid ""
 "displays 0 and 1 are not specified. This configuration only takes effect "
 "when full screen is enabled.\n"
 "Application restart required to apply changes."
-msgstr ""
+msgstr "Список пар отображений гостевых дисплеев на клиентские мониторы. Например, "
+"чтобы отобразить гостевые дисплеи 0 и 1 на клиентские мониторы 1 и 2, используйте "
+"0:1;1:2. Список должен содержать id всех дисплеев от 0 до последнего желаемого, т. е. "
+"2:2 это невалидный параметр, так как отсутствуют отображения для дисплеев 0 и 1. "
+"Данный параметр имет эффект только в режиме ПОЛНОГО ЭКРАНА. "
+"Требуется ПЕРЕЗАПУСК приложения, чтобы применить изменения."
+
 
 #. Удаленное приложение
 #: ../resources/ui/start_settings_form.glade.h:38
@@ -1472,6 +1478,9 @@ msgid ""
 "displays must be contiguous. Comma separated list of machine-specific "
 "display IDs. Exampe: 0,1"
 msgstr ""
+"Указать, какие клиентские мониторы должны использоваться для отображения удаленного рабочего стола. "
+"Мониторы должны иметь обшие стороны. Параметр задается как список id мониторов через запятую. "
+"Например: 0,1 - использовать мониторы с id 0 и 1."
 
 #: ../resources/ui/start_settings_form.glade.h:114
 msgid "Selected monitors"
