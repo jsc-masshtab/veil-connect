@@ -76,7 +76,7 @@ void virt_viewer_window_menu_view_release_cursor(GtkWidget *menu, VirtViewerWind
 void virt_viewer_window_menu_preferences_cb(GtkWidget *menu, VirtViewerWindow *self);
 void virt_viewer_window_menu_change_cd_activate(GtkWidget *menu, VirtViewerWindow *self);
 // connection control
-void virt_viewer_window_menu_switch_off(GtkWidget *menu, VirtViewerWindow *self);
+void virt_viewer_window_menu_disconnect(GtkWidget *menu, VirtViewerWindow *self);
 void virt_viewer_window_menu_reconnect(GtkWidget *menu, VirtViewerWindow *self);
 // vm control
 void virt_viewer_window_menu_start_vm(GtkWidget *menu, VirtViewerWindow *self);
@@ -892,7 +892,6 @@ virt_viewer_window_menu_file_quit(GtkWidget *src G_GNUC_UNUSED,
     virt_viewer_app_maybe_quit(self->priv->app, self);
 }
 
-
 static void
 virt_viewer_window_set_fullscreen(VirtViewerWindow *self,
                                   gboolean fullscreen)
@@ -1186,7 +1185,7 @@ virt_viewer_window_menu_change_cd_activate(GtkWidget *menu G_GNUC_UNUSED,
 }
 
 G_MODULE_EXPORT void
-virt_viewer_window_menu_switch_off(GtkWidget *menu G_GNUC_UNUSED, VirtViewerWindow *self)
+virt_viewer_window_menu_disconnect(GtkWidget *menu G_GNUC_UNUSED, VirtViewerWindow *self)
 {
     // Завершаем соединение, закрываем окно
     g_info("%s\n", (const char *)__func__);
@@ -1267,7 +1266,7 @@ virt_viewer_window_toolbar_setup(VirtViewerWindow *self)
     gtk_tool_item_set_tooltip_text(GTK_TOOL_ITEM(button), _("Disconnect"));
     gtk_widget_show(button);
     gtk_toolbar_insert(GTK_TOOLBAR(priv->toolbar), GTK_TOOL_ITEM (button), 0);
-    g_signal_connect(button, "clicked", G_CALLBACK(virt_viewer_window_menu_file_quit), self);
+    g_signal_connect(button, "clicked", G_CALLBACK(virt_viewer_window_menu_disconnect), self);
 
     /* USB Device selection */
     //button = gtk_image_new_from_resource(VIRT_VIEWER_RESOURCE_PREFIX"/icons/24x24/virt-viewer-usb.png");

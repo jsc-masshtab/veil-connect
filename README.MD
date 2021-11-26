@@ -101,8 +101,6 @@ pacman -S mingw64/mingw-w64-x86_64-libusb
 ```
 - В файле CmaleLists.txt в переменную LIBS_INCLUDE_PATH задать путь MSYS_INCLUDE
 
-- Собрать freerdp
-
 - Скачать freerdp https://github.com/FreeRDP/FreeRDP/releases/latest распаковать.
   Freerdp на Windows возможно собрать только с помощью нативного компилятора (visual C) 
 
@@ -154,7 +152,6 @@ intltool-update --pot --gettext-package=veil-connect
 msgmerge ru.po veil-connect.pot -o ru.po
 ```
 - Написать перевод в файле ru.po.
-
 - Выполнить в терминале в папке po.
 ```
 msgfmt ru.po -o ru/LC_MESSAGES/veil-connect.mo

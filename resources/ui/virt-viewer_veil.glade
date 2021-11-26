@@ -237,7 +237,7 @@
                             <property name="can_focus">False</property>
                             <property name="label" translatable="yes" comments="Отключиться">Disconnect</property>
                             <property name="use_underline">True</property>
-                            <signal name="activate" handler="virt_viewer_window_menu_switch_off" swapped="no"/>
+                            <signal name="activate" handler="virt_viewer_window_menu_disconnect" swapped="no"/>
                           </object>
                         </child>
                         <child>
