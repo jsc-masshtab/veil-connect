@@ -64,14 +64,14 @@ Source: "C:\Jenkins\workspace\vdi-connect\build\rdp_data\*"; DestDir: "{app}\rdp
 Source: "C:\Jenkins\workspace\vdi-connect\build\share\*"; DestDir: "{app}\share"; Flags: ignoreversion recursesubdirs createallsubdirs; Components: app
 Source: "C:\Jenkins\workspace\vdi-connect\build\x2go_data\*"; DestDir: "{app}\x2go_data"; Flags: ignoreversion recursesubdirs createallsubdirs; Components: app
 ; FreeRDP
-Source: "C:\Jenkins\workspace\vdi-connect\build\freerdp_2.2.0\*.dll"; DestDir: "{app}"; Flags: ignoreversion deleteafterinstall; Components: freerdp\220
-Source: "C:\Jenkins\workspace\vdi-connect\build\freerdp_2.3.2\*.dll"; DestDir: "{app}"; Flags: ignoreversion deleteafterinstall; Components: freerdp\232
+Source: "C:\Jenkins\workspace\vdi-connect\build\freerdp_2.2.0\*.dll"; DestDir: "{app}"; Flags: ignoreversion; CopyMode: alwaysoverwrite; Components: freerdp\220
+Source: "C:\Jenkins\workspace\vdi-connect\build\freerdp_2.3.2\*.dll"; DestDir: "{app}"; Flags: ignoreversion; CopyMode: alwaysoverwrite; Components: freerdp\232
 ; Files
 Source: "C:\Jenkins\workspace\vdi-connect\build\veil_connect.exe"; DestDir: "{app}"; Flags: ignoreversion; Components: app
 Source: "C:\Jenkins\workspace\vdi-connect\build\vc_redist.exe"; DestDir: "{tmp}"; Flags: deleteafterinstall; Components: app
 Source: "C:\Jenkins\workspace\vdi-connect\build\usbdk.msi"; DestDir: "{tmp}"; Flags: deleteafterinstall; Components: usbdk
 Source: "C:\Jenkins\workspace\vdi-connect\build\gspawn-win64-helper*.exe"; DestDir: "{app}"; Flags: ignoreversion; Components: app
-Source: "C:\Jenkins\workspace\vdi-connect\build\*.dll"; DestDir: "{app}"; Flags: ignoreversion; Components: app
+Source: "C:\Jenkins\workspace\vdi-connect\build\*.dll"; Excludes: "\freerdp2.dll,\freerdp-client2.dll,\winpr2.dll,\winpr-tools2.dll"; DestDir: "{app}"; Flags: ignoreversion; Components: app
 Source: "C:\Jenkins\workspace\vdi-connect\build\*.css"; DestDir: "{app}"; Flags: ignoreversion; Components: app
 Source: "C:\Jenkins\workspace\vdi-connect\build\*.bak"; DestDir: "{app}"; Flags: ignoreversion; Components: app
 Source: "C:\Jenkins\workspace\vdi-connect\build\*.vbs"; DestDir: "{app}"; Flags: ignoreversion; Components: app
