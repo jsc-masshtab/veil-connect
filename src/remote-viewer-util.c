@@ -1028,6 +1028,49 @@ void extract_name_and_domain(const gchar *full_user_name, gchar **user_name, gch
     }
 }
 
+void util_show_monitor_config_window(GtkWindow *parent, GdkDisplay *display)
+{
+    // get config
+    int monitor_amount = gdk_display_get_n_monitors(display);
+    gchar *final_string = NULL;
+
+    for (int i = 0; i < monitor_amount; ++i) {
+        GdkMonitor *monitor = gdk_display_get_monitor(display, i);
+
+        GdkRectangle geometry;
+        gdk_monitor_get_geometry(monitor, &geometry);
+
+        const char *manufacturer = gdk_monitor_get_manufacturer(monitor);
+        const char *model = gdk_monitor_get_model(monitor);
+        gboolean is_primary = gdk_monitor_is_primary(monitor);
+
+        gchar *monitor_info = NULL;
+        monitor_info = g_strdup_printf(
+                "№ %i   (%i %i %i %i)   %s %s   %s",
+                i, geometry.x, geometry.y, geometry.width, geometry.height,
+                manufacturer ? manufacturer : "", model,
+                is_primary ? "Primary monitor" : "");
+
+        gchar *temp_final_string;
+        if (final_string) {
+            temp_final_string = g_strdup_printf("%s\n%s", final_string, monitor_info);
+            g_free(final_string);
+            g_free(monitor_info);
+
+            final_string = temp_final_string;
+        } else {
+            final_string =  monitor_info;
+        }
+    }
+
+    g_info("Monitor config: %s", final_string);
+
+    // show config
+    show_msg_box_dialog(parent, final_string);
+
+    g_free(final_string);
+}
+
 /*
  * Local variables:
  *  c-indent-level: 4

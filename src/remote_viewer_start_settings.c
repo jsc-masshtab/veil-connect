@@ -42,6 +42,7 @@ typedef struct{
     GtkWidget *client_cursor_visible_checkbutton;
     GtkWidget *spice_full_screen_check_btn;
     GtkWidget *spice_monitor_mapping_entry;
+    GtkWidget *btn_show_monitor_config_spice;
 
     // RDP settings
     GtkWidget *rdp_image_pixel_format_combobox;
@@ -57,6 +58,7 @@ typedef struct{
     GtkWidget *is_multimon_check_btn;
     GtkWidget *rdp_full_screen_check_btn;
     GtkWidget *rdp_selected_monitors_entry;
+    GtkWidget *btn_show_monitor_config_rdp;
 
     GtkWidget *redirect_printers_check_btn;
 
@@ -319,7 +321,7 @@ on_use_rd_gateway_check_btn_toggled(GtkToggleButton *button, ConnectSettingsDial
 }
 
 static void
-btn_btn_choose_rdp_file_clicked(GtkButton *button G_GNUC_UNUSED, ConnectSettingsDialogData *dialog_data)
+btn_choose_rdp_file_clicked(GtkButton *button G_GNUC_UNUSED, ConnectSettingsDialogData *dialog_data)
 {
     GtkWidget *dialog = gtk_file_chooser_dialog_new (_("Open File"),
                                                      GTK_WINDOW(dialog_data->window),
@@ -509,6 +511,12 @@ static void
 on_select_usb_btn_clicked_cb(GtkButton *button G_GNUC_UNUSED, ConnectSettingsDialogData *dialog_data)
 {
     usb_selector_widget_show_and_start_loop(dialog_data->usb_selector_widget, GTK_WINDOW(dialog_data->window));
+}
+
+static void
+btn_show_monitor_config_clicked(GtkButton *button G_GNUC_UNUSED, ConnectSettingsDialogData *dialog_data)
+{
+    util_show_monitor_config_window(GTK_WINDOW(dialog_data->window), gdk_display_get_default());
 }
 
 static void
@@ -882,6 +890,8 @@ GtkResponseType remote_viewer_start_settings_dialog(RemoteViewer *p_remote_viewe
             get_widget_from_builder(dialog_data.builder, "spice_full_screen_check_btn");
     dialog_data.spice_monitor_mapping_entry =
             get_widget_from_builder(dialog_data.builder, "spice_monitor_mapping_entry");
+    dialog_data.btn_show_monitor_config_spice =
+            get_widget_from_builder(dialog_data.builder, "btn_show_monitor_config_spice");
 
     // rdp settings
     dialog_data.rdp_image_pixel_format_combobox =
@@ -900,10 +910,12 @@ GtkResponseType remote_viewer_start_settings_dialog(RemoteViewer *p_remote_viewe
     dialog_data.btn_remove_remote_folder = get_widget_from_builder(dialog_data.builder, "btn_remove_remote_folder");
 
     dialog_data.is_multimon_check_btn = get_widget_from_builder(dialog_data.builder, "is_multimon_check_btn");
-    dialog_data.rdp_full_screen_check_btn = get_widget_from_builder(
-            dialog_data.builder, "rdp_full_screen_check_btn");
-    dialog_data.rdp_selected_monitors_entry = get_widget_from_builder(
-            dialog_data.builder, "rdp_selected_monitors_entry");
+    dialog_data.rdp_full_screen_check_btn =
+            get_widget_from_builder(dialog_data.builder, "rdp_full_screen_check_btn");
+    dialog_data.rdp_selected_monitors_entry =
+            get_widget_from_builder(dialog_data.builder, "rdp_selected_monitors_entry");
+    dialog_data.btn_show_monitor_config_rdp =
+            get_widget_from_builder(dialog_data.builder, "btn_show_monitor_config_rdp");
     dialog_data.redirect_printers_check_btn =
             get_widget_from_builder(dialog_data.builder, "redirect_printers_check_btn");
 
@@ -999,7 +1011,7 @@ GtkResponseType remote_viewer_start_settings_dialog(RemoteViewer *p_remote_viewe
     g_signal_connect(dialog_data.use_rdp_file_check_btn, "toggled",
                      G_CALLBACK(on_use_rdp_file_check_btn_toggled), &dialog_data);
     g_signal_connect(dialog_data.btn_choose_rdp_file, "clicked",
-                     G_CALLBACK(btn_btn_choose_rdp_file_clicked), &dialog_data);
+                     G_CALLBACK(btn_choose_rdp_file_clicked), &dialog_data);
     g_signal_connect(dialog_data.use_rd_gateway_check_btn, "toggled",
                      G_CALLBACK(on_use_rd_gateway_check_btn_toggled), &dialog_data);
 
@@ -1015,6 +1027,12 @@ GtkResponseType remote_viewer_start_settings_dialog(RemoteViewer *p_remote_viewe
     g_signal_connect(dialog_data.btn_open_doc, "clicked", G_CALLBACK(btn_open_doc_clicked_cb),
                      &dialog_data);
     g_signal_connect(dialog_data.select_usb_btn, "clicked", G_CALLBACK(on_select_usb_btn_clicked_cb), &dialog_data);
+
+    g_signal_connect(dialog_data.btn_show_monitor_config_spice, "clicked",
+                     G_CALLBACK(btn_show_monitor_config_clicked), &dialog_data);
+    g_signal_connect(dialog_data.btn_show_monitor_config_rdp, "clicked",
+                     G_CALLBACK(btn_show_monitor_config_clicked), &dialog_data);
+
     dialog_data.on_direct_connect_mode_check_btn_toggled_id =
             g_signal_connect(dialog_data.direct_connect_mode_check_btn, "toggled",
                              G_CALLBACK(on_direct_connect_mode_check_btn_toggled), &dialog_data);

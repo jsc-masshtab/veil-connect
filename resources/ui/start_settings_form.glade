@@ -14,6 +14,16 @@
     <property name="step_increment">1</property>
     <property name="page_increment">10</property>
   </object>
+  <object class="GtkImage" id="image_show_monitor_config_rdp">
+    <property name="visible">True</property>
+    <property name="can_focus">False</property>
+    <property name="stock">gtk-dialog-question</property>
+  </object>
+  <object class="GtkImage" id="image_show_monitor_config_spice">
+    <property name="visible">True</property>
+    <property name="can_focus">False</property>
+    <property name="stock">gtk-dialog-question</property>
+  </object>
   <object class="GtkAdjustment" id="port_ajustment">
     <property name="upper">65535</property>
     <property name="value">443</property>
@@ -304,7 +314,7 @@
                   </packing>
                 </child>
                 <child>
-                  <object class="GtkBox">
+                  <object class="GtkBox" id="box">
                     <property name="visible">True</property>
                     <property name="can_focus">False</property>
                     <property name="margin_top">3</property>
@@ -362,17 +372,42 @@
                           </packing>
                         </child>
                         <child>
-                          <object class="GtkEntry" id="spice_monitor_mapping_entry">
+                          <object class="GtkBox">
                             <property name="visible">True</property>
-                            <property name="can_focus">True</property>
-                            <property name="tooltip_text" translatable="yes">The value is a list of mappings between a guest display and a client monitor. For example, to map guest displays 0 and 1 to client monitors 1 and 2 use:
+                            <property name="can_focus">False</property>
+                            <child>
+                              <object class="GtkEntry" id="spice_monitor_mapping_entry">
+                                <property name="visible">True</property>
+                                <property name="can_focus">True</property>
+                                <property name="tooltip_text" translatable="yes">The value is a list of mappings between a guest display and a client monitor. For example, to map guest displays 0 and 1 to client monitors 1 and 2 use:
 0:1;1:2. The monitor-mapping must contain ids of all displays from 0 to the last desired display id, e.g. "2:2" is invalid because mappings for displays 0 and 1 are not specified. This configuration only takes effect when full screen is enabled.
 Application restart required to apply changes.</property>
+                                <property name="hexpand">True</property>
+                              </object>
+                              <packing>
+                                <property name="expand">False</property>
+                                <property name="fill">True</property>
+                                <property name="position">0</property>
+                              </packing>
+                            </child>
+                            <child>
+                              <object class="GtkButton" id="btn_show_monitor_config_spice">
+                                <property name="visible">True</property>
+                                <property name="can_focus">True</property>
+                                <property name="receives_default">True</property>
+                                <property name="image">image_show_monitor_config_spice</property>
+                              </object>
+                              <packing>
+                                <property name="expand">False</property>
+                                <property name="fill">True</property>
+                                <property name="position">1</property>
+                              </packing>
+                            </child>
                           </object>
                           <packing>
                             <property name="expand">False</property>
                             <property name="fill">True</property>
-                            <property name="position">1</property>
+                            <property name="position">2</property>
                           </packing>
                         </child>
                       </object>
@@ -912,17 +947,6 @@ GUI data will be ignored</property>
                               </packing>
                             </child>
                             <child>
-                              <object class="GtkEntry" id="rdp_selected_monitors_entry">
-                                <property name="visible">True</property>
-                                <property name="can_focus">True</property>
-                                <property name="tooltip_text" translatable="yes">Specifies which local displays to use from the remote session. The selected displays must be contiguous. Comma separated list of machine-specific display IDs. Exampe: 0,1</property>
-                              </object>
-                              <packing>
-                                <property name="left_attach">1</property>
-                                <property name="top_attach">4</property>
-                              </packing>
-                            </child>
-                            <child>
                               <object class="GtkLabel">
                                 <property name="visible">True</property>
                                 <property name="can_focus">False</property>
@@ -932,6 +956,42 @@ GUI data will be ignored</property>
                               </object>
                               <packing>
                                 <property name="left_attach">0</property>
+                                <property name="top_attach">4</property>
+                              </packing>
+                            </child>
+                            <child>
+                              <object class="GtkBox">
+                                <property name="visible">True</property>
+                                <property name="can_focus">False</property>
+                                <child>
+                                  <object class="GtkEntry" id="rdp_selected_monitors_entry">
+                                    <property name="visible">True</property>
+                                    <property name="can_focus">True</property>
+                                    <property name="tooltip_text" translatable="yes">Specifies which local displays to use from the remote session. The selected displays must be contiguous. Comma separated list of machine-specific display IDs. Exampe: 0,1</property>
+                                    <property name="hexpand">True</property>
+                                  </object>
+                                  <packing>
+                                    <property name="expand">False</property>
+                                    <property name="fill">True</property>
+                                    <property name="position">0</property>
+                                  </packing>
+                                </child>
+                                <child>
+                                  <object class="GtkButton" id="btn_show_monitor_config_rdp">
+                                    <property name="visible">True</property>
+                                    <property name="can_focus">True</property>
+                                    <property name="receives_default">True</property>
+                                    <property name="image">image_show_monitor_config_rdp</property>
+                                  </object>
+                                  <packing>
+                                    <property name="expand">False</property>
+                                    <property name="fill">True</property>
+                                    <property name="position">1</property>
+                                  </packing>
+                                </child>
+                              </object>
+                              <packing>
+                                <property name="left_attach">1</property>
                                 <property name="top_attach">4</property>
                               </packing>
                             </child>

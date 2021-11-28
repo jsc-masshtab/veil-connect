@@ -154,6 +154,8 @@ void copy_file_content(FILE *sourceFile, FILE *destFile);
 // Extract name and domain from full_user_name (name@domain)
 void extract_name_and_domain(const gchar *full_user_name, gchar **user_name, gchar **domain);
 
+void util_show_monitor_config_window(GtkWindow *parent, GdkDisplay *display);
+
 #endif
 
 /*
