@@ -22,6 +22,7 @@
 
 #include "rdp_viewer.h"
 #include "remote-viewer-util.h"
+#include "vdi_event.h"
 
 
 typedef struct
@@ -243,7 +244,9 @@ launch_windows_rdp_client(const VeilRdpSettings *p_rdp_settings)
     g_child_watch_add(data.pid, (GChildWatchFunc)windows_rdp_launcher_cb_child_watch, &data);
 
     // launch event loop
+    vdi_event_vm_changed_notify(vdi_session_get_current_vm_id());
     create_loop_and_launch(&data.loop);
+    vdi_event_vm_changed_notify(NULL);
 
     g_signal_handler_disconnect(get_vdi_session_static(), ws_cmd_received_handle);
 
