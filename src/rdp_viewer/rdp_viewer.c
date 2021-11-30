@@ -152,12 +152,16 @@ static void rdp_viewer_show_error_msg_if_required(RemoteViewerData *self)
             gchar *msg = rdp_util_get_full_error_msg(
                     self->ex_rdp_context->last_rdp_error, self->ex_rdp_context->rail_rdp_error);
             show_msg_box_dialog(GTK_WINDOW(rdp_window_data->rdp_viewer_window), msg);
+            g_warning("%s", msg);
             g_free(msg);
         } else if (!self->ex_rdp_context->is_connected_last_time) {
             // Не удалось установить соединение. Проверьте разрешен ли удаленный доступ для текущего пользователя
             show_msg_box_dialog(GTK_WINDOW(rdp_window_data->rdp_viewer_window),
                     _("Unable to connect. Check if remote access allowed for this user."));
+            g_warning("FreeRDP: Unable to connect.");
         }
+    } else {
+        g_info("FreeRDP: intentional stop detected");
     }
 }
 
