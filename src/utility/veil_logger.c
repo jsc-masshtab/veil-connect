@@ -24,6 +24,7 @@ static gchar *cur_log_path = NULL;
 static gchar *prev_clipboard_text = NULL;
 static gint clipboard_log_enabled = 1;
 
+
 void veil_logger_setup()
 {
     // read settings from ini
@@ -46,6 +47,19 @@ void veil_logger_setup()
         g_warning("Log directory is protected from writing");
         return;
     }
+
+    // FreeRDP log
+    gboolean freerdp_debug_log_enabled = read_int_from_ini_file(
+            "RDPSettings", "freerdp_debug_log_enabled", FALSE);
+    if (freerdp_debug_log_enabled)
+        g_setenv("WLOG_LEVEL", "DEBUG", TRUE);
+#ifdef G_OS_WIN32
+    // На Windows FreeRDP не пишет в std вывод приложения, так как имеет некую отдельную систему
+    // логирования. Переннаправляем вывод в отдельный файл
+    g_setenv("WLOG_APPENDER", "FILE", TRUE);
+    g_setenv("WLOG_FILEAPPENDER_OUTPUT_FILE_PATH", cur_log_path, TRUE);
+    g_setenv("WLOG_FILEAPPENDER_OUTPUT_FILE_NAME", "freerdp2.log", TRUE);
+#endif
 
 #ifdef NDEBUG // logging errors  in release mode
     gboolean log_output_to_file = read_int_from_ini_file("General", "log_output_to_file", TRUE);

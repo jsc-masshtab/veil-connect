@@ -245,6 +245,8 @@ void rdp_settings_read_ini_file(VeilRdpSettings *rdp_settings, gboolean rewrite_
     g_autofree gchar *gateway_address = NULL;
     gateway_address = read_str_from_ini_file(rdp_group, "gateway_address");
     update_string_safely(&rdp_settings->gateway_address, gateway_address);
+
+    rdp_settings->freerdp_debug_log_enabled = read_int_from_ini_file(rdp_group, "freerdp_debug_log_enabled", FALSE);
 }
 
 /*
@@ -375,6 +377,8 @@ void rdp_settings_write(VeilRdpSettings *rdp_settings)
 
     write_int_to_ini_file(rdp_group, "use_gateway", rdp_settings->use_gateway);
     write_str_to_ini_file(rdp_group, "gateway_address", rdp_settings->gateway_address);
+
+    write_int_to_ini_file(rdp_group, "freerdp_debug_log_enabled", rdp_settings->freerdp_debug_log_enabled);
 }
 
 void rdp_settings_clear(VeilRdpSettings *rdp_settings)

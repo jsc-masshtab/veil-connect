@@ -314,7 +314,7 @@ void virt_viewer_util_init(const char *appname)
     /* Get redirection from parent */
     BOOL out_valid = is_handle_valid(GetStdHandle(STD_OUTPUT_HANDLE));
     BOOL err_valid = is_handle_valid(GetStdHandle(STD_ERROR_HANDLE));
-    
+
     /*
      * If not all output are redirected try to redirect to parent console.
      * If parent has no console (for instance as launched from GUI) just

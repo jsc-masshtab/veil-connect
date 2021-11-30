@@ -440,6 +440,7 @@ Application restart required to apply changes.</property>
                     <property name="can_focus">True</property>
                     <property name="hscrollbar_policy">never</property>
                     <property name="shadow_type">in</property>
+                    <property name="overlay_scrolling">False</property>
                     <child>
                       <object class="GtkViewport">
                         <property name="visible">True</property>
@@ -448,6 +449,7 @@ Application restart required to apply changes.</property>
                           <object class="GtkGrid">
                             <property name="visible">True</property>
                             <property name="can_focus">False</property>
+                            <property name="margin_right">11</property>
                             <property name="margin_top">3</property>
                             <property name="row_spacing">9</property>
                             <property name="column_spacing">3</property>
@@ -994,6 +996,24 @@ GUI data will be ignored</property>
                                 <property name="left_attach">1</property>
                                 <property name="top_attach">4</property>
                               </packing>
+                            </child>
+                            <child>
+                              <object class="GtkCheckButton" id="rdp_log_debug_info_check_btn">
+                                <property name="label" translatable="yes">Log debug info</property>
+                                <property name="visible">True</property>
+                                <property name="can_focus">True</property>
+                                <property name="receives_default">False</property>
+                                <property name="tooltip_text" translatable="yes">Log debug information. Enabling this option may slow down the application. Application restart required to apply changes.</property>
+                                <property name="halign">start</property>
+                                <property name="draw_indicator">True</property>
+                              </object>
+                              <packing>
+                                <property name="left_attach">0</property>
+                                <property name="top_attach">19</property>
+                              </packing>
+                            </child>
+                            <child>
+                              <placeholder/>
                             </child>
                             <child>
                               <placeholder/>

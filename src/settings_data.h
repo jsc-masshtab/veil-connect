@@ -84,6 +84,8 @@ typedef struct{
     gboolean use_gateway;
     gchar *gateway_address;
 
+    gboolean freerdp_debug_log_enabled;
+
 } VeilRdpSettings;
 
 

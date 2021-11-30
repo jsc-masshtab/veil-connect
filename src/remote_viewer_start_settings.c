@@ -87,6 +87,8 @@ typedef struct{
     GtkWidget *use_rd_gateway_check_btn;
     GtkWidget *gateway_address_entry;
 
+    GtkWidget *rdp_log_debug_info_check_btn;
+
     // X2GO settings
     GtkWidget *x2go_app_combobox;
 
@@ -678,6 +680,9 @@ fill_gui(ConnectSettingsDialogData *dialog_data)
     if (p_conn_data->rdp_settings.gateway_address)
         gtk_entry_set_text(GTK_ENTRY(dialog_data->gateway_address_entry), p_conn_data->rdp_settings.gateway_address);
 
+    gtk_toggle_button_set_active((GtkToggleButton *)dialog_data->rdp_log_debug_info_check_btn,
+                                 p_conn_data->rdp_settings.freerdp_debug_log_enabled);
+
     // X2Go Settings
     gtk_combo_box_set_active(GTK_COMBO_BOX(dialog_data->x2go_app_combobox),
                              (gint)p_conn_data->x2Go_settings.app_type);
@@ -824,6 +829,9 @@ take_from_gui(ConnectSettingsDialogData *dialog_data)
     const gchar *gateway_address = gtk_entry_get_text(GTK_ENTRY(dialog_data->gateway_address_entry));
     update_string_safely(&conn_data->rdp_settings.gateway_address, gateway_address);
 
+    conn_data->rdp_settings.freerdp_debug_log_enabled =
+            gtk_toggle_button_get_active((GtkToggleButton *)dialog_data->rdp_log_debug_info_check_btn);
+
     // X2Go settings
     conn_data->x2Go_settings.app_type = (X2goApplication)gtk_combo_box_get_active(
             GTK_COMBO_BOX(dialog_data->x2go_app_combobox));
@@ -949,6 +957,7 @@ GtkResponseType remote_viewer_start_settings_dialog(RemoteViewer *p_remote_viewe
 
     dialog_data.use_rd_gateway_check_btn = get_widget_from_builder(dialog_data.builder, "use_rd_gateway_check_btn");
     dialog_data.gateway_address_entry = get_widget_from_builder(dialog_data.builder, "gateway_address_entry");
+    dialog_data.rdp_log_debug_info_check_btn = get_widget_from_builder(dialog_data.builder, "rdp_log_debug_info_check_btn");
 
     // X2Go settings
     dialog_data.x2go_app_combobox = get_widget_from_builder(dialog_data.builder, "x2go_app_combobox");
