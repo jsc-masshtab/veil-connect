@@ -964,6 +964,15 @@ void set_vm_power_state_on_label(GtkLabel *label, int power_state)
     }
 }
 
+static void set_label_selectable(gpointer data, gpointer user_data G_GNUC_UNUSED)
+{
+    GtkWidget *widget = GTK_WIDGET(data);
+
+    if (GTK_IS_LABEL(widget)) {
+        gtk_label_set_selectable(GTK_LABEL(widget), TRUE);
+    }
+}
+
 void show_msg_box_dialog(GtkWindow *parent, const gchar *message)
 {
     GtkWidget *dialog_msg = gtk_message_dialog_new(parent,
@@ -972,6 +981,14 @@ void show_msg_box_dialog(GtkWindow *parent, const gchar *message)
                                                    GTK_BUTTONS_OK,
                                                    "%s", message);
     gtk_dialog_set_default_response(GTK_DIALOG(dialog_msg), GTK_RESPONSE_ACCEPT);
+
+
+    GtkWidget *area = gtk_message_dialog_get_message_area(GTK_MESSAGE_DIALOG(dialog_msg));
+    GtkContainer *box = (GtkContainer *) area;
+
+    GList *children = gtk_container_get_children(box);
+    g_list_foreach(children, set_label_selectable, NULL);
+    g_list_free(children);
 
     gtk_widget_show_all(dialog_msg);
     gtk_dialog_run(GTK_DIALOG(dialog_msg));
