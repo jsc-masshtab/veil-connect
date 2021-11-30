@@ -123,11 +123,10 @@ set_message_to_info_label(GtkLabel *label, const gchar *message)
     if (!message)
         return;
 
-    const guint max_str_width = 110;
+    const guint max_str_width = 300;
 
-    //const gchar *mask_string = "<span color=\"red\">%s</span>";
     // trim message
-    if ( strlen(message) > max_str_width ) {
+    if ( strlen_safely(message) > max_str_width ) {
         gchar *message_str = g_strndup(message, max_str_width);
         gtk_label_set_text(label, message_str);
         g_free(message_str);
