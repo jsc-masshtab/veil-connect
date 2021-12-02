@@ -1291,7 +1291,7 @@ virt_viewer_window_toolbar_setup(VirtViewerWindow *self)
     /* Leave fullscreen */
     button = GTK_WIDGET(gtk_tool_button_new(NULL, NULL));
     gtk_tool_button_set_icon_name(GTK_TOOL_BUTTON(button), "view-restore");
-    gtk_tool_button_set_label(GTK_TOOL_BUTTON(button), _("Leave fullscreen"));
+    //gtk_tool_button_set_label(GTK_TOOL_BUTTON(button), "");
     gtk_tool_item_set_tooltip_text(GTK_TOOL_ITEM(button), _("Leave fullscreen"));
     gtk_tool_item_set_is_important(GTK_TOOL_ITEM(button), TRUE);
     gtk_widget_show(button);

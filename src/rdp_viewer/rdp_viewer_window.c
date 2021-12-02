@@ -477,7 +477,7 @@ create_new_button_for_overlay_toolbar(RdpWindowData *rdp_window_data, const gcha
 {
     GtkWidget *button = GTK_WIDGET(gtk_tool_button_new(NULL, NULL));
     gtk_tool_button_set_icon_name(GTK_TOOL_BUTTON(button), icon_name);
-    gtk_tool_button_set_label(GTK_TOOL_BUTTON(button), text);
+    //gtk_tool_button_set_label(GTK_TOOL_BUTTON(button), text);
     gtk_tool_item_set_tooltip_text(GTK_TOOL_ITEM(button), text);
     gtk_tool_item_set_is_important(GTK_TOOL_ITEM(button), TRUE);
     gtk_widget_show(button);
