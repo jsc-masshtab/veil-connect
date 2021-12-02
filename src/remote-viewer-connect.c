@@ -45,12 +45,14 @@ typedef struct
     GtkWidget *check_btn_2fa_password;
 
     GtkWidget *window;
-    GtkWidget *settings_button;
-    GtkWidget *connect_button;
     GtkWidget *connect_spinner;
     GtkWidget *message_display_label;
     GtkWidget *header_label;
     GtkWidget *new_version_available_image;
+
+    GtkWidget *settings_button;
+    GtkWidget *connect_button;
+    GtkWidget *btn_cancel_auth;
 
     // pointers to data
     gchar *current_pool_id;
@@ -68,7 +70,8 @@ set_auth_dialog_state(AuthDialogState auth_dialog_state, RemoteViewerConnData *c
     switch (auth_dialog_state) {
     case AUTH_GUI_DEFAULT_STATE: {
         // stop connect spinner
-        gtk_spinner_stop((GtkSpinner *)ci->connect_spinner);
+        gtk_spinner_stop(GTK_SPINNER(ci->connect_spinner));
+        gtk_widget_set_visible(GTK_WIDGET(ci->btn_cancel_auth), FALSE);
 
         //// enable connect button if address_entry is not empty
         //if (gtk_entry_get_text_length(GTK_ENTRY(ci->address_entry)) > 0)
@@ -84,7 +87,8 @@ set_auth_dialog_state(AuthDialogState auth_dialog_state, RemoteViewerConnData *c
         gtk_widget_set_sensitive(GTK_WIDGET(ci->connect_button), FALSE);
 
         // start connect spinner
-        gtk_spinner_start((GtkSpinner *)ci->connect_spinner);
+        gtk_spinner_start(GTK_SPINNER(ci->connect_spinner));
+        gtk_widget_set_visible(GTK_WIDGET(ci->btn_cancel_auth), TRUE);
         break;
     }
     default: {
@@ -262,6 +266,12 @@ connect_button_clicked_cb(GtkButton *button G_GNUC_UNUSED, gpointer data)
 }
 
 static void
+btn_cancel_auth_clicked_cb(GtkButton *button G_GNUC_UNUSED, gpointer data G_GNUC_UNUSED)
+{
+    vdi_session_cancell_pending_requests();
+}
+
+static void
 fill_gui(RemoteViewerConnData *ci)
 {
     if (get_conn_data(ci)->opt_manual_mode) {
@@ -326,6 +336,7 @@ remote_viewer_connect_dialog(RemoteViewer *remote_viewer)
 
     ci.settings_button = GTK_WIDGET(gtk_builder_get_object(builder, "btn_settings"));
     ci.connect_button = GTK_WIDGET(gtk_builder_get_object(builder, "connect-button"));
+    ci.btn_cancel_auth = GTK_WIDGET(gtk_builder_get_object(builder, "btn_cancel_auth"));
     ci.connect_spinner = GTK_WIDGET(gtk_builder_get_object(builder, "connect-spinner"));
     ci.message_display_label = GTK_WIDGET(gtk_builder_get_object(builder, "message-display-label"));
     gtk_label_set_selectable(GTK_LABEL(ci.message_display_label), TRUE);
@@ -350,6 +361,7 @@ remote_viewer_connect_dialog(RemoteViewer *remote_viewer)
     g_signal_connect_swapped(ci.window, "delete-event", G_CALLBACK(window_deleted_cb), &ci);
     g_signal_connect(ci.settings_button, "clicked", G_CALLBACK(settings_button_clicked_cb), &ci);
     g_signal_connect(ci.connect_button, "clicked", G_CALLBACK(connect_button_clicked_cb), &ci);
+    g_signal_connect(ci.btn_cancel_auth, "clicked", G_CALLBACK(btn_cancel_auth_clicked_cb), &ci);
     gulong updates_checked_handle = g_signal_connect(remote_viewer->app_updater, "updates-checked",
                                           G_CALLBACK(remote_viewer_on_updates_checked), &ci);
     g_signal_connect(ci.check_btn_2fa_password, "toggled", G_CALLBACK(on_check_btn_2fa_password_toggled), &ci);
