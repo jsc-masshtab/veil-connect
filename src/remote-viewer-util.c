@@ -1088,6 +1088,50 @@ void util_show_monitor_config_window(GtkWindow *parent, GdkDisplay *display)
     g_free(final_string);
 }
 
+int util_get_monitor_number(GdkDisplay *display)
+{
+#if GDK_VERSION_CUR_STABLE <= G_ENCODE_VERSION(3, 20)
+    GdkScreen *screen = gdk_display_get_default_screen(display);
+    return gdk_screen_get_n_monitors(screen);
+#else
+    return gdk_display_get_n_monitors(display);
+#endif
+}
+
+void util_get_monitor_geometry(GdkDisplay *display, int num, GdkRectangle *geometry)
+{
+#if GDK_VERSION_CUR_STABLE <= G_ENCODE_VERSION(3, 20)
+    GdkScreen *screen = gdk_display_get_default_screen(display);
+    gdk_screen_get_monitor_geometry(screen, num, geometry);
+#else
+    GdkMonitor *monitor = gdk_display_get_monitor(display, num);
+    gdk_monitor_get_geometry(monitor, geometry);
+#endif
+}
+
+gboolean util_check_if_monitor_primary(GdkDisplay *display, int num)
+{
+#if GDK_VERSION_CUR_STABLE <= G_ENCODE_VERSION(3, 20)
+    GdkScreen *screen = gdk_display_get_default_screen(display);
+    gint primary_mon_num = gdk_screen_get_primary_monitor(screen);
+    return num == primary_mon_num;
+#else
+    GdkMonitor *monitor = gdk_display_get_monitor(display, num);
+    return gdk_monitor_is_primary(monitor);
+#endif
+}
+
+gboolean util_check_if_monitor_number_valid(GdkDisplay *display, int num)
+{
+#if GDK_VERSION_CUR_STABLE <= G_ENCODE_VERSION(3, 20)
+    int monitor_amount = util_get_monitor_number(display);
+    return (num >= 0 && num < monitor_amount);
+#else
+    GdkMonitor *monitor = gdk_display_get_monitor(display, num);
+    return (monitor != NULL); // valid if not NULL
+#endif
+}
+
 /*
  * Local variables:
  *  c-indent-level: 4

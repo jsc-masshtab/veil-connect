@@ -155,6 +155,10 @@ void copy_file_content(FILE *sourceFile, FILE *destFile);
 void extract_name_and_domain(const gchar *full_user_name, gchar **user_name, gchar **domain);
 
 void util_show_monitor_config_window(GtkWindow *parent, GdkDisplay *display);
+int util_get_monitor_number(GdkDisplay *display);
+void util_get_monitor_geometry(GdkDisplay *display, int num, GdkRectangle *geometry);
+gboolean util_check_if_monitor_primary(GdkDisplay *display, int num);
+gboolean util_check_if_monitor_number_valid(GdkDisplay *display, int num);
 
 #endif
 

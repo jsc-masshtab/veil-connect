@@ -90,15 +90,14 @@ static gboolean rdp_viewer_update_images(gpointer user_data)
     return G_SOURCE_CONTINUE;
 }
 
-// set_monitor_data_and_create_rdp_viewer_window. Returns monitor geometry
+// Returns monitor geometry
 static RdpWindowData * set_monitor_data_and_create_rdp_viewer_window(
-        GdkMonitor *monitor, GdkRectangle *geometry, int index, int monitor_num,
+        GdkRectangle *geometry, int index, int monitor_num,
         ExtendedRdpContext *ex_rdp_context, GMainLoop **loop_p)
 {
-    gboolean is_mon_primary = gdk_monitor_is_primary(monitor);
-
+    GdkDisplay *display = gdk_display_get_default();
     // get monitor geometry
-    gdk_monitor_get_geometry(monitor, geometry);
+    util_get_monitor_geometry(display, monitor_num, geometry);
 
     // set monitor data for rdp client
     rdpSettings* settings = ex_rdp_context->context.settings;
@@ -107,7 +106,7 @@ static RdpWindowData * set_monitor_data_and_create_rdp_viewer_window(
     settings->MonitorDefArray[index].y = geometry->y;
     settings->MonitorDefArray[index].width = geometry->width;
     settings->MonitorDefArray[index].height = geometry->height;
-    settings->MonitorDefArray[index].is_primary = is_mon_primary;
+    settings->MonitorDefArray[index].is_primary = util_check_if_monitor_primary(display, monitor_num);
 
     // create rdp viewer window
     RdpWindowData *rdp_window_data = rdp_viewer_window_create(ex_rdp_context, index, monitor_num, *geometry);
@@ -123,14 +122,14 @@ static gboolean rdp_viewer_ask_for_credentials_if_required(VeilRdpSettings *p_rd
 {
     if (p_rdp_settings->user_name == NULL || p_rdp_settings->password == NULL)
         return virt_viewer_auth_collect_credentials(NULL,
-                                               "RDP", p_rdp_settings->ip,
-                                               &p_rdp_settings->user_name, &p_rdp_settings->password);
+                                                    "RDP", p_rdp_settings->ip,
+                                                    &p_rdp_settings->user_name, &p_rdp_settings->password);
     else
         return TRUE;
 }
 
 static void rdp_viewer_stats_data_updated(gpointer data G_GNUC_UNUSED, VdiVmRemoteProtocol protocol,
-                                               NetworkStatsData *nw_data, ExtendedRdpContext *ex_rdp_context)
+                                          NetworkStatsData *nw_data, ExtendedRdpContext *ex_rdp_context)
 {
     GArray *rdp_windows_array = ex_rdp_context->rdp_windows_array;
     for (guint i = 0; i < rdp_windows_array->len; ++i) {
@@ -152,16 +151,12 @@ static void rdp_viewer_show_error_msg_if_required(RemoteViewerData *self)
             gchar *msg = rdp_util_get_full_error_msg(
                     self->ex_rdp_context->last_rdp_error, self->ex_rdp_context->rail_rdp_error);
             show_msg_box_dialog(GTK_WINDOW(rdp_window_data->rdp_viewer_window), msg);
-            g_warning("%s", msg);
             g_free(msg);
         } else if (!self->ex_rdp_context->is_connected_last_time) {
             // Не удалось установить соединение. Проверьте разрешен ли удаленный доступ для текущего пользователя
             show_msg_box_dialog(GTK_WINDOW(rdp_window_data->rdp_viewer_window),
-                    _("Unable to connect. Check if remote access allowed for this user."));
-            g_warning("FreeRDP: Unable to connect.");
+                                _("Unable to connect. Check if remote access allowed for this user."));
         }
-    } else {
-        g_info("FreeRDP: intentional stop detected");
     }
 }
 
@@ -172,13 +167,11 @@ gint rdp_viewer_compare_monitors(gconstpointer a, gconstpointer b)
 {
     GdkDisplay *display = gdk_display_get_default();
 
-    GdkMonitor *monitor_a = gdk_display_get_monitor(display, *(int *)a);
     GdkRectangle geometry_a;
-    gdk_monitor_get_geometry(monitor_a, &geometry_a);
+    util_get_monitor_geometry(display, *(int *)a, &geometry_a);
 
-    GdkMonitor *monitor_b = gdk_display_get_monitor(display, *(int *)b);
     GdkRectangle geometry_b;
-    gdk_monitor_get_geometry(monitor_b, &geometry_b);
+    util_get_monitor_geometry(display, *(int *)b, &geometry_b);
 
     return (geometry_a.x - geometry_b.x);
 }
@@ -200,8 +193,8 @@ RemoteViewerState rdp_viewer_start(RemoteViewer *app, VeilRdpSettings *p_rdp_set
     GMainLoop *loop = NULL;
     // create RDP context
     self.ex_rdp_context = create_rdp_context(p_rdp_settings,
-            (UpdateCursorCallback)rdp_viewer_update_cursor,
-            (GSourceFunc)rdp_viewer_update_images);
+                                             (UpdateCursorCallback)rdp_viewer_update_cursor,
+                                             (GSourceFunc)rdp_viewer_update_images);
     self.ex_rdp_context->p_loop = &loop;
     self.ex_rdp_context->next_app_state_p = &next_app_state;
     self.ex_rdp_context->app = app;
@@ -231,14 +224,14 @@ RemoteViewerState rdp_viewer_start(RemoteViewer *app, VeilRdpSettings *p_rdp_set
             for (guint i = 0; i < monitor_configs_len; i++) {
                 int monitor_num = atoi(monitor_configs[i]);
                 // Проверить что monitor_num валидный и добавить в массив
-                GdkMonitor *monitor = gdk_display_get_monitor(display, monitor_num);
-                if (monitor)
+                gboolean is_mon_valid = util_check_if_monitor_number_valid(display, monitor_num);
+                if (is_mon_valid)
                     g_array_append_val(monitor_num_array, monitor_num);
             }
         }
         // Если нет (корректных) данных в настройках то используем все мониторы (до MAX_MONITOR_AMOUNT)
         if (monitor_num_array->len == 0) {
-            int monitor_amount = MIN(gdk_display_get_n_monitors(display), MAX_MONITOR_AMOUNT);
+            int monitor_amount = MIN(util_get_monitor_number(display), MAX_MONITOR_AMOUNT);
             for (int i = 0; i < monitor_amount; ++i) {
                 g_array_append_val(monitor_num_array, i);
             }
@@ -248,7 +241,7 @@ RemoteViewerState rdp_viewer_start(RemoteViewer *app, VeilRdpSettings *p_rdp_set
         int monitor_num = 0;
         // Берем либо первый номер из настроек (если он валидный), либо основной монитор(номер 0)
         int first_monitor_num_in_config = monitor_configs_len > 0 ? atoi(monitor_configs[0]) : 0;
-        if (gdk_display_get_monitor(display, first_monitor_num_in_config))
+        if (util_check_if_monitor_number_valid(display, first_monitor_num_in_config))
             monitor_num = first_monitor_num_in_config;
 
         g_array_append_val(monitor_num_array, monitor_num);
@@ -265,9 +258,8 @@ RemoteViewerState rdp_viewer_start(RemoteViewer *app, VeilRdpSettings *p_rdp_set
 
     // Запомнить geometry.x крайнего левого монитора из используемых
     int left_monitor_num = g_array_index(monitor_num_array, int, 0);
-    GdkMonitor *left_monitor = gdk_display_get_monitor(display, left_monitor_num);
     GdkRectangle left_geometry;
-    gdk_monitor_get_geometry(left_monitor, &left_geometry);
+    util_get_monitor_geometry(display, left_monitor_num, &left_geometry);
     int left_x = left_geometry.x;
 
     // array which will contain rdp windows
@@ -283,10 +275,9 @@ RemoteViewerState rdp_viewer_start(RemoteViewer *app, VeilRdpSettings *p_rdp_set
 
         int monitor_num = g_array_index(monitor_num_array, int, i);
         // get monitor data
-        GdkMonitor *monitor = gdk_display_get_monitor(display, monitor_num);
         GdkRectangle geometry;
         RdpWindowData *rdp_window_data = set_monitor_data_and_create_rdp_viewer_window(
-                monitor, &geometry, i, monitor_num, self.ex_rdp_context, &loop);
+                &geometry, i, monitor_num, self.ex_rdp_context, &loop);
         total_monitor_width += geometry.width;
 
         // find the smallest height
