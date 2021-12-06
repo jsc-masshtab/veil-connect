@@ -334,7 +334,7 @@ static void rdp_viewer_item_menu_usb_activated(GtkWidget *menu G_GNUC_UNUSED, gp
 #endif
 
     g_autofree gchar *title = NULL;
-    title = g_strdup_printf("%s  -  usbredir", APPLICATION_NAME_WITH_SPACES);
+    title = g_strdup_printf("%s  -  usbredir", APPLICATION_NAME);
     usbredir_dialog_start(GTK_WINDOW(rdp_window_data->rdp_viewer_window), title);
 }
 
@@ -679,7 +679,7 @@ RdpWindowData *rdp_viewer_window_create(ExtendedRdpContext *ex_rdp_context,
     // ВМ: %s     Пользователь: %s  -  %s
     gchar *title = g_strdup_printf(_("VM: %s     User: %s     Monitor number: %i  -  %s"),
             vdi_session_get_current_vm_name(), ex_rdp_context->p_rdp_settings->user_name,
-            rdp_window_data->monitor_number, APPLICATION_NAME_WITH_SPACES);
+            rdp_window_data->monitor_number, APPLICATION_NAME);
     gtk_window_set_title(GTK_WINDOW(rdp_viewer_window), title);
     free_memory_safely(&title);
 

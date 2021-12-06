@@ -125,6 +125,8 @@ gchar *get_log_dir_path(void);
 // Replace substring
 gchar *replace_str(const gchar *src, const gchar *find, const gchar *replace);
 
+gchar *util_remove_all_spaces(const gchar *src);
+
 // Conver string from local to utf8
 void convert_string_from_utf8_to_locale(gchar **utf8_str);
 

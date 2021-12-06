@@ -54,8 +54,8 @@ typedef struct
     GtkWidget *connect_button;
     GtkWidget *btn_cancel_auth;
 
-    // pointers to data
-    gchar *current_pool_id;
+    GtkWidget * app_name_label;
+
 
     AuthDialogState auth_dialog_state;
 
@@ -347,6 +347,11 @@ remote_viewer_connect_dialog(RemoteViewer *remote_viewer)
     gtk_widget_set_tooltip_text(ci.header_label, header_label_tooltip_text);
     gtk_label_set_text(GTK_LABEL(ci.header_label), VERSION);
     ci.new_version_available_image = GTK_WIDGET(gtk_builder_get_object(builder, "new-version-available-image"));
+
+    ci.app_name_label = GTK_WIDGET(gtk_builder_get_object(builder, "app_name_label"));
+    gchar *uppercase_name = g_utf8_strup(APPLICATION_NAME, -1);
+    gtk_label_set_text(GTK_LABEL(ci.app_name_label), uppercase_name);
+    g_free(uppercase_name);
 
     // password entry
     ci.password_entry = GTK_WIDGET(gtk_builder_get_object(builder, "password-entry"));

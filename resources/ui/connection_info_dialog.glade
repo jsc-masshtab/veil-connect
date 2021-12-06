@@ -6,7 +6,7 @@
     <property name="can_focus">False</property>
     <property name="tooltip_text" translatable="yes" comments="Информация о скоростях обновляется раз в 5 секунд. &#10;Информация о потерях и RTT обновляется раз в 30 секунд.">Speed data is being updated every 5 seconds. 
 Losses and RTT are being updated every 30 seconds</property>
-    <property name="title" translatable="yes" comments="Информация о соединении - VeilL Connect">Connection information - VeilL Connect</property>
+    <property name="title" translatable="yes" comments="Информация о соединении">Connection information</property>
     <property name="type_hint">dialog</property>
     <child>
       <placeholder/>
@@ -78,7 +78,7 @@ Losses and RTT are being updated every 30 seconds</property>
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
                 <property name="halign">end</property>
-                <property name="label" translatable="yes" comments="Время подключения к VeiL VDI">Connection time to VeiL VDI</property>
+                <property name="label" translatable="yes" comments="Время подключения к VDI брокеру">Connection time to VDI broker</property>
               </object>
               <packing>
                 <property name="expand">False</property>

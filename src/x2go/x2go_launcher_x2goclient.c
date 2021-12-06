@@ -99,7 +99,7 @@ static gboolean x2go_launcher_launch_process(X2goData *data, gchar **error_msg)
     // g_get_user_data_dir
     const gchar *user_config_dir = g_get_user_config_dir();
     g_autofree gchar *app_x2go_data_dir = NULL;
-    app_x2go_data_dir = g_build_filename(user_config_dir, APPLICATION_NAME, "x2go_data", NULL);
+    app_x2go_data_dir = g_build_filename(user_config_dir, APP_FILES_DIRECTORY_NAME, "x2go_data", NULL);
     g_mkdir_with_parents(app_x2go_data_dir, 0755);
 
     g_autofree gchar *x2go_data_file_name = NULL;

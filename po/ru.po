@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2021-11-30 15:17+0300\n"
+"POT-Creation-Date: 2021-12-06 15:00+0300\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -44,7 +44,8 @@ msgstr "Открыть файл"
 #: ../src/remote_viewer_start_settings.c:264
 #: ../src/remote_viewer_start_settings.c:331
 #: ../src/remote_viewer_start_settings.c:467
-#: ../resources/ui/vdi_manager_form.glade.h:7
+#: ../resources/ui/vdi_manager_form.glade.h:6
+#: ../resources/ui/remote-viewer-connect_veil.glade.h:9
 #: ../resources/ui/start_settings_form.glade.h:4
 msgid "Cancel"
 msgstr "Отменить"
@@ -69,11 +70,11 @@ msgstr "Процесс обновления завершился с ошибка
 msgid "Password required"
 msgstr "Необходимо ввести пароль"
 
-#: ../src/remote-viewer-connect.c:189 ../src/remote-viewer-connect.c:200
+#: ../src/remote-viewer-connect.c:193 ../src/remote-viewer-connect.c:204
 msgid "Connection address is not specified"
 msgstr "Адрес подключения не указан"
 
-#: ../src/remote-viewer-connect.c:301
+#: ../src/remote-viewer-connect.c:311
 msgid "A new version available. Press Settings->Service->Get updates"
 msgstr ""
 "Доступна новая версия. Чтобы обновиться нажмите Настройки->Служебные-"
@@ -228,13 +229,13 @@ msgstr ""
 "Процесс установки версии %s\n"
 "завершился с ошибками."
 
-#: ../src/rdp_viewer/rdp_viewer.c:159
+#: ../src/rdp_viewer/rdp_viewer.c:158
 msgid "Unable to connect. Check if remote access allowed for this user."
 msgstr ""
 "Не удалось подключиться. Проверьте, разрешен ли удаленный доступ для этого "
 "пользователя."
 
-#: ../src/rdp_viewer/rdp_viewer.c:310
+#: ../src/rdp_viewer/rdp_viewer.c:305
 msgid "Folders redirection is not allowed"
 msgstr "Проброс папок запрещен администратором"
 
@@ -445,7 +446,7 @@ msgstr "Отправлен запрос на получение ВМ из пул
 #. "Отправлен запрос на список пулов"
 #. Отправлен запрос на список пулов
 #: ../src/vdi_client/vdi_manager.c:173
-#: ../resources/ui/vdi_manager_form.glade.h:11
+#: ../resources/ui/vdi_manager_form.glade.h:10
 msgid "Pool data request sent"
 msgstr "Отправлен запрос на список пулов"
 
@@ -601,7 +602,7 @@ msgstr "Переподключение"
 msgid "USB device selection"
 msgstr "Выбор USB устройство"
 
-#: ../src/virt_viewer/virt-viewer-window.c:1294
+#. gtk_tool_button_set_label(GTK_TOOL_BUTTON(button), "");
 #: ../src/virt_viewer/virt-viewer-window.c:1295
 msgid "Leave fullscreen"
 msgstr "Покинуть полный экран"
@@ -823,7 +824,7 @@ msgstr ""
 
 #. Profile settings
 #: ../resources/ui/vdi_user_settings_form.glade.h:1
-#: ../resources/ui/vdi_manager_form.glade.h:3
+#: ../resources/ui/vdi_manager_form.glade.h:2
 msgid "Profile settings"
 msgstr "Настройки профиля"
 
@@ -842,27 +843,23 @@ msgstr "Сгенерировать новый QR код"
 msgid "Apply"
 msgstr "Применить"
 
-#: ../resources/ui/vdi_manager_form.glade.h:1
-msgid "VeiL Connect"
-msgstr ""
-
 #. Обновить
-#: ../resources/ui/vdi_manager_form.glade.h:5
+#: ../resources/ui/vdi_manager_form.glade.h:4
 msgid "Update"
 msgstr "Обновить"
 
 #. Sign out
-#: ../resources/ui/vdi_manager_form.glade.h:9
+#: ../resources/ui/vdi_manager_form.glade.h:8
 msgid "Sign out"
 msgstr "Выйти"
 
-#: ../resources/ui/vdi_manager_form.glade.h:12
+#: ../resources/ui/vdi_manager_form.glade.h:11
 msgid "VDI server availability indicator"
 msgstr "Индикатор доступности VDI сервера"
 
 #: ../resources/ui/vdi_messenger_from.glade.h:1
-msgid "Dialog with administrator - VeilL Connect"
-msgstr "Диалог с администратором - VeilL Connect"
+msgid "Dialog with administrator"
+msgstr "Диалог с администратором"
 
 #. Отправить
 #: ../resources/ui/vdi_messenger_from.glade.h:3
@@ -878,20 +875,21 @@ msgstr ""
 "Информация о скоростях обновляется раз в 5 секунд. \n"
 "Информация о потерях и RTT обновляется раз в 30 секунд"
 
-#. Информация о соединении - VeilL Connect
+#. Информация о соединении
 #: ../resources/ui/connection_info_dialog.glade.h:5
-msgid "Connection information - VeilL Connect"
-msgstr "Информация о соединении - VeilL Connect"
+#: ../resources/ui/virt-viewer_veil.glade.h:64
+msgid "Connection information"
+msgstr "Информация о соединении"
 
 #. Протокол
 #: ../resources/ui/connection_info_dialog.glade.h:7
 msgid "Protocol"
 msgstr "Протокол"
 
-#. Время подключения к VeiL VDI
+#. Время подключения к VDI брокеру
 #: ../resources/ui/connection_info_dialog.glade.h:9
-msgid "Connection time to VeiL VDI"
-msgstr "Время подключения к VeiL VDI"
+msgid "Connection time to VDI broker"
+msgstr "Время подключения к VDI брокеру"
 
 #. Время подключения к ВМ
 #: ../resources/ui/connection_info_dialog.glade.h:11
@@ -918,29 +916,25 @@ msgstr "Средний RTT"
 msgid "Network losses percentage"
 msgstr "Процент сетевых потерь"
 
-#: ../resources/ui/remote-viewer-connect_veil.glade.h:1
-msgid "VEIL CONNECT"
-msgstr ""
-
 #. Login
-#: ../resources/ui/remote-viewer-connect_veil.glade.h:3
+#: ../resources/ui/remote-viewer-connect_veil.glade.h:2
 msgid "Login"
 msgstr "Логин"
 
 #. Пользователь
-#: ../resources/ui/remote-viewer-connect_veil.glade.h:5
+#: ../resources/ui/remote-viewer-connect_veil.glade.h:4
 msgid "User"
 msgstr "Пользователь"
 
 #. Пароль
-#: ../resources/ui/remote-viewer-connect_veil.glade.h:7
+#: ../resources/ui/remote-viewer-connect_veil.glade.h:6
 #: ../resources/ui/ask_pass_form.glade.h:4
 #: ../resources/ui/x2go_control_form.glade.h:5
 msgid "Password"
 msgstr "Пароль"
 
 #. Одноразовый пароль
-#: ../resources/ui/remote-viewer-connect_veil.glade.h:9
+#: ../resources/ui/remote-viewer-connect_veil.glade.h:8
 msgid "One-time password"
 msgstr "Одноразовый пароль"
 
@@ -1097,11 +1091,6 @@ msgstr "Официальная страница ECP VeiL"
 #: ../resources/ui/virt-viewer_veil.glade.h:62
 msgid "Documentation"
 msgstr "Документация"
-
-#. Информация о соединении
-#: ../resources/ui/virt-viewer_veil.glade.h:64
-msgid "Connection information"
-msgstr "Информация о соединении"
 
 #. О программе
 #: ../resources/ui/virt-viewer_veil.glade.h:66
@@ -1488,7 +1477,8 @@ msgstr ""
 
 #: ../resources/ui/start_settings_form.glade.h:115
 msgid "Log debug info"
-msgstr "Логировать отладочную\n"
+msgstr ""
+"Логировать отладочную\n"
 "информацию"
 
 #: ../resources/ui/start_settings_form.glade.h:116
@@ -1496,9 +1486,8 @@ msgid ""
 "Log debug information. Enabling this option may slow down the application. "
 "Application restart required to apply changes."
 msgstr ""
-"Логировать отладочную информацию. "
-"Включение этой опции может замедлить приложение. "
-"Требуется перезапуск приложения."
+"Логировать отладочную информацию. Включение этой опции может замедлить "
+"приложение. Требуется перезапуск приложения."
 
 #. X2Go приложение
 #: ../resources/ui/start_settings_form.glade.h:118
@@ -1934,6 +1923,12 @@ msgstr "Имя:"
 #: ../resources/ui/virt-viewer-auth.glade.h:7
 msgid "Show password"
 msgstr "Показывать пароль"
+
+#~ msgid "Connection information - VeilL Connect"
+#~ msgstr "Информация о соединении - VeilL Connect"
+
+#~ msgid "Connection time to VeiL VDI"
+#~ msgstr "Время подключения к VeiL VDI"
 
 #~ msgid "Unable to connect: %s"
 #~ msgstr "Не удалось подключиться: %s"

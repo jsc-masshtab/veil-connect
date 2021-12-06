@@ -823,7 +823,7 @@ gchar *get_log_dir_path()
     gchar *log_dir = g_strdup("log");
 #elif _WIN32
     const gchar *locap_app_data_path = g_getenv("LOCALAPPDATA");
-    gchar *log_dir = g_strdup_printf("%s\\%s\\log", locap_app_data_path, APPLICATION_NAME);
+    gchar *log_dir = g_strdup_printf("%s\\%s\\log", locap_app_data_path, APP_FILES_DIRECTORY_NAME);
 #endif
     return log_dir;
 }
@@ -850,6 +850,11 @@ gchar* replace_str(const gchar *src, const gchar *find, const gchar *replace)
     return retval;
 }
 
+gchar *util_remove_all_spaces(const gchar *src)
+{
+    return replace_str(src, " ", "");
+}
+
 void convert_string_from_utf8_to_locale(gchar **utf8_str)
 {
     if (!utf8_str || !(*utf8_str))
@@ -867,7 +872,7 @@ void convert_string_from_utf8_to_locale(gchar **utf8_str)
 gchar *get_windows_app_data_location()
 {
     const gchar *locap_app_data_path = g_getenv("LOCALAPPDATA");
-    gchar *app_data_dir = g_strdup_printf("%s\\%s", locap_app_data_path, APPLICATION_NAME);
+    gchar *app_data_dir = g_strdup_printf("%s\\%s", locap_app_data_path, APP_FILES_DIRECTORY_NAME);
     return app_data_dir;
 }
 

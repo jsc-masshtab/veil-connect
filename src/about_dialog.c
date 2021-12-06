@@ -35,7 +35,8 @@ void show_about_dialog(GtkWindow *parent_window)
     about = remote_viewer_util_load_ui("virt-viewer-about.glade");
 
     dialog = GTK_WIDGET(gtk_builder_get_object(about, "about"));
-    gtk_about_dialog_set_version ((GtkAboutDialog *)dialog, VERSION);
+    gtk_about_dialog_set_version (GTK_ABOUT_DIALOG(dialog), VERSION);
+    gtk_about_dialog_set_program_name(GTK_ABOUT_DIALOG(dialog), APPLICATION_NAME);
 
     icon = gdk_pixbuf_new_from_resource(VIRT_VIEWER_RESOURCE_PREFIX"/icons/content/img/veil-32x32.png", NULL);
     if (icon != NULL) {

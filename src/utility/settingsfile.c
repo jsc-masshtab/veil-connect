@@ -42,12 +42,12 @@ get_ini_file_name()
     if (ini_file_path == NULL) {
         // create app dir
         const gchar *user_config_dir = g_get_user_config_dir();
-        gchar *app_data_dir = g_build_filename(user_config_dir, APPLICATION_NAME, NULL);
+        gchar *app_data_dir = g_build_filename(user_config_dir, APP_FILES_DIRECTORY_NAME, NULL);
         g_mkdir_with_parents(app_data_dir, 0755);
         g_free(app_data_dir);
 
         ini_file_path = g_build_filename(user_config_dir,
-                                         APPLICATION_NAME, "veil_client_settings.ini", NULL);
+                                         APP_FILES_DIRECTORY_NAME, "veil_client_settings.ini", NULL);
 
         if (!g_file_test(ini_file_path, G_FILE_TEST_EXISTS)) {
             // create file

@@ -94,10 +94,11 @@
 /* Define to the sub-directory where libtool stores uninstalled libraries. */
 #define LT_OBJDIR ".libs/"
 
-/* Name of application */
-#define APPLICATION_NAME "VeilConnect"
+/* Name of application settings and config files directory */
+#define APP_FILES_DIRECTORY_NAME "VeilConnect"
 
-#define APPLICATION_NAME_WITH_SPACES "VeiL Connect"
+/* Name of application */
+#define APPLICATION_NAME "VeiL Connect"
 
 /* Name of package */
 #define PACKAGE GETTEXT_PACKAGE

@@ -57,12 +57,11 @@
           </packing>
         </child>
         <child>
-          <object class="GtkLabel" id="user-name-label1">
+          <object class="GtkLabel" id="app_name_label">
             <property name="name">title-label</property>
             <property name="visible">True</property>
             <property name="can_focus">False</property>
             <property name="halign">start</property>
-            <property name="label" translatable="yes">VEIL CONNECT</property>
           </object>
           <packing>
             <property name="expand">False</property>
