@@ -501,7 +501,7 @@ create_new_button_for_overlay_toolbar(RdpWindowData *rdp_window_data, const gcha
     gtk_tool_item_set_tooltip_text(GTK_TOOL_ITEM(button), text);
     gtk_tool_item_set_is_important(GTK_TOOL_ITEM(button), TRUE);
     gtk_widget_show(button);
-    gtk_toolbar_insert(GTK_TOOLBAR(rdp_window_data->overlay_toolbar), GTK_TOOL_ITEM(button), 0);
+    gtk_toolbar_insert(GTK_TOOLBAR(rdp_window_data->overlay_toolbar), GTK_TOOL_ITEM(button), -1);
 
     return button;
 }
@@ -543,9 +543,6 @@ static void rdp_viewer_toolbar_setup(GtkBuilder *builder, RdpWindowData *rdp_win
                 rdp_window_data);
     }
 
-    // Disconnect
-    button = create_new_button_for_overlay_toolbar(rdp_window_data, "window-close", _("Disconnect"));
-    g_signal_connect(button, "clicked", G_CALLBACK(rdp_viewer_window_menu_switch_off), rdp_window_data);
     // Send key combination
     button = create_new_button_for_overlay_toolbar(rdp_window_data, "preferences-desktop-keyboard-shortcuts",
                                                    _("Send key combination"));
@@ -553,6 +550,11 @@ static void rdp_viewer_toolbar_setup(GtkBuilder *builder, RdpWindowData *rdp_win
     fill_shortcuts_menu(GTK_MENU(rdp_window_data->menu_send_shortcut), rdp_window_data->ex_rdp_context);
     g_signal_connect(button, "clicked", G_CALLBACK(rdp_viewer_window_menu_show_shortcuts),
                      rdp_window_data);
+
+    // Disconnect
+    button = create_new_button_for_overlay_toolbar(rdp_window_data, "window-close", _("Disconnect"));
+    g_signal_connect(button, "clicked", G_CALLBACK(rdp_viewer_window_menu_switch_off), rdp_window_data);
+
 
     // add toolbar to overlay
     rdp_window_data->revealer = virt_viewer_timed_revealer_new(rdp_window_data->overlay_toolbar);
