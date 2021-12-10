@@ -67,7 +67,7 @@ static void usbredir_spice_show_usb_widget(SpiceUsbSession *self)
     usbredir_spice_set_status(self, "");
 }
 
-// Отложенное создание usb окна. Если создать сразу после подключения, то не применяются USB фильтры со стоторы spice
+// Отложенное создание usb окна. Если создать сразу после подключения, то не применяются USB фильтры со стороны spice
 // сервера
 static gboolean usbredir_spice_delayed_show_usb_widget(gpointer data)
 {
