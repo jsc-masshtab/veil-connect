@@ -43,7 +43,7 @@ pipeline {
 
     parameters {
         string(      name: 'BRANCH',               defaultValue: 'master',          description: 'branch')
-        string(      name: 'VERSION',              defaultValue: '1.8.10',           description: 'version')
+        string(      name: 'VERSION',              defaultValue: '1.9.0',           description: 'version')
         booleanParam(name: 'STRETCH',              defaultValue: true,              description: 'create DEB?')
         booleanParam(name: 'BUSTER',               defaultValue: true,              description: 'create DEB?')
         booleanParam(name: 'BIONIC',               defaultValue: true,              description: 'create DEB?')

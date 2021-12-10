@@ -306,7 +306,27 @@ static void rdp_viewer_item_about_activated(GtkWidget *menu G_GNUC_UNUSED, gpoin
     show_about_dialog(rdp_viewer_window);
 }
 
-static void rdp_viewer_item_menu_usb_activated(GtkWidget *menu G_GNUC_UNUSED, gpointer userdata)
+static gboolean rdp_viewer_window_is_usbredir_possible(RdpWindowData *rdp_window_data)
+{
+    // Работает только в связке с veil
+    //if (opt_manual_mode)
+    //    return FALSE;
+
+    // Не показывать если запрещено в админке. Проброс USB запрещен администратором
+    if (!vdi_session_is_usb_redir_permitted()) {
+        show_msg_box_dialog(GTK_WINDOW(rdp_window_data->rdp_viewer_window), _("USB redirection is not allowed"));
+        return FALSE;
+    }
+
+#ifdef _WIN32
+    if ( !usbredir_util_check_if_usbdk_installed(GTK_WINDOW(rdp_window_data->rdp_viewer_window)) )
+        return FALSE;
+#endif
+
+    return TRUE;
+}
+
+static void rdp_viewer_item_menu_usb_tcp_activated(GtkWidget *menu G_GNUC_UNUSED, gpointer userdata)
 {
     RdpWindowData *rdp_window_data = (RdpWindowData *)userdata;
 #ifdef __APPLE__
@@ -314,28 +334,28 @@ static void rdp_viewer_item_menu_usb_activated(GtkWidget *menu G_GNUC_UNUSED, gp
                         "Проброс USB не поддерживается на текущей ОС");
     return;
 #endif
-    // Работает только в связке с veil
-    //if (opt_manual_mode)
-    //    return;
+
     // Не показывать если уже открыто
     if (usbredir_controller_is_usb_tcp_window_shown())
         return;
 
-    // Не показывать если запрещено в админке. Проброс USB запрещен администратором
-    if (!vdi_session_is_usb_redir_permitted()) {
-        show_msg_box_dialog(GTK_WINDOW(rdp_window_data->rdp_viewer_window),
-                            _("USB redirection is not allowed"));
+    if (!rdp_viewer_window_is_usbredir_possible(rdp_window_data))
         return;
-    }
-
-#ifdef _WIN32
-    if ( !usbredir_util_check_if_usbdk_installed(GTK_WINDOW(rdp_window_data->rdp_viewer_window)) )
-        return;
-#endif
 
     g_autofree gchar *title = NULL;
-    title = g_strdup_printf("%s  -  usbredir", APPLICATION_NAME);
+    title = g_strdup_printf("usbredir TCP  -  %s", APPLICATION_NAME);
     usbredir_dialog_start(GTK_WINDOW(rdp_window_data->rdp_viewer_window), title);
+}
+
+static void rdp_viewer_item_menu_usb_spice_activated(GtkWidget *menu G_GNUC_UNUSED, gpointer userdata)
+{
+    RdpWindowData *rdp_window_data = (RdpWindowData *)userdata;
+
+    if (!rdp_viewer_window_is_usbredir_possible(rdp_window_data))
+        return;
+
+    usbredir_spice_show_dialog(usbredir_controller_get_static()->spice_usb_session,
+            GTK_WINDOW(rdp_window_data->rdp_viewer_window));
 }
 
 static void rdp_viewer_window_menu_send(GtkWidget *menu, gpointer userdata)
@@ -694,12 +714,25 @@ RdpWindowData *rdp_viewer_window_create(ExtendedRdpContext *ex_rdp_context,
     rdp_window_data->top_menu = GTK_WIDGET(gtk_builder_get_object(builder, "top-menu"));
 
     // usb menu is not required for rdp
-    GtkWidget *menu_usb = GTK_WIDGET(gtk_builder_get_object(builder, "menu-file-usb-device-selection"));
+    GtkWidget *menu_usb = GTK_WIDGET(gtk_builder_get_object(builder, "menu-file-usb"));
     // Для RDS пула используется возможности freerdp для перенаправления USB (RemoteFX)
-    if (vdi_session_get_current_pool_type() == VDI_POOL_TYPE_RDS)
+    if (vdi_session_get_current_pool_type() == VDI_POOL_TYPE_RDS) {
         gtk_widget_set_sensitive(menu_usb, FALSE);
-    else
-        g_signal_connect(menu_usb, "activate", G_CALLBACK(rdp_viewer_item_menu_usb_activated), rdp_window_data);
+    } else {
+        GtkWidget *submenu_usb = GTK_WIDGET(gtk_builder_get_object(builder, "usbredir_submenu"));
+
+        GtkWidget *menu_usb_usbredir_tcp = GTK_WIDGET(gtk_builder_get_object(builder,
+                "menu-file-usb-device-selection"));
+        gtk_menu_item_set_label(GTK_MENU_ITEM(menu_usb_usbredir_tcp), "USBREDIR TCP");
+        g_signal_connect(menu_usb_usbredir_tcp, "activate",
+                G_CALLBACK(rdp_viewer_item_menu_usb_tcp_activated), rdp_window_data);
+
+        // Добавить кнпку меню для spice usb
+        GtkWidget *menu_usb_usbredir_spice = gtk_menu_item_new_with_label("USBREDIR SPICE");
+        gtk_container_add(GTK_CONTAINER(submenu_usb), menu_usb_usbredir_spice);
+        g_signal_connect(menu_usb_usbredir_spice, "activate",
+                         G_CALLBACK(rdp_viewer_item_menu_usb_spice_activated), rdp_window_data);
+    }
 
     // remove inapropriate items from settings menu
     gtk_widget_destroy(GTK_WIDGET(gtk_builder_get_object(builder, "menu-file-smartcard-insert")));

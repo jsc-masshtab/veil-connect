@@ -11,6 +11,8 @@
 
 #include <gtk/gtk.h>
 
+#include <spice-client-gtk.h>
+
 extern gboolean doDebug;
 
 typedef enum {
@@ -161,6 +163,8 @@ int util_get_monitor_number(GdkDisplay *display);
 void util_get_monitor_geometry(GdkDisplay *display, int num, GdkRectangle *geometry);
 gboolean util_check_if_monitor_primary(GdkDisplay *display, int num);
 gboolean util_check_if_monitor_number_valid(GdkDisplay *display, int num);
+
+const gchar *util_spice_channel_event_to_str(SpiceChannelEvent event);
 
 #endif
 

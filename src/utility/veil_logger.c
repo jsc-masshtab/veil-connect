@@ -34,7 +34,7 @@ void veil_logger_setup()
     log_dir = get_log_dir_path();
 
     // current log dir
-    GDateTime *datetime = g_date_time_new_now_local();;
+    GDateTime *datetime = g_date_time_new_now_local();
     data_time_string_s = g_date_time_format(datetime, "%Y_%m_%d___%H_%M_%S");
     g_date_time_unref(datetime);
     cur_log_path = g_build_filename(log_dir, data_time_string_s, NULL);

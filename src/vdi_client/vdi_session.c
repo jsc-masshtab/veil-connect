@@ -1004,6 +1004,45 @@ void vdi_session_generate_qr_code_task(GTask *task,
     g_task_return_pointer(task, tk_user_data, NULL);
 }
 
+void vdi_session_get_vm_data_task(GTask *task,
+                                  gpointer       source_object G_GNUC_UNUSED,
+                                  gpointer       task_data G_GNUC_UNUSED,
+                                  GCancellable  *cancellable G_GNUC_UNUSED)
+{
+    // url
+    g_autofree gchar *url_str = NULL;
+    url_str = g_strdup_printf("%s/client/get_vm_data/%s", vdi_session_static->api_url,
+                                     vdi_session_static->current_vm_id);
+
+    // Request
+    g_autofree gchar *response_body_str = NULL;
+    response_body_str = vdi_session_api_call("GET", url_str, NULL, NULL);
+
+    // Parse response (На данный момент нужны только данные для подключения по спайс)
+    JsonParser *parser = json_parser_new();
+    ServerReplyType server_reply_type;
+    JsonObject *reply_json_object = json_get_data_or_errors_object(parser, response_body_str, &server_reply_type);
+
+    VdiVmData *vdi_vm_data = calloc(1, sizeof(VdiVmData));
+    vdi_vm_data->server_reply_type = server_reply_type;
+
+    if (server_reply_type == SERVER_REPLY_TYPE_DATA) {
+        vdi_vm_data->vm_host = g_strdup(json_object_get_string_member_safely(
+                reply_json_object, "controller_address"));
+        vdi_vm_data->vm_port = json_object_get_int_member_safely(reply_json_object, "remote_access_port");
+        vdi_vm_data->vm_password = g_strdup(json_object_get_string_member_safely(
+                reply_json_object, "graphics_password"));
+    } else {
+        g_warning("%s Error reply. Response_body_str: %s", (const char *)__func__, response_body_str);
+    }
+
+    vdi_vm_data->message = g_strdup(json_object_get_string_member_safely(reply_json_object, "message"));
+    g_info("%s: server_reply_type %s", (const char *)__func__, vdi_vm_data->message);
+
+    g_object_unref(parser);
+    g_task_return_pointer(task, vdi_vm_data, NULL);
+}
+
 gboolean vdi_session_logout(void)
 {
     // disconnect from license server(redis)

@@ -1137,6 +1137,32 @@ gboolean util_check_if_monitor_number_valid(GdkDisplay *display, int num)
 #endif
 }
 
+const gchar *util_spice_channel_event_to_str(SpiceChannelEvent event)
+{
+    switch (event) {
+        case SPICE_CHANNEL_NONE:
+            return "SPICE_CHANNEL_NONE";
+        case SPICE_CHANNEL_OPENED:
+            return "SPICE_CHANNEL_OPENED";
+        case SPICE_CHANNEL_SWITCHING:
+            return "SPICE_CHANNEL_SWITCHING";
+        case SPICE_CHANNEL_CLOSED:
+            return "SPICE_CHANNEL_CLOSED";
+        case SPICE_CHANNEL_ERROR_CONNECT:
+            return "SPICE_CHANNEL_ERROR_CONNECT";
+        case SPICE_CHANNEL_ERROR_TLS:
+            return "SPICE_CHANNEL_ERROR_TLS";
+        case SPICE_CHANNEL_ERROR_LINK:
+            return "SPICE_CHANNEL_ERROR_LINK";
+        case SPICE_CHANNEL_ERROR_AUTH:
+            return "SPICE_CHANNEL_ERROR_AUTH";
+        case SPICE_CHANNEL_ERROR_IO:
+            return "SPICE_CHANNEL_ERROR_IO";
+        default:
+            return "UNKNOWN";
+    }
+}
+
 /*
  * Local variables:
  *  c-indent-level: 4

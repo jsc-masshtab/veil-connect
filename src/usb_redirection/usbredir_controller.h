@@ -13,6 +13,7 @@
 #include <gtk/gtk.h>
 
 #include "usbredirserver_data.h"
+#include "usbredir_spice.h"
 
 #define TYPE_USBREDIR_CONTROLLER   ( usbredir_controller_get_type( ) )
 #define USBREDIR_CONTROLLER( obj ) ( G_TYPE_CHECK_INSTANCE_CAST((obj), TYPE_USBREDIR_CONTROLLER, UsbRedirController) )
@@ -29,6 +30,9 @@ typedef struct{
     // первым делом отправляем запрос на удаление всех tcp usb.
 
     gboolean is_usb_tcp_window_shown; // Открыто ли в данный момент окно управления USB TCP
+
+    SpiceUsbSession *spice_usb_session;
+
 } UsbRedirController;
 
 typedef struct
@@ -43,6 +47,8 @@ typedef struct
 GType usbredir_controller_get_type( void ) G_GNUC_CONST;
 
 UsbRedirController *usbredir_controller_new(void);
+
+void usbredir_controller_stop_all(void);
 
 void usbredir_controller_start_task(UsbServerStartData start_data);
 void usbredir_controller_stop_task(int usbbus, int usbaddr);

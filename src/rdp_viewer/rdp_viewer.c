@@ -311,7 +311,7 @@ RemoteViewerState rdp_viewer_start(RemoteViewer *app, VeilRdpSettings *p_rdp_set
     // launch event loop
     create_loop_and_launch(&loop);
     // stop usb tasks if there are any
-    usbredir_controller_stop_all_cur_tasks(FALSE);
+    usbredir_controller_stop_all();
     /// Показать сообщение если завершение работы не было совершено пользователем намерено (произошла ошибка)
     rdp_viewer_show_error_msg_if_required(&self);
 

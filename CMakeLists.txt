@@ -155,6 +155,8 @@ list(APPEND SRC_CODE
 
 # usb_redirection
 list(APPEND SRC_CODE
+        src/usb_redirection/usbredir_spice.h
+        src/usb_redirection/usbredir_spice.c
         src/usb_redirection/usbredirserver.h
         src/usb_redirection/usbredirserver_data.h
         src/usb_redirection/usbredirhost.h

@@ -236,10 +236,9 @@ static void on_vdi_session_get_vdi_pool_data_finished(GObject *source_object G_G
 {
     g_info("%s", (const char *)__func__);
 
-    GError *error = NULL;
     g_autofree gchar *err_msg = NULL;
     err_msg = g_strdup(_("Failed to fetch pool data"));
-    gpointer ptr_res = g_task_propagate_pointer(G_TASK(res), &error); // take ownership
+    gpointer ptr_res = g_task_propagate_pointer(G_TASK(res), NULL); // take ownership
     if(ptr_res == NULL) { // "Не удалось получить список пулов"
         set_vdi_client_state(self, VDI_RECEIVED_RESPONSE, err_msg, TRUE);
         return;
@@ -319,7 +318,7 @@ static void on_vdi_session_get_vm_from_pool_finished(GObject *source_object G_GN
     GError *error = NULL;
     g_autofree gchar *err_msg = NULL;
     err_msg = g_strdup(_("Failed to get VM fom pool"));
-    gpointer  ptr_res =  g_task_propagate_pointer (G_TASK (res), &error); // take ownership
+    gpointer ptr_res = g_task_propagate_pointer (G_TASK(res), &error); // take ownership
     if (ptr_res == NULL) { // "Не удалось получить вм из пула",
         g_info("%s : FAIL", (const char *)__func__);
         set_vdi_client_state(self, VDI_RECEIVED_RESPONSE, err_msg, TRUE);

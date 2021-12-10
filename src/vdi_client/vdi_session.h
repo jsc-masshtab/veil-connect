@@ -311,6 +311,12 @@ void vdi_session_generate_qr_code_task(GTask *task,
                                        gpointer       task_data,
                                        GCancellable  *cancellable);
 
+// Get VM info
+void vdi_session_get_vm_data_task(GTask *task,
+                                  gpointer       source_object,
+                                  gpointer       task_data,
+                                  GCancellable  *cancellable);
+
 // Log out sync
 gboolean vdi_session_logout(void);
 
