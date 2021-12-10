@@ -501,7 +501,7 @@ create_new_button_for_overlay_toolbar(RdpWindowData *rdp_window_data, const gcha
     gtk_tool_item_set_tooltip_text(GTK_TOOL_ITEM(button), text);
     gtk_tool_item_set_is_important(GTK_TOOL_ITEM(button), TRUE);
     gtk_widget_show(button);
-    gtk_toolbar_insert(GTK_TOOLBAR(rdp_window_data->overlay_toolbar), GTK_TOOL_ITEM(button), 0);
+    gtk_toolbar_insert(GTK_TOOLBAR(rdp_window_data->overlay_toolbar), GTK_TOOL_ITEM(button), -1);
 
     return button;
 }
