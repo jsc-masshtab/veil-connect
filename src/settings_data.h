@@ -114,7 +114,6 @@ typedef struct{
     gchar *ip;
     int port;
 
-    gboolean is_ldap;
     gboolean is_connect_to_prev_pool;
     gboolean to_save_pswd;
 

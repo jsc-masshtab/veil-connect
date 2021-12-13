@@ -80,7 +80,7 @@ make
 
 ## Building on Windows
 
-- Установить MSYS2, следуя инструкциям https://www.gtk.org/docs/installations/windows
+- Установить MSYS2, следуя инструкциям https://www.gtk.org/docs/installations/windows.
 
 
 - Установить GTK3. Открыть MSYS2 терминал и выполнить:
@@ -99,12 +99,11 @@ pacman -S mingw64/mingw-w64-x86_64-libsoup
 pacman -S mingw64/mingw-w64-x86_64-spice-gtk
 pacman -S mingw64/mingw-w64-x86_64-libusb
 ```
-- В файле CmaleLists.txt в переменную LIBS_INCLUDE_PATH задать путь MSYS_INCLUDE
+- В файле CmaleLists.txt в переменную LIBS_INCLUDE_PATH задать путь MSYS_INCLUDE.
 
 - Скачать freerdp https://github.com/FreeRDP/FreeRDP/releases/latest распаковать.
-  Freerdp на Windows возможно собрать только с помощью нативного компилятора (visual C) 
 
-- Поставить visual studio https://visualstudio.microsoft.com/ru/downloads/ .
+- Поставить visual studio https://visualstudio.microsoft.com/ru/downloads/.
   
 - Выполнить в корне freerdp команду:
   ```
@@ -112,25 +111,29 @@ pacman -S mingw64/mingw-w64-x86_64-libusb
   ```
 - Файл FreeRDP.sln открыть в студии. Выбрать режим Release и собрать. В папке freerdp
 будет создана папка Release с собранными библиотеками.
-- В файле CmaleLists.txt в переменной FREERDP_PATH указать путь к папке freerdp
+- В файле CmaleLists.txt в переменной FREERDP_PATH указать путь к папке freerdp.
  
-- Собрать Veil Connect
+- Собрать Veil Connect.
 
 ## Building on Mac
 
-- Установить средства разработки выполнив в терминале:
+- Установить Xcode из App Store.
+ 
+- Установить средства разработки, выполнив в терминале:
 ```  
 xcode-select --install
 ```
 
-- Установить macports следуя инструкциям https://www.macports.org/install.php
-- Установить xquartz  https://www.xquartz.org/
+- Установить macports, следуя инструкциям https://www.macports.org/install.php.
+
+- Установить xquartz  https://www.xquartz.org/.
 ```
   sudo /opt/local/bin/port -v install xorg-server
 ```
 
-- Установить зависимости:
+- Установить зависимости и инструменты:
 ```
+sudo /opt/local/bin/port install cmake
 sudo /opt/local/bin/port install gtk3 +x11
 sudo /opt/local/bin/port install freerdp
 sudo /opt/local/bin/port install spice-gtk +x11
@@ -139,7 +142,7 @@ sudo /opt/local/bin/port install libsoup
 sudo /opt/local/bin/port install hiredis
 ```
 
-- Собрать Veil Connect
+- Собрать Veil Connect.
 
 ## Структурная схема
 ![Alt text](doc/diagram.svg)

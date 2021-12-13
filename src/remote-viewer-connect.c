@@ -43,6 +43,7 @@ typedef struct
     GtkWidget *password_entry;
     GtkWidget *disposable_password_entry;
     GtkWidget *check_btn_2fa_password;
+    GtkWidget *ldap_check_btn;
 
     GtkWidget *window;
     GtkWidget *connect_spinner;
@@ -118,6 +119,9 @@ take_from_gui(RemoteViewerConnData *ci)
     } else {
         vdi_session_set_credentials(login, password, disposable_password);
     }
+
+    gboolean is_ldap = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(ci->ldap_check_btn));
+    vdi_session_set_ldap(is_ldap);
 }
 
 // set error message
@@ -285,6 +289,8 @@ fill_gui(RemoteViewerConnData *ci)
         if (vdi_session_get_vdi_password())
             gtk_entry_set_text(GTK_ENTRY(ci->password_entry), vdi_session_get_vdi_password());
     }
+
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(ci->ldap_check_btn), vdi_session_is_ldap());
 }
 
 // В этом режиме сразу автоматом пытаемся подключиться к предыдущему пулу, не дожидаясь действий пользователя.
@@ -360,6 +366,7 @@ remote_viewer_connect_dialog(RemoteViewer *remote_viewer)
     // 2fa password
     ci.disposable_password_entry = GTK_WIDGET(gtk_builder_get_object(builder, "disposable_password_entry"));
     ci.check_btn_2fa_password = GTK_WIDGET(gtk_builder_get_object(builder, "check_btn_2fa_password"));
+    ci.ldap_check_btn = get_widget_from_builder(builder, "ldap_check_btn");
 
     // Signal - callbacks connections
     g_signal_connect(ci.window, "key-press-event", G_CALLBACK(key_pressed_cb), &ci);

@@ -222,7 +222,8 @@ void vdi_session_cancell_pending_requests(void);
 // set vdi session credentials
 void vdi_session_set_credentials(const gchar *username, const gchar *password,
                                  const gchar *disposable_password);
-void vdi_session_set_conn_data(const gchar *ip, int port, gboolean is_ldap);
+void vdi_session_set_conn_data(const gchar *ip, int port);
+void vdi_session_set_ldap(gboolean is_ldap);
 // set current pool id
 void vdi_session_set_current_pool_id(const gchar *current_pool_id);
 // get current vm id

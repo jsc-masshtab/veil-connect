@@ -27,7 +27,6 @@ void settings_data_read_all(ConnectSettingsData *data)
 
     data->ip = read_str_from_ini_file(manual_conn_group, "ip");
     data->port = read_int_from_ini_file(manual_conn_group, "port", 443);
-    data->is_ldap = read_int_from_ini_file(manual_conn_group, "is_ldap", 0);
 
     // set params save group
     const gchar *paramToFileGrpoup = get_cur_ini_param_group();
@@ -41,7 +40,8 @@ void settings_data_read_all(ConnectSettingsData *data)
     gboolean is_ldap = read_int_from_ini_file(paramToFileGrpoup, "is_ldap", 0);
 
     vdi_session_set_credentials(username, password, NULL);
-    vdi_session_set_conn_data(ip, port, is_ldap);
+    vdi_session_set_conn_data(ip, port);
+    vdi_session_set_ldap(is_ldap);
 
     data->domain = read_str_from_ini_file(paramToFileGrpoup, "domain");
     data->is_connect_to_prev_pool =
@@ -79,7 +79,6 @@ void settings_data_save_all(ConnectSettingsData *data)
         write_str_to_ini_file(manual_conn_group, "password", "");
     write_str_to_ini_file(manual_conn_group, "ip", data->ip);
     write_int_to_ini_file(manual_conn_group, "port", data->port);
-    write_int_to_ini_file(manual_conn_group, "is_ldap", data->is_ldap);
 
     // Main
     const gchar *paramToFileGrpoup = get_cur_ini_param_group();

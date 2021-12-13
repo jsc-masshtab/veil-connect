@@ -234,22 +234,6 @@
                       </packing>
                     </child>
                     <child>
-                      <object class="GtkCheckButton" id="ldap-button">
-                        <property name="label" translatable="yes" comments="Внешняя служба авторизации">LDAP</property>
-                        <property name="name">ldap-button</property>
-                        <property name="visible">True</property>
-                        <property name="can_focus">True</property>
-                        <property name="receives_default">False</property>
-                        <property name="halign">start</property>
-                        <property name="draw_indicator">True</property>
-                      </object>
-                      <packing>
-                        <property name="expand">False</property>
-                        <property name="fill">True</property>
-                        <property name="position">3</property>
-                      </packing>
-                    </child>
-                    <child>
                       <object class="GtkCheckButton" id="connect-to-prev-button">
                         <property name="label" translatable="yes" comments="Автоподключение при запуске">Auto connection upon startup</property>
                         <property name="name">connect-to-prev-button</property>
@@ -846,6 +830,7 @@ GUI data will be ignored</property>
                               <object class="GtkEntry" id="rdp_shared_folders_entry">
                                 <property name="visible">True</property>
                                 <property name="can_focus">True</property>
+                                <property name="tooltip_text" translatable="yes">Add folders to redirect</property>
                                 <property name="hexpand">True</property>
                               </object>
                               <packing>
@@ -857,7 +842,6 @@ GUI data will be ignored</property>
                               <object class="GtkLabel">
                                 <property name="visible">True</property>
                                 <property name="can_focus">False</property>
-                                <property name="tooltip_text" translatable="yes" comments="Перечислите папки через точку с запятой, либо выберите их с помощью селектора">Add folders to redirect</property>
                                 <property name="halign">end</property>
                                 <property name="margin_right">10</property>
                                 <property name="label" translatable="yes" comments="Перенаправляемые папки">Folders redirection</property>

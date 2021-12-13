@@ -33,7 +33,6 @@ typedef struct{
     GtkWidget *domain_entry;
     GtkWidget *address_entry;
     GtkWidget *port_spinbox;
-    GtkWidget *ldap_check_btn;
     GtkWidget *conn_to_prev_pool_checkbutton;
     GtkWidget *save_password_checkbtn;
     GtkWidget *remote_protocol_combobox;
@@ -131,7 +130,6 @@ typedef struct{
 static void update_gui_according_to_connect_mode(ConnectSettingsDialogData *dialog_data,
                                                      gboolean _opt_manual_mode)
 {
-    gtk_widget_set_sensitive(dialog_data->ldap_check_btn, !_opt_manual_mode);
     gtk_widget_set_sensitive(dialog_data->conn_to_prev_pool_checkbutton, !_opt_manual_mode);
     gtk_widget_set_visible(dialog_data->remote_protocol_combobox, _opt_manual_mode);
 
@@ -571,14 +569,11 @@ fill_gui(ConnectSettingsDialogData *dialog_data)
         }
         // port.
         gtk_spin_button_set_value(GTK_SPIN_BUTTON(dialog_data->port_spinbox), p_conn_data->port);
-        // ldap
-        gtk_toggle_button_set_active((GtkToggleButton *)dialog_data->ldap_check_btn, p_conn_data->is_ldap);
     } else {
         if (vdi_session_get_vdi_ip())
             gtk_entry_set_text(GTK_ENTRY(dialog_data->address_entry), vdi_session_get_vdi_ip());
         gtk_spin_button_set_value(GTK_SPIN_BUTTON(dialog_data->port_spinbox),
                                   vdi_session_get_vdi_port());
-        gtk_toggle_button_set_active((GtkToggleButton *)dialog_data->ldap_check_btn, vdi_session_is_ldap());
     }
 
     // Connect to prev pool
@@ -724,15 +719,12 @@ take_from_gui(ConnectSettingsDialogData *dialog_data)
     update_string_safely(&conn_data->domain, gtk_entry_get_text(GTK_ENTRY(dialog_data->domain_entry)));
     const gchar *ip = gtk_entry_get_text(GTK_ENTRY(dialog_data->address_entry));
     int port = gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(dialog_data->port_spinbox));
-    gboolean is_ldap = gtk_toggle_button_get_active((GtkToggleButton *)dialog_data->ldap_check_btn);
     if (conn_data->opt_manual_mode) {
         // ip port
         update_string_safely(&conn_data->ip, ip);
         conn_data->port = port;
-        // ldap
-        conn_data->is_ldap = is_ldap;
     } else {
-        vdi_session_set_conn_data(ip, port, is_ldap);
+        vdi_session_set_conn_data(ip, port);
     }
 
     // prev pool
@@ -891,7 +883,6 @@ GtkResponseType remote_viewer_start_settings_dialog(RemoteViewer *p_remote_viewe
     dialog_data.domain_entry = get_widget_from_builder(dialog_data.builder, "domain-entry");
     dialog_data.address_entry = get_widget_from_builder(dialog_data.builder, "connection-address-entry");
     dialog_data.port_spinbox = get_widget_from_builder(dialog_data.builder, "port_spinbox");
-    dialog_data.ldap_check_btn = get_widget_from_builder(dialog_data.builder, "ldap-button");
     dialog_data.conn_to_prev_pool_checkbutton = get_widget_from_builder(dialog_data.builder, "connect-to-prev-button");
     dialog_data.save_password_checkbtn = get_widget_from_builder(dialog_data.builder, "save_password_btn");
     dialog_data.remote_protocol_combobox = get_widget_from_builder(dialog_data.builder, "remote_protocol_combobox");

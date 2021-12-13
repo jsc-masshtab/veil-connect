@@ -432,7 +432,7 @@ void vdi_session_set_credentials(const gchar *username, const gchar *password,
     vdi_session_static->disposable_password = strstrip_safely(g_strdup(disposable_password));
 }
 
-void vdi_session_set_conn_data(const gchar *ip, int port, gboolean is_ldap)
+void vdi_session_set_conn_data(const gchar *ip, int port)
 {
     free_memory_safely(&vdi_session_static->vdi_ip);
     free_memory_safely(&vdi_session_static->api_url);
@@ -454,6 +454,10 @@ void vdi_session_set_conn_data(const gchar *ip, int port, gboolean is_ldap)
 
     vdi_session_static->auth_url = g_strdup_printf("%s/auth/", vdi_session_static->api_url);
 
+}
+
+void vdi_session_set_ldap(gboolean is_ldap)
+{
     vdi_session_static->is_ldap = is_ldap;
 }
 
