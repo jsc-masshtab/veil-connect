@@ -61,6 +61,7 @@ typedef struct{
     GtkWidget *btn_show_monitor_config_rdp;
 
     GtkWidget *redirect_printers_check_btn;
+    GtkWidget *rdp_redirect_microphone_check_btn;
 
     GtkWidget *remote_app_check_btn;
     GtkWidget *remote_app_name_entry;
@@ -632,6 +633,8 @@ fill_gui(ConnectSettingsDialogData *dialog_data)
 
     gtk_toggle_button_set_active((GtkToggleButton *)dialog_data->redirect_printers_check_btn,
             p_conn_data->rdp_settings.redirectprinters);
+    gtk_toggle_button_set_active((GtkToggleButton *)dialog_data->rdp_redirect_microphone_check_btn,
+                                 p_conn_data->rdp_settings.redirect_microphone);
 
     gtk_toggle_button_set_active((GtkToggleButton *)dialog_data->remote_app_check_btn,
             p_conn_data->rdp_settings.is_remote_app);
@@ -782,6 +785,8 @@ take_from_gui(ConnectSettingsDialogData *dialog_data)
 
     conn_data->rdp_settings.redirectprinters = gtk_toggle_button_get_active(
             (GtkToggleButton *)dialog_data->redirect_printers_check_btn);
+    conn_data->rdp_settings.redirect_microphone = gtk_toggle_button_get_active(
+            (GtkToggleButton *)dialog_data->rdp_redirect_microphone_check_btn);
 
     conn_data->rdp_settings.is_remote_app =
             gtk_toggle_button_get_active((GtkToggleButton *)dialog_data->remote_app_check_btn);
@@ -926,6 +931,8 @@ GtkResponseType remote_viewer_start_settings_dialog(RemoteViewer *p_remote_viewe
             get_widget_from_builder(dialog_data.builder, "btn_show_monitor_config_rdp");
     dialog_data.redirect_printers_check_btn =
             get_widget_from_builder(dialog_data.builder, "redirect_printers_check_btn");
+    dialog_data.rdp_redirect_microphone_check_btn =
+            get_widget_from_builder(dialog_data.builder, "rdp_redirect_microphone_check_btn");
 
     dialog_data.remote_app_check_btn = get_widget_from_builder(dialog_data.builder, "remote_app_check_btn");
     dialog_data.remote_app_name_entry = get_widget_from_builder(dialog_data.builder, "remote_app_name_entry");

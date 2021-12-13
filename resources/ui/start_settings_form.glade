@@ -449,41 +449,11 @@ Application restart required to apply changes.</property>
                           <object class="GtkGrid">
                             <property name="visible">True</property>
                             <property name="can_focus">False</property>
-                            <property name="margin_right">11</property>
+                            <property name="margin_right">12</property>
                             <property name="margin_top">3</property>
                             <property name="row_spacing">9</property>
                             <property name="column_spacing">3</property>
                             <property name="column_homogeneous">True</property>
-                            <child>
-                              <object class="GtkCheckButton" id="remote_app_check_btn">
-                                <property name="label" translatable="yes" comments="Удаленное приложение">Remote application</property>
-                                <property name="name">remote_app_check_btn</property>
-                                <property name="visible">True</property>
-                                <property name="can_focus">True</property>
-                                <property name="receives_default">False</property>
-                                <property name="tooltip_text" translatable="yes" comments="Режим, в котором доступно только одно заданное приложение">Remote application mode</property>
-                                <property name="halign">start</property>
-                                <property name="hexpand">False</property>
-                                <property name="draw_indicator">True</property>
-                              </object>
-                              <packing>
-                                <property name="left_attach">0</property>
-                                <property name="top_attach">8</property>
-                              </packing>
-                            </child>
-                            <child>
-                              <object class="GtkEntry" id="remote_app_name_entry">
-                                <property name="name">remote_app_name_entry</property>
-                                <property name="visible">True</property>
-                                <property name="sensitive">False</property>
-                                <property name="can_focus">True</property>
-                                <property name="placeholder_text" translatable="yes" comments="название">name</property>
-                              </object>
-                              <packing>
-                                <property name="left_attach">1</property>
-                                <property name="top_attach">8</property>
-                              </packing>
-                            </child>
                             <child>
                               <object class="GtkLabel">
                                 <property name="visible">True</property>
@@ -497,120 +467,11 @@ Application restart required to apply changes.</property>
                               </packing>
                             </child>
                             <child>
-                              <object class="GtkEntry" id="remote_app_options_entry">
-                                <property name="visible">True</property>
-                                <property name="sensitive">False</property>
-                                <property name="can_focus">True</property>
-                                <property name="placeholder_text" translatable="yes" comments="параметры">options</property>
-                              </object>
-                              <packing>
-                                <property name="left_attach">1</property>
-                                <property name="top_attach">9</property>
-                              </packing>
-                            </child>
-                            <child>
-                              <object class="GtkCheckButton" id="is_rdp_vid_comp_used_check_btn">
-                                <property name="label" translatable="yes" comments="Сжатие видеопотока">Video stream compression</property>
-                                <property name="name">is_rdp_vid_comp_used_check_btn</property>
-                                <property name="visible">True</property>
-                                <property name="can_focus">True</property>
-                                <property name="receives_default">False</property>
-                                <property name="tooltip_text" translatable="yes" comments="Указать кодек сжатия видеопотока">Specify compression codec</property>
-                                <property name="halign">start</property>
-                                <property name="draw_indicator">True</property>
-                              </object>
-                              <packing>
-                                <property name="left_attach">0</property>
-                                <property name="top_attach">10</property>
-                              </packing>
-                            </child>
-                            <child>
-                              <object class="GtkComboBoxText" id="rdp_codec_combobox">
-                                <property name="visible">True</property>
-                                <property name="sensitive">False</property>
-                                <property name="can_focus">False</property>
-                                <property name="active">0</property>
-                                <items>
-                                  <item id="RFX" translatable="yes">RemoteFX</item>
-                                  <item id="AVC420" translatable="yes">AVC420</item>
-                                  <item id="AVC444" translatable="yes">AVC444</item>
-                                </items>
-                              </object>
-                              <packing>
-                                <property name="left_attach">1</property>
-                                <property name="top_attach">10</property>
-                              </packing>
-                            </child>
-                            <child>
-                              <object class="GtkCheckButton" id="rdp_decorations_check_btn">
-                                <property name="label" translatable="yes" comments="Отключить декорации окон">Disable window decorations</property>
-                                <property name="visible">True</property>
-                                <property name="can_focus">True</property>
-                                <property name="receives_default">False</property>
-                                <property name="halign">start</property>
-                                <property name="draw_indicator">True</property>
-                              </object>
-                              <packing>
-                                <property name="left_attach">0</property>
-                                <property name="top_attach">11</property>
-                              </packing>
-                            </child>
-                            <child>
-                              <object class="GtkCheckButton" id="rdp_fonts_check_btn">
-                                <property name="label" translatable="yes" comments="Отключить гладкие шрифты">Disable smooth fonts </property>
-                                <property name="visible">True</property>
-                                <property name="can_focus">True</property>
-                                <property name="receives_default">False</property>
-                                <property name="halign">start</property>
-                                <property name="draw_indicator">True</property>
-                              </object>
-                              <packing>
-                                <property name="left_attach">0</property>
-                                <property name="top_attach">12</property>
-                              </packing>
-                            </child>
-                            <child>
-                              <object class="GtkCheckButton" id="rdp_themes_check_btn">
-                                <property name="label" translatable="yes" comments="Отключить Windows темы">Disable Windows themes</property>
-                                <property name="visible">True</property>
-                                <property name="can_focus">True</property>
-                                <property name="receives_default">False</property>
-                                <property name="halign">start</property>
-                                <property name="draw_indicator">True</property>
-                              </object>
-                              <packing>
-                                <property name="left_attach">0</property>
-                                <property name="top_attach">13</property>
-                              </packing>
-                            </child>
-                            <child>
-                              <object class="GtkButton" id="select_usb_btn">
-                                <property name="label" translatable="yes" comments="Выбрать USB для&#10;перенаправления">Select RemoteFX USB for redirection</property>
-                                <property name="visible">True</property>
-                                <property name="can_focus">True</property>
-                                <property name="receives_default">True</property>
-                                <property name="tooltip_text" translatable="yes" comments="Перенаправление USB устройств (веб камеры, микрофоны).&#10;Для работы необходимы поддержка RemoteFX на стороне удаленной машины и разрешение на открытие USB на текущем клиенте.&#10;Перенаправление flash накопителей не поддерживается: используйте перенаправление папок.">USB devices redirection</property>
-                              </object>
-                              <packing>
-                                <property name="left_attach">0</property>
-                                <property name="top_attach">14</property>
-                              </packing>
-                            </child>
-                            <child>
                               <object class="GtkBox">
                                 <property name="visible">True</property>
                                 <property name="can_focus">False</property>
                                 <child>
-                                  <object class="GtkEntry" id="rdp_shared_folders_entry">
-                                    <property name="visible">True</property>
-                                    <property name="can_focus">True</property>
-                                    <property name="hexpand">True</property>
-                                  </object>
-                                  <packing>
-                                    <property name="expand">False</property>
-                                    <property name="fill">True</property>
-                                    <property name="position">0</property>
-                                  </packing>
+                                  <placeholder/>
                                 </child>
                               </object>
                               <packing>
@@ -681,145 +542,46 @@ Application restart required to apply changes.</property>
                               </packing>
                             </child>
                             <child>
-                              <object class="GtkCheckButton" id="redirect_printers_check_btn">
-                                <property name="label" translatable="yes" comments="Перенаправить принтеры">Redirect printers</property>
-                                <property name="name">redirect_printers_check_btn</property>
-                                <property name="visible">True</property>
-                                <property name="can_focus">True</property>
-                                <property name="receives_default">False</property>
-                                <property name="tooltip_text" translatable="yes">Network scanners and printers redirection</property>
-                                <property name="halign">start</property>
-                                <property name="hexpand">True</property>
-                                <property name="draw_indicator">True</property>
-                              </object>
-                              <packing>
-                                <property name="left_attach">0</property>
-                                <property name="top_attach">7</property>
-                              </packing>
-                            </child>
-                            <child>
                               <object class="GtkBox">
                                 <property name="visible">True</property>
                                 <property name="can_focus">False</property>
                                 <property name="homogeneous">True</property>
                                 <child>
-                                  <object class="GtkCheckButton" id="use_rdp_file_check_btn">
-                                    <property name="label" translatable="yes" comments="RDP файл">RDP file</property>
+                                  <object class="GtkBox">
                                     <property name="visible">True</property>
-                                    <property name="can_focus">True</property>
-                                    <property name="receives_default">False</property>
-                                    <property name="tooltip_text" translatable="yes" comments="Режим чтения настроек RDP из стандартного файла настроек (.rdp)&#10;Текущие данные графической формы игнорируются">Reading the settings from standard RDP file (.rdp)
+                                    <property name="can_focus">False</property>
+                                    <property name="homogeneous">True</property>
+                                    <child>
+                                      <object class="GtkCheckButton" id="use_rdp_file_check_btn">
+                                        <property name="label" translatable="yes" comments="RDP файл">RDP file</property>
+                                        <property name="visible">True</property>
+                                        <property name="can_focus">True</property>
+                                        <property name="receives_default">False</property>
+                                        <property name="tooltip_text" translatable="yes" comments="Режим чтения настроек RDP из стандартного файла настроек (.rdp)&#10;Текущие данные графической формы игнорируются">Reading the settings from standard RDP file (.rdp)
 GUI data will be ignored</property>
-                                    <property name="halign">start</property>
-                                    <property name="hexpand">False</property>
-                                    <property name="draw_indicator">True</property>
-                                  </object>
-                                  <packing>
-                                    <property name="expand">False</property>
-                                    <property name="fill">True</property>
-                                    <property name="position">0</property>
-                                  </packing>
-                                </child>
-                                <child>
-                                  <object class="GtkButton" id="btn_choose_rdp_file">
-                                    <property name="label" translatable="yes" comments="Выбрать">Select</property>
-                                    <property name="visible">True</property>
-                                    <property name="can_focus">True</property>
-                                    <property name="receives_default">True</property>
-                                  </object>
-                                  <packing>
-                                    <property name="expand">False</property>
-                                    <property name="fill">True</property>
-                                    <property name="position">1</property>
-                                  </packing>
-                                </child>
-                              </object>
-                              <packing>
-                                <property name="left_attach">0</property>
-                                <property name="top_attach">17</property>
-                              </packing>
-                            </child>
-                            <child>
-                              <object class="GtkEntry" id="rdp_file_name_entry">
-                                <property name="visible">True</property>
-                                <property name="can_focus">True</property>
-                                <property name="hexpand">True</property>
-                                <property name="placeholder_text" translatable="yes">File name</property>
-                              </object>
-                              <packing>
-                                <property name="left_attach">1</property>
-                                <property name="top_attach">17</property>
-                              </packing>
-                            </child>
-                            <child>
-                              <object class="GtkLabel">
-                                <property name="visible">True</property>
-                                <property name="can_focus">False</property>
-                                <property name="tooltip_text" translatable="yes" comments="Перечислите папки через точку с запятой, либо выберите их с помощью селектора">Add folders to redirect</property>
-                                <property name="halign">end</property>
-                                <property name="margin_right">10</property>
-                                <property name="label" translatable="yes" comments="Перенаправляемые папки">Folders redirection</property>
-                              </object>
-                              <packing>
-                                <property name="left_attach">0</property>
-                                <property name="top_attach">15</property>
-                              </packing>
-                            </child>
-                            <child>
-                              <object class="GtkBox">
-                                <property name="visible">True</property>
-                                <property name="can_focus">False</property>
-                                <property name="homogeneous">True</property>
-                                <child>
-                                  <object class="GtkButton" id="btn_add_remote_folder">
-                                    <property name="label" translatable="yes" comments="Добавить папку">Add folder</property>
-                                    <property name="visible">True</property>
-                                    <property name="can_focus">True</property>
-                                    <property name="receives_default">True</property>
-                                    <property name="hexpand">True</property>
-                                    <property name="always_show_image">True</property>
-                                  </object>
-                                  <packing>
-                                    <property name="expand">False</property>
-                                    <property name="fill">True</property>
-                                    <property name="position">1</property>
-                                  </packing>
-                                </child>
-                                <child>
-                                  <object class="GtkButton" id="btn_remove_remote_folder">
-                                    <property name="label" translatable="yes" comments="Очистить">Clear</property>
-                                    <property name="visible">True</property>
-                                    <property name="can_focus">True</property>
-                                    <property name="receives_default">True</property>
-                                    <property name="hexpand">True</property>
-                                    <property name="always_show_image">True</property>
-                                  </object>
-                                  <packing>
-                                    <property name="expand">False</property>
-                                    <property name="fill">True</property>
-                                    <property name="position">2</property>
-                                  </packing>
-                                </child>
-                              </object>
-                              <packing>
-                                <property name="left_attach">1</property>
-                                <property name="top_attach">16</property>
-                              </packing>
-                            </child>
-                            <child>
-                              <object class="GtkBox">
-                                <property name="visible">True</property>
-                                <property name="can_focus">False</property>
-                                <property name="homogeneous">True</property>
-                                <child>
-                                  <object class="GtkCheckButton" id="use_rd_gateway_check_btn">
-                                    <property name="label" translatable="yes">RD Gateway</property>
-                                    <property name="visible">True</property>
-                                    <property name="can_focus">True</property>
-                                    <property name="receives_default">False</property>
-                                    <property name="tooltip_text" translatable="yes">Connect to Remote Desktop Gateway</property>
-                                    <property name="halign">start</property>
-                                    <property name="draw_indicator">True</property>
+                                        <property name="halign">start</property>
+                                        <property name="hexpand">False</property>
+                                        <property name="draw_indicator">True</property>
+                                      </object>
+                                      <packing>
+                                        <property name="expand">False</property>
+                                        <property name="fill">True</property>
+                                        <property name="position">0</property>
+                                      </packing>
+                                    </child>
+                                    <child>
+                                      <object class="GtkButton" id="btn_choose_rdp_file">
+                                        <property name="label" translatable="yes" comments="Выбрать">Select</property>
+                                        <property name="visible">True</property>
+                                        <property name="can_focus">True</property>
+                                        <property name="receives_default">True</property>
+                                      </object>
+                                      <packing>
+                                        <property name="expand">False</property>
+                                        <property name="fill">True</property>
+                                        <property name="position">1</property>
+                                      </packing>
+                                    </child>
                                   </object>
                                   <packing>
                                     <property name="expand">False</property>
@@ -830,18 +592,6 @@ GUI data will be ignored</property>
                               </object>
                               <packing>
                                 <property name="left_attach">0</property>
-                                <property name="top_attach">18</property>
-                              </packing>
-                            </child>
-                            <child>
-                              <object class="GtkEntry" id="gateway_address_entry">
-                                <property name="visible">True</property>
-                                <property name="sensitive">False</property>
-                                <property name="can_focus">True</property>
-                                <property name="placeholder_text" translatable="yes">Gateway address</property>
-                              </object>
-                              <packing>
-                                <property name="left_attach">1</property>
                                 <property name="top_attach">18</property>
                               </packing>
                             </child>
@@ -1009,11 +759,274 @@ GUI data will be ignored</property>
                               </object>
                               <packing>
                                 <property name="left_attach">0</property>
+                                <property name="top_attach">20</property>
+                              </packing>
+                            </child>
+                            <child>
+                              <object class="GtkCheckButton" id="use_rd_gateway_check_btn">
+                                <property name="label" translatable="yes">RD Gateway</property>
+                                <property name="visible">True</property>
+                                <property name="can_focus">True</property>
+                                <property name="receives_default">False</property>
+                                <property name="tooltip_text" translatable="yes">Connect to Remote Desktop Gateway</property>
+                                <property name="halign">start</property>
+                                <property name="draw_indicator">True</property>
+                              </object>
+                              <packing>
+                                <property name="left_attach">0</property>
                                 <property name="top_attach">19</property>
                               </packing>
                             </child>
                             <child>
-                              <placeholder/>
+                              <object class="GtkEntry" id="gateway_address_entry">
+                                <property name="visible">True</property>
+                                <property name="sensitive">False</property>
+                                <property name="can_focus">True</property>
+                                <property name="placeholder_text" translatable="yes">Gateway address</property>
+                              </object>
+                              <packing>
+                                <property name="left_attach">1</property>
+                                <property name="top_attach">19</property>
+                              </packing>
+                            </child>
+                            <child>
+                              <object class="GtkEntry" id="rdp_file_name_entry">
+                                <property name="visible">True</property>
+                                <property name="can_focus">True</property>
+                                <property name="hexpand">True</property>
+                                <property name="placeholder_text" translatable="yes">File name</property>
+                              </object>
+                              <packing>
+                                <property name="left_attach">1</property>
+                                <property name="top_attach">18</property>
+                              </packing>
+                            </child>
+                            <child>
+                              <object class="GtkBox">
+                                <property name="visible">True</property>
+                                <property name="can_focus">False</property>
+                                <property name="homogeneous">True</property>
+                                <child>
+                                  <object class="GtkButton" id="btn_add_remote_folder">
+                                    <property name="label" translatable="yes" comments="Добавить папку">Add folder</property>
+                                    <property name="visible">True</property>
+                                    <property name="can_focus">True</property>
+                                    <property name="receives_default">True</property>
+                                    <property name="hexpand">True</property>
+                                    <property name="always_show_image">True</property>
+                                  </object>
+                                  <packing>
+                                    <property name="expand">False</property>
+                                    <property name="fill">True</property>
+                                    <property name="position">1</property>
+                                  </packing>
+                                </child>
+                                <child>
+                                  <object class="GtkButton" id="btn_remove_remote_folder">
+                                    <property name="label" translatable="yes" comments="Очистить">Clear</property>
+                                    <property name="visible">True</property>
+                                    <property name="can_focus">True</property>
+                                    <property name="receives_default">True</property>
+                                    <property name="hexpand">True</property>
+                                    <property name="always_show_image">True</property>
+                                  </object>
+                                  <packing>
+                                    <property name="expand">False</property>
+                                    <property name="fill">True</property>
+                                    <property name="position">2</property>
+                                  </packing>
+                                </child>
+                              </object>
+                              <packing>
+                                <property name="left_attach">1</property>
+                                <property name="top_attach">17</property>
+                              </packing>
+                            </child>
+                            <child>
+                              <object class="GtkEntry" id="rdp_shared_folders_entry">
+                                <property name="visible">True</property>
+                                <property name="can_focus">True</property>
+                                <property name="hexpand">True</property>
+                              </object>
+                              <packing>
+                                <property name="left_attach">1</property>
+                                <property name="top_attach">16</property>
+                              </packing>
+                            </child>
+                            <child>
+                              <object class="GtkLabel">
+                                <property name="visible">True</property>
+                                <property name="can_focus">False</property>
+                                <property name="tooltip_text" translatable="yes" comments="Перечислите папки через точку с запятой, либо выберите их с помощью селектора">Add folders to redirect</property>
+                                <property name="halign">end</property>
+                                <property name="margin_right">10</property>
+                                <property name="label" translatable="yes" comments="Перенаправляемые папки">Folders redirection</property>
+                              </object>
+                              <packing>
+                                <property name="left_attach">0</property>
+                                <property name="top_attach">16</property>
+                              </packing>
+                            </child>
+                            <child>
+                              <object class="GtkButton" id="select_usb_btn">
+                                <property name="label" translatable="yes" comments="Выбрать USB для&#10;перенаправления">Select RemoteFX USB for redirection</property>
+                                <property name="visible">True</property>
+                                <property name="can_focus">True</property>
+                                <property name="receives_default">True</property>
+                                <property name="tooltip_text" translatable="yes" comments="Перенаправление USB устройств (веб камеры, микрофоны).&#10;Для работы необходимы поддержка RemoteFX на стороне удаленной машины и разрешение на открытие USB на текущем клиенте.&#10;Перенаправление flash накопителей не поддерживается: используйте перенаправление папок.">USB devices redirection</property>
+                              </object>
+                              <packing>
+                                <property name="left_attach">0</property>
+                                <property name="top_attach">15</property>
+                              </packing>
+                            </child>
+                            <child>
+                              <object class="GtkCheckButton" id="redirect_printers_check_btn">
+                                <property name="label" translatable="yes" comments="Перенаправить принтеры">Redirect printers</property>
+                                <property name="name">redirect_printers_check_btn</property>
+                                <property name="visible">True</property>
+                                <property name="can_focus">True</property>
+                                <property name="receives_default">False</property>
+                                <property name="tooltip_text" translatable="yes">Network scanners and printers redirection</property>
+                                <property name="halign">start</property>
+                                <property name="hexpand">True</property>
+                                <property name="draw_indicator">True</property>
+                              </object>
+                              <packing>
+                                <property name="left_attach">0</property>
+                                <property name="top_attach">14</property>
+                              </packing>
+                            </child>
+                            <child>
+                              <object class="GtkCheckButton" id="remote_app_check_btn">
+                                <property name="label" translatable="yes" comments="Удаленное приложение">Remote application</property>
+                                <property name="name">remote_app_check_btn</property>
+                                <property name="visible">True</property>
+                                <property name="can_focus">True</property>
+                                <property name="receives_default">False</property>
+                                <property name="tooltip_text" translatable="yes" comments="Режим, в котором доступно только одно заданное приложение">Remote application mode</property>
+                                <property name="halign">start</property>
+                                <property name="hexpand">False</property>
+                                <property name="draw_indicator">True</property>
+                              </object>
+                              <packing>
+                                <property name="left_attach">0</property>
+                                <property name="top_attach">7</property>
+                              </packing>
+                            </child>
+                            <child>
+                              <object class="GtkEntry" id="remote_app_name_entry">
+                                <property name="name">remote_app_name_entry</property>
+                                <property name="visible">True</property>
+                                <property name="sensitive">False</property>
+                                <property name="can_focus">True</property>
+                                <property name="placeholder_text" translatable="yes" comments="название">name</property>
+                              </object>
+                              <packing>
+                                <property name="left_attach">1</property>
+                                <property name="top_attach">7</property>
+                              </packing>
+                            </child>
+                            <child>
+                              <object class="GtkEntry" id="remote_app_options_entry">
+                                <property name="visible">True</property>
+                                <property name="sensitive">False</property>
+                                <property name="can_focus">True</property>
+                                <property name="placeholder_text" translatable="yes" comments="параметры">options</property>
+                              </object>
+                              <packing>
+                                <property name="left_attach">1</property>
+                                <property name="top_attach">8</property>
+                              </packing>
+                            </child>
+                            <child>
+                              <object class="GtkComboBoxText" id="rdp_codec_combobox">
+                                <property name="visible">True</property>
+                                <property name="sensitive">False</property>
+                                <property name="can_focus">False</property>
+                                <property name="active">0</property>
+                                <items>
+                                  <item id="RFX" translatable="yes">RemoteFX</item>
+                                  <item id="AVC420" translatable="yes">AVC420</item>
+                                  <item id="AVC444" translatable="yes">AVC444</item>
+                                </items>
+                              </object>
+                              <packing>
+                                <property name="left_attach">1</property>
+                                <property name="top_attach">9</property>
+                              </packing>
+                            </child>
+                            <child>
+                              <object class="GtkCheckButton" id="is_rdp_vid_comp_used_check_btn">
+                                <property name="label" translatable="yes" comments="Сжатие видеопотока">Video stream compression</property>
+                                <property name="name">is_rdp_vid_comp_used_check_btn</property>
+                                <property name="visible">True</property>
+                                <property name="can_focus">True</property>
+                                <property name="receives_default">False</property>
+                                <property name="tooltip_text" translatable="yes" comments="Указать кодек сжатия видеопотока">Specify compression codec</property>
+                                <property name="halign">start</property>
+                                <property name="draw_indicator">True</property>
+                              </object>
+                              <packing>
+                                <property name="left_attach">0</property>
+                                <property name="top_attach">9</property>
+                              </packing>
+                            </child>
+                            <child>
+                              <object class="GtkCheckButton" id="rdp_decorations_check_btn">
+                                <property name="label" translatable="yes" comments="Отключить декорации окон">Disable window decorations</property>
+                                <property name="visible">True</property>
+                                <property name="can_focus">True</property>
+                                <property name="receives_default">False</property>
+                                <property name="halign">start</property>
+                                <property name="draw_indicator">True</property>
+                              </object>
+                              <packing>
+                                <property name="left_attach">0</property>
+                                <property name="top_attach">10</property>
+                              </packing>
+                            </child>
+                            <child>
+                              <object class="GtkCheckButton" id="rdp_fonts_check_btn">
+                                <property name="label" translatable="yes" comments="Отключить гладкие шрифты">Disable smooth fonts </property>
+                                <property name="visible">True</property>
+                                <property name="can_focus">True</property>
+                                <property name="receives_default">False</property>
+                                <property name="halign">start</property>
+                                <property name="draw_indicator">True</property>
+                              </object>
+                              <packing>
+                                <property name="left_attach">0</property>
+                                <property name="top_attach">11</property>
+                              </packing>
+                            </child>
+                            <child>
+                              <object class="GtkCheckButton" id="rdp_themes_check_btn">
+                                <property name="label" translatable="yes" comments="Отключить Windows темы">Disable Windows themes</property>
+                                <property name="visible">True</property>
+                                <property name="can_focus">True</property>
+                                <property name="receives_default">False</property>
+                                <property name="halign">start</property>
+                                <property name="draw_indicator">True</property>
+                              </object>
+                              <packing>
+                                <property name="left_attach">0</property>
+                                <property name="top_attach">12</property>
+                              </packing>
+                            </child>
+                            <child>
+                              <object class="GtkCheckButton" id="rdp_redirect_microphone_check_btn">
+                                <property name="label" translatable="yes">Redirect microphone</property>
+                                <property name="visible">True</property>
+                                <property name="can_focus">True</property>
+                                <property name="receives_default">False</property>
+                                <property name="halign">start</property>
+                                <property name="draw_indicator">True</property>
+                              </object>
+                              <packing>
+                                <property name="left_attach">0</property>
+                                <property name="top_attach">13</property>
+                              </packing>
                             </child>
                             <child>
                               <placeholder/>

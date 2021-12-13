@@ -60,6 +60,7 @@ typedef struct{
 
     gboolean redirectsmartcards;
     gboolean redirectprinters;
+    gboolean redirect_microphone;
 
     gchar *alternate_shell;
 

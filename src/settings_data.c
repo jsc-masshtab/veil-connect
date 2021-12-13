@@ -207,6 +207,7 @@ void rdp_settings_read_ini_file(VeilRdpSettings *rdp_settings, gboolean rewrite_
 
     rdp_settings->redirectsmartcards = read_int_from_ini_file(rdp_group, "redirectsmartcards", 1);
     rdp_settings->redirectprinters = read_int_from_ini_file(rdp_group, "redirect_printers", 1);
+    rdp_settings->redirect_microphone = read_int_from_ini_file(rdp_group, "redirect_microphone", 1);
 
     g_autofree gchar *alternate_shell = NULL;
     alternate_shell = read_str_from_ini_file(rdp_group, "alternate_shell");
@@ -347,7 +348,9 @@ void rdp_settings_write(VeilRdpSettings *rdp_settings)
     write_int_to_ini_file(rdp_group, "full_screen", rdp_settings->full_screen);
     write_str_to_ini_file(rdp_group, "selectedmonitors", rdp_settings->selectedmonitors);
 
+    write_int_to_ini_file(rdp_group, "redirectsmartcards", rdp_settings->redirectsmartcards);
     write_int_to_ini_file(rdp_group, "redirect_printers", rdp_settings->redirectprinters);
+    write_int_to_ini_file(rdp_group, "redirect_microphone", rdp_settings->redirect_microphone);
 
     write_int_to_ini_file(rdp_group, "is_remote_app", rdp_settings->is_remote_app);
     write_str_to_ini_file(rdp_group, "remote_app_program", rdp_settings->remote_app_program);
