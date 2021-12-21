@@ -502,7 +502,7 @@ VdiVmRemoteProtocol vdi_session_str_to_remote_protocol(const gchar *protocol_str
     else if (g_strcmp0("RDP", protocol_str) == 0)
         protocol = VDI_RDP_PROTOCOL;
     else if (g_strcmp0("NATIVE_RDP", protocol_str) == 0)
-        protocol = VDI_RDP_WINDOWS_NATIVE_PROTOCOL;
+        protocol = VDI_RDP_NATIVE_PROTOCOL;
     else if (g_strcmp0("X2GO", protocol_str) == 0)
         protocol = VDI_X2GO_PROTOCOL;
 
@@ -518,7 +518,7 @@ const gchar *vdi_session_remote_protocol_to_str(VdiVmRemoteProtocol protocol)
             return "SPICE_DIRECT";
         case VDI_RDP_PROTOCOL:
             return "RDP";
-        case VDI_RDP_WINDOWS_NATIVE_PROTOCOL:
+        case VDI_RDP_NATIVE_PROTOCOL:
             return "NATIVE_RDP";
         case VDI_X2GO_PROTOCOL:
             return "X2GO";

@@ -987,7 +987,6 @@ void show_msg_box_dialog(GtkWindow *parent, const gchar *message)
                                                    "%s", message);
     gtk_dialog_set_default_response(GTK_DIALOG(dialog_msg), GTK_RESPONSE_ACCEPT);
 
-
     GtkWidget *area = gtk_message_dialog_get_message_area(GTK_MESSAGE_DIALOG(dialog_msg));
     GtkContainer *box = (GtkContainer *) area;
 

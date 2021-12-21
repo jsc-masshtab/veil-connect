@@ -229,9 +229,9 @@ static gboolean rdp_viewer_window_event_on_mapped(GtkWidget *widget G_GNUC_UNUSE
     g_info("%s", (const char *)__func__);
     RdpWindowData *rdp_window_data = (RdpWindowData *)user_data;
     gboolean full_screen = rdp_window_data->ex_rdp_context->p_rdp_settings->full_screen;
-#ifndef __APPLE__ // Адекватный фул скрин не реализован для MacOs
+//#ifndef __APPLE__ // Адекватный фул скрин не реализован для MacOs
     rdp_viewer_window_toggle_fullscreen(rdp_window_data, full_screen);
-#endif
+//#endif
     return FALSE;
 }
 

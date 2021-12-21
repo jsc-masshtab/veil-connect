@@ -95,7 +95,7 @@ void conn_info_dialog_update(ConnInfoDialog *self, VdiVmRemoteProtocol protocol,
         gtk_label_set_text(GTK_LABEL(self->read_speed_label), read_speed_str);
         gtk_label_set_text(GTK_LABEL(self->write_speed_label), "-");
 
-    } else if (protocol == VDI_RDP_PROTOCOL || protocol == VDI_RDP_WINDOWS_NATIVE_PROTOCOL) {
+    } else if (protocol == VDI_RDP_PROTOCOL || protocol == VDI_RDP_NATIVE_PROTOCOL) {
         g_autofree gchar *read_speed_str = NULL;
         read_speed_str = convert_speed_to_kbytes_str(nw_data->rdp_read_speed);
         gtk_label_set_text(GTK_LABEL(self->read_speed_label), read_speed_str);

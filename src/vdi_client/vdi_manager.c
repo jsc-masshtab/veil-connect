@@ -23,6 +23,7 @@
 #include "jsonhandler.h"
 #include "settingsfile.h"
 #include "vdi_user_settings_widget.h"
+#include "native_rdp_launcher.h"
 
 #define MAX_POOL_NUMBER 150
 #define MSG_TRIM_LENGTH 140
@@ -298,9 +299,24 @@ static void on_vdi_session_get_vdi_pool_data_finished(GObject *source_object G_G
 
 static void stop_event_loop_and_go_to_vm(VdiManager *self)
 {
+#if defined(__MACH__)
+    // На маке единственное адекватное решение так как процесс завершится сразу после запуска RDP клиента
+    if (vdi_session_get_current_remote_protocol() == VDI_RDP_NATIVE_PROTOCOL) {
+        rdp_settings_read_ini_file(&self->p_conn_data->rdp_settings, !self->p_conn_data->rdp_settings.is_remote_app);
+        rdp_settings_set_connect_data(&self->p_conn_data->rdp_settings, vdi_session_get_vdi_username(),
+                                      vdi_session_get_vdi_password(), self->p_conn_data->domain,
+                                      self->p_conn_data->ip, 0);
+        launch_native_rdp_client(GTK_WINDOW(self->window), &self->p_conn_data->rdp_settings);
+    } else {
+        self->ci.response = TRUE;
+        self->ci.next_app_state = APP_STATE_REMOTE_VM;
+        shutdown_loop(self->ci.loop);
+    }
+#else
     self->ci.response = TRUE;
     self->ci.next_app_state = APP_STATE_REMOTE_VM;
     shutdown_loop(self->ci.loop);
+#endif
 }
 
 // callback which is invoked when vm start request finished
@@ -342,7 +358,7 @@ static void on_vdi_session_get_vm_from_pool_finished(GObject *source_object G_GN
         rdp_settings_clear(&self->p_conn_data->rdp_settings);
         VdiVmRemoteProtocol protocol = vdi_session_get_current_remote_protocol();
         if (vdi_vm_data->farm_array && vdi_vm_data->farm_array->len > 0 &&
-                (protocol == VDI_RDP_PROTOCOL || protocol == VDI_RDP_WINDOWS_NATIVE_PROTOCOL)) {
+                (protocol == VDI_RDP_PROTOCOL || protocol == VDI_RDP_NATIVE_PROTOCOL)) {
 
             AppSelectorResult selector_res = vdi_app_selector_start(vdi_vm_data, GTK_WINDOW(self->window));
             self->p_conn_data->rdp_settings = selector_res.rdp_settings;
