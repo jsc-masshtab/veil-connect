@@ -105,7 +105,7 @@ void usbredir_controller_stop_all_cur_tasks(gboolean with_sleep)
 
     // wait a bit to give the tasks a chance to finish correctly (when quitting app)
     if (with_sleep)
-        g_usleep(1500000);
+        g_usleep(1000000);
 }
 // We suppose this port will be free. Ofc there is a very small chance that another process took it.
 int usbredir_controller_get_free_port(void)

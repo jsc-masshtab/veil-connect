@@ -58,7 +58,8 @@ typedef struct{
 RdpWindowData *rdp_viewer_window_create(ExtendedRdpContext *ex_rdp_context,
         int index,  int monitor_num, GdkRectangle geometry);
 void rdp_viewer_window_destroy(RdpWindowData *rdp_window_data);
-void rdp_viewer_window_stop(RdpWindowData *rdp_window_data, RemoteViewerState next_app_state);
+void rdp_viewer_window_stop(RdpWindowData *rdp_window_data, RemoteViewerState next_app_state,
+        gboolean exit_if_cant_abort);
 
 void rdp_viewer_window_send_key_shortcut(rdpContext* context, int key_shortcut_index);
 #endif // RDP_VIEWER_WINDOW_H

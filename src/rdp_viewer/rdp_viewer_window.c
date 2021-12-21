@@ -217,7 +217,7 @@ static gboolean rdp_viewer_window_deleted_cb(gpointer userdata)
 {
     g_info("%s", (const char *)__func__);
     RdpWindowData *rdp_window_data = (RdpWindowData *)userdata;
-    rdp_viewer_window_stop(rdp_window_data, APP_STATE_EXITING);
+    rdp_viewer_window_stop(rdp_window_data, APP_STATE_EXITING, TRUE);
 
     return TRUE;
 }
@@ -291,12 +291,12 @@ static void on_ws_cmd_received(gpointer data  G_GNUC_UNUSED, const gchar *cmd, R
 {
     g_info("rdp on_ws_cmd_received");
     if (g_strcmp0(cmd, "DISCONNECT") == 0)
-        rdp_viewer_window_stop(rdp_window_data, APP_STATE_AUTH_DIALOG);
+        rdp_viewer_window_stop(rdp_window_data, APP_STATE_AUTH_DIALOG, FALSE);
 }
 
 static void on_auth_fail_detected(gpointer data G_GNUC_UNUSED, RdpWindowData *rdp_window_data)
 {
-    rdp_viewer_window_stop(rdp_window_data, APP_STATE_AUTH_DIALOG);
+    rdp_viewer_window_stop(rdp_window_data, APP_STATE_AUTH_DIALOG, FALSE);
 }
 
 static void rdp_viewer_item_about_activated(GtkWidget *menu G_GNUC_UNUSED, gpointer userdata)
@@ -378,15 +378,15 @@ rdp_viewer_window_menu_close_window(GtkWidget *menu G_GNUC_UNUSED, gpointer user
 {
     g_info("%s", (const char *)__func__);
     RdpWindowData *rdp_window_data = (RdpWindowData *)userdata;
-    rdp_viewer_window_stop(rdp_window_data, APP_STATE_EXITING);
+    rdp_viewer_window_stop(rdp_window_data, APP_STATE_EXITING, TRUE);
 }
 
 static void
-rdp_viewer_window_menu_switch_off(GtkWidget *menu G_GNUC_UNUSED, gpointer userdata)
+rdp_viewer_window_menu_disconnect(GtkWidget *menu G_GNUC_UNUSED, gpointer userdata)
 {
     g_info("%s", (const char *)__func__);
     RdpWindowData *rdp_window_data = (RdpWindowData *)userdata;
-    rdp_viewer_window_stop(rdp_window_data, APP_STATE_VDI_DIALOG);
+    rdp_viewer_window_stop(rdp_window_data, APP_STATE_VDI_DIALOG, FALSE);
 }
 
 static void
@@ -454,7 +454,7 @@ rdp_viewer_control_menu_setup(GtkBuilder *builder, RdpWindowData *rdp_window_dat
     GtkMenuItem *menu_reboot_vm = GTK_MENU_ITEM(gtk_builder_get_object(builder, "menu-reboot-vm"));
     GtkMenuItem *menu_reboot_vm_force = GTK_MENU_ITEM(gtk_builder_get_object(builder, "menu-reboot-vm-force"));
 
-    g_signal_connect(menu_switch_off, "activate", G_CALLBACK(rdp_viewer_window_menu_switch_off), rdp_window_data);
+    g_signal_connect(menu_switch_off, "activate", G_CALLBACK(rdp_viewer_window_menu_disconnect), rdp_window_data);
 
     g_signal_connect(menu_start_vm, "activate", G_CALLBACK(rdp_viewer_window_menu_start_vm), NULL);
     g_signal_connect(menu_suspend_vm, "activate", G_CALLBACK(rdp_viewer_window_menu_suspend_vm), NULL);
@@ -553,7 +553,7 @@ static void rdp_viewer_toolbar_setup(GtkBuilder *builder, RdpWindowData *rdp_win
 
     // Disconnect
     button = create_new_button_for_overlay_toolbar(rdp_window_data, "window-close", _("Disconnect"));
-    g_signal_connect(button, "clicked", G_CALLBACK(rdp_viewer_window_menu_switch_off), rdp_window_data);
+    g_signal_connect(button, "clicked", G_CALLBACK(rdp_viewer_window_menu_disconnect), rdp_window_data);
 
 
     // add toolbar to overlay
@@ -742,7 +742,7 @@ RdpWindowData *rdp_viewer_window_create(ExtendedRdpContext *ex_rdp_context,
     gtk_widget_destroy(GTK_WIDGET(gtk_builder_get_object(builder, "menu-change-cd")));
     gtk_widget_destroy(GTK_WIDGET(gtk_builder_get_object(builder, "menu-preferences")));
 
-    GtkMenuItem *menu_close_window = GTK_MENU_ITEM(gtk_builder_get_object(builder, "imagemenuitem5"));
+    GtkMenuItem *menu_close_window = GTK_MENU_ITEM(gtk_builder_get_object(builder, "item_close_app"));
     g_signal_connect(menu_close_window, "activate", G_CALLBACK(rdp_viewer_window_menu_close_window), rdp_window_data);
 
     // control menu
@@ -834,14 +834,22 @@ void rdp_viewer_window_destroy(RdpWindowData *rdp_window_data)
     free(rdp_window_data);
 }
 
-void rdp_viewer_window_stop(RdpWindowData *rdp_window_data, RemoteViewerState next_app_state)
+void rdp_viewer_window_stop(RdpWindowData *rdp_window_data, RemoteViewerState next_app_state,
+        gboolean exit_if_cant_abort)
 {
     *rdp_window_data->ex_rdp_context->next_app_state_p = next_app_state;
     rdp_window_data->ex_rdp_context->is_abort_demanded = TRUE;
 
-    // Условие  из-за проблемы невозможности отмены стадии коннекта во freerdp
-    if (!rdp_window_data->ex_rdp_context->is_connecting)
+    // Условие  из-за проблемы невозможности отмены стадии коннекта во freerdp (функция freerdp_connect)
+    if (!rdp_window_data->ex_rdp_context->is_connecting) {
         shutdown_loop(*rdp_window_data->loop_p);
+    } else if (exit_if_cant_abort) { // Завершаем приложения форсировано
+        g_warning("%s: Forced exit", (const char *)__func__);
+        usbredir_controller_deinit_static();
+        vdi_session_static_destroy();
+
+        exit(3);
+    }
 }
 
 void rdp_viewer_window_send_key_shortcut(rdpContext* context, int key_shortcut_index)
