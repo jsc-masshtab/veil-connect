@@ -287,7 +287,7 @@ static void on_vm_status_changed(gpointer data G_GNUC_UNUSED, int power_state, R
             GTK_LABEL(gtk_builder_get_object(rdp_window_data->builder, "vm_status_display")), power_state);
 }
 
-static void on_ws_cmd_received(gpointer data  G_GNUC_UNUSED, const gchar *cmd, RdpWindowData *rdp_window_data)
+static void on_ws_cmd_received(gpointer data G_GNUC_UNUSED, const gchar *cmd, RdpWindowData *rdp_window_data)
 {
     g_info("rdp on_ws_cmd_received");
     if (g_strcmp0(cmd, "DISCONNECT") == 0)
