@@ -346,7 +346,7 @@ static void controller_manager_init(ControllerManager *self)
     self->btn_cancel_requests = GTK_WIDGET(gtk_builder_get_object(self->builder, "btn_cancel_requests"));
 
     self->remote_protocol_combobox = GTK_WIDGET(gtk_builder_get_object(self->builder, "remote_protocol_combobox"));
-#ifdef _WIN32
+#if  defined(_WIN32) || defined(__MACH__)
     const gchar *rdp_native = vdi_session_remote_protocol_to_str(RDP_WINDOWS_NATIVE_PROTOCOL);
     gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(self->remote_protocol_combobox), rdp_native, rdp_native);
 #endif
