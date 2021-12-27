@@ -134,8 +134,8 @@ on_ws_cmd_received(gpointer data G_GNUC_UNUSED, const gchar *cmd, NativeRdpData 
 #else
         (void)cmd;
         (void)native_rdp_data;
-    }
 #endif
+    }
 }
 
 static void
@@ -232,7 +232,7 @@ launch_native_rdp_client(GtkWindow *parent, const VeilRdpSettings *p_rdp_setting
     int index = 0;
 
 #if  defined(_WIN32)
-    argv[index] = g_strdup("mtstc");
+    argv[index] = g_strdup("mstsc");
     argv[++index] = g_strdup(rdp_data_file_name);
 #elif defined(__MACH__)
     argv[index] = g_strdup("open");
