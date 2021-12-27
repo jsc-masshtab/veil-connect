@@ -27,8 +27,8 @@
 #include "usbredir_controller.h"
 #include "rdp_viewer.h"
 #include "x2go/x2go_launcher.h"
-#ifdef _WIN32
-#include "windows_rdp_launcher.h"
+#if defined(_WIN32) || defined(__MACH__)
+#include "native_rdp_launcher.h"
 #endif
 
 
@@ -269,12 +269,12 @@ retry_connect_to_vm:
                             vdi_session_get_vdi_password(), self->conn_data.domain, self->conn_data.ip, 0);
             next_app_state = rdp_viewer_start(self, &self->conn_data.rdp_settings);
 #ifdef _WIN32
-        } else if (vdi_session_get_current_remote_protocol() == VDI_RDP_WINDOWS_NATIVE_PROTOCOL) {
+        } else if (vdi_session_get_current_remote_protocol() == VDI_RDP_NATIVE_PROTOCOL) {
             rdp_settings_read_ini_file(&self->conn_data.rdp_settings, !self->conn_data.rdp_settings.is_remote_app);
             rdp_settings_set_connect_data(&self->conn_data.rdp_settings, vdi_session_get_vdi_username(),
                                           vdi_session_get_vdi_password(), self->conn_data.domain,
                                           self->conn_data.ip, 0);
-            launch_windows_rdp_client(&self->conn_data.rdp_settings);
+            launch_native_rdp_client(NULL, &self->conn_data.rdp_settings);
 #endif
         } else if (vdi_session_get_current_remote_protocol() == VDI_X2GO_PROTOCOL) {
             x2go_launcher_start(vdi_session_get_vdi_username(), vdi_session_get_vdi_password(), &self->conn_data);

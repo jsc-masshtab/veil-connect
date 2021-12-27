@@ -339,7 +339,7 @@ void vdi_ws_client_send_vm_changed(VdiWsClient *ws_vdi_client, const gchar *vm_i
     }
     else {
         // RDP соединения шифруются, другие нет.
-        gboolean is_connection_secure = (protocol == VDI_RDP_PROTOCOL || protocol == VDI_RDP_WINDOWS_NATIVE_PROTOCOL);
+        gboolean is_connection_secure = (protocol == VDI_RDP_PROTOCOL || protocol == VDI_RDP_NATIVE_PROTOCOL);
         json_builder_add_boolean_value(builder, is_connection_secure);
     }
 

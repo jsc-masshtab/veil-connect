@@ -64,8 +64,8 @@ VdiPoolWidget build_pool_widget(const gchar *pool_id, const gchar *pool_name,
         if (g_strcmp0(protocol_name, vdi_session_remote_protocol_to_str(VDI_SPICE_PROTOCOL)) == 0
             || g_strcmp0(protocol_name, vdi_session_remote_protocol_to_str(VDI_SPICE_DIRECT_PROTOCOL)) == 0
             || g_strcmp0(protocol_name, vdi_session_remote_protocol_to_str(VDI_RDP_PROTOCOL)) == 0
-#ifdef _WIN32
-            || g_strcmp0(protocol_name, vdi_session_remote_protocol_to_str(VDI_RDP_WINDOWS_NATIVE_PROTOCOL)) == 0
+#if defined(_WIN32) || defined(__MACH__)
+            || g_strcmp0(protocol_name, vdi_session_remote_protocol_to_str(VDI_RDP_NATIVE_PROTOCOL)) == 0
 #endif
             || g_strcmp0(protocol_name, vdi_session_remote_protocol_to_str(VDI_X2GO_PROTOCOL)) == 0
             )

@@ -13,6 +13,6 @@
 
 #include "settings_data.h"
 
-void launch_windows_rdp_client(const VeilRdpSettings *p_rdp_settings);
+void launch_native_rdp_client(GtkWindow *parent, const VeilRdpSettings *p_rdp_settings);
 
 #endif // WINDOWS_RDP_LAUNCHER_H

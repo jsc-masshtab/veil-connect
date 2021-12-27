@@ -7,6 +7,7 @@
  */
 
 #include <config.h>
+#include <glib/gi18n.h>
 #include <gio/gio.h>
 #include <gtk/gtk.h>
 
@@ -20,6 +21,7 @@
 #include <tchar.h>
 #endif
 
+#include "native_rdp_launcher.h"
 #include "rdp_viewer.h"
 #include "remote-viewer-util.h"
 #include "vdi_event.h"
@@ -32,13 +34,15 @@ typedef struct
     GPid pid;
     gboolean is_launched;
 
+    GtkWindow *parent_widget;
+
 } NativeRdpData;
 
-#ifdef _WIN32
+#if defined(_WIN32)
 // Конвертирует мультибайт строку в wide characters строку.
 // Возвращаемая строка должна быть освобождена с free
 wchar_t *
-windows_rdp_launcher_multibyte_str_to_wchar_str(const gchar *g_str)
+native_rdp_launcher_multibyte_str_to_wchar_str(const gchar *g_str)
 {
     if (g_str == NULL)
         return NULL;
@@ -52,7 +56,7 @@ windows_rdp_launcher_multibyte_str_to_wchar_str(const gchar *g_str)
 
 // Сохраняем пароль для возможности входа через нативный клиент без ввода пароля
 static void
-windows_rdp_launcher_store_conn_data(const VeilRdpSettings *p_rdp_settings)
+native_rdp_launcher_store_conn_data(const VeilRdpSettings *p_rdp_settings)
 {
     g_autofree gchar *user_name = NULL;
     user_name = g_strdup(p_rdp_settings->user_name);
@@ -78,9 +82,9 @@ windows_rdp_launcher_store_conn_data(const VeilRdpSettings *p_rdp_settings)
     convert_string_from_utf8_to_locale(&target_name_converted);
 
     // Convert to wide char strings
-    wchar_t *user_name_converted_w = windows_rdp_launcher_multibyte_str_to_wchar_str(user_name_converted);
-    wchar_t *password_converted_w = windows_rdp_launcher_multibyte_str_to_wchar_str(password_converted);
-    wchar_t *target_name_converted_w = windows_rdp_launcher_multibyte_str_to_wchar_str(target_name_converted);
+    wchar_t *user_name_converted_w = native_rdp_launcher_multibyte_str_to_wchar_str(user_name_converted);
+    wchar_t *password_converted_w = native_rdp_launcher_multibyte_str_to_wchar_str(password_converted);
+    wchar_t *target_name_converted_w = native_rdp_launcher_multibyte_str_to_wchar_str(target_name_converted);
 
     // Store credentials
     DWORD cbCredentialBlobSize = (DWORD)(wcslen(password_converted_w) * sizeof(wchar_t));
@@ -105,13 +109,19 @@ windows_rdp_launcher_store_conn_data(const VeilRdpSettings *p_rdp_settings)
     free(password_converted_w);
     free(target_name_converted_w);
 }
+#endif
+
+#if defined(_WIN32) || defined(__MACH__)
 
 static void
-windows_rdp_launcher_cb_child_watch( GPid  pid, gint status, NativeRdpData *data)
+native_rdp_launcher_cb_child_watch(GPid pid, gint status, NativeRdpData *data)
 {
     g_info("FINISHED. %s Status: %i", __func__, status);
     g_spawn_close_pid(pid);
-
+#if defined(__MACH__)
+    if (status == 256)
+        show_msg_box_dialog(data->parent_widget, _("Check if Microsoft Remote Client installed"));
+#endif
     shutdown_loop(data->loop);
 }
 
@@ -119,8 +129,13 @@ static void
 on_ws_cmd_received(gpointer data G_GNUC_UNUSED, const gchar *cmd, NativeRdpData *native_rdp_data)
 {
     if (g_strcmp0(cmd, "DISCONNECT") == 0) {
+#if  defined(_WIN32)
         TerminateProcess(native_rdp_data->pid, 0);
+#else
+        (void)cmd;
+        (void)native_rdp_data;
     }
+#endif
 }
 
 static void
@@ -137,11 +152,9 @@ append_rdp_data(FILE *destFile, const gchar *param_name, const gchar *param_valu
 
 
 void
-launch_windows_rdp_client(const VeilRdpSettings *p_rdp_settings)
+launch_native_rdp_client(GtkWindow *parent, const VeilRdpSettings *p_rdp_settings)
 {
-#ifdef __linux__
-    (void)p_rdp_settings;
-#elif defined _WIN32
+#if  defined(_WIN32) || defined(__MACH__)
     //create rdp file based on template
     //open template for reading and take its content
     FILE *sourceFile;
@@ -154,14 +167,14 @@ launch_windows_rdp_client(const VeilRdpSettings *p_rdp_settings)
         return;
     }
 
-    gchar *app_data_dir = get_windows_app_data_location();
-    gchar *app_rdp_data_dir = g_strdup_printf("%s/rdp_data", app_data_dir);
+    const gchar *app_data_dir = g_get_user_config_dir();
+    gchar *app_rdp_data_dir = g_build_filename(app_data_dir,
+                                               APP_FILES_DIRECTORY_NAME, "rdp_data", NULL);
     g_mkdir_with_parents(app_rdp_data_dir, 0755);
 
     g_autofree gchar *rdp_data_file_name = NULL;
     rdp_data_file_name = g_strdup_printf("%s/rdp_file.rdp", app_rdp_data_dir);
     g_free(app_rdp_data_dir);
-    g_free(app_data_dir);
 
     convert_string_from_utf8_to_locale(&rdp_data_file_name);
     destFile = fopen(rdp_data_file_name, "w");
@@ -206,19 +219,28 @@ launch_windows_rdp_client(const VeilRdpSettings *p_rdp_settings)
     fclose(sourceFile);
     fclose(destFile);
 
+#if  defined(_WIN32)
     // Store credentials data
-    windows_rdp_launcher_store_conn_data(p_rdp_settings);
+    native_rdp_launcher_store_conn_data(p_rdp_settings);
+#endif
 
-    NativeRdpData data = {};
+    NativeRdpData data = {.parent_widget = parent};
+    //data.parent_widget = parent;
 
     // launch process
     gchar *argv[3] = {};
     int index = 0;
-    argv[index] = g_strdup("mstsc");
+
+#if  defined(_WIN32)
+    argv[index] = g_strdup("mtstc");
     argv[++index] = g_strdup(rdp_data_file_name);
+#elif defined(__MACH__)
+    argv[index] = g_strdup("open");
+    argv[++index] = g_strdup(rdp_data_file_name);
+    //argv[++index] = g_strdup("--wait-apps");
+#endif
 
     GError *error = NULL;
-
     data.is_launched = g_spawn_async(NULL, argv, NULL,
                                      G_SPAWN_DO_NOT_REAP_CHILD | G_SPAWN_SEARCH_PATH, NULL,
                                      NULL, &data.pid, &error);
@@ -228,7 +250,7 @@ launch_windows_rdp_client(const VeilRdpSettings *p_rdp_settings)
     }
 
     if (!data.is_launched) {
-        g_warning("mstsc SPAWN FAILED");
+        g_warning("NATIVE CLIENT SPAWN FAILED");
         if (error) {
             g_warning("%s", error->message);
             g_clear_error(&error);
@@ -236,19 +258,25 @@ launch_windows_rdp_client(const VeilRdpSettings *p_rdp_settings)
         return;
     }
 
+    // stop process callback
+    g_child_watch_add(data.pid, (GChildWatchFunc)native_rdp_launcher_cb_child_watch, &data);
+
     // disconnect signal
     gulong ws_cmd_received_handle = g_signal_connect(get_vdi_session_static(), "ws-cmd-received",
                                                         G_CALLBACK(on_ws_cmd_received), &data);
 
-    // stop process callback
-    g_child_watch_add(data.pid, (GChildWatchFunc)windows_rdp_launcher_cb_child_watch, &data);
-
     // launch event loop
+#if defined(_WIN32)
     vdi_event_vm_changed_notify(vdi_session_get_current_vm_id());
+#endif
     create_loop_and_launch(&data.loop);
+#if defined(_WIN32)
     vdi_event_vm_changed_notify(NULL);
+#endif
 
     g_signal_handler_disconnect(get_vdi_session_static(), ws_cmd_received_handle);
-
+#else
+    (void)parent;
+    (void)p_rdp_settings;
 #endif
 }
