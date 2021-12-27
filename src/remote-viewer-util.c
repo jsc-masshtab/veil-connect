@@ -886,9 +886,19 @@ gchar *get_windows_app_temp_location()
     return temp_dir;
 }
 
-const gchar *get_cur_ini_param_group()
+const gchar *get_cur_ini_group_vdi()
 {
-    return "RemoteViewerConnect";
+    return "RemoteViewerConnect"; // legacy name to keep existing user settings
+}
+
+const gchar *get_cur_ini_group_direct()
+{
+    return "ManualConnect";
+}
+
+const gchar *get_cur_ini_group_controller()
+{
+    return "ControllerConnect";
 }
 
 //void gtk_combo_box_text_set_active_text(GtkComboBoxText *combo_box, const gchar *text)
@@ -1160,6 +1170,68 @@ const gchar *util_spice_channel_event_to_str(SpiceChannelEvent event)
         default:
             return "UNKNOWN";
     }
+}
+
+guint util_send_message(SoupSession *soup_session, SoupMessage *msg, const char *uri_string)
+{
+    static int count = 0;
+    g_info("Send_count: %i", ++count);
+
+    guint status = soup_session_send_message(soup_session, msg);
+    g_info("%s: Response code: %i  reason_phrase: %s  uri_string: %s",
+           (const char *)__func__, status, msg->reason_phrase, uri_string);
+    return status;
+}
+
+void util_free_veil_vm_data(VeilVmData *vm_data)
+{
+    free_memory_safely(&vm_data->vm_host);
+    free_memory_safely(&vm_data->vm_username);
+    free_memory_safely(&vm_data->vm_password);
+    free_memory_safely(&vm_data->message);
+    free_memory_safely(&vm_data->vm_verbose_name);
+
+    if (vm_data->farm_array) {
+        for (guint i = 0; i < vm_data->farm_array->len; ++i) {
+            VeilFarmData farm_data = g_array_index(vm_data->farm_array, VeilFarmData, i);
+            g_free(farm_data.farm_alias);
+
+            if (farm_data.app_array) {
+                for (guint j = 0; j < vm_data->farm_array->len; ++j) {
+                    VeilAppData app_data = g_array_index(farm_data.app_array, VeilAppData, j);
+                    g_free(app_data.app_alias);
+                    g_free(app_data.app_name);
+                    g_free(app_data.icon_base64);
+                }
+
+                g_array_free(farm_data.app_array, TRUE);
+            }
+        }
+
+        g_array_free(vm_data->farm_array, TRUE);
+    }
+
+    free(vm_data);
+}
+
+// set info message
+void util_set_message_to_info_label(GtkLabel *label, const gchar *message)
+{
+    if (!message)
+        return;
+
+    const guint max_str_width = 300;
+
+    // trim message
+    if ( strlen_safely(message) > max_str_width ) {
+        gchar *message_str = g_strndup(message, max_str_width);
+        gtk_label_set_text(label, message_str);
+        g_free(message_str);
+    } else {
+        gtk_label_set_text(label, message);
+    }
+
+    gtk_widget_set_tooltip_text(GTK_WIDGET(label), message);
 }
 
 /*

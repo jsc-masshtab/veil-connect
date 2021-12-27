@@ -64,7 +64,7 @@ typedef struct
     GObjectClass parent_class;
 
     /* signals */
-    void (*stats_data_updated)(NetSpeedometer *self, VdiVmRemoteProtocol protocol, NetworkStatsData *nw_data);
+    void (*stats_data_updated)(NetSpeedometer *self, VmRemoteProtocol protocol, NetworkStatsData *nw_data);
     void (*address_changed)(NetSpeedometer *self);
 
 } NetSpeedometerClass;

@@ -149,7 +149,7 @@ static void refresh_vdi_get_vm_from_pool_async(VdiManager *self, const gchar *po
 
     // take from gui correct remote protocol
     if (vdi_pool_widget.is_valid) {
-        VdiVmRemoteProtocol remote_protocol = vdi_pool_widget_get_current_protocol(&vdi_pool_widget);
+        VmRemoteProtocol remote_protocol = vdi_pool_widget_get_current_protocol(&vdi_pool_widget);
         g_info("%s remote_protocol %s", (const char *) __func__, vdi_session_remote_protocol_to_str(remote_protocol));
         vdi_session_set_current_remote_protocol(remote_protocol);
     }
@@ -168,7 +168,7 @@ static void refresh_vdi_get_vm_from_pool_async(VdiManager *self, const gchar *po
 // start asynchronous task to get vm data from vdi
 static void refresh_vdi_pool_data_async(VdiManager *self)
 {
-    vdi_session_cancell_pending_requests();
+    vdi_session_cancel_pending_requests();
     unregister_all_pools(self);
     // "Отправлен запрос на список пулов"
     set_vdi_client_state(self, VDI_WAITING_FOR_POOL_DATA, _("Pool data request sent"), FALSE);
@@ -314,7 +314,7 @@ static void stop_event_loop_and_go_to_vm(VdiManager *self)
     }
 #else
     self->ci.response = TRUE;
-    self->ci.next_app_state = APP_STATE_REMOTE_VM;
+    self->ci.next_app_state = APP_STATE_CONNECT_TO_VM;
     shutdown_loop(self->ci.loop);
 #endif
 }
@@ -341,24 +341,39 @@ static void on_vdi_session_get_vm_from_pool_finished(GObject *source_object G_GN
         return;
     }
 
-    VdiVmData *vdi_vm_data = (VdiVmData *)ptr_res;
+    VeilVmData *vdi_vm_data = (VeilVmData *)ptr_res;
 
     if (vdi_vm_data->server_reply_type == SERVER_REPLY_TYPE_DATA) {
+        VmRemoteProtocol protocol = vdi_session_get_current_remote_protocol();
+
         // save to settings file the last pool we connected to
-        write_str_to_ini_file("RemoteViewerConnect", "pool_id", vdi_session_get_current_pool_id());
+        write_str_to_ini_file(get_cur_ini_group_vdi(), "pool_id", vdi_session_get_current_pool_id());
 
         update_string_safely(&self->p_conn_data->ip, vdi_vm_data->vm_host);
         self->p_conn_data->port = vdi_vm_data->vm_port;
         update_string_safely(&self->p_conn_data->password, vdi_vm_data->vm_password);
         update_string_safely(&self->p_conn_data->vm_verbose_name, vdi_vm_data->vm_verbose_name);
+        switch (protocol) {
+            case SPICE_PROTOCOL:
+            case SPICE_DIRECT_PROTOCOL:{
+                update_string_safely(&self->p_conn_data->password, vdi_vm_data->vm_password);
+                break;
+            }
+            default: {
+                update_string_safely(&self->p_conn_data->password, vdi_session_get_vdi_password());
+                break;
+            }
+        }
+
+        update_string_safely(&self->p_conn_data->user, vdi_session_get_vdi_username());
+
         // "Получена вм из пула"
         set_vdi_client_state(self, VDI_RECEIVED_RESPONSE, _("VM received from pool"), FALSE);
 
         // Если существует список приложений и если протокол RDP, то показываем окно выбора приложений
         rdp_settings_clear(&self->p_conn_data->rdp_settings);
-        VdiVmRemoteProtocol protocol = vdi_session_get_current_remote_protocol();
         if (vdi_vm_data->farm_array && vdi_vm_data->farm_array->len > 0 &&
-                (protocol == VDI_RDP_PROTOCOL || protocol == VDI_RDP_NATIVE_PROTOCOL)) {
+                (protocol == RDP_PROTOCOL || protocol == RDP_WINDOWS_NATIVE_PROTOCOL)) {
 
             AppSelectorResult selector_res = vdi_app_selector_start(vdi_vm_data, GTK_WINDOW(self->window));
             self->p_conn_data->rdp_settings = selector_res.rdp_settings;
@@ -379,7 +394,7 @@ static void on_vdi_session_get_vm_from_pool_finished(GObject *source_object G_GN
             show_msg_box_dialog(GTK_WINDOW(self->window), user_message);
     }
     //
-    vdi_api_session_free_vdi_vm_data(vdi_vm_data);
+    util_free_veil_vm_data(vdi_vm_data);
 }
 
 // ws data callback    "<span color=\"red\">%s</span>"
@@ -435,7 +450,7 @@ static void on_btn_cancel_requests_clicked(GtkButton *button G_GNUC_UNUSED, VdiM
 
     g_info("%s", (const char *)__func__); // "Текущие запросы отменены"
     gtk_label_set_text(GTK_LABEL(self->status_label), _("Current requests cancelled"));
-    vdi_session_cancell_pending_requests();
+    vdi_session_cancel_pending_requests();
 }
 // quit button pressed callback
 static void on_button_quit_clicked(GtkButton *button G_GNUC_UNUSED, VdiManager *self)
@@ -600,7 +615,7 @@ RemoteViewerState vdi_manager_dialog(VdiManager *self, ConnectSettingsData *conn
 
     // connect_to_prev_pool_if_enabled
     g_autofree gchar *last_pool_id = NULL;
-    last_pool_id = read_str_from_ini_file("RemoteViewerConnect", "pool_id");
+    last_pool_id = read_str_from_ini_file(get_cur_ini_group_vdi(), "pool_id");
     if (!last_pool_id)
         conn_data->is_connect_to_prev_pool = FALSE;
 
@@ -618,7 +633,7 @@ RemoteViewerState vdi_manager_dialog(VdiManager *self, ConnectSettingsData *conn
     create_loop_and_launch(&self->ci.loop);
 
     // clear
-    vdi_session_cancell_pending_requests();
+    vdi_session_cancel_pending_requests();
     // save data to ini file
     save_data_to_ini_file();
 

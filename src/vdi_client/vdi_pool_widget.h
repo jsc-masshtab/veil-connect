@@ -44,7 +44,7 @@ VdiPoolWidget build_pool_widget(const gchar *pool_id, const gchar *pool_name,
         const gchar *os_type, const gchar *status, JsonArray *conn_types_json_array, GtkWidget *gtk_flow_box);
 
 // get current remote protocol
-VdiVmRemoteProtocol vdi_pool_widget_get_current_protocol(VdiPoolWidget *vdi_pool_widget);
+VmRemoteProtocol vdi_pool_widget_get_current_protocol(VdiPoolWidget *vdi_pool_widget);
 
 // start / stop spinner
 void vdi_pool_widget_enable_spinner(VdiPoolWidget *vdi_pool_widget, gboolean enable);

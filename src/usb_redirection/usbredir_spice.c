@@ -144,7 +144,7 @@ static void on_vdi_session_get_vm_data_task_finished(GObject *source_object G_GN
         return;
     }
 
-    VdiVmData *vdi_vm_data = (VdiVmData *)ptr_res;
+    VeilVmData *vdi_vm_data = (VeilVmData *)ptr_res;
     if (vdi_vm_data->server_reply_type == SERVER_REPLY_TYPE_DATA) {
 
         usbredir_spice_set_status(self, "Получены данные для подключения SPICE");
@@ -162,7 +162,7 @@ static void on_vdi_session_get_vm_data_task_finished(GObject *source_object G_GN
         usbredir_spice_set_status(self, user_message);
     }
 
-    vdi_api_session_free_vdi_vm_data(vdi_vm_data);
+    util_free_veil_vm_data(vdi_vm_data);
 }
 
 SpiceUsbSession *usbredir_spice_new()

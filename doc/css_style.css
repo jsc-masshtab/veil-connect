@@ -131,7 +131,6 @@
 
 #main-window-controls {
      background-color: white;
-     padding: 5px;
 }
 
 #btn_open_user_settings,
@@ -235,4 +234,14 @@
 
 #message_main_view{
      background: #dff0e3;
+}
+
+/*
+#label_error{
+     background-color: #ffcccc;
+     color: black;
+}
+*/
+#label_error{
+     color: red;
 }

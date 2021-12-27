@@ -268,7 +268,7 @@ static gboolean net_speedometer_check_stats(NetSpeedometer *self)
                 self->nw.rdp_read_speed, self->nw.rdp_write_speed, self->nw.min_rtt,
                 self->nw.avg_rtt, self->nw.max_rtt, self->nw.loss_percentage);
 
-        g_signal_emit_by_name(self, "stats-data-updated", VDI_RDP_PROTOCOL, &self->nw);
+        g_signal_emit_by_name(self, "stats-data-updated", RDP_PROTOCOL, &self->nw);
     } else {
         self->nw.rdp_read_bytes = 0;
         self->nw.rdp_write_bytes = 0;
@@ -318,7 +318,7 @@ static gboolean net_speedometer_check_stats(NetSpeedometer *self)
                                                    self->nw.min_rtt, self->nw.avg_rtt, self->nw.max_rtt,
                                                    self->nw.loss_percentage);
 
-            g_signal_emit_by_name(self, "stats-data-updated", VDI_SPICE_PROTOCOL, &self->nw);
+            g_signal_emit_by_name(self, "stats-data-updated", SPICE_PROTOCOL, &self->nw);
         }
     } else {
         memset(&self->nw.spice_read_bytes, 0, sizeof(SpiceReadBytes));

@@ -13,6 +13,7 @@
 #include "virt-viewer-app.h"
 #include "app_updater.h"
 #include "vdi_manager.h"
+#include "controller_client/controller_manager.h"
 #include "messenger.h"
 #include "net_speedometer.h"
 
@@ -36,8 +37,10 @@ typedef struct {
 
     VirtViewerApp *virt_viewer_obj;
     AppUpdater *app_updater;
-    VdiManager *vdi_manager;
     VeilMessenger *veil_messenger;
+
+    VdiManager *vdi_manager;
+    ControllerManager *controller_manager;
 
 } RemoteViewer;
 

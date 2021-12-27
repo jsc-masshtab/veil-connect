@@ -27,6 +27,7 @@
 #include "usbredir_controller.h"
 #include "rdp_viewer.h"
 #include "x2go/x2go_launcher.h"
+#include "controller_client/controller_session.h"
 #if defined(_WIN32) || defined(__MACH__)
 #include "native_rdp_launcher.h"
 #endif
@@ -170,6 +171,9 @@ remote_viewer_init(RemoteViewer *self)
 
     // create vdi session
     get_vdi_session_static();
+
+    // create controller session
+    get_controller_session_static();
 }
 
 RemoteViewer *
@@ -186,115 +190,132 @@ void remote_viewer_free_resources(RemoteViewer *self)
 {
     g_object_unref(self->virt_viewer_obj);
     g_object_unref(self->app_updater);
+
     if (self->vdi_manager)
         g_object_unref(self->vdi_manager);
+    if (self->controller_manager)
+        g_object_unref(self->controller_manager);
 
     if (self->veil_messenger)
         g_object_unref(self->veil_messenger);
 
     usbredir_controller_deinit_static();
     vdi_session_static_destroy();
+    controller_session_static_destroy();
 
     settings_data_clear(&self->conn_data);
+}
+
+static RemoteViewerState
+remote_viewer_connect_to_vm(RemoteViewer *self, VmRemoteProtocol protocol)
+{
+    RemoteViewerState next_app_state = APP_STATE_CONNECT_TO_VM;
+
+    // connect to vm depending on remote protocol
+    if (protocol == RDP_PROTOCOL) {
+        // Читаем из ini настройки remote_app только если они еще не установлены ранее (они могут быть
+        // получены от RDS пула)
+        rdp_settings_read_ini_file(&self->conn_data.rdp_settings,
+                                   !self->conn_data.rdp_settings.is_remote_app);
+        rdp_settings_set_connect_data(&self->conn_data.rdp_settings, self->conn_data.user,
+                                      self->conn_data.password, self->conn_data.domain,
+                                      self->conn_data.ip, 0);
+        next_app_state = rdp_viewer_start(self, &self->conn_data.rdp_settings);
+#ifdef _WIN32
+        } else if (protocol == RDP_WINDOWS_NATIVE_PROTOCOL) {
+                rdp_settings_read_ini_file(&self->conn_data.rdp_settings, !self->conn_data.rdp_settings.is_remote_app);
+                rdp_settings_set_connect_data(&self->conn_data.rdp_settings, self->conn_data.user,
+                                              self->conn_data.password, self->conn_data.domain,
+                                              self->conn_data.ip, 0);
+                launch_windows_rdp_client(&self->conn_data.rdp_settings);
+#endif
+    } else if (protocol == X2GO_PROTOCOL) {
+        x2go_launcher_start(self->conn_data.user, self->conn_data.password, &self->conn_data);
+    } else { // spice by default
+        virt_viewer_app_set_spice_session_data(self->virt_viewer_obj, &self->conn_data);
+        virt_viewer_app_set_window_name(self->virt_viewer_obj, self->conn_data.vm_verbose_name, self->conn_data.user);
+        next_app_state = virt_viewer_app_instant_start(self->virt_viewer_obj);
+    }
+
+    return next_app_state;
 }
 
 static void
 remote_viewer_start(RemoteViewer *self)
 {
+    RemoteViewerState next_app_state = APP_STATE_AUTH_DIALOG;
     //create veil messenger
     self->veil_messenger = veil_messenger_new();
     // remote connect dialog
-retry_auth:
-
+    retry_auth:
     veil_messenger_hide(self->veil_messenger);
     // Забираем из ui адрес и порт
     GtkResponseType dialog_window_response = remote_viewer_connect_dialog(self);
     if (dialog_window_response == GTK_RESPONSE_CLOSE)
         goto to_exit;
 
-    // После такого как забрали адресс с логином и паролем действуем в зависимости от opt_manual_mode
-    // 1) в мануальном режиме сразу подключаемся к удаленноиу раб столу
-    // 2) В дефолтном режиме вызываем vdi manager. В нем пользователь выберет машину для подключения
-retry_connect_to_vm:
-    /// instant connect attempt
-    if (self->conn_data.opt_manual_mode) {
-        RemoteViewerState app_state = APP_STATE_AUTH_DIALOG;
-        if (vdi_session_get_current_remote_protocol() == VDI_RDP_PROTOCOL) {
-            // Либо берем данные ГУИ, либо парсим rdp файл
-            gboolean read_from_std_rdp_file = read_int_from_ini_file("RDPSettings", "use_rdp_file", 0);
-            if (read_from_std_rdp_file) {
-                rdp_settings_read_standard_file(&self->conn_data.rdp_settings, NULL);
-            } else {
-                rdp_settings_read_ini_file(&self->conn_data.rdp_settings, TRUE);
-                rdp_settings_set_connect_data(&self->conn_data.rdp_settings, self->conn_data.user,
-                        self->conn_data.password, self->conn_data.domain, self->conn_data.ip, self->conn_data.port);
+    // После такого как забрали адресс с логином и паролем действуем в зависимости от режима (1 из 3)
+    retry_connect_to_vm:
+    switch (self->conn_data.global_app_mode) {
+        case GLOBAL_APP_MODE_VDI: {
+            // show VDI manager window
+            if (self->vdi_manager == NULL)
+                self->vdi_manager = vdi_manager_new();
+            next_app_state = vdi_manager_dialog(self->vdi_manager, &self->conn_data);
+
+            if (next_app_state == APP_STATE_CONNECT_TO_VM)
+                next_app_state = remote_viewer_connect_to_vm(self, vdi_session_get_current_remote_protocol());
+
+            break;
+        }
+        case GLOBAL_APP_MODE_DIRECT: {
+            if (self->conn_data.protocol_in_direct_app_mode == RDP_PROTOCOL) {
+                // Либо берем данные ГУИ, либо парсим rdp файл
+                gboolean read_from_std_rdp_file = read_int_from_ini_file("RDPSettings", "use_rdp_file", 0);
+                if (read_from_std_rdp_file) {
+                    rdp_settings_read_standard_file(&self->conn_data.rdp_settings, NULL);
+                } else {
+                    rdp_settings_read_ini_file(&self->conn_data.rdp_settings, TRUE);
+                    rdp_settings_set_connect_data(&self->conn_data.rdp_settings, self->conn_data.user,
+                                                  self->conn_data.password, self->conn_data.domain,
+                                                  self->conn_data.ip, self->conn_data.port);
+                }
+                next_app_state = rdp_viewer_start(self, &self->conn_data.rdp_settings);
+
+            } else if (self->conn_data.protocol_in_direct_app_mode == X2GO_PROTOCOL) {
+                x2go_launcher_start(self->conn_data.user, self->conn_data.password, &self->conn_data);
+            } else { // SPICE by default
+                virt_viewer_app_set_spice_session_data(self->virt_viewer_obj, &self->conn_data);
+                virt_viewer_app_set_window_name(self->virt_viewer_obj, self->conn_data.vm_verbose_name,
+                                                self->conn_data.user);
+                next_app_state = virt_viewer_app_instant_start(self->virt_viewer_obj);
             }
-            app_state = rdp_viewer_start(self, &self->conn_data.rdp_settings);
 
-        } else if (vdi_session_get_current_remote_protocol() == VDI_X2GO_PROTOCOL) {
-            x2go_launcher_start(self->conn_data.user, self->conn_data.password, &self->conn_data);
-        } else { // SPICE by default
-            virt_viewer_app_set_spice_session_data(self->virt_viewer_obj, self->conn_data.ip, self->conn_data.port,
-                                                   self->conn_data.user, self->conn_data.password);
-            virt_viewer_app_instant_start(self->virt_viewer_obj);
-            // go back to auth or quit
-            if (virt_viewer_app_is_quitting(self->virt_viewer_obj))
-                app_state = APP_STATE_EXITING;
-            else
-                app_state = APP_STATE_AUTH_DIALOG;
+            if (next_app_state == APP_STATE_CONNECT_TO_VM)
+                next_app_state = APP_STATE_AUTH_DIALOG;
+
+            break;
         }
+        case GLOBAL_APP_MODE_CONTROLLER: {
+            if (self->controller_manager == NULL)
+                self->controller_manager = controller_manager_new();
+            next_app_state = controller_manager_dialog(self->controller_manager, &self->conn_data);
 
-        if (app_state == APP_STATE_AUTH_DIALOG)
-            goto retry_auth;
-        else if (app_state == APP_STATE_EXITING)
-            goto to_exit;
-    /// VDI connect mode
-    } else {
-        // show VDI manager window
-        if (self->vdi_manager == NULL)
-            self->vdi_manager = vdi_manager_new();
-        RemoteViewerState next_app_state = vdi_manager_dialog(self->vdi_manager, &self->conn_data);
-        if (next_app_state == APP_STATE_AUTH_DIALOG)
-            goto retry_auth;
-        else if (next_app_state == APP_STATE_EXITING)
-            goto to_exit;
+            if (next_app_state == APP_STATE_CONNECT_TO_VM)
+                next_app_state = remote_viewer_connect_to_vm(self, controller_session_get_current_remote_protocol());
 
-        // connect to vm depending remote protocol
-        next_app_state = APP_STATE_VDI_DIALOG;
-        if (vdi_session_get_current_remote_protocol() == VDI_RDP_PROTOCOL) {
-            // Читаем из ini настройки remote_app только если они еще не установлены ранее (они могут быть получены от
-            // RDS пула, например)
-            rdp_settings_read_ini_file(&self->conn_data.rdp_settings, !self->conn_data.rdp_settings.is_remote_app);
-            rdp_settings_set_connect_data(&self->conn_data.rdp_settings, vdi_session_get_vdi_username(),
-                            vdi_session_get_vdi_password(), self->conn_data.domain, self->conn_data.ip, 0);
-            next_app_state = rdp_viewer_start(self, &self->conn_data.rdp_settings);
-#ifdef _WIN32
-        } else if (vdi_session_get_current_remote_protocol() == VDI_RDP_NATIVE_PROTOCOL) {
-            rdp_settings_read_ini_file(&self->conn_data.rdp_settings, !self->conn_data.rdp_settings.is_remote_app);
-            rdp_settings_set_connect_data(&self->conn_data.rdp_settings, vdi_session_get_vdi_username(),
-                                          vdi_session_get_vdi_password(), self->conn_data.domain,
-                                          self->conn_data.ip, 0);
-            launch_native_rdp_client(NULL, &self->conn_data.rdp_settings);
-#endif
-        } else if (vdi_session_get_current_remote_protocol() == VDI_X2GO_PROTOCOL) {
-            x2go_launcher_start(vdi_session_get_vdi_username(), vdi_session_get_vdi_password(), &self->conn_data);
-        } else { // spice by default
-            virt_viewer_app_set_spice_session_data(self->virt_viewer_obj, self->conn_data.ip, self->conn_data.port,
-                                                   self->conn_data.user, self->conn_data.password);
-            virt_viewer_app_set_window_name(self->virt_viewer_obj, self->conn_data.vm_verbose_name,
-                    vdi_session_get_vdi_username());
-            virt_viewer_app_instant_start(self->virt_viewer_obj);
-            next_app_state = virt_viewer_get_next_app_state(self->virt_viewer_obj);
+            break;
         }
-
-        if (next_app_state == APP_STATE_EXITING)
-            goto to_exit;
-        else if (next_app_state == APP_STATE_AUTH_DIALOG)
-            goto retry_auth;
-        else if (next_app_state == APP_STATE_VDI_DIALOG)
-            goto retry_connect_to_vm;
     }
 
-to_exit:
+    if (next_app_state == APP_STATE_EXITING)
+        goto to_exit;
+    else if (next_app_state == APP_STATE_AUTH_DIALOG)
+        goto retry_auth;
+    else if (next_app_state == APP_STATE_CONNECT_TO_VM)
+        goto retry_connect_to_vm;
+
+    to_exit:
     settings_data_save_all(&self->conn_data);
 }
+

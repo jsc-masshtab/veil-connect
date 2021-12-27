@@ -14,6 +14,11 @@
 #include "vdi_session.h"
 #include "remote-viewer-util.h"
 
+typedef enum{
+    GLOBAL_APP_MODE_VDI, // Режим подключения к VDI
+    GLOBAL_APP_MODE_DIRECT, // Режим подключения к ВМ напрямую
+    GLOBAL_APP_MODE_CONTROLLER // Режим подключения к контроллеру (ECP)
+} GlobalAppMode; // Режим работы приложения
 
 typedef enum{
     X2GO_APP_QT_CLIENT,
@@ -127,12 +132,14 @@ typedef struct{
     VeilX2GoSettings x2Go_settings;
 
     // Sevice settings
-    gboolean opt_manual_mode; // Режим подключения к ВМ наррямую
+    GlobalAppMode global_app_mode;
     gchar *windows_updates_url;
     int vm_await_timeout;
 
     // Параметры актуальные тольео во время работы приложения (не гужно сохранять в файл)
     gboolean not_connected_to_prev_pool_yet; // Подключалось ли приложение автоматом к предыдущему пулу при старте
+
+    VmRemoteProtocol protocol_in_direct_app_mode;
 
 } ConnectSettingsData;
 

@@ -20,6 +20,7 @@
 
 #include "remote_viewer_start_settings.h"
 #include "veil_logger.h"
+#include "controller_client/controller_session.h"
 
 
 typedef struct{
@@ -111,7 +112,7 @@ typedef struct{
     GtkWidget *check_updates_label;
     GtkWidget *windows_updates_url_entry;
 
-    GtkWidget *direct_connect_mode_check_btn;
+    GtkWidget *app_mode_combobox;
     GtkWidget *vm_await_time_spinbox;
 
     // control buttons
@@ -121,21 +122,43 @@ typedef struct{
     RemoteViewer *p_remote_viewer;
 
     // signal handler ids
-    gulong on_direct_connect_mode_check_btn_toggled_id;
+    gulong on_app_mode_combobox_changed_id;
 
 } ConnectSettingsDialogData;
 
 // D режиме по умолчанию подключение к VDI серверу. В ручном режиме прямое подключение к ВМ
 // GUI в разных режимах имеет небольшое отличие
-static void update_gui_according_to_connect_mode(ConnectSettingsDialogData *dialog_data,
-                                                     gboolean _opt_manual_mode)
+static void update_gui_according_to_app_mode(ConnectSettingsDialogData *dialog_data,
+                                             GlobalAppMode global_app_mode)
 {
-    gtk_widget_set_sensitive(dialog_data->conn_to_prev_pool_checkbutton, !_opt_manual_mode);
-    gtk_widget_set_visible(dialog_data->remote_protocol_combobox, _opt_manual_mode);
-
-    gtk_widget_set_visible(dialog_data->btn_choose_rdp_file, _opt_manual_mode);
-    gtk_widget_set_visible(dialog_data->rdp_file_name_entry, _opt_manual_mode);
-    gtk_widget_set_visible(dialog_data->use_rdp_file_check_btn, _opt_manual_mode);
+    switch (global_app_mode) {
+        case GLOBAL_APP_MODE_VDI: {
+            gtk_widget_set_sensitive(dialog_data->conn_to_prev_pool_checkbutton, TRUE);
+            gtk_widget_set_visible(dialog_data->remote_protocol_combobox, FALSE);
+            gtk_widget_set_visible(dialog_data->btn_choose_rdp_file, FALSE);
+            gtk_widget_set_visible(dialog_data->rdp_file_name_entry, FALSE);
+            gtk_widget_set_visible(dialog_data->use_rdp_file_check_btn, FALSE);
+            break;
+        }
+        case GLOBAL_APP_MODE_DIRECT: {
+            gtk_widget_set_sensitive(dialog_data->conn_to_prev_pool_checkbutton, FALSE);
+            gtk_widget_set_visible(dialog_data->remote_protocol_combobox, TRUE);
+            gtk_widget_set_visible(dialog_data->btn_choose_rdp_file, TRUE);
+            gtk_widget_set_visible(dialog_data->rdp_file_name_entry, TRUE);
+            gtk_widget_set_visible(dialog_data->use_rdp_file_check_btn, TRUE);
+            break;
+        }
+        case GLOBAL_APP_MODE_CONTROLLER: {
+            gtk_widget_set_sensitive(dialog_data->conn_to_prev_pool_checkbutton, FALSE);
+            gtk_widget_set_visible(dialog_data->remote_protocol_combobox, FALSE);
+            gtk_widget_set_visible(dialog_data->btn_choose_rdp_file, FALSE);
+            gtk_widget_set_visible(dialog_data->rdp_file_name_entry, FALSE);
+            gtk_widget_set_visible(dialog_data->use_rdp_file_check_btn, FALSE);
+            break;
+        }
+        default:
+            break;
+    }
 }
 
 static gboolean
@@ -521,15 +544,16 @@ btn_show_monitor_config_clicked(GtkButton *button G_GNUC_UNUSED, ConnectSettings
 }
 
 static void
-on_direct_connect_mode_check_btn_toggled(GtkToggleButton *check_btn, gpointer user_data)
+on_app_mode_combobox_changed(GtkComboBox *widget G_GNUC_UNUSED, gpointer user_data)
 {
     g_info("%s", (const char*)__func__);
     ConnectSettingsDialogData *dialog_data = (ConnectSettingsDialogData *)user_data;
-    gboolean _opt_manual_mode = gtk_toggle_button_get_active(check_btn);
-    update_gui_according_to_connect_mode(dialog_data, _opt_manual_mode);
+    const gchar *mode_id = gtk_combo_box_get_active_id(GTK_COMBO_BOX(dialog_data->app_mode_combobox));
+    GlobalAppMode global_app_mode = (GlobalAppMode)atoi(mode_id);
+    update_gui_according_to_app_mode(dialog_data, global_app_mode);
 
     // Устанавливаем дефолтный порт
-    if (_opt_manual_mode)
+    if (global_app_mode == GLOBAL_APP_MODE_DIRECT)
         gtk_spin_button_set_value(GTK_SPIN_BUTTON(dialog_data->port_spinbox), 3389);
     else
         gtk_spin_button_set_value(GTK_SPIN_BUTTON(dialog_data->port_spinbox), 443);
@@ -546,34 +570,50 @@ fill_gui(ConnectSettingsDialogData *dialog_data)
 {
     ConnectSettingsData *p_conn_data = get_conn_data(dialog_data);
 
+    update_gui_according_to_app_mode(dialog_data, p_conn_data->global_app_mode);
+
     // Service settings
     gtk_entry_set_text(GTK_ENTRY(dialog_data->windows_updates_url_entry), p_conn_data->windows_updates_url);
 
-    gulong entry_handler_id = dialog_data->on_direct_connect_mode_check_btn_toggled_id;
-    g_signal_handler_block(dialog_data->direct_connect_mode_check_btn, entry_handler_id); // to prevent callback
-    gtk_toggle_button_set_active((GtkToggleButton *)dialog_data->direct_connect_mode_check_btn,
-                                 p_conn_data->opt_manual_mode);
-    g_signal_handler_unblock(dialog_data->direct_connect_mode_check_btn, entry_handler_id);
+    gulong handler_id = dialog_data->on_app_mode_combobox_changed_id;
+    g_signal_handler_block(dialog_data->app_mode_combobox, handler_id); // to prevent callback
+
+    g_autofree gchar *global_app_mode_str = NULL;
+    global_app_mode_str = g_strdup_printf("%i", (int)p_conn_data->global_app_mode);
+    gtk_combo_box_set_active_id(GTK_COMBO_BOX(dialog_data->app_mode_combobox), global_app_mode_str);
+
+    g_signal_handler_unblock(dialog_data->app_mode_combobox, handler_id);
 
     gtk_spin_button_set_value(GTK_SPIN_BUTTON(dialog_data->vm_await_time_spinbox), p_conn_data->vm_await_timeout);
 
     /// General settings
     // domain
-    if (p_conn_data->domain) {
+    if (p_conn_data->domain)
         gtk_entry_set_text(GTK_ENTRY(dialog_data->domain_entry), p_conn_data->domain);
-    }
-    if (p_conn_data->opt_manual_mode) {
-        // ip
-        if (p_conn_data->ip) {
-            gtk_entry_set_text(GTK_ENTRY(dialog_data->address_entry), p_conn_data->ip);
+
+    switch (p_conn_data->global_app_mode) {
+        case GLOBAL_APP_MODE_VDI: {
+            if (vdi_session_get_vdi_ip())
+                gtk_entry_set_text(GTK_ENTRY(dialog_data->address_entry), vdi_session_get_vdi_ip());
+            gtk_spin_button_set_value(GTK_SPIN_BUTTON(dialog_data->port_spinbox),
+                                      vdi_session_get_vdi_port());
+            break;
         }
-        // port.
-        gtk_spin_button_set_value(GTK_SPIN_BUTTON(dialog_data->port_spinbox), p_conn_data->port);
-    } else {
-        if (vdi_session_get_vdi_ip())
-            gtk_entry_set_text(GTK_ENTRY(dialog_data->address_entry), vdi_session_get_vdi_ip());
-        gtk_spin_button_set_value(GTK_SPIN_BUTTON(dialog_data->port_spinbox),
-                                  vdi_session_get_vdi_port());
+        case GLOBAL_APP_MODE_DIRECT: {
+            if (p_conn_data->ip) {
+                gtk_entry_set_text(GTK_ENTRY(dialog_data->address_entry), p_conn_data->ip);
+            }
+            gtk_spin_button_set_value(GTK_SPIN_BUTTON(dialog_data->port_spinbox), p_conn_data->port);
+            break;
+        }
+        case GLOBAL_APP_MODE_CONTROLLER: {
+            if (get_controller_session_static()->address.string)
+                gtk_entry_set_text(GTK_ENTRY(dialog_data->address_entry),
+                        get_controller_session_static()->address.string);
+            gtk_spin_button_set_value(GTK_SPIN_BUTTON(dialog_data->port_spinbox),
+                    get_controller_session_static()->port);
+            break;
+        }
     }
 
     // Connect to prev pool
@@ -583,9 +623,8 @@ fill_gui(ConnectSettingsDialogData *dialog_data)
     gtk_toggle_button_set_active((GtkToggleButton *)dialog_data->save_password_checkbtn, p_conn_data->to_save_pswd);
 
     if (gtk_widget_get_visible(dialog_data->remote_protocol_combobox)) {
-        VdiVmRemoteProtocol protocol = vdi_session_get_current_remote_protocol();
         // Текст и id совпадают
-        const gchar *protocol_str = vdi_session_remote_protocol_to_str(protocol);
+        const gchar *protocol_str = vdi_session_remote_protocol_to_str(p_conn_data->protocol_in_direct_app_mode);
         gtk_combo_box_set_active_id((GtkComboBox *) dialog_data->remote_protocol_combobox, protocol_str);
     }
 
@@ -709,8 +748,8 @@ take_from_gui(ConnectSettingsDialogData *dialog_data)
     // Service settings
     update_string_safely(&conn_data->windows_updates_url,
                          gtk_entry_get_text(GTK_ENTRY(dialog_data->windows_updates_url_entry)));
-    conn_data->opt_manual_mode =
-            gtk_toggle_button_get_active((GtkToggleButton *)dialog_data->direct_connect_mode_check_btn);
+    conn_data->global_app_mode = (GlobalAppMode)atoi(
+            gtk_combo_box_get_active_id(GTK_COMBO_BOX(dialog_data->app_mode_combobox)));
     conn_data->vm_await_timeout =
             gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(dialog_data->vm_await_time_spinbox));
 
@@ -719,12 +758,21 @@ take_from_gui(ConnectSettingsDialogData *dialog_data)
     update_string_safely(&conn_data->domain, gtk_entry_get_text(GTK_ENTRY(dialog_data->domain_entry)));
     const gchar *ip = gtk_entry_get_text(GTK_ENTRY(dialog_data->address_entry));
     int port = gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(dialog_data->port_spinbox));
-    if (conn_data->opt_manual_mode) {
-        // ip port
-        update_string_safely(&conn_data->ip, ip);
-        conn_data->port = port;
-    } else {
-        vdi_session_set_conn_data(ip, port);
+
+    switch (conn_data->global_app_mode) {
+        case GLOBAL_APP_MODE_VDI: {
+            vdi_session_set_conn_data(ip, port);
+            break;
+        }
+        case GLOBAL_APP_MODE_DIRECT: {
+            update_string_safely(&conn_data->ip, ip);
+            conn_data->port = port;
+            break;
+        }
+        case GLOBAL_APP_MODE_CONTROLLER: {
+            controller_session_set_conn_data(ip, port);
+            break;
+        }
     }
 
     // prev pool
@@ -735,8 +783,7 @@ take_from_gui(ConnectSettingsDialogData *dialog_data)
 
     if (gtk_widget_get_visible(dialog_data->remote_protocol_combobox)) {
         const gchar *protocol_str = gtk_combo_box_get_active_id((GtkComboBox*)dialog_data->remote_protocol_combobox);
-        VdiVmRemoteProtocol protocol = vdi_session_str_to_remote_protocol(protocol_str);
-        vdi_session_set_current_remote_protocol(protocol);
+        conn_data->protocol_in_direct_app_mode = vdi_session_str_to_remote_protocol(protocol_str);
     }
 
     /// Spice debug cursor enabling
@@ -996,8 +1043,7 @@ GtkResponseType remote_viewer_start_settings_dialog(RemoteViewer *p_remote_viewe
         gtk_widget_set_sensitive(dialog_data.btn_get_app_updates, FALSE);
     }
 
-    dialog_data.direct_connect_mode_check_btn = get_widget_from_builder(
-            dialog_data.builder, "direct_connect_mode_check_btn");
+    dialog_data.app_mode_combobox = get_widget_from_builder(dialog_data.builder, "app_mode_combobox");
     dialog_data.vm_await_time_spinbox = get_widget_from_builder(
             dialog_data.builder, "vm_await_time_spinbox");
 
@@ -1040,9 +1086,9 @@ GtkResponseType remote_viewer_start_settings_dialog(RemoteViewer *p_remote_viewe
     g_signal_connect(dialog_data.btn_show_monitor_config_rdp, "clicked",
                      G_CALLBACK(btn_show_monitor_config_clicked), &dialog_data);
 
-    dialog_data.on_direct_connect_mode_check_btn_toggled_id =
-            g_signal_connect(dialog_data.direct_connect_mode_check_btn, "toggled",
-                             G_CALLBACK(on_direct_connect_mode_check_btn_toggled), &dialog_data);
+    dialog_data.on_app_mode_combobox_changed_id =
+            g_signal_connect(dialog_data.app_mode_combobox, "changed",
+                             G_CALLBACK(on_app_mode_combobox_changed), &dialog_data);
 
     gulong st_msg_hdle = g_signal_connect(p_remote_viewer->app_updater, "status-msg-changed",
                                           G_CALLBACK(on_app_updater_status_msg_changed),&dialog_data);
@@ -1053,7 +1099,6 @@ GtkResponseType remote_viewer_start_settings_dialog(RemoteViewer *p_remote_viewe
     gtk_window_set_transient_for(GTK_WINDOW(dialog_data.window), parent);
     gtk_window_set_position(GTK_WINDOW(dialog_data.window), GTK_WIN_POS_CENTER);
     gtk_widget_show_all(dialog_data.window);
-    update_gui_according_to_connect_mode(&dialog_data, get_conn_data(&dialog_data)->opt_manual_mode);
     fill_gui(&dialog_data);
 #ifndef  _WIN32
     gtk_widget_hide(dialog_data.windows_updates_url_entry);

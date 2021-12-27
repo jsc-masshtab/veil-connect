@@ -1118,6 +1118,12 @@ G_MODULE_EXPORT void
 virt_viewer_window_menu_dialog_with_admin(GtkWidget *menu G_GNUC_UNUSED, VirtViewerWindow *self)
 {
     g_info("%s", (const char *)__func__);
+    if (REMOTE_VIEWER(self->priv->app->application_p)->conn_data.global_app_mode != GLOBAL_APP_MODE_VDI) {
+        show_msg_box_dialog(GTK_WINDOW(self->priv->window),
+                            _("Messaging is supported only in VDI connection mode"));
+        return;
+    }
+
     VeilMessenger *veil_messenger = REMOTE_VIEWER(self->priv->app->application_p)->veil_messenger;
     veil_messenger_show_on_top(veil_messenger);
 }
@@ -1677,7 +1683,7 @@ virt_viewer_window_set_kiosk(VirtViewerWindow *self, gboolean enabled)
 
 void virt_viewer_window_update_network_stats(VirtViewerWindow *self, NetworkStatsData *nw_data)
 {
-    conn_info_dialog_update(self->priv->conn_info_dialog, VDI_SPICE_PROTOCOL, nw_data);
+    conn_info_dialog_update(self->priv->conn_info_dialog, SPICE_PROTOCOL, nw_data);
 }
 
 void virt_viewer_window_update_vm_conn_time(VirtViewerWindow *self, const gchar *time)

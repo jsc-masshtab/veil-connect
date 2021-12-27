@@ -1412,19 +1412,21 @@ gboolean virt_viewer_connect_attempt(VirtViewerApp *self)
     return FALSE;
 }
 
-void virt_viewer_app_instant_start(VirtViewerApp *self)
+RemoteViewerState virt_viewer_app_instant_start(VirtViewerApp *self)
 {
     self->priv->is_polling_enabled = TRUE;
     virt_viewer_connect_attempt(self);
 
     virt_viewer_app_show_main_window(self);
     virt_viewer_app_start_loop(self);
+
+    return self->priv->next_app_state;
 }
 
 /*
  *  Каллбэк, обработчика сигнала об обновлении сетевой статистики
  */
-static void virt_viewer_app_stats_data_updated(gpointer data G_GNUC_UNUSED, VdiVmRemoteProtocol protocol G_GNUC_UNUSED,
+static void virt_viewer_app_stats_data_updated(gpointer data G_GNUC_UNUSED, VmRemoteProtocol protocol G_GNUC_UNUSED,
                                         NetworkStatsData *nw_data, VirtViewerApp *self)
 {
     for (GList *l = self->priv->windows; l; l = l->next) {
@@ -1866,13 +1868,12 @@ void virt_viewer_app_set_app_pointer(VirtViewerApp *self, GtkApplication *applic
     self->application_p = application;
 }
 
-void virt_viewer_app_set_spice_session_data(VirtViewerApp *self, const gchar *ip, int port,
-                                            const gchar *user, const gchar *password)
+void virt_viewer_app_set_spice_session_data(VirtViewerApp *self, const ConnectSettingsData *p_conn_data)
 {
-    g_info("%s port %i\n", (const char *)__func__, port);
-    g_info("%s user %s\n", (const char *)__func__, user);
+    g_info("%s port %i\n", (const char *)__func__, p_conn_data->port);
+    g_info("%s user %s\n", (const char *)__func__, p_conn_data->user);
 
-    gchar *guri = g_strdup_printf("spice://%s:%i", ip, port);
+    gchar *guri = g_strdup_printf("spice://%s:%i", p_conn_data->ip, p_conn_data->port);
     g_strstrip(guri);
     g_object_set(self, "guri", guri, NULL);
     g_free(guri);
@@ -1881,11 +1882,11 @@ void virt_viewer_app_set_spice_session_data(VirtViewerApp *self, const gchar *ip
     //        VIRT_VIEWER_SESSION_SPICE(virt_viewer_app_get_session(self));
     //virt_viewer_session_spice_set_credentials(spice_session, user, password);
     // remember credentials
-    g_object_set_data_full(G_OBJECT(self), "username", g_strdup(user), (GDestroyNotify) g_free);
-    g_object_set_data_full(G_OBJECT(self), "password", g_strdup(password), (GDestroyNotify) g_free);
+    g_object_set_data_full(G_OBJECT(self), "username", g_strdup(p_conn_data->user), (GDestroyNotify) g_free);
+    g_object_set_data_full(G_OBJECT(self), "password", g_strdup(p_conn_data->password), (GDestroyNotify) g_free);
 
     // update ip in network speedometer
-    net_speedometer_update_vm_ip(self->net_speedometer, ip);
+    net_speedometer_update_vm_ip(self->net_speedometer, p_conn_data->ip);
 }
 
 void virt_viewer_app_setup(VirtViewerApp *self, ConnectSettingsData *conn_data)
@@ -1940,7 +1941,7 @@ virt_viewer_app_init(VirtViewerApp *self)
 {
     GError *error  = NULL;
     self->priv = GET_PRIVATE(self);
-    self->priv->next_app_state = APP_STATE_VDI_DIALOG;
+    self->priv->next_app_state = APP_STATE_CONNECT_TO_VM;
 
     GdkPixbuf *gdkPixbuf =
             gdk_pixbuf_new_from_resource(VIRT_VIEWER_RESOURCE_PREFIX"/icons/content/img/veil-32x32.png", &error);

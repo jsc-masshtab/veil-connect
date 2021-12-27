@@ -67,8 +67,7 @@ GType virt_viewer_app_get_type (void);
 
 VirtViewerApp *virt_viewer_app_new(void);
 void virt_viewer_app_set_app_pointer(VirtViewerApp *self, GtkApplication *application);
-void virt_viewer_app_set_spice_session_data(VirtViewerApp *self, const gchar *ip, int port,
-                                            const gchar *user, const gchar *password);
+void virt_viewer_app_set_spice_session_data(VirtViewerApp *self, const ConnectSettingsData *p_conn_data);
 
 void virt_viewer_app_setup(VirtViewerApp *self, ConnectSettingsData *conn_data);
 gboolean virt_viewer_app_show_main_window(VirtViewerApp *self);
@@ -131,7 +130,7 @@ void virt_viewer_app_enable_auto_clipboard(VirtViewerApp *self, gboolean enabled
 void virt_viewer_app_start_loop(VirtViewerApp *self);
 
 gboolean virt_viewer_connect_attempt(VirtViewerApp *self);
-void virt_viewer_app_instant_start(VirtViewerApp *self);
+RemoteViewerState virt_viewer_app_instant_start(VirtViewerApp *self);
 
 
 G_END_DECLS

@@ -12,6 +12,7 @@
 #include "remote-viewer-util.h"
 #include "settingsfile.h"
 #include "settings_data.h"
+#include "controller_client/controller_session.h"
 
 /*
  * Чтение всех настроек приложения
@@ -21,35 +22,54 @@ void settings_data_read_all(ConnectSettingsData *data)
     settings_data_clear(data);
 
     // Direct connection to VM data
-    const gchar *manual_conn_group = "ManualConnect";
+    const gchar *manual_conn_group = get_cur_ini_group_direct();
     data->user = read_str_from_ini_file(manual_conn_group, "username");
     data->password = read_str_from_ini_file(manual_conn_group, "password");
 
     data->ip = read_str_from_ini_file(manual_conn_group, "ip");
     data->port = read_int_from_ini_file(manual_conn_group, "port", 443);
 
-    // set params save group
-    const gchar *paramToFileGrpoup = get_cur_ini_param_group();
-    g_autofree gchar *username = NULL;
-    g_autofree gchar *password = NULL;
-    g_autofree gchar *ip = NULL;
-    username = read_str_from_ini_file(paramToFileGrpoup, "username");
-    password = read_str_from_ini_file(paramToFileGrpoup, "password");
-    ip = read_str_from_ini_file(paramToFileGrpoup, "ip");
-    int port = read_int_from_ini_file(paramToFileGrpoup, "port", 443);
-    gboolean is_ldap = read_int_from_ini_file(paramToFileGrpoup, "is_ldap", 0);
+    // connection to VDI
+    {
+        const gchar *param_group_vdi = get_cur_ini_group_vdi();
+        g_autofree gchar *username = NULL;
+        g_autofree gchar *password = NULL;
+        g_autofree gchar *ip = NULL;
+        username = read_str_from_ini_file(param_group_vdi, "username");
+        password = read_str_from_ini_file(param_group_vdi, "password");
+        ip = read_str_from_ini_file(param_group_vdi, "ip");
+        int port = read_int_from_ini_file(param_group_vdi, "port", 443);
+        gboolean is_ldap = read_int_from_ini_file(param_group_vdi, "is_ldap", 0);
 
-    vdi_session_set_credentials(username, password, NULL);
-    vdi_session_set_conn_data(ip, port);
-    vdi_session_set_ldap(is_ldap);
+        vdi_session_set_credentials(username, password, NULL);
+        vdi_session_set_conn_data(ip, port);
+        vdi_session_set_ldap(is_ldap);
 
-    data->domain = read_str_from_ini_file(paramToFileGrpoup, "domain");
-    data->is_connect_to_prev_pool =
-            read_int_from_ini_file(paramToFileGrpoup, "connect_to_pool", 0);
-    data->to_save_pswd = read_int_from_ini_file(paramToFileGrpoup, "to_save_pswd", 1);
+        data->domain = read_str_from_ini_file(param_group_vdi, "domain");
+        data->is_connect_to_prev_pool =
+                read_int_from_ini_file(param_group_vdi, "connect_to_pool", 0);
+        data->to_save_pswd = read_int_from_ini_file(param_group_vdi, "to_save_pswd", 1);
+    }
 
-    vdi_session_set_current_remote_protocol(
-            read_int_from_ini_file("General", "cur_remote_protocol_index", VDI_SPICE_PROTOCOL));
+    // controller
+    {
+        const gchar *param_group_controller = get_cur_ini_group_controller();
+        g_autofree gchar *username = NULL;
+        g_autofree gchar *password = NULL;
+        g_autofree gchar *ip = NULL;
+        username = read_str_from_ini_file(param_group_controller, "username");
+        password = read_str_from_ini_file(param_group_controller, "password");
+        ip = read_str_from_ini_file(param_group_controller, "ip");
+        int port = read_int_from_ini_file(param_group_controller, "port", 443);
+        gboolean is_ldap = read_int_from_ini_file(param_group_controller, "is_ldap", 0);
+
+        controller_session_set_credentials(username, password);
+        controller_session_set_conn_data(ip, port);
+        controller_session_set_ldap(is_ldap);
+
+        data->domain = read_str_from_ini_file(param_group_controller, "domain");
+        data->to_save_pswd = read_int_from_ini_file(param_group_controller, "to_save_pswd", 1);
+    }
 
     // SPICE
     spice_settings_read(&data->spice_settings);
@@ -57,13 +77,19 @@ void settings_data_read_all(ConnectSettingsData *data)
     rdp_settings_read_ini_file(&data->rdp_settings, TRUE);
     // X2Go
     x2go_settings_read(&data->x2Go_settings);
-
     // Service
-    data->opt_manual_mode = read_int_from_ini_file("General", "opt_manual_mode", 0);
+    data->global_app_mode = read_int_from_ini_file("ServiceSettings", "global_app_mode", GLOBAL_APP_MODE_VDI);
 
     data->windows_updates_url = read_str_from_ini_file_default("ServiceSettings",
                                                                 "windows_updates_url", VEIL_CONNECT_WIN_RELEASE_URL);
     data->vm_await_timeout = read_int_from_ini_file("ServiceSettings", "vm_await_timeout", 65);
+
+    // cur_remote_protocol_index
+    VmRemoteProtocol protocol = read_int_from_ini_file("General",
+                                                       "cur_remote_protocol_index", SPICE_PROTOCOL);
+    vdi_session_set_current_remote_protocol(protocol);
+    data->protocol_in_direct_app_mode = protocol;
+    controller_session_set_current_remote_protocol(protocol);
 }
 
 /*
@@ -71,7 +97,9 @@ void settings_data_read_all(ConnectSettingsData *data)
  */
 void settings_data_save_all(ConnectSettingsData *data)
 {
-    const gchar *manual_conn_group = "ManualConnect";
+    // Main
+    // Direct
+    const gchar *manual_conn_group = get_cur_ini_group_direct();
     write_str_to_ini_file(manual_conn_group, "username", data->user);
     if (data->to_save_pswd)
         write_str_to_ini_file(manual_conn_group, "password", data->password);
@@ -80,21 +108,53 @@ void settings_data_save_all(ConnectSettingsData *data)
     write_str_to_ini_file(manual_conn_group, "ip", data->ip);
     write_int_to_ini_file(manual_conn_group, "port", data->port);
 
-    // Main
-    const gchar *paramToFileGrpoup = get_cur_ini_param_group();
-    write_str_to_ini_file(paramToFileGrpoup, "username", vdi_session_get_vdi_username());
+    // VDI
+    const gchar *param_group_vdi = get_cur_ini_group_vdi();
+    write_str_to_ini_file(param_group_vdi, "username", vdi_session_get_vdi_username());
     if (data->to_save_pswd)
-        write_str_to_ini_file(paramToFileGrpoup, "password", vdi_session_get_vdi_password());
+        write_str_to_ini_file(param_group_vdi, "password", vdi_session_get_vdi_password());
     else
-        write_str_to_ini_file(paramToFileGrpoup, "password", "");
-    write_str_to_ini_file(paramToFileGrpoup, "ip", vdi_session_get_vdi_ip());
-    write_int_to_ini_file(paramToFileGrpoup, "port", vdi_session_get_vdi_port());
-    write_int_to_ini_file(paramToFileGrpoup, "is_ldap", vdi_session_is_ldap());
+        write_str_to_ini_file(param_group_vdi, "password", "");
+    write_str_to_ini_file(param_group_vdi, "ip", vdi_session_get_vdi_ip());
+    write_int_to_ini_file(param_group_vdi, "port", vdi_session_get_vdi_port());
+    write_int_to_ini_file(param_group_vdi, "is_ldap", vdi_session_is_ldap());
 
-    write_str_to_ini_file(paramToFileGrpoup, "domain", data->domain);
-    write_int_to_ini_file(paramToFileGrpoup, "connect_to_pool", data->is_connect_to_prev_pool);
-    write_int_to_ini_file(paramToFileGrpoup, "to_save_pswd", data->to_save_pswd);
-    write_int_to_ini_file("General", "cur_remote_protocol_index", vdi_session_get_current_remote_protocol());
+    write_str_to_ini_file(param_group_vdi, "domain", data->domain);
+    write_int_to_ini_file(param_group_vdi, "connect_to_pool", data->is_connect_to_prev_pool);
+    write_int_to_ini_file(param_group_vdi, "to_save_pswd", data->to_save_pswd);
+
+    // cur_remote_protocol_index
+    switch (data->global_app_mode) {
+        case GLOBAL_APP_MODE_VDI: {
+            write_int_to_ini_file("General", "cur_remote_protocol_index",
+                    vdi_session_get_current_remote_protocol());
+            break;
+        }
+        case GLOBAL_APP_MODE_DIRECT: {
+            write_int_to_ini_file("General", "cur_remote_protocol_index",
+                                  data->protocol_in_direct_app_mode);
+            break;
+        }
+        case GLOBAL_APP_MODE_CONTROLLER: {
+            write_int_to_ini_file("General", "cur_remote_protocol_index",
+                                  controller_session_get_current_remote_protocol());
+            break;
+        }
+    }
+
+    // Controller
+    const gchar *param_group_controller = get_cur_ini_group_controller();
+    write_str_to_ini_file(param_group_controller, "username", get_controller_session_static()->username.string);
+    if (data->to_save_pswd)
+        write_str_to_ini_file(param_group_controller, "password", get_controller_session_static()->password.string);
+    else
+        write_str_to_ini_file(param_group_controller, "password", "");
+    write_str_to_ini_file(param_group_controller, "ip", get_controller_session_static()->address.string);
+    write_int_to_ini_file(param_group_controller, "port", get_controller_session_static()->port);
+    write_int_to_ini_file(param_group_controller, "is_ldap", get_controller_session_static()->is_ldap);
+
+    write_str_to_ini_file(param_group_controller, "domain", data->domain);
+    write_int_to_ini_file(param_group_controller, "to_save_pswd", data->to_save_pswd);
 
     // SPICE
     spice_settings_write(&data->spice_settings);
@@ -104,7 +164,7 @@ void settings_data_save_all(ConnectSettingsData *data)
     x2go_settings_write(&data->x2Go_settings);
 
     // Service
-    write_int_to_ini_file("General", "opt_manual_mode", data->opt_manual_mode);
+    write_int_to_ini_file("ServiceSettings", "global_app_mode", data->global_app_mode);
     write_str_to_ini_file("ServiceSettings", "windows_updates_url", data->windows_updates_url);
     write_int_to_ini_file("ServiceSettings", "vm_await_timeout", data->vm_await_timeout);
 

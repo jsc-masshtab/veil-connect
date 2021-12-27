@@ -151,6 +151,12 @@ list(APPEND SRC_CODE
         src/x2go/x2go_launcher.c
         src/x2go/x2go_launcher_pyhoca.c
         src/x2go/x2go_launcher_x2goclient.c
+
+# controller_client
+        src/controller_client/controller_session.h
+        src/controller_client/controller_session.c
+        src/controller_client/controller_manager.h
+        src/controller_client/controller_manager.c
 )
 
 # usb_redirection

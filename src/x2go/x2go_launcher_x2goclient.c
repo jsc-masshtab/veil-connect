@@ -58,15 +58,23 @@ static gboolean x2go_launcher_fill_settings_file(X2goData *data, const gchar *x2
                                   G_KEY_FILE_KEEP_TRANSLATIONS,
                                   &error)) {
         if (error)
-            g_debug("%s", error->message);
+            g_warning("%s", error->message);
         g_clear_error(&error);
         return FALSE;
     }
 
     const gchar *group_name = "X2GoSession";
-    g_key_file_set_value(x2go_keyfile, group_name, "host", conn_data->ip);
-    g_key_file_set_value(x2go_keyfile, group_name, "user", data->user);
-    g_key_file_set_value(x2go_keyfile, group_name, "command", conn_data->x2Go_settings.x2go_session_type);
+
+    if (x2go_keyfile == NULL) {
+        g_warning("x2go_keyfile == NULL");
+        return FALSE;
+    }
+    if (conn_data->ip)
+        g_key_file_set_value(x2go_keyfile, group_name, "host", conn_data->ip);
+    if (data->user)
+        g_key_file_set_value(x2go_keyfile, group_name, "user", data->user);
+    if (conn_data->x2Go_settings.x2go_session_type)
+        g_key_file_set_value(x2go_keyfile, group_name, "command", conn_data->x2Go_settings.x2go_session_type);
     g_key_file_set_integer(x2go_keyfile, group_name, "fullscreen", conn_data->x2Go_settings.full_screen);
     gint speed;
     if (g_strcmp0(conn_data->x2Go_settings.x2go_conn_type, "modem") == 0)

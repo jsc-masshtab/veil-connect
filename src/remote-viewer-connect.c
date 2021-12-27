@@ -22,6 +22,7 @@
 #include "jsonhandler.h"
 #include "remote_viewer_start_settings.h"
 #include "usbredir_dialog.h"
+#include "controller_client/controller_session.h"
 
 
 typedef enum
@@ -110,42 +111,68 @@ take_from_gui(RemoteViewerConnData *ci)
     const gchar *login = gtk_entry_get_text(GTK_ENTRY(ci->login_entry));
     const gchar *password = gtk_entry_get_text(GTK_ENTRY(ci->password_entry));
     const gchar *disposable_password = gtk_entry_get_text(GTK_ENTRY(ci->disposable_password_entry));
-
-    if (get_conn_data(ci)->opt_manual_mode) {
-        update_string_safely(&get_conn_data(ci)->user, login);
-        strstrip_safely(get_conn_data(ci)->user);
-        update_string_safely(&get_conn_data(ci)->password, password);
-        strstrip_safely(get_conn_data(ci)->password);
-    } else {
-        vdi_session_set_credentials(login, password, disposable_password);
-    }
-
     gboolean is_ldap = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(ci->ldap_check_btn));
-    vdi_session_set_ldap(is_ldap);
-}
 
-// set error message
-static void
-set_message_to_info_label(GtkLabel *label, const gchar *message)
-{
-    if (!message)
-        return;
-
-    const guint max_str_width = 300;
-
-    // trim message
-    if ( strlen_safely(message) > max_str_width ) {
-        gchar *message_str = g_strndup(message, max_str_width);
-        gtk_label_set_text(label, message_str);
-        g_free(message_str);
-    } else {
-        gtk_label_set_text(label, message);
+    switch (get_conn_data(ci)->global_app_mode) {
+        case GLOBAL_APP_MODE_VDI: {
+            vdi_session_set_credentials(login, password, disposable_password);
+            vdi_session_set_ldap(is_ldap);
+            break;
+        }
+        case GLOBAL_APP_MODE_DIRECT: {
+            update_string_safely(&get_conn_data(ci)->user, login);
+            strstrip_safely(get_conn_data(ci)->user);
+            update_string_safely(&get_conn_data(ci)->password, password);
+            strstrip_safely(get_conn_data(ci)->password);
+            break;
+        }
+        case GLOBAL_APP_MODE_CONTROLLER: {
+            controller_session_set_credentials(login, password);
+            controller_session_set_ldap(is_ldap);
+            break;
+        }
     }
-
-    gtk_widget_set_tooltip_text(GTK_WIDGET(label), message);
 }
 
-// token fetch callback
+static void
+fill_gui(RemoteViewerConnData *ci)
+{
+    switch (get_conn_data(ci)->global_app_mode) {
+        case GLOBAL_APP_MODE_VDI: {
+            if (vdi_session_get_vdi_username())
+                gtk_entry_set_text(GTK_ENTRY(ci->login_entry), vdi_session_get_vdi_username());
+            if (vdi_session_get_vdi_password())
+                gtk_entry_set_text(GTK_ENTRY(ci->password_entry), vdi_session_get_vdi_password());
+
+            gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(ci->ldap_check_btn), vdi_session_is_ldap());
+            gtk_widget_set_sensitive(ci->ldap_check_btn, TRUE);
+            break;
+        }
+        case GLOBAL_APP_MODE_DIRECT: {
+            if (get_conn_data(ci)->user)
+                gtk_entry_set_text(GTK_ENTRY(ci->login_entry), get_conn_data(ci)->user);
+            if (get_conn_data(ci)->password)
+                gtk_entry_set_text(GTK_ENTRY(ci->password_entry), get_conn_data(ci)->password);
+
+            gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(ci->ldap_check_btn), FALSE);
+            gtk_widget_set_sensitive(ci->ldap_check_btn, FALSE);
+            break;
+        }
+        case GLOBAL_APP_MODE_CONTROLLER: {
+            if (get_controller_session_static()->username.string)
+                gtk_entry_set_text(GTK_ENTRY(ci->login_entry), get_controller_session_static()->username.string);
+            if (get_controller_session_static()->password.string)
+                gtk_entry_set_text(GTK_ENTRY(ci->password_entry), get_controller_session_static()->password.string);
+
+            gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(ci->ldap_check_btn),
+                                         get_controller_session_static()->is_ldap);
+            gtk_widget_set_sensitive(ci->ldap_check_btn, TRUE);
+            break;
+        }
+    }
+}
+
+// token fetch callback (vdi)
 static void
 on_vdi_session_log_in_finished(GObject *source_object G_GNUC_UNUSED,
                                       GAsyncResult *res,
@@ -165,7 +192,29 @@ on_vdi_session_log_in_finished(GObject *source_object G_GNUC_UNUSED,
         take_from_gui(ci);
         shutdown_loop(ci->loop);
     } else {
-        set_message_to_info_label(GTK_LABEL(ci->message_display_label), reply_msg);
+        util_set_message_to_info_label(GTK_LABEL(ci->message_display_label), reply_msg);
+        set_auth_dialog_state(AUTH_GUI_DEFAULT_STATE, ci);
+    }
+}
+
+// token fetch callback (controller)
+static void
+on_controller_session_log_in_finished(GObject *source_object G_GNUC_UNUSED,
+                               GAsyncResult *res,
+                               gpointer user_data)
+{
+    RemoteViewerConnData *ci = user_data;
+
+    gboolean is_ok = g_task_propagate_boolean(G_TASK(res), NULL);
+
+    if (is_ok) {
+        ci->dialog_window_response = GTK_RESPONSE_OK;
+        take_from_gui(ci);
+        shutdown_loop(ci->loop);
+    } else {
+        g_autofree gchar *last_error_phrase = NULL;
+        last_error_phrase = atomic_string_get(&get_controller_session_static()->last_error_phrase);
+        util_set_message_to_info_label(GTK_LABEL(ci->message_display_label), last_error_phrase);
         set_auth_dialog_state(AUTH_GUI_DEFAULT_STATE, ci);
     }
 }
@@ -185,31 +234,56 @@ static void connect_to_vdi_server(RemoteViewerConnData *ci)
     execute_async_task(vdi_session_log_in_task, on_vdi_session_log_in_finished, NULL, ci);
 }
 
-static void
-handle_connect_event(RemoteViewerConnData *ci)
+// connecto to controller (ECP)
+static void connect_to_controller(RemoteViewerConnData *ci)
 {
-    // In manual mode we shutdown the loop.
-    if (get_conn_data(ci)->opt_manual_mode) {
+    if (ci->auth_dialog_state == AUTH_GUI_CONNECT_TRY_STATE)
+        return;
 
-        if (strlen_safely(get_conn_data(ci)->ip) == 0) {
-            // "Не указан адрес подключения (Настройки->Основные)"
-            set_message_to_info_label(GTK_LABEL(ci->message_display_label),
-                                      _("Connection address is not specified"));
-            return;
+    // set credential for connection to controller
+    take_from_gui(ci);
+    set_auth_dialog_state(AUTH_GUI_CONNECT_TRY_STATE, ci);
+
+    //start token fetching task
+    execute_async_task(controller_session_log_in_task, on_controller_session_log_in_finished, NULL, ci);
+}
+
+static void
+handle_connect_request(RemoteViewerConnData *ci)
+{
+    switch (get_conn_data(ci)->global_app_mode) {
+        case GLOBAL_APP_MODE_VDI: {
+            if (strlen_safely(vdi_session_get_vdi_ip()) == 0) {
+                util_set_message_to_info_label(GTK_LABEL(ci->message_display_label),
+                                          _("Connection address is not specified"));
+                return;
+            }
+
+            connect_to_vdi_server(ci);
+            break;
         }
+        case GLOBAL_APP_MODE_DIRECT: {
+            if (strlen_safely(get_conn_data(ci)->ip) == 0) {
+                // "Не указан адрес подключения (Настройки->Основные)"
+                util_set_message_to_info_label(GTK_LABEL(ci->message_display_label),
+                                          _("Connection address is not specified"));
+                return;
+            }
 
-        ci->dialog_window_response = GTK_RESPONSE_OK;
-        take_from_gui(ci);
-        shutdown_loop(ci->loop);
-    } else {
-
-        if (strlen_safely(vdi_session_get_vdi_ip()) == 0) {
-            set_message_to_info_label(GTK_LABEL(ci->message_display_label),
-                                      _("Connection address is not specified"));
-            return;
+            ci->dialog_window_response = GTK_RESPONSE_OK;
+            take_from_gui(ci);
+            shutdown_loop(ci->loop);
+            break;
         }
-
-        connect_to_vdi_server(ci);
+        case GLOBAL_APP_MODE_CONTROLLER: {
+            if (strlen_safely(get_controller_session_static()->address.string) == 0) {
+                util_set_message_to_info_label(GTK_LABEL(ci->message_display_label),
+                                          _("Connection address is not specified"));
+                return;
+            }
+            connect_to_controller(ci);
+            break;
+        }
     }
 }
 
@@ -232,7 +306,7 @@ key_pressed_cb(GtkWidget *widget G_GNUC_UNUSED, GdkEvent *event, gpointer data)
         switch (event->key.keyval) {
             case GDK_KEY_Return:
                 g_info("GDK_KEY_Return\n");
-                handle_connect_event(ci);
+                handle_connect_request(ci);
                 return TRUE;
             case GDK_KEY_Escape:
                 g_signal_emit_by_name(window, "delete-event", NULL, &retval);
@@ -250,7 +324,9 @@ settings_button_clicked_cb(GtkButton *button G_GNUC_UNUSED, gpointer data)
 {
     RemoteViewerConnData *ci = data;
     GtkResponseType res = remote_viewer_start_settings_dialog(ci->p_remote_viewer, GTK_WINDOW(ci->window));
-    (void)res;
+    // update gui state
+    if (res == GTK_RESPONSE_OK)
+        fill_gui(ci);
 }
 
 static void
@@ -265,32 +341,27 @@ on_check_btn_2fa_password_toggled(GtkToggleButton *button, gpointer data)
 static void
 connect_button_clicked_cb(GtkButton *button G_GNUC_UNUSED, gpointer data)
 {
-    RemoteViewerConnData *ci = data;
-    handle_connect_event(ci);
+    RemoteViewerConnData *ci = (RemoteViewerConnData *)data;
+    handle_connect_request(ci);
 }
 
 static void
-btn_cancel_auth_clicked_cb(GtkButton *button G_GNUC_UNUSED, gpointer data G_GNUC_UNUSED)
+btn_cancel_auth_clicked_cb(GtkButton *button G_GNUC_UNUSED, gpointer data)
 {
-    vdi_session_cancell_pending_requests();
-}
+    RemoteViewerConnData *ci = (RemoteViewerConnData *)data;
 
-static void
-fill_gui(RemoteViewerConnData *ci)
-{
-    if (get_conn_data(ci)->opt_manual_mode) {
-        if (get_conn_data(ci)->user)
-            gtk_entry_set_text(GTK_ENTRY(ci->login_entry), get_conn_data(ci)->user);
-        if (get_conn_data(ci)->password)
-            gtk_entry_set_text(GTK_ENTRY(ci->password_entry), get_conn_data(ci)->password);
-    } else {
-        if (vdi_session_get_vdi_username())
-            gtk_entry_set_text(GTK_ENTRY(ci->login_entry), vdi_session_get_vdi_username());
-        if (vdi_session_get_vdi_password())
-            gtk_entry_set_text(GTK_ENTRY(ci->password_entry), vdi_session_get_vdi_password());
+    switch (get_conn_data(ci)->global_app_mode) {
+        case GLOBAL_APP_MODE_VDI: {
+            vdi_session_cancel_pending_requests();
+            break;
+        }
+        case GLOBAL_APP_MODE_CONTROLLER: {
+            controller_session_cancel_pending_requests();
+            break;
+        }
+        default:
+            break;
     }
-
-    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(ci->ldap_check_btn), vdi_session_is_ldap());
 }
 
 // В этом режиме сразу автоматом пытаемся подключиться к предыдущему пулу, не дожидаясь действий пользователя.
@@ -298,7 +369,8 @@ fill_gui(RemoteViewerConnData *ci)
 // попасть на начальную форму и настройки (not_connected_to_prev_pool_yet)
 static void fast_forward_connect_to_prev_pool_if_enabled(RemoteViewerConnData *ci)
 {
-    if(get_conn_data(ci)->is_connect_to_prev_pool && !get_conn_data(ci)->opt_manual_mode &&
+    if(get_conn_data(ci)->global_app_mode == GLOBAL_APP_MODE_VDI &&
+    get_conn_data(ci)->is_connect_to_prev_pool &&
             get_conn_data(ci)->not_connected_to_prev_pool_yet) {
         connect_to_vdi_server(ci);
     }

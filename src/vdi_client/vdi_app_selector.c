@@ -77,7 +77,7 @@ static void vdi_app_selector_setup_icon_btn(VdiAppSelector *self, GtkWidget *btn
             G_CALLBACK(vdi_app_selector_on_icon_btn_clicked), self);
 }
 
-static void vdi_app_selector_add_app(VdiAppSelector *self, VdiAppData app_data)
+static void vdi_app_selector_add_app(VdiAppSelector *self, VeilAppData app_data)
 {
     VdiGuiApp gui_app_data = {};
 
@@ -131,7 +131,7 @@ static void on_auth_fail_detected(gpointer data G_GNUC_UNUSED, VdiAppSelector *s
     shutdown_loop(self->loop);
 }
 
-AppSelectorResult vdi_app_selector_start(VdiVmData *p_vdi_vm_data, GtkWindow *parent)
+AppSelectorResult vdi_app_selector_start(VeilVmData *p_vdi_vm_data, GtkWindow *parent)
 {
     VdiAppSelector *self = calloc(1, sizeof(VdiAppSelector));
     self->selector_result.result_type = APP_SELECTOR_RESULT_NONE;
@@ -156,12 +156,12 @@ AppSelectorResult vdi_app_selector_start(VdiVmData *p_vdi_vm_data, GtkWindow *pa
     // Заполнить приложения для выбора пользователем
     if (farm_array) {
         for (guint i = 0; i < MIN(farm_array->len, 500); ++i) {
-            VdiFarmData farm_data = g_array_index(farm_array, VdiFarmData, i);
+            VeilFarmData farm_data = g_array_index(farm_array, VeilFarmData, i);
             //g_info("farm_data.farm_alias: %s", farm_data.farm_alias);
 
             if (farm_data.app_array) {
                 for (guint j = 0; j < MIN(farm_data.app_array->len, 1000); ++j) {
-                    VdiAppData app_data = g_array_index(farm_data.app_array, VdiAppData, j);
+                    VeilAppData app_data = g_array_index(farm_data.app_array, VeilAppData, j);
                     vdi_app_selector_add_app(self, app_data);
                 }
             }

@@ -30,6 +30,9 @@ gboolean json_object_get_bool_member_safely(JsonObject *object, const gchar *mem
 // Every reply from VDI must contain errors or data
 JsonObject *json_get_data_or_errors_object(JsonParser *parser, const gchar *json_str,
         ServerReplyType *server_reply_type);
+// Same as json_get_data_or_errors_object but for ECP VeiL
+JsonObject *json_get_data_or_errors_object_ecp(JsonParser *parser, const gchar *json_str,
+                                               ServerReplyType *server_reply_type);
 
 gchar *string_to_json_value(const gchar *string);
 

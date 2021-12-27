@@ -26,6 +26,8 @@
 #define ACCEPT_RESPONSE 202
 #define BAD_REQUEST 400
 #define AUTH_FAIL_RESPONSE 401
+#define HTTP_RESPONSE_TIOMEOUT 20
+
 
 static VdiSession *vdi_session_static = NULL;
 
@@ -128,7 +130,7 @@ VdiSession *vdi_session_new()
                                                              "ssl-strict", ssl_strict, NULL);
 
     // init
-    vdi_session->current_remote_protocol = VDI_SPICE_PROTOCOL; // by default
+    vdi_session->current_remote_protocol = SPICE_PROTOCOL; // by default
 
     vdi_session->vdi_username = NULL;
     vdi_session->vdi_password = NULL;
@@ -279,7 +281,7 @@ static gchar *vdi_session_auth_request()
 
             const gchar *message = json_object_get_string_member_safely(reply_json_object, "message");
             g_info("%s : Unable to get token. %s %s", (const char *)__func__, message, msg->reason_phrase);
-            if (message != NULL && strlen_safely(message) != 0)
+            if (strlen_safely(message) != 0)
                 reply_msg = g_strdup(message);
             else if (msg->reason_phrase != NULL && strlen_safely(msg->reason_phrase) != 0)
                 reply_msg = g_strdup(msg->reason_phrase);
@@ -419,7 +421,7 @@ gchar *vdi_session_get_token(void)
     return atomic_string_get(&vdi_session_static->jwt);
 }
 
-void vdi_session_cancell_pending_requests()
+void vdi_session_cancel_pending_requests()
 {
     soup_session_abort(vdi_session_static->soup_session);
 }
@@ -486,47 +488,47 @@ const gchar *vdi_session_get_current_vm_id()
     return vdi_session_static->current_vm_id;
 }
 
-void vdi_session_set_current_remote_protocol(VdiVmRemoteProtocol remote_protocol)
+void vdi_session_set_current_remote_protocol(VmRemoteProtocol remote_protocol)
 {
     vdi_session_static->current_remote_protocol = remote_protocol;
 }
 
-VdiVmRemoteProtocol vdi_session_get_current_remote_protocol()
+VmRemoteProtocol vdi_session_get_current_remote_protocol()
 {
     return vdi_session_static->current_remote_protocol;
 }
 
-VdiVmRemoteProtocol vdi_session_str_to_remote_protocol(const gchar *protocol_str)
+VmRemoteProtocol vdi_session_str_to_remote_protocol(const gchar *protocol_str)
 {
-    VdiVmRemoteProtocol protocol = VDI_ANOTHER_REMOTE_PROTOCOL;
+    VmRemoteProtocol protocol = ANOTHER_REMOTE_PROTOCOL;
     if (g_strcmp0("SPICE", protocol_str) == 0)
-        protocol = VDI_SPICE_PROTOCOL;
+        protocol = SPICE_PROTOCOL;
     else if (g_strcmp0("SPICE_DIRECT", protocol_str) == 0)
-        protocol = VDI_SPICE_DIRECT_PROTOCOL;
+        protocol = SPICE_DIRECT_PROTOCOL;
     else if (g_strcmp0("RDP", protocol_str) == 0)
-        protocol = VDI_RDP_PROTOCOL;
+        protocol = RDP_PROTOCOL;
     else if (g_strcmp0("NATIVE_RDP", protocol_str) == 0)
-        protocol = VDI_RDP_NATIVE_PROTOCOL;
+        protocol = RDP_WINDOWS_NATIVE_PROTOCOL;
     else if (g_strcmp0("X2GO", protocol_str) == 0)
-        protocol = VDI_X2GO_PROTOCOL;
+        protocol = X2GO_PROTOCOL;
 
     return protocol;
 }
 
-const gchar *vdi_session_remote_protocol_to_str(VdiVmRemoteProtocol protocol)
+const gchar *vdi_session_remote_protocol_to_str(VmRemoteProtocol protocol)
 {
     switch (protocol) {
-        case VDI_SPICE_PROTOCOL:
+        case SPICE_PROTOCOL:
             return "SPICE";
-        case VDI_SPICE_DIRECT_PROTOCOL:
+        case SPICE_DIRECT_PROTOCOL:
             return "SPICE_DIRECT";
-        case VDI_RDP_PROTOCOL:
+        case RDP_PROTOCOL:
             return "RDP";
-        case VDI_RDP_NATIVE_PROTOCOL:
+        case RDP_WINDOWS_NATIVE_PROTOCOL:
             return "NATIVE_RDP";
-        case VDI_X2GO_PROTOCOL:
+        case X2GO_PROTOCOL:
             return "X2GO";
-        case VDI_ANOTHER_REMOTE_PROTOCOL:
+        case ANOTHER_REMOTE_PROTOCOL:
         default:
             return "UNKNOWN_PROTOCOL";
     }
@@ -637,7 +639,7 @@ gchar *vdi_session_api_call(const char *method, const char *uri_string, const gc
         soup_message_set_request(msg, "application/json", SOUP_MEMORY_COPY, body_str, strlen_safely(body_str));
 
     // send request.
-    send_message(msg, uri_string);
+    util_send_message(vdi_session_static->soup_session, msg, uri_string);
     g_info("vdi_session_api_call: msg->status_code: %i", msg->status_code);
     //g_info("msg->response_body: %s", msg->response_body->data);
     // Повторяем логику как в браузере - завершаем соединение и выбрасываем пользователя к форме авторизации
@@ -737,7 +739,7 @@ void vdi_session_get_vm_from_pool_task(GTask       *task,
     ServerReplyType server_reply_type;
     JsonObject *reply_json_object = json_get_data_or_errors_object(parser, response_body_str, &server_reply_type);
 
-    VdiVmData *vdi_vm_data = calloc(1, sizeof(VdiVmData));
+    VeilVmData *vdi_vm_data = calloc(1, sizeof(VeilVmData));
     vdi_vm_data->server_reply_type = server_reply_type;
 
     if (server_reply_type == SERVER_REPLY_TYPE_DATA) {
@@ -750,11 +752,11 @@ void vdi_session_get_vm_from_pool_task(GTask       *task,
         // parse rds farm data
         JsonArray *farm_array = json_object_get_array_member_safely(reply_json_object, "farm_list");
         if (farm_array) {
-            vdi_vm_data->farm_array = g_array_new(FALSE, FALSE, sizeof(VdiFarmData));
+            vdi_vm_data->farm_array = g_array_new(FALSE, FALSE, sizeof(VeilFarmData));
 
             guint farm_amount = json_array_get_length(farm_array);
             for (guint i = 0; i < farm_amount; ++i) {
-                VdiFarmData farm_data = {};
+                VeilFarmData farm_data = {};
                 //  farm_alias
                 JsonObject *farm_obj = json_array_get_object_element(farm_array, i);
                 farm_data.farm_alias = g_strdup(json_object_get_string_member_safely( farm_obj, "farm_alias"));
@@ -762,11 +764,11 @@ void vdi_session_get_vm_from_pool_task(GTask       *task,
                 // app array
                 JsonArray *app_array = json_object_get_array_member_safely(farm_obj, "app_array");
                 if (app_array) {
-                    farm_data.app_array = g_array_new(FALSE, FALSE, sizeof(VdiAppData));
+                    farm_data.app_array = g_array_new(FALSE, FALSE, sizeof(VeilAppData));
 
                     guint app_amount = json_array_get_length(app_array);
                     for (guint j = 0; j < app_amount; ++j) {
-                        VdiAppData app_data = {};
+                        VeilAppData app_data = {};
 
                         JsonObject *app_obj = json_array_get_object_element(app_array, j);
                         // app_name
@@ -1031,7 +1033,7 @@ void vdi_session_get_vm_data_task(GTask *task,
     ServerReplyType server_reply_type;
     JsonObject *reply_json_object = json_get_data_or_errors_object(parser, response_body_str, &server_reply_type);
 
-    VdiVmData *vdi_vm_data = calloc(1, sizeof(VdiVmData));
+    VeilVmData *vdi_vm_data = calloc(1, sizeof(VeilVmData));
     vdi_vm_data->server_reply_type = server_reply_type;
 
     if (server_reply_type == SERVER_REPLY_TYPE_DATA) {
@@ -1059,9 +1061,7 @@ gboolean vdi_session_logout(void)
     // stop websocket connection
     vdi_ws_client_stop(&vdi_session_static->vdi_ws_client);
 
-    vdi_session_cancell_pending_requests();
-
-    vdi_session_reset_current_data();
+    vdi_session_cancel_pending_requests();
 
     g_info("%s", (const char *)__func__);
     g_autofree gchar *jwt_str = NULL;
@@ -1116,7 +1116,7 @@ gchar *vdi_session_check_for_tk_updates(const gchar *veil_connect_url, gchar **p
     if (msg == NULL)
         goto clear_mark;
 
-    guint status = send_message(msg, veil_connect_url);
+    guint status = util_send_message(vdi_session_static->soup_session, msg, veil_connect_url);
     if (status != OK_RESPONSE)
         goto clear_mark;
 
@@ -1303,36 +1303,6 @@ void vdi_api_session_free_action_on_vm_data(ActionOnVmData *action_on_vm_data)
 {
     free_memory_safely(&action_on_vm_data->action_on_vm_str);
     free(action_on_vm_data);
-}
-
-void vdi_api_session_free_vdi_vm_data(VdiVmData *vdi_vm_data)
-{
-    free_memory_safely(&vdi_vm_data->vm_host);
-    free_memory_safely(&vdi_vm_data->vm_password);
-    free_memory_safely(&vdi_vm_data->message);
-    free_memory_safely(&vdi_vm_data->vm_verbose_name);
-
-    if (vdi_vm_data->farm_array) {
-        for (guint i = 0; i < vdi_vm_data->farm_array->len; ++i) {
-            VdiFarmData farm_data = g_array_index(vdi_vm_data->farm_array, VdiFarmData, i);
-            g_free(farm_data.farm_alias);
-
-            if (farm_data.app_array) {
-                for (guint j = 0; j < vdi_vm_data->farm_array->len; ++j) {
-                    VdiAppData app_data = g_array_index(farm_data.app_array, VdiAppData, j);
-                    g_free(app_data.app_alias);
-                    g_free(app_data.app_name);
-                    g_free(app_data.icon_base64);
-                }
-
-                g_array_free(farm_data.app_array, TRUE);
-            }
-        }
-
-        g_array_free(vdi_vm_data->farm_array, TRUE);
-    }
-
-    free(vdi_vm_data);
 }
 
 void vdi_api_session_free_attach_usb_data(AttachUsbData *attach_usb_data)

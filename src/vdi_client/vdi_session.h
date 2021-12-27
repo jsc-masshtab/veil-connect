@@ -16,7 +16,7 @@
 #include <libsoup/soup-session.h>
 #include <libsoup/soup-message.h>
 
-
+#include "remote-viewer-util.h"
 #include "vdi_ws_client.h"
 #include "async.h"
 #include "jsonhandler.h"
@@ -32,22 +32,6 @@ typedef enum{
     USER_PERMISSION_SHARED_CLIPBOARD_GUEST_TO_CLIENT = 1 << 3
 
 } UserPermission;
-// remote protocol type
-typedef enum{
-    VDI_SPICE_PROTOCOL,
-    VDI_SPICE_DIRECT_PROTOCOL,
-    VDI_RDP_PROTOCOL,
-    VDI_RDP_NATIVE_PROTOCOL,
-    VDI_X2GO_PROTOCOL,
-    VDI_ANOTHER_REMOTE_PROTOCOL
-} VdiVmRemoteProtocol;
-
-// vm operational system
-typedef enum{
-    VDI_VM_WIN,
-    VDI_VM_LINUX,
-    VDI_VM_ANOTHER_OS
-} VdiVmOs;
 
 typedef enum{
     VDI_POOL_TYPE_UNKNOWN,
@@ -55,41 +39,6 @@ typedef enum{
     VDI_POOL_TYPE_AUTOMATED,
     VDI_POOL_TYPE_RDS
 } VdiPoolType;
-
-typedef struct{
-
-    gchar *farm_alias;
-    GArray *app_array;
-
-} VdiFarmData;
-
-typedef struct{
-
-    gchar *app_name;
-    gchar *app_alias;
-    gchar *icon_base64;
-
-} VdiAppData;
-
-// Инфа о виртуальной машине полученная от vdi
-typedef struct{
-
-    VdiVmOs os_type;
-
-    gchar *vm_host;
-    int vm_port;
-    gchar *vm_password;
-    gchar *vm_verbose_name;
-
-    gchar *message;
-
-    gint test_data;
-    ServerReplyType server_reply_type;
-
-    // For RDS only
-    GArray *farm_array;
-
-} VdiVmData;
 
 // Data which passed to vdi_session_api_call
 typedef struct{
@@ -162,7 +111,7 @@ struct _VdiSession
     // data about current pool and vm
     VdiPoolType pool_type;
     gchar *current_pool_id;
-    VdiVmRemoteProtocol current_remote_protocol;
+    VmRemoteProtocol current_remote_protocol;
     gchar *current_vm_id;
     gchar *current_vm_verbose_name;
     gchar *current_controller_address;
@@ -218,7 +167,7 @@ const gchar *vdi_session_get_vdi_password(void);
 gchar *vdi_session_get_token(void);
 
 // cancell pending requests
-void vdi_session_cancell_pending_requests(void);
+void vdi_session_cancel_pending_requests(void);
 // set vdi session credentials
 void vdi_session_set_credentials(const gchar *username, const gchar *password,
                                  const gchar *disposable_password);
@@ -234,12 +183,12 @@ VdiPoolType vdi_session_get_current_pool_type(void);
 const gchar *vdi_session_get_current_vm_id(void);
 
 // set current remote protocol
-void vdi_session_set_current_remote_protocol(VdiVmRemoteProtocol remote_protocol);
+void vdi_session_set_current_remote_protocol(VmRemoteProtocol remote_protocol);
 // get current remote protocol
-VdiVmRemoteProtocol vdi_session_get_current_remote_protocol(void);
+VmRemoteProtocol vdi_session_get_current_remote_protocol(void);
 
-VdiVmRemoteProtocol vdi_session_str_to_remote_protocol(const gchar *protocol_str);
-const gchar *vdi_session_remote_protocol_to_str(VdiVmRemoteProtocol protocol);
+VmRemoteProtocol vdi_session_str_to_remote_protocol(const gchar *protocol_str);
+const gchar *vdi_session_remote_protocol_to_str(VmRemoteProtocol protocol);
 
 VdiWsClient *vdi_session_get_ws_client(void);
 
@@ -336,7 +285,6 @@ void vdi_api_session_execute_task_do_action_on_vm(const gchar *actionStr, gboole
 
 
 void vdi_api_session_free_action_on_vm_data(ActionOnVmData *action_on_vm_data);
-void vdi_api_session_free_vdi_vm_data(VdiVmData *vdi_vm_data);
 void vdi_api_session_free_attach_usb_data(AttachUsbData *attach_usb_data);
 void vdi_api_session_free_detach_usb_data(DetachUsbData *detach_usb_data);
 void vdi_api_session_free_text_message_data(TextMessageData *text_message_data);

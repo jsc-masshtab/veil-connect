@@ -128,7 +128,7 @@ static gboolean rdp_viewer_ask_for_credentials_if_required(VeilRdpSettings *p_rd
         return TRUE;
 }
 
-static void rdp_viewer_stats_data_updated(gpointer data G_GNUC_UNUSED, VdiVmRemoteProtocol protocol,
+static void rdp_viewer_stats_data_updated(gpointer data G_GNUC_UNUSED, VmRemoteProtocol protocol,
                                           NetworkStatsData *nw_data, ExtendedRdpContext *ex_rdp_context)
 {
     GArray *rdp_windows_array = ex_rdp_context->rdp_windows_array;
@@ -326,10 +326,10 @@ RemoteViewerState rdp_viewer_start(RemoteViewer *app, VeilRdpSettings *p_rdp_set
     g_array_free(rdp_windows_array, TRUE);
 
     if (next_app_state == APP_STATE_UNDEFINED) {
-        if (app->conn_data.opt_manual_mode)
+        if (app->conn_data.global_app_mode == GLOBAL_APP_MODE_DIRECT)
             next_app_state = APP_STATE_AUTH_DIALOG;
         else
-            next_app_state = APP_STATE_VDI_DIALOG;
+            next_app_state = APP_STATE_CONNECT_TO_VM;
     }
     return next_app_state;
 }

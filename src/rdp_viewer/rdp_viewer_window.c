@@ -22,6 +22,7 @@
 
 #include "rdp_display.h"
 #include "vdi_session.h"
+#include "controller_client/controller_session.h"
 #include "about_dialog.h"
 
 #include "settingsfile.h"
@@ -274,9 +275,15 @@ static void rdp_viewer_item_tk_doc_activated(GtkWidget *menu G_GNUC_UNUSED, gpoi
 }
 
 static void rdp_viewer_item_dialog_with_admin_activated(GtkWidget *menu G_GNUC_UNUSED,
-        ExtendedRdpContext *ex_rdp_context)
+                                                        RdpWindowData *rdp_window_data)
 {
-    VeilMessenger *veil_messenger = REMOTE_VIEWER(ex_rdp_context->app)->veil_messenger;
+    if (rdp_window_data->ex_rdp_context->app->conn_data.global_app_mode != GLOBAL_APP_MODE_VDI) {
+        show_msg_box_dialog(GTK_WINDOW(rdp_window_data->rdp_viewer_window),
+                            _("Messaging is supported only in VDI connection mode"));
+        return;
+    }
+
+    VeilMessenger *veil_messenger = REMOTE_VIEWER(rdp_window_data->ex_rdp_context->app)->veil_messenger;
     veil_messenger_show_on_top(veil_messenger);
 }
 
@@ -313,9 +320,11 @@ static void rdp_viewer_item_about_activated(GtkWidget *menu G_GNUC_UNUSED, gpoin
 
 static gboolean rdp_viewer_window_is_usbredir_possible(RdpWindowData *rdp_window_data)
 {
-    // Работает только в связке с veil
-    //if (opt_manual_mode)
-    //    return FALSE;
+    if (rdp_window_data->ex_rdp_context->app->conn_data.global_app_mode != GLOBAL_APP_MODE_VDI) {
+        show_msg_box_dialog(GTK_WINDOW(rdp_window_data->rdp_viewer_window),
+                _("USBREDIR is supported only in VDI connection mode"));
+        return FALSE;
+    }
 
     // Не показывать если запрещено в админке. Проброс USB запрещен администратором
     if (!vdi_session_is_usb_redir_permitted()) {
@@ -391,7 +400,7 @@ rdp_viewer_window_menu_disconnect(GtkWidget *menu G_GNUC_UNUSED, gpointer userda
 {
     g_info("%s", (const char *)__func__);
     RdpWindowData *rdp_window_data = (RdpWindowData *)userdata;
-    rdp_viewer_window_stop(rdp_window_data, APP_STATE_VDI_DIALOG, FALSE);
+    rdp_viewer_window_stop(rdp_window_data, APP_STATE_CONNECT_TO_VM, FALSE);
 }
 
 static void
@@ -705,8 +714,9 @@ RdpWindowData *rdp_viewer_window_create(ExtendedRdpContext *ex_rdp_context,
             GTK_WIDGET(gtk_builder_get_object(builder, "viewer"));
     // ВМ: %s     Пользователь: %s  -  %s
     gchar *title = g_strdup_printf(_("VM: %s     User: %s     Monitor number: %i  -  %s"),
-            vdi_session_get_current_vm_name(), ex_rdp_context->p_rdp_settings->user_name,
-            rdp_window_data->monitor_number, APPLICATION_NAME);
+                                   ex_rdp_context->app->conn_data.vm_verbose_name,
+                                   ex_rdp_context->p_rdp_settings->user_name,
+                                   rdp_window_data->monitor_number, APPLICATION_NAME);
     gtk_window_set_title(GTK_WINDOW(rdp_viewer_window), title);
     free_memory_safely(&title);
 
@@ -784,7 +794,7 @@ RdpWindowData *rdp_viewer_window_create(ExtendedRdpContext *ex_rdp_context,
     g_signal_connect(item_about, "activate", G_CALLBACK(rdp_viewer_item_about_activated), NULL);
     g_signal_connect(item_tk_doc, "activate", G_CALLBACK(rdp_viewer_item_tk_doc_activated), NULL);
     g_signal_connect(item_dialog_with_admin, "activate",
-            G_CALLBACK(rdp_viewer_item_dialog_with_admin_activated), ex_rdp_context);
+            G_CALLBACK(rdp_viewer_item_dialog_with_admin_activated), rdp_window_data);
     g_signal_connect(item_menu_connection_info, "activate",
             G_CALLBACK(rdp_viewer_item_menu_connection_info_activated), rdp_window_data);
     g_signal_connect(rdp_viewer_window, "key-press-event", G_CALLBACK(rdp_viewer_window_key_pressed), ex_rdp_context);
@@ -852,6 +862,7 @@ void rdp_viewer_window_stop(RdpWindowData *rdp_window_data, RemoteViewerState ne
         g_warning("%s: Forced exit", (const char *)__func__);
         usbredir_controller_deinit_static();
         vdi_session_static_destroy();
+        controller_session_static_destroy();
 
         exit(3);
     }

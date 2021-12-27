@@ -7,6 +7,9 @@
 
 void atomic_string_init(AtomicString *self)
 {
+    if (self->is_init)
+        return;
+
     self->string = NULL;
     g_mutex_init(&self->string_mutex);
     self->is_init = TRUE;

@@ -33,7 +33,7 @@ void conn_info_dialog_destroy(ConnInfoDialog *self);
 void conn_info_dialog_show(ConnInfoDialog *self, GtkWindow *parent_window);
 
 void conn_info_dialog_update_vm_conn_time(ConnInfoDialog *self, const gchar *time);
-void conn_info_dialog_update(ConnInfoDialog *self, VdiVmRemoteProtocol protocol, NetworkStatsData *nw_data);
+void conn_info_dialog_update(ConnInfoDialog *self, VmRemoteProtocol protocol, NetworkStatsData *nw_data);
 void conn_info_dialog_reset(ConnInfoDialog *self);
 
 #endif //VEIL_CONNECT_CONN_INFO_DIALOG_H

@@ -27,8 +27,11 @@ JsonObject *get_root_json_object(JsonParser *parser, const gchar *data)
 
 gint64 json_object_get_int_member_safely(JsonObject *object, const gchar *member_name)
 {
-    if (object && json_object_has_member(object, member_name))
-        return json_object_get_int_member(object, member_name);
+    if (object && json_object_has_member(object, member_name)) {
+        JsonNode *node = json_object_get_member(object, member_name);
+        if (node && json_node_get_node_type(node) == JSON_NODE_VALUE)
+            return json_node_get_int(node);
+    }
 
     g_info("json member '%s' does not exist", member_name);
     return 0;
@@ -118,6 +121,47 @@ JsonObject *json_get_data_or_errors_object(JsonParser *parser, const gchar *json
     }
 
 total_fail:
+    *server_reply_type = SERVER_REPLY_TYPE_UNKNOWN;
+    return NULL;
+}
+
+JsonObject *json_get_data_or_errors_object_ecp(JsonParser *parser, const gchar *json_str,
+                                           ServerReplyType *server_reply_type)
+{
+    if (!json_str)
+        goto total_fail;
+
+    JsonObject *root_object = get_root_json_object(parser, json_str);
+    if (!root_object)
+        goto total_fail;
+
+    // errors
+    if (json_object_has_member(root_object, "errors")) {
+
+        JsonArray *errors_json_array = json_object_get_array_member_safely(root_object, "errors");
+
+        if (errors_json_array && json_array_get_length(errors_json_array) > 0) {
+            JsonObject *error_json_object_0 = json_array_get_object_element(errors_json_array, (guint) 0);
+
+            if (error_json_object_0) {
+                *server_reply_type = SERVER_REPLY_TYPE_ERROR;
+                return error_json_object_0;
+            }
+            else {
+                g_info("Errors json first element in is NOT json object!");
+                goto total_fail;
+            }
+        }
+        else {
+            g_info("Errors json array is empty!");
+            goto total_fail;
+        }
+    } else {
+        *server_reply_type = SERVER_REPLY_TYPE_DATA;
+        return root_object;
+    }
+
+    total_fail:
     *server_reply_type = SERVER_REPLY_TYPE_UNKNOWN;
     return NULL;
 }

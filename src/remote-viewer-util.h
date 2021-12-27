@@ -10,10 +10,23 @@
 #define VIRT_VIEWER_UTIL_H
 
 #include <gtk/gtk.h>
+#include <libsoup/soup-session.h>
 
 #include <spice-client-gtk.h>
 
+#include "jsonhandler.h"
+
 extern gboolean doDebug;
+
+// remote protocol type
+typedef enum{
+    SPICE_PROTOCOL,
+    SPICE_DIRECT_PROTOCOL,
+    RDP_PROTOCOL,
+    RDP_WINDOWS_NATIVE_PROTOCOL,
+    X2GO_PROTOCOL,
+    ANOTHER_REMOTE_PROTOCOL
+} VmRemoteProtocol;
 
 typedef enum {
     LINUX_DISTRO_UNKNOWN,
@@ -30,8 +43,7 @@ typedef enum
 {
     APP_STATE_UNDEFINED,
     APP_STATE_AUTH_DIALOG, // Начальое окно авторизации
-    APP_STATE_VDI_DIALOG, // ОКно выбора пула
-    APP_STATE_REMOTE_VM, // Окно с удаленным раб сталом
+    APP_STATE_CONNECT_TO_VM, // Выбор и подключение к ВМ.
     APP_STATE_EXITING // Завершение приложение
 } RemoteViewerState;
 
@@ -60,6 +72,50 @@ typedef struct {
     gulong bytes_main;
 
 } SpiceReadBytes;
+
+// vm operational system
+typedef enum{
+    VDI_VM_WIN,
+    VDI_VM_LINUX,
+    VDI_VM_ANOTHER_OS
+} VeilVmOs;
+
+typedef struct{
+
+    gchar *farm_alias;
+    GArray *app_array;
+
+} VeilFarmData;
+
+typedef struct{
+
+    gchar *app_name;
+    gchar *app_alias;
+    gchar *icon_base64;
+
+} VeilAppData;
+
+// Инфа о виртуальной машине, полученная от сервера
+typedef struct{
+
+    VeilVmOs os_type;
+
+    gchar *vm_host;
+    int vm_port;
+
+    gchar *vm_username;
+    gchar *vm_password;
+    gchar *vm_verbose_name;
+
+    gchar *message;
+
+    gint test_data;
+    ServerReplyType server_reply_type;
+
+    // For RDS only
+    GArray *farm_array;
+
+} VeilVmData;
 
 
 #define VIRT_VIEWER_ERROR virt_viewer_error_quark ()
@@ -135,7 +191,12 @@ void convert_string_from_utf8_to_locale(gchar **utf8_str);
 gchar *get_windows_app_data_location(void);
 gchar *get_windows_app_temp_location(void);
 
-const gchar *get_cur_ini_param_group(void);
+// ini секция для данных подключения  VDI
+const gchar *get_cur_ini_group_vdi(void);
+// ini секция для подключения к ВМ напрямую
+const gchar *get_cur_ini_group_direct(void);
+// ini секция для данных подключения к контроллеру
+const gchar *get_cur_ini_group_controller(void);
 
 //void gtk_combo_box_text_set_active_text(GtkComboBoxText *combo_box, const gchar *text);
 
@@ -166,6 +227,11 @@ gboolean util_check_if_monitor_number_valid(GdkDisplay *display, int num);
 
 const gchar *util_spice_channel_event_to_str(SpiceChannelEvent event);
 
+guint util_send_message(SoupSession *soup_session, SoupMessage *msg, const char *uri_string);
+
+void util_free_veil_vm_data(VeilVmData *vm_data);
+
+void util_set_message_to_info_label(GtkLabel *label, const gchar *message);
 #endif
 
 /*
