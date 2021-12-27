@@ -222,16 +222,21 @@ static gboolean rdp_viewer_window_deleted_cb(gpointer userdata)
     return TRUE;
 }
 
-// Oкно не перевести в фул скрин пока оно не показано. Поэтому так
+// Oкно не перевести в фул скрин пока оно не показано. Поэтому так.
+// Делаем это на первичный показ окна
 static gboolean rdp_viewer_window_event_on_mapped(GtkWidget *widget G_GNUC_UNUSED, GdkEvent *event G_GNUC_UNUSED,
         gpointer user_data)
 {
     g_info("%s", (const char *)__func__);
+
     RdpWindowData *rdp_window_data = (RdpWindowData *)user_data;
-    gboolean full_screen = rdp_window_data->ex_rdp_context->p_rdp_settings->full_screen;
-//#ifndef __APPLE__ // Адекватный фул скрин не реализован для MacOs
-    rdp_viewer_window_toggle_fullscreen(rdp_window_data, full_screen);
-//#endif
+    if (!rdp_window_data->window_was_mapped) {
+        gboolean full_screen = rdp_window_data->ex_rdp_context->p_rdp_settings->full_screen;
+        rdp_viewer_window_toggle_fullscreen(rdp_window_data, full_screen);
+
+        rdp_window_data->window_was_mapped = TRUE;
+    }
+
     return FALSE;
 }
 

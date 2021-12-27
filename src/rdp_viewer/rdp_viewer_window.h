@@ -42,6 +42,7 @@ typedef struct{
     GdkSeat *seat;
     guint grab_try_event_source_id;
     gboolean is_grab_keyboard_on_focus_in_mode;
+    gboolean window_was_mapped;
 #ifdef _WIN32
     HHOOK keyboard_hook;
 #endif
