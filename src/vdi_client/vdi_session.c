@@ -160,6 +160,15 @@ VdiSession *vdi_session_new()
     return vdi_session;
 }
 
+static void vdi_session_reset_current_data()
+{
+    free_memory_safely(&vdi_session_static->current_pool_id);
+    free_memory_safely(&vdi_session_static->current_vm_id);
+    free_memory_safely(&vdi_session_static->current_vm_verbose_name);
+    free_memory_safely(&vdi_session_static->current_controller_address);
+    free_memory_safely(&vdi_session_static->login_time);
+}
+
 static void free_session_memory()
 {
     free_memory_safely(&vdi_session_static->vdi_username);
@@ -172,12 +181,7 @@ static void free_session_memory()
 
     atomic_string_set(&vdi_session_static->jwt, NULL);
 
-    free_memory_safely(&vdi_session_static->current_pool_id);
-    free_memory_safely(&vdi_session_static->current_vm_id);
-    free_memory_safely(&vdi_session_static->current_vm_verbose_name);
-    free_memory_safely(&vdi_session_static->current_controller_address);
-
-    free_memory_safely(&vdi_session_static->login_time);
+    vdi_session_reset_current_data();
 }
 
 static void setup_header_for_vdi_session_api_call(SoupMessage *msg)
@@ -1056,6 +1060,8 @@ gboolean vdi_session_logout(void)
     vdi_ws_client_stop(&vdi_session_static->vdi_ws_client);
 
     vdi_session_cancell_pending_requests();
+
+    vdi_session_reset_current_data();
 
     g_info("%s", (const char *)__func__);
     g_autofree gchar *jwt_str = NULL;
