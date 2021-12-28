@@ -187,9 +187,6 @@ void vdi_session_set_current_remote_protocol(VmRemoteProtocol remote_protocol);
 // get current remote protocol
 VmRemoteProtocol vdi_session_get_current_remote_protocol(void);
 
-VmRemoteProtocol vdi_session_str_to_remote_protocol(const gchar *protocol_str);
-const gchar *vdi_session_remote_protocol_to_str(VmRemoteProtocol protocol);
-
 VdiWsClient *vdi_session_get_ws_client(void);
 
 // get current vm name

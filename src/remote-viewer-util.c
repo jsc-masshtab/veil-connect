@@ -1234,6 +1234,42 @@ void util_set_message_to_info_label(GtkLabel *label, const gchar *message)
     gtk_widget_set_tooltip_text(GTK_WIDGET(label), message);
 }
 
+VmRemoteProtocol util_str_to_remote_protocol(const gchar *protocol_str)
+{
+    VmRemoteProtocol protocol = ANOTHER_REMOTE_PROTOCOL;
+    if (g_strcmp0("SPICE", protocol_str) == 0)
+        protocol = SPICE_PROTOCOL;
+    else if (g_strcmp0("SPICE_DIRECT", protocol_str) == 0)
+        protocol = SPICE_DIRECT_PROTOCOL;
+    else if (g_strcmp0("RDP", protocol_str) == 0)
+        protocol = RDP_PROTOCOL;
+    else if (g_strcmp0("NATIVE_RDP", protocol_str) == 0)
+        protocol = RDP_NATIVE_PROTOCOL;
+    else if (g_strcmp0("X2GO", protocol_str) == 0)
+        protocol = X2GO_PROTOCOL;
+
+    return protocol;
+}
+
+const gchar *util_remote_protocol_to_str(VmRemoteProtocol protocol)
+{
+    switch (protocol) {
+        case SPICE_PROTOCOL:
+            return "SPICE";
+        case SPICE_DIRECT_PROTOCOL:
+            return "SPICE_DIRECT";
+        case RDP_PROTOCOL:
+            return "RDP";
+        case RDP_NATIVE_PROTOCOL:
+            return "NATIVE_RDP";
+        case X2GO_PROTOCOL:
+            return "X2GO";
+        case ANOTHER_REMOTE_PROTOCOL:
+        default:
+            return "UNKNOWN_PROTOCOL";
+    }
+}
+
 /*
  * Local variables:
  *  c-indent-level: 4

@@ -498,42 +498,6 @@ VmRemoteProtocol vdi_session_get_current_remote_protocol()
     return vdi_session_static->current_remote_protocol;
 }
 
-VmRemoteProtocol vdi_session_str_to_remote_protocol(const gchar *protocol_str)
-{
-    VmRemoteProtocol protocol = ANOTHER_REMOTE_PROTOCOL;
-    if (g_strcmp0("SPICE", protocol_str) == 0)
-        protocol = SPICE_PROTOCOL;
-    else if (g_strcmp0("SPICE_DIRECT", protocol_str) == 0)
-        protocol = SPICE_DIRECT_PROTOCOL;
-    else if (g_strcmp0("RDP", protocol_str) == 0)
-        protocol = RDP_PROTOCOL;
-    else if (g_strcmp0("NATIVE_RDP", protocol_str) == 0)
-        protocol = RDP_WINDOWS_NATIVE_PROTOCOL;
-    else if (g_strcmp0("X2GO", protocol_str) == 0)
-        protocol = X2GO_PROTOCOL;
-
-    return protocol;
-}
-
-const gchar *vdi_session_remote_protocol_to_str(VmRemoteProtocol protocol)
-{
-    switch (protocol) {
-        case SPICE_PROTOCOL:
-            return "SPICE";
-        case SPICE_DIRECT_PROTOCOL:
-            return "SPICE_DIRECT";
-        case RDP_PROTOCOL:
-            return "RDP";
-        case RDP_WINDOWS_NATIVE_PROTOCOL:
-            return "NATIVE_RDP";
-        case X2GO_PROTOCOL:
-            return "X2GO";
-        case ANOTHER_REMOTE_PROTOCOL:
-        default:
-            return "UNKNOWN_PROTOCOL";
-    }
-}
-
 VdiWsClient *vdi_session_get_ws_client()
 {
     return &vdi_session_static->vdi_ws_client;
@@ -703,7 +667,7 @@ void vdi_session_get_vm_from_pool_task(GTask       *task,
     json_builder_begin_object(builder);
 
     json_builder_set_member_name(builder, "remote_protocol");
-    json_builder_add_string_value(builder, vdi_session_remote_protocol_to_str(
+    json_builder_add_string_value(builder, util_remote_protocol_to_str(
             vdi_session_static->current_remote_protocol));
 
     if (task_data) {

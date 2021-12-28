@@ -494,7 +494,7 @@ void controller_session_get_vm_data_task(GTask *task,
                 break;
             }
             case RDP_PROTOCOL:
-            case RDP_WINDOWS_NATIVE_PROTOCOL:
+            case RDP_NATIVE_PROTOCOL:
             case X2GO_PROTOCOL: {
                 const gchar *ipv4_0 = controller_session_extract_ipv4(reply_json_object);
                 vdi_vm_data->vm_host = g_strdup(ipv4_0);

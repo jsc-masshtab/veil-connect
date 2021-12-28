@@ -11,21 +11,6 @@
 #include "config.h"
 
 
-static void about_close(GtkWidget *dialog,
-                        gpointer data G_GNUC_UNUSED)
-{
-    gtk_widget_hide(dialog);
-    gtk_widget_destroy(dialog);
-}
-
-//static void about_delete(GtkWidget *dialog,
-//                         void *dummy G_GNUC_UNUSED,
-//                         gpointer data G_GNUC_UNUSED)
-//{
-//    gtk_widget_hide(dialog);
-//    gtk_widget_destroy(dialog);
-//}
-
 void show_about_dialog(GtkWindow *parent_window)
 {
     GtkBuilder *about;
@@ -48,10 +33,9 @@ void show_about_dialog(GtkWindow *parent_window)
 
     gtk_window_set_transient_for(GTK_WINDOW(dialog), parent_window);
 
-    g_signal_connect(dialog, "response",
-                     G_CALLBACK(about_close), NULL);
-
     gtk_widget_show(dialog);
+    gtk_dialog_run(GTK_DIALOG(dialog));
+    gtk_widget_destroy(dialog);
 
     g_object_unref(G_OBJECT(about));
 }

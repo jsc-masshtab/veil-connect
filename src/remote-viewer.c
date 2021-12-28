@@ -222,7 +222,7 @@ remote_viewer_connect_to_vm(RemoteViewer *self, VmRemoteProtocol protocol)
                                       self->conn_data.ip, 0);
         next_app_state = rdp_viewer_start(self, &self->conn_data.rdp_settings);
 #if  defined(_WIN32) || defined(__MACH__)
-        } else if (protocol == RDP_WINDOWS_NATIVE_PROTOCOL) {
+        } else if (protocol == RDP_NATIVE_PROTOCOL) {
                 rdp_settings_read_ini_file(&self->conn_data.rdp_settings, !self->conn_data.rdp_settings.is_remote_app);
                 rdp_settings_set_connect_data(&self->conn_data.rdp_settings, self->conn_data.user,
                                               self->conn_data.password, self->conn_data.domain,

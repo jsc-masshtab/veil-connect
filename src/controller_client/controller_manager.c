@@ -301,7 +301,7 @@ static gboolean vm_list_tree_view_mouse_btn_pressed(GtkWidget *widget G_GNUC_UNU
 
             // Set remote protocol
             const gchar *protocol_str = gtk_combo_box_get_active_id((GtkComboBox*)self->remote_protocol_combobox);
-            VmRemoteProtocol protocol = vdi_session_str_to_remote_protocol(protocol_str);
+            VmRemoteProtocol protocol = util_str_to_remote_protocol(protocol_str);
             controller_session_set_current_remote_protocol(protocol);
 
             // get VM specific data
@@ -347,7 +347,7 @@ static void controller_manager_init(ControllerManager *self)
 
     self->remote_protocol_combobox = GTK_WIDGET(gtk_builder_get_object(self->builder, "remote_protocol_combobox"));
 #if  defined(_WIN32) || defined(__MACH__)
-    const gchar *rdp_native = vdi_session_remote_protocol_to_str(RDP_WINDOWS_NATIVE_PROTOCOL);
+    const gchar *rdp_native = util_remote_protocol_to_str(RDP_NATIVE_PROTOCOL);
     gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(self->remote_protocol_combobox), rdp_native, rdp_native);
 #endif
     self->status_label = GTK_WIDGET(gtk_builder_get_object(self->builder, "status_label"));

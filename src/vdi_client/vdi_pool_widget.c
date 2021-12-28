@@ -61,13 +61,13 @@ VdiPoolWidget build_pool_widget(const gchar *pool_id, const gchar *pool_name,
     guint protocols_number = MIN(json_array_get_length(conn_types_json_array), MAX_PROTOCOLS_NUMBER);
     for (int i = 0; i < (int) protocols_number; ++i) {
         const gchar *protocol_name = json_array_get_string_element(conn_types_json_array, (guint) i);
-        if (g_strcmp0(protocol_name, vdi_session_remote_protocol_to_str(SPICE_PROTOCOL)) == 0
-            || g_strcmp0(protocol_name, vdi_session_remote_protocol_to_str(SPICE_DIRECT_PROTOCOL)) == 0
-            || g_strcmp0(protocol_name, vdi_session_remote_protocol_to_str(RDP_PROTOCOL)) == 0
+        if (g_strcmp0(protocol_name, util_remote_protocol_to_str(SPICE_PROTOCOL)) == 0
+            || g_strcmp0(protocol_name, util_remote_protocol_to_str(SPICE_DIRECT_PROTOCOL)) == 0
+            || g_strcmp0(protocol_name, util_remote_protocol_to_str(RDP_PROTOCOL)) == 0
 #if  defined(_WIN32) || defined(__MACH__)
-            || g_strcmp0(protocol_name, vdi_session_remote_protocol_to_str(RDP_WINDOWS_NATIVE_PROTOCOL)) == 0
+            || g_strcmp0(protocol_name, util_remote_protocol_to_str(RDP_NATIVE_PROTOCOL)) == 0
 #endif
-            || g_strcmp0(protocol_name, vdi_session_remote_protocol_to_str(X2GO_PROTOCOL)) == 0
+            || g_strcmp0(protocol_name, util_remote_protocol_to_str(X2GO_PROTOCOL)) == 0
             )
             gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(vdi_pool_widget.combobox_remote_protocol), protocol_name);
     }
@@ -114,7 +114,7 @@ VmRemoteProtocol vdi_pool_widget_get_current_protocol(VdiPoolWidget *vdi_pool_wi
             (GtkComboBoxText*)vdi_pool_widget->combobox_remote_protocol);
     g_info("%s current_protocol_str %s", (const char *)__func__, current_protocol_str);
 
-    VmRemoteProtocol protocol = vdi_session_str_to_remote_protocol(current_protocol_str);
+    VmRemoteProtocol protocol = util_str_to_remote_protocol(current_protocol_str);
     free_memory_safely(&current_protocol_str);
     return protocol;
 }

@@ -150,7 +150,7 @@ static void refresh_vdi_get_vm_from_pool_async(VdiManager *self, const gchar *po
     // take from gui correct remote protocol
     if (vdi_pool_widget.is_valid) {
         VmRemoteProtocol remote_protocol = vdi_pool_widget_get_current_protocol(&vdi_pool_widget);
-        g_info("%s remote_protocol %s", (const char *) __func__, vdi_session_remote_protocol_to_str(remote_protocol));
+        g_info("%s remote_protocol %s", (const char *) __func__, util_remote_protocol_to_str(remote_protocol));
         vdi_session_set_current_remote_protocol(remote_protocol);
     }
 
@@ -301,7 +301,7 @@ static void stop_event_loop_and_go_to_vm(VdiManager *self)
 {
 #if defined(__MACH__)
     // На маке единственное адекватное решение так как процесс завершится сразу после запуска RDP клиента
-    if (vdi_session_get_current_remote_protocol() == RDP_WINDOWS_NATIVE_PROTOCOL) {
+    if (vdi_session_get_current_remote_protocol() == RDP_NATIVE_PROTOCOL) {
         rdp_settings_read_ini_file(&self->p_conn_data->rdp_settings, !self->p_conn_data->rdp_settings.is_remote_app);
         rdp_settings_set_connect_data(&self->p_conn_data->rdp_settings, vdi_session_get_vdi_username(),
                                       vdi_session_get_vdi_password(), self->p_conn_data->domain,
@@ -373,7 +373,7 @@ static void on_vdi_session_get_vm_from_pool_finished(GObject *source_object G_GN
         // Если существует список приложений и если протокол RDP, то показываем окно выбора приложений
         rdp_settings_clear(&self->p_conn_data->rdp_settings);
         if (vdi_vm_data->farm_array && vdi_vm_data->farm_array->len > 0 &&
-                (protocol == RDP_PROTOCOL || protocol == RDP_WINDOWS_NATIVE_PROTOCOL)) {
+                (protocol == RDP_PROTOCOL || protocol == RDP_NATIVE_PROTOCOL)) {
 
             AppSelectorResult selector_res = vdi_app_selector_start(vdi_vm_data, GTK_WINDOW(self->window));
             self->p_conn_data->rdp_settings = selector_res.rdp_settings;

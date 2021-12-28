@@ -86,7 +86,7 @@ void conn_info_dialog_update(ConnInfoDialog *self, VmRemoteProtocol protocol, Ne
     gtk_label_set_text(GTK_LABEL(self->network_loss_label), network_loss_str);
 
     // protocol
-    gtk_label_set_text(GTK_LABEL(self->protocol_label), vdi_session_remote_protocol_to_str(protocol));
+    gtk_label_set_text(GTK_LABEL(self->protocol_label), util_remote_protocol_to_str(protocol));
 
     // speed
     if (protocol == SPICE_PROTOCOL || protocol == SPICE_DIRECT_PROTOCOL) {
@@ -95,7 +95,7 @@ void conn_info_dialog_update(ConnInfoDialog *self, VmRemoteProtocol protocol, Ne
         gtk_label_set_text(GTK_LABEL(self->read_speed_label), read_speed_str);
         gtk_label_set_text(GTK_LABEL(self->write_speed_label), "-");
 
-    } else if (protocol == RDP_PROTOCOL || protocol == RDP_WINDOWS_NATIVE_PROTOCOL) {
+    } else if (protocol == RDP_PROTOCOL || protocol == RDP_NATIVE_PROTOCOL) {
         g_autofree gchar *read_speed_str = NULL;
         read_speed_str = convert_speed_to_kbytes_str(nw_data->rdp_read_speed);
         gtk_label_set_text(GTK_LABEL(self->read_speed_label), read_speed_str);

@@ -797,7 +797,7 @@ RdpWindowData *rdp_viewer_window_create(ExtendedRdpContext *ex_rdp_context,
                      rdp_window_data);
     g_signal_connect(item_product_site, "activate",
                      G_CALLBACK(rdp_viewer_item_product_site_activated), rdp_viewer_window);
-    g_signal_connect(item_about, "activate", G_CALLBACK(rdp_viewer_item_about_activated), NULL);
+    g_signal_connect(item_about, "activate", G_CALLBACK(rdp_viewer_item_about_activated), rdp_viewer_window);
     g_signal_connect(item_tk_doc, "activate", G_CALLBACK(rdp_viewer_item_tk_doc_activated), NULL);
     g_signal_connect(item_dialog_with_admin, "activate",
             G_CALLBACK(rdp_viewer_item_dialog_with_admin_activated), rdp_window_data);

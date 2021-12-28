@@ -23,7 +23,7 @@ typedef enum{
     SPICE_PROTOCOL,
     SPICE_DIRECT_PROTOCOL,
     RDP_PROTOCOL,
-    RDP_WINDOWS_NATIVE_PROTOCOL,
+    RDP_NATIVE_PROTOCOL,
     X2GO_PROTOCOL,
     ANOTHER_REMOTE_PROTOCOL
 } VmRemoteProtocol;
@@ -232,6 +232,9 @@ guint util_send_message(SoupSession *soup_session, SoupMessage *msg, const char 
 void util_free_veil_vm_data(VeilVmData *vm_data);
 
 void util_set_message_to_info_label(GtkLabel *label, const gchar *message);
+
+VmRemoteProtocol util_str_to_remote_protocol(const gchar *protocol_str);
+const gchar *util_remote_protocol_to_str(VmRemoteProtocol protocol);
 #endif
 
 /*

@@ -624,7 +624,7 @@ fill_gui(ConnectSettingsDialogData *dialog_data)
 
     if (gtk_widget_get_visible(dialog_data->remote_protocol_combobox)) {
         // Текст и id совпадают
-        const gchar *protocol_str = vdi_session_remote_protocol_to_str(p_conn_data->protocol_in_direct_app_mode);
+        const gchar *protocol_str = util_remote_protocol_to_str(p_conn_data->protocol_in_direct_app_mode);
         gtk_combo_box_set_active_id((GtkComboBox *) dialog_data->remote_protocol_combobox, protocol_str);
     }
 
@@ -783,7 +783,7 @@ take_from_gui(ConnectSettingsDialogData *dialog_data)
 
     if (gtk_widget_get_visible(dialog_data->remote_protocol_combobox)) {
         const gchar *protocol_str = gtk_combo_box_get_active_id((GtkComboBox*)dialog_data->remote_protocol_combobox);
-        conn_data->protocol_in_direct_app_mode = vdi_session_str_to_remote_protocol(protocol_str);
+        conn_data->protocol_in_direct_app_mode = util_str_to_remote_protocol(protocol_str);
     }
 
     /// Spice debug cursor enabling
