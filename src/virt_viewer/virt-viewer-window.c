@@ -374,7 +374,6 @@ virt_viewer_window_init (VirtViewerWindow *self)
     gtk_widget_set_sensitive(GTK_WIDGET(gtk_builder_get_object(self->priv->builder, "menu-send")), FALSE);
     gtk_widget_set_sensitive(GTK_WIDGET(gtk_builder_get_object(self->priv->builder, "menu-view-zoom")), FALSE);
     //gtk_widget_set_sensitive(GTK_WIDGET(gtk_builder_get_object(self->priv->builder, "menu-file-screenshot")), FALSE);
-    gtk_widget_set_sensitive(GTK_WIDGET(gtk_builder_get_object(self->priv->builder, "menu-preferences")), FALSE);
 
     gtk_builder_connect_signals(priv->builder, self);
 
@@ -1565,6 +1564,13 @@ virt_viewer_window_enable_kiosk(VirtViewerWindow *self)
 void
 virt_viewer_window_show(VirtViewerWindow *self)
 {
+    // adjust GUI
+    gtk_widget_set_sensitive(GTK_WIDGET(gtk_builder_get_object(self->priv->builder, "menu-preferences")), FALSE);
+    gboolean is_vdi_mode = REMOTE_VIEWER(self->priv->app->application_p)->conn_data.global_app_mode ==
+            GLOBAL_APP_MODE_VDI;
+    GtkWidget *menu_control = GTK_WIDGET(gtk_builder_get_object(self->priv->builder, "menu-control"));
+    gtk_widget_set_sensitive(menu_control, is_vdi_mode);
+
     if (self->priv->display && !virt_viewer_display_get_enabled(self->priv->display))
         virt_viewer_display_enable(self->priv->display);
 
