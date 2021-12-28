@@ -10,6 +10,12 @@
 #include "remote-viewer-util.h"
 #include "config.h"
 
+static void
+msg_box_parent_hidden(GtkWidget *widget G_GNUC_UNUSED, gpointer user_data)
+{
+    GtkWidget *dialog_msg = (GtkWidget *)user_data;
+    gtk_widget_hide(dialog_msg);
+}
 
 void show_about_dialog(GtkWindow *parent_window)
 {
@@ -33,8 +39,13 @@ void show_about_dialog(GtkWindow *parent_window)
 
     gtk_window_set_transient_for(GTK_WINDOW(dialog), parent_window);
 
+    gulong sig_handler = g_signal_connect(parent_window, "hide",
+            G_CALLBACK(msg_box_parent_hidden), dialog);
+
     gtk_widget_show(dialog);
     gtk_dialog_run(GTK_DIALOG(dialog));
+
+    g_signal_handler_disconnect(G_OBJECT(parent_window), sig_handler);
     gtk_widget_destroy(dialog);
 
     g_object_unref(G_OBJECT(about));

@@ -53,12 +53,24 @@ void conn_info_dialog_destroy(ConnInfoDialog *self)
     g_object_unref(G_OBJECT(self->builder));
 }
 
+static void
+conn_info_parent_hidden(GtkWidget *widget G_GNUC_UNUSED, gpointer user_data)
+{
+    GtkWidget *dialog_msg = (GtkWidget *)user_data;
+    gtk_widget_hide(dialog_msg);
+}
+
 void conn_info_dialog_show(ConnInfoDialog *self, GtkWindow *parent_window)
 {
     gtk_window_set_transient_for(GTK_WINDOW(self->dialog), parent_window);
     gtk_spinner_start(GTK_SPINNER(self->data_await_spinner));
 
+    gulong sig_handler = g_signal_connect(parent_window, "hide",
+            G_CALLBACK(conn_info_parent_hidden), self->dialog);
+
     gtk_dialog_run(GTK_DIALOG(self->dialog));
+
+    g_signal_handler_disconnect(G_OBJECT(parent_window), sig_handler);
     gtk_widget_hide(self->dialog);
 }
 

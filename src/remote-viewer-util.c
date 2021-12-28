@@ -988,6 +988,13 @@ static void set_label_selectable(gpointer data, gpointer user_data G_GNUC_UNUSED
     }
 }
 
+static void
+msg_box_parent_hidden(GtkWidget *widget G_GNUC_UNUSED, gpointer user_data)
+{
+    GtkWidget *dialog_msg = (GtkWidget *)user_data;
+    gtk_widget_hide(dialog_msg);
+}
+
 void show_msg_box_dialog(GtkWindow *parent, const gchar *message)
 {
     GtkWidget *dialog_msg = gtk_message_dialog_new(parent,
@@ -1004,8 +1011,12 @@ void show_msg_box_dialog(GtkWindow *parent, const gchar *message)
     g_list_foreach(children, set_label_selectable, NULL);
     g_list_free(children);
 
+    gulong sig_handler = g_signal_connect(parent, "hide", G_CALLBACK(msg_box_parent_hidden), dialog_msg);
+
     gtk_widget_show_all(dialog_msg);
     gtk_dialog_run(GTK_DIALOG(dialog_msg));
+
+    g_signal_handler_disconnect(G_OBJECT(parent), sig_handler);
     gtk_widget_destroy(dialog_msg);
 }
 
