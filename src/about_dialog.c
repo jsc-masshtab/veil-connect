@@ -11,7 +11,7 @@
 #include "config.h"
 
 static void
-msg_box_parent_hidden(GtkWidget *widget G_GNUC_UNUSED, gpointer user_data)
+on_about_dialog_parent_hidden(GtkWidget *widget G_GNUC_UNUSED, gpointer user_data)
 {
     GtkWidget *dialog_msg = (GtkWidget *)user_data;
     gtk_widget_hide(dialog_msg);
@@ -40,7 +40,7 @@ void show_about_dialog(GtkWindow *parent_window)
     gtk_window_set_transient_for(GTK_WINDOW(dialog), parent_window);
 
     gulong sig_handler = g_signal_connect(parent_window, "hide",
-            G_CALLBACK(msg_box_parent_hidden), dialog);
+            G_CALLBACK(on_about_dialog_parent_hidden), dialog);
 
     gtk_widget_show(dialog);
     gtk_dialog_run(GTK_DIALOG(dialog));

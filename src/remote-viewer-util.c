@@ -1011,12 +1011,15 @@ void show_msg_box_dialog(GtkWindow *parent, const gchar *message)
     g_list_foreach(children, set_label_selectable, NULL);
     g_list_free(children);
 
-    gulong sig_handler = g_signal_connect(parent, "hide", G_CALLBACK(msg_box_parent_hidden), dialog_msg);
+    gulong sig_handler = 0;
+    if (parent)
+        sig_handler = g_signal_connect(parent, "hide", G_CALLBACK(msg_box_parent_hidden), dialog_msg);
 
     gtk_widget_show_all(dialog_msg);
     gtk_dialog_run(GTK_DIALOG(dialog_msg));
 
-    g_signal_handler_disconnect(G_OBJECT(parent), sig_handler);
+    if (sig_handler)
+        g_signal_handler_disconnect(G_OBJECT(parent), sig_handler);
     gtk_widget_destroy(dialog_msg);
 }
 
