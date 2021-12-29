@@ -58,6 +58,9 @@ native_rdp_launcher_multibyte_str_to_wchar_str(const gchar *g_str)
 static void
 native_rdp_launcher_store_conn_data(const VeilRdpSettings *p_rdp_settings)
 {
+    if (p_rdp_settings->user_name == NULL || p_rdp_settings->password == NULL)
+        return;
+
     g_autofree gchar *user_name = NULL;
     user_name = g_strdup(p_rdp_settings->user_name);
     g_autofree gchar *domain = NULL;

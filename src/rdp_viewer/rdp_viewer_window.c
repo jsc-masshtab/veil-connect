@@ -760,14 +760,11 @@ RdpWindowData *rdp_viewer_window_create(ExtendedRdpContext *ex_rdp_context,
     GtkMenuItem *menu_close_window = GTK_MENU_ITEM(gtk_builder_get_object(builder, "item_close_app"));
     g_signal_connect(menu_close_window, "activate", G_CALLBACK(rdp_viewer_window_menu_close_window), rdp_window_data);
 
+    rdp_viewer_control_menu_setup(builder, rdp_window_data);
     // control menu. Управление ВМ реализовано только для VDI режима
-    if (ex_rdp_context->app->conn_data.global_app_mode == GLOBAL_APP_MODE_VDI) {
-        rdp_viewer_control_menu_setup(builder, rdp_window_data);
-    }
-    else {
-        GtkWidget *menu_control = GTK_WIDGET(gtk_builder_get_object(builder, "menu-control"));
-        gtk_widget_set_sensitive(menu_control, FALSE);
-    }
+    gboolean is_vdi_mode = ex_rdp_context->app->conn_data.global_app_mode == GLOBAL_APP_MODE_VDI;
+    GtkWidget *menu_control = GTK_WIDGET(gtk_builder_get_object(builder, "menu-control"));
+    gtk_widget_set_sensitive(menu_control, is_vdi_mode);
 
     // controll toolbar used in fullscreen
     rdp_viewer_toolbar_setup(builder, rdp_window_data); // for overlay controll

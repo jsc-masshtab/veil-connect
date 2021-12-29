@@ -1059,7 +1059,7 @@ void copy_file_content(FILE *sourceFile, FILE *destFile)
 
 void extract_name_and_domain(const gchar *full_user_name, gchar **user_name, gchar **domain)
 {
-    if (strchr(full_user_name, '@')) {
+    if (full_user_name && strchr(full_user_name, '@')) {
 
         const gint token_amount = 2;
         gchar **name_domain_array = g_strsplit(full_user_name, "@", token_amount);
