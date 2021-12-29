@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2021-12-13 13:38+0300\n"
+"POT-Creation-Date: 2021-12-29 16:28+0300\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -24,78 +24,90 @@ msgstr ""
 msgid "%.2f Kbyte "
 msgstr ""
 
-#: ../src/conn_info_dialog.c:81
+#: ../src/conn_info_dialog.c:93
 #, c-format
 msgid "%.2f ms"
 msgstr ""
 
-#: ../src/remote-viewer.c:121
+#: ../src/remote-viewer.c:122
 #, c-format
 msgid "%s\n"
 msgstr ""
 
 #. get folder name
-#: ../src/remote_viewer_start_settings.c:260
-#: ../src/remote_viewer_start_settings.c:327
+#: ../src/remote_viewer_start_settings.c:283
+#: ../src/remote_viewer_start_settings.c:350
 msgid "Open File"
 msgstr ""
 
 #. Отменить
-#: ../src/remote_viewer_start_settings.c:263
-#: ../src/remote_viewer_start_settings.c:330
-#: ../src/remote_viewer_start_settings.c:466
+#: ../src/remote_viewer_start_settings.c:286
+#: ../src/remote_viewer_start_settings.c:353
+#: ../src/remote_viewer_start_settings.c:489
 #: ../resources/ui/vdi_manager_form.glade.h:6
 #: ../resources/ui/remote-viewer-connect_veil.glade.h:9
 #: ../resources/ui/start_settings_form.glade.h:4
+#: ../resources/ui/controller_manager_form.glade.h:4
 msgid "Cancel"
 msgstr ""
 
-#: ../src/remote_viewer_start_settings.c:265
-#: ../src/remote_viewer_start_settings.c:332
+#: ../src/remote_viewer_start_settings.c:288
+#: ../src/remote_viewer_start_settings.c:355
 msgid "Choose"
 msgstr ""
 
-#: ../src/remote_viewer_start_settings.c:419
-#: ../src/remote_viewer_start_settings.c:465
+#: ../src/remote_viewer_start_settings.c:442
+#: ../src/remote_viewer_start_settings.c:488
 msgid "Ok"
 msgstr ""
 
 #. Процесс обновления завершился с ошибками
-#: ../src/remote_viewer_start_settings.c:423
+#: ../src/remote_viewer_start_settings.c:446
 msgid "The update process ended with errors"
 msgstr ""
 
 #. "Необходимо ввести пароль"
-#: ../src/remote_viewer_start_settings.c:491
+#: ../src/remote_viewer_start_settings.c:514
 msgid "Password required"
 msgstr ""
 
-#: ../src/remote-viewer-connect.c:197 ../src/remote-viewer-connect.c:208
+#: ../src/remote-viewer-connect.c:164
+#: ../resources/ui/start_settings_form.glade.h:215
+msgid "VM connection mode"
+msgstr ""
+
+#: ../src/remote-viewer-connect.c:178
+#: ../resources/ui/start_settings_form.glade.h:216
+msgid "Controller connection mode"
+msgstr ""
+
+#: ../src/remote-viewer-connect.c:267 ../src/remote-viewer-connect.c:278
+#: ../src/remote-viewer-connect.c:290
 msgid "Connection address is not specified"
 msgstr ""
 
-#: ../src/remote-viewer-connect.c:317
+#: ../src/remote-viewer-connect.c:398
 msgid "A new version available. Press Settings->Service->Get updates"
 msgstr ""
 
-#: ../src/x2go/x2go_launcher_x2goclient.c:96
+#: ../src/x2go/x2go_launcher_x2goclient.c:104
 #, c-format
 msgid "Unable to open %s"
 msgstr ""
 
-#: ../src/x2go/x2go_launcher_x2goclient.c:116
+#: ../src/x2go/x2go_launcher_x2goclient.c:124
 #, c-format
 msgid ""
 "\n"
 "Unable to open file %s."
 msgstr ""
 
-#: ../src/x2go/x2go_launcher_x2goclient.c:125
+#: ../src/x2go/x2go_launcher_x2goclient.c:133
 #, c-format
 msgid "Unable to prepare x2go config file"
 msgstr ""
 
-#: ../src/x2go/x2go_launcher_x2goclient.c:157
+#: ../src/x2go/x2go_launcher_x2goclient.c:165
 #, c-format
 msgid "Failed to start process x2goclient"
 msgstr ""
@@ -225,30 +237,43 @@ msgstr ""
 msgid "Folders redirection is not allowed"
 msgstr ""
 
-#: ../src/rdp_viewer/rdp_viewer_window.c:317
+#: ../src/rdp_viewer/native_rdp_launcher.c:123
+msgid "Check if Microsoft Remote Client installed"
+msgstr ""
+
+#: ../src/rdp_viewer/rdp_viewer_window.c:282
+#: ../src/virt_viewer/virt-viewer-window.c:1122
+msgid "Messaging is supported only in VDI connection mode"
+msgstr ""
+
+#: ../src/rdp_viewer/rdp_viewer_window.c:325
+msgid "USBREDIR is supported only in VDI connection mode"
+msgstr ""
+
+#: ../src/rdp_viewer/rdp_viewer_window.c:331
 msgid "USB redirection is not allowed"
 msgstr ""
 
 #. Leave fullscreen
-#: ../src/rdp_viewer/rdp_viewer_window.c:534
+#: ../src/rdp_viewer/rdp_viewer_window.c:548
 msgid "Leave full screen"
 msgstr ""
 
-#: ../src/rdp_viewer/rdp_viewer_window.c:548
-#: ../src/virt_viewer/virt-viewer-window.c:1284
+#: ../src/rdp_viewer/rdp_viewer_window.c:562
+#: ../src/virt_viewer/virt-viewer-window.c:1289
 msgid "Send key combination"
 msgstr ""
 
 #. Disconnect
 #. Отключиться
-#: ../src/rdp_viewer/rdp_viewer_window.c:555
-#: ../src/virt_viewer/virt-viewer-window.c:1266
+#: ../src/rdp_viewer/rdp_viewer_window.c:569
+#: ../src/virt_viewer/virt-viewer-window.c:1271
 #: ../resources/ui/virt-viewer_veil.glade.h:36
 msgid "Disconnect"
 msgstr ""
 
 #. Перенаправление USB /dev/bus/usb/%03i/%03i завершилось с ошибкой. %s
-#: ../src/rdp_viewer/rdp_viewer_window.c:574
+#: ../src/rdp_viewer/rdp_viewer_window.c:588
 #, c-format
 msgid ""
 "USB redirection /dev/bus/usb/%03i/%03i finished with errors.\n"
@@ -256,7 +281,7 @@ msgid ""
 msgstr ""
 
 #. ВМ: %s     Пользователь: %s  -  %s
-#: ../src/rdp_viewer/rdp_viewer_window.c:702
+#: ../src/rdp_viewer/rdp_viewer_window.c:716
 #, c-format
 msgid "VM: %s     User: %s     Monitor number: %i  -  %s"
 msgstr ""
@@ -412,55 +437,57 @@ msgid "Press Apply to disable 2fa."
 msgstr ""
 
 #. gui message  "Отправлен запрос на получение вм из пула"
-#: ../src/vdi_client/vdi_manager.c:144
+#: ../src/vdi_client/vdi_manager.c:145
 msgid "VM request sent"
 msgstr ""
 
 #. "Отправлен запрос на список пулов"
 #. Отправлен запрос на список пулов
-#: ../src/vdi_client/vdi_manager.c:173
+#: ../src/vdi_client/vdi_manager.c:174
 #: ../resources/ui/vdi_manager_form.glade.h:10
 msgid "Pool data request sent"
 msgstr ""
 
-#: ../src/vdi_client/vdi_manager.c:240
+#: ../src/vdi_client/vdi_manager.c:241
 msgid "Failed to fetch pool data"
 msgstr ""
 
 #. "Получен список пулов"
-#: ../src/vdi_client/vdi_manager.c:292
+#: ../src/vdi_client/vdi_manager.c:293
 msgid "Pool data received"
 msgstr ""
 
-#: ../src/vdi_client/vdi_manager.c:320
+#: ../src/vdi_client/vdi_manager.c:336
 msgid "Failed to get VM fom pool"
 msgstr ""
 
 #. "Получена вм из пула"
-#: ../src/vdi_client/vdi_manager.c:339
+#: ../src/vdi_client/vdi_manager.c:371
 msgid "VM received from pool"
 msgstr ""
 
 #. "Текущие запросы отменены"
-#: ../src/vdi_client/vdi_manager.c:421
+#: ../src/vdi_client/vdi_manager.c:452
 msgid "Current requests cancelled"
 msgstr ""
 
 #. show window
 #. %s  Время входа: %s  -  %s
-#: ../src/vdi_client/vdi_manager.c:572
+#: ../src/vdi_client/vdi_manager.c:603
+#: ../src/controller_client/controller_manager.c:378
 #, c-format
 msgid "%s  Login time: %s  -  %s"
 msgstr ""
 
 #. "Не удалось сформировать SoupMessage. %s"
-#: ../src/vdi_client/vdi_session.c:227
+#: ../src/vdi_client/vdi_session.c:233
+#: ../src/controller_client/controller_session.c:298
 #, c-format
 msgid "Failed to form SoupMessage. %s"
 msgstr ""
 
 #. "Не удалось авторизоваться"
-#: ../src/vdi_client/vdi_session.c:283
+#: ../src/vdi_client/vdi_session.c:289
 msgid "Failed to login"
 msgstr ""
 
@@ -476,113 +503,113 @@ msgstr ""
 msgid "At least %s version %s is required to setup this connection"
 msgstr ""
 
-#: ../src/virt_viewer/virt-viewer-window.c:600
+#: ../src/virt_viewer/virt-viewer-window.c:599
 msgid "Ctrl+Alt+_Del"
 msgstr ""
 
-#: ../src/virt_viewer/virt-viewer-window.c:601
+#: ../src/virt_viewer/virt-viewer-window.c:600
 msgid "Ctrl+Alt+_Backspace"
 msgstr ""
 
-#: ../src/virt_viewer/virt-viewer-window.c:603
+#: ../src/virt_viewer/virt-viewer-window.c:602
 msgid "Ctrl+Alt+F_1"
 msgstr ""
 
-#: ../src/virt_viewer/virt-viewer-window.c:604
+#: ../src/virt_viewer/virt-viewer-window.c:603
 msgid "Ctrl+Alt+F_2"
 msgstr ""
 
-#: ../src/virt_viewer/virt-viewer-window.c:605
+#: ../src/virt_viewer/virt-viewer-window.c:604
 msgid "Ctrl+Alt+F_3"
 msgstr ""
 
-#: ../src/virt_viewer/virt-viewer-window.c:606
+#: ../src/virt_viewer/virt-viewer-window.c:605
 msgid "Ctrl+Alt+F_4"
 msgstr ""
 
-#: ../src/virt_viewer/virt-viewer-window.c:607
+#: ../src/virt_viewer/virt-viewer-window.c:606
 msgid "Ctrl+Alt+F_5"
 msgstr ""
 
-#: ../src/virt_viewer/virt-viewer-window.c:608
+#: ../src/virt_viewer/virt-viewer-window.c:607
 msgid "Ctrl+Alt+F_6"
 msgstr ""
 
-#: ../src/virt_viewer/virt-viewer-window.c:609
+#: ../src/virt_viewer/virt-viewer-window.c:608
 msgid "Ctrl+Alt+F_7"
 msgstr ""
 
-#: ../src/virt_viewer/virt-viewer-window.c:610
+#: ../src/virt_viewer/virt-viewer-window.c:609
 msgid "Ctrl+Alt+F_8"
 msgstr ""
 
-#: ../src/virt_viewer/virt-viewer-window.c:611
+#: ../src/virt_viewer/virt-viewer-window.c:610
 msgid "Ctrl+Alt+F_9"
 msgstr ""
 
-#: ../src/virt_viewer/virt-viewer-window.c:612
+#: ../src/virt_viewer/virt-viewer-window.c:611
 msgid "Ctrl+Alt+F1_0"
 msgstr ""
 
-#: ../src/virt_viewer/virt-viewer-window.c:613
+#: ../src/virt_viewer/virt-viewer-window.c:612
 msgid "Ctrl+Alt+F11"
 msgstr ""
 
-#: ../src/virt_viewer/virt-viewer-window.c:614
+#: ../src/virt_viewer/virt-viewer-window.c:613
 msgid "Ctrl+Alt+F12"
 msgstr ""
 
-#: ../src/virt_viewer/virt-viewer-window.c:1006
+#: ../src/virt_viewer/virt-viewer-window.c:1005
 #, c-format
 msgid "Unable to determine image format for file '%s'"
 msgstr ""
 
-#: ../src/virt_viewer/virt-viewer-window.c:1029
+#: ../src/virt_viewer/virt-viewer-window.c:1028
 msgid "Save screenshot"
 msgstr ""
 
-#: ../src/virt_viewer/virt-viewer-window.c:1032
+#: ../src/virt_viewer/virt-viewer-window.c:1031
 #: ../resources/ui/virt-viewer-vm-connection.glade.h:2
 #: ../resources/ui/virt-viewer-auth.glade.h:2
 #: ../resources/ui/virt-viewer-file-transfer-dialog.glade.h:1
 msgid "_Cancel"
 msgstr ""
 
-#: ../src/virt_viewer/virt-viewer-window.c:1033
+#: ../src/virt_viewer/virt-viewer-window.c:1032
 msgid "_Save"
 msgstr ""
 
-#: ../src/virt_viewer/virt-viewer-window.c:1041
+#: ../src/virt_viewer/virt-viewer-window.c:1040
 msgid "Screenshot.png"
 msgstr ""
 
-#: ../src/virt_viewer/virt-viewer-window.c:1088
+#: ../src/virt_viewer/virt-viewer-window.c:1087
 msgid "Folder redirection prohibited by administrator"
 msgstr ""
 
-#: ../src/virt_viewer/virt-viewer-window.c:1179
+#: ../src/virt_viewer/virt-viewer-window.c:1184
 msgid "Unable to connnect to oVirt"
 msgstr ""
 
-#: ../src/virt_viewer/virt-viewer-window.c:1203
+#: ../src/virt_viewer/virt-viewer-window.c:1208
 msgid "Reconnecting"
 msgstr ""
 
-#: ../src/virt_viewer/virt-viewer-window.c:1275
-#: ../src/virt_viewer/virt-viewer-window.c:1276
+#: ../src/virt_viewer/virt-viewer-window.c:1280
+#: ../src/virt_viewer/virt-viewer-window.c:1281
 msgid "USB device selection"
 msgstr ""
 
 #. gtk_tool_button_set_label(GTK_TOOL_BUTTON(button), "");
-#: ../src/virt_viewer/virt-viewer-window.c:1295
+#: ../src/virt_viewer/virt-viewer-window.c:1300
 msgid "Leave fullscreen"
 msgstr ""
 
-#: ../src/virt_viewer/virt-viewer-window.c:1370
+#: ../src/virt_viewer/virt-viewer-window.c:1375
 msgid "Ctrl+Alt"
 msgstr ""
 
-#: ../src/virt_viewer/virt-viewer-window.c:1373
+#: ../src/virt_viewer/virt-viewer-window.c:1378
 #, c-format
 msgid "(Press %s to release pointer)"
 msgstr ""
@@ -732,42 +759,82 @@ msgstr ""
 msgid "Guest domain has shutdown"
 msgstr ""
 
-#: ../src/virt_viewer/virt-viewer-app.c:1498
+#: ../src/virt_viewer/virt-viewer-app.c:1500
 msgid "Connected to graphic server"
 msgstr ""
 
-#: ../src/virt_viewer/virt-viewer-app.c:1542
+#: ../src/virt_viewer/virt-viewer-app.c:1544
 #, c-format
 msgid "Unable to connect to the graphic server %s"
 msgstr ""
 
-#: ../src/virt_viewer/virt-viewer-app.c:1577
+#: ../src/virt_viewer/virt-viewer-app.c:1579
 #, c-format
 msgid "Unable to authenticate with remote desktop server at %s: %s\n"
 msgstr ""
 
-#: ../src/virt_viewer/virt-viewer-app.c:1595
+#: ../src/virt_viewer/virt-viewer-app.c:1597
 #, c-format
 msgid "Unable to authenticate with remote desktop server: %s"
 msgstr ""
 
-#: ../src/virt_viewer/virt-viewer-app.c:1605
+#: ../src/virt_viewer/virt-viewer-app.c:1607
 #, c-format
 msgid "USB redirection error: %s"
 msgstr ""
 
-#: ../src/virt_viewer/virt-viewer-app.c:1910
+#: ../src/virt_viewer/virt-viewer-app.c:1911
 #, c-format
 msgid "Zoom level must be within %d-%d\n"
 msgstr ""
 
-#: ../src/virt_viewer/virt-viewer-app.c:2381
+#: ../src/virt_viewer/virt-viewer-app.c:2382
 #, c-format
 msgid "Display _%d"
 msgstr ""
 
 #: ../src/virt_viewer/virt-viewer-display-vnc.c:134
 msgid "VNC does not provide GUID"
+msgstr ""
+
+#: ../src/controller_client/controller_manager.c:121
+msgid "Failed to fetch list of VMs."
+msgstr ""
+
+#: ../src/controller_client/controller_manager.c:142
+#, c-format
+msgid "List of VMs received. Amount: %li."
+msgstr ""
+
+#: ../src/controller_client/controller_manager.c:192
+msgid "Failed to fetch vm data."
+msgstr ""
+
+#: ../src/controller_client/controller_manager.c:204
+msgid "VM data received."
+msgstr ""
+
+#. Setup gui
+#: ../src/controller_client/controller_manager.c:226
+msgid "List of VMs requested."
+msgstr ""
+
+#. get VM specific data
+#: ../src/controller_client/controller_manager.c:311
+msgid "Vm data requested."
+msgstr ""
+
+#. "Не удалось авторизоваться"
+#: ../src/controller_client/controller_session.c:227
+msgid "ECP request failed"
+msgstr ""
+
+#: ../src/controller_client/controller_session.c:348
+msgid "Failed to extract token. Probably unexpected msg format."
+msgstr ""
+
+#: ../src/controller_client/controller_session.c:453
+msgid "Failed to fetch connection info. Possibly remote access is disabled."
 msgstr ""
 
 #. Закрыть
@@ -809,11 +876,13 @@ msgstr ""
 
 #. Обновить
 #: ../resources/ui/vdi_manager_form.glade.h:4
+#: ../resources/ui/controller_manager_form.glade.h:2
 msgid "Update"
 msgstr ""
 
 #. Sign out
 #: ../resources/ui/vdi_manager_form.glade.h:8
+#: ../resources/ui/controller_manager_form.glade.h:6
 msgid "Sign out"
 msgstr ""
 
@@ -845,6 +914,7 @@ msgstr ""
 
 #. Протокол
 #: ../resources/ui/connection_info_dialog.glade.h:7
+#: ../resources/ui/controller_manager_form.glade.h:8
 msgid "Protocol"
 msgstr ""
 
@@ -1128,14 +1198,17 @@ msgid "Save password in ini file"
 msgstr ""
 
 #: ../resources/ui/start_settings_form.glade.h:21
+#: ../resources/ui/controller_manager_form.glade.h:9
 msgid "SPICE"
 msgstr ""
 
 #: ../resources/ui/start_settings_form.glade.h:22
+#: ../resources/ui/controller_manager_form.glade.h:11
 msgid "RDP"
 msgstr ""
 
 #: ../resources/ui/start_settings_form.glade.h:23
+#: ../resources/ui/controller_manager_form.glade.h:12
 msgid "X2GO"
 msgstr ""
 
@@ -1773,23 +1846,27 @@ msgstr ""
 msgid "Open documentation (in browser)"
 msgstr ""
 
-#. Подключение к удаленной машине напрямую
-#: ../resources/ui/start_settings_form.glade.h:211
-msgid "Connect to a remote machine directly"
-msgstr ""
-
-#. Режим, в котором подключение будет производиться не к VDI серверу, а напрямую к удаленной машине
-#: ../resources/ui/start_settings_form.glade.h:213
-msgid "Direct VM connection mode"
-msgstr ""
-
 #. Время ожидания ВМ из пула, сек
-#: ../resources/ui/start_settings_form.glade.h:215
+#: ../resources/ui/start_settings_form.glade.h:211
 msgid "VM waiting time, sec"
 msgstr ""
 
+#: ../resources/ui/start_settings_form.glade.h:212
+msgid ""
+"Global application mode. It determines  which server the applications "
+"connects to"
+msgstr ""
+
+#: ../resources/ui/start_settings_form.glade.h:213
+msgid "Application mode"
+msgstr ""
+
+#: ../resources/ui/start_settings_form.glade.h:214
+msgid "VDI connection mode"
+msgstr ""
+
 #. Служебные
-#: ../resources/ui/start_settings_form.glade.h:217
+#: ../resources/ui/start_settings_form.glade.h:218
 msgid "Service"
 msgstr ""
 
@@ -1848,4 +1925,12 @@ msgstr ""
 
 #: ../resources/ui/virt-viewer-auth.glade.h:7
 msgid "Show password"
+msgstr ""
+
+#: ../resources/ui/controller_manager_form.glade.h:7
+msgid "Search by name"
+msgstr ""
+
+#: ../resources/ui/controller_manager_form.glade.h:10
+msgid "SPICE DIRECT"
 msgstr ""

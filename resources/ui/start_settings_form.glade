@@ -1510,6 +1510,7 @@ GUI data will be ignored</property>
                           <object class="GtkLabel">
                             <property name="visible">True</property>
                             <property name="can_focus">False</property>
+                            <property name="tooltip_text" translatable="yes">Global application mode. It determines  which server the applications connects to</property>
                             <property name="halign">end</property>
                             <property name="label" translatable="yes">Application mode</property>
                           </object>

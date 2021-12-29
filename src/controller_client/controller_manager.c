@@ -189,7 +189,7 @@ static void on_controller_session_get_vm_data_task_finished(GObject *source_obje
     controller_manager_set_gui_state(self, GUI_STATE_DEFAULT);
 
     g_autofree gchar *err_msg = NULL;
-    err_msg = g_strdup(_("Failed to fetch vm data"));
+    err_msg = g_strdup(_("Failed to fetch vm data."));
     gpointer ptr_res = g_task_propagate_pointer(G_TASK(res), NULL); // take ownership
     if(ptr_res == NULL) { // "Не удалось получить данные"
         controller_manager_set_status(self, err_msg, TRUE);

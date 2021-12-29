@@ -33,7 +33,7 @@ src/app_updater/app_updater.c
 src/rdp_viewer/rdp_keyboard.c
 src/rdp_viewer/rdp_rail.c
 src/rdp_viewer/rdp_viewer.c
-src/rdp_viewer/windows_rdp_launcher.c
+src/rdp_viewer/native_rdp_launcher.c
 src/rdp_viewer/rdp_clipboard.c
 src/rdp_viewer/rdp_cursor.c
 src/rdp_viewer/rdp_display.c
@@ -73,6 +73,8 @@ src/virt_viewer/virt-viewer-app.c
 src/virt_viewer/virt-viewer-display-vnc.c
 src/virt_viewer/virt-viewer-display.c
 src/virt_viewer/windows-cmdline-wrapper.c
+src/controller_client/controller_manager.c
+src/controller_client/controller_session.c
 resources/ui/usb_selector_form.glade
 resources/ui/vdi_user_settings_form.glade
 resources/ui/vdi_manager_form.glade
@@ -90,3 +92,4 @@ resources/ui/virt-viewer-about.glade
 resources/ui/virt-viewer-preferences.glade
 resources/ui/virt-viewer-auth.glade
 resources/ui/virt-viewer-file-transfer-dialog.glade
+resources/ui/controller_manager_form.glade

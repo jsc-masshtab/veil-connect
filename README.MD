@@ -149,6 +149,7 @@ sudo /opt/local/bin/port install hiredis
 
 ## Обновление переводов
 
+- Если появились новые файлы, то добавить их в POTFILES.in.
 - Выполнить в терминале в папке po.
 ```
 intltool-update --pot --gettext-package=veil-connect
