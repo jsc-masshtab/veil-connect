@@ -56,8 +56,9 @@ typedef struct
     GtkWidget *connect_button;
     GtkWidget *btn_cancel_auth;
 
-    GtkWidget * app_name_label;
+    GtkWidget *app_name_label;
 
+    GtkWidget *global_application_mode_image;
 
     AuthDialogState auth_dialog_state;
 
@@ -146,6 +147,8 @@ fill_gui(RemoteViewerConnData *ci)
 
             gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(ci->ldap_check_btn), vdi_session_is_ldap());
             gtk_widget_set_sensitive(ci->ldap_check_btn, TRUE);
+
+            gtk_widget_set_visible(ci->global_application_mode_image, FALSE);
             break;
         }
         case GLOBAL_APP_MODE_DIRECT: {
@@ -156,6 +159,9 @@ fill_gui(RemoteViewerConnData *ci)
 
             gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(ci->ldap_check_btn), FALSE);
             gtk_widget_set_sensitive(ci->ldap_check_btn, FALSE);
+
+            gtk_widget_set_visible(ci->global_application_mode_image, TRUE);
+            gtk_widget_set_tooltip_text(ci->global_application_mode_image, _("VM connection mode"));
             break;
         }
         case GLOBAL_APP_MODE_CONTROLLER: {
@@ -167,6 +173,9 @@ fill_gui(RemoteViewerConnData *ci)
             gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(ci->ldap_check_btn),
                                          get_controller_session_static()->is_ldap);
             gtk_widget_set_sensitive(ci->ldap_check_btn, TRUE);
+
+            gtk_widget_set_visible(ci->global_application_mode_image, TRUE);
+            gtk_widget_set_tooltip_text(ci->global_application_mode_image, _("Controller connection mode"));
             break;
         }
     }
@@ -439,6 +448,8 @@ remote_viewer_connect_dialog(RemoteViewer *remote_viewer)
     ci.disposable_password_entry = GTK_WIDGET(gtk_builder_get_object(builder, "disposable_password_entry"));
     ci.check_btn_2fa_password = GTK_WIDGET(gtk_builder_get_object(builder, "check_btn_2fa_password"));
     ci.ldap_check_btn = get_widget_from_builder(builder, "ldap_check_btn");
+
+    ci.global_application_mode_image = GTK_WIDGET(gtk_builder_get_object(builder, "global_application_mode_image"));
 
     // Signal - callbacks connections
     g_signal_connect(ci.window, "key-press-event", G_CALLBACK(key_pressed_cb), &ci);

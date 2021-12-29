@@ -136,9 +136,12 @@ static void on_controller_session_get_vm_list_task_finished(GObject *source_obje
 
     if (reply_json_object && server_reply_type == SERVER_REPLY_TYPE_DATA) {
 
-        controller_manager_set_status(self, _("List of VMs received."), FALSE);
+        gint64 count = json_object_get_int_member_safely(reply_json_object, "count");
 
-        //gint64 count = json_object_get_int_member_safely(reply_json_object, "count");
+        g_autofree gchar *info_msg = NULL;
+        info_msg = g_strdup_printf(_("List of VMs received. Amount: %li."), count);
+        controller_manager_set_status(self, info_msg, FALSE);
+
         JsonArray *json_array = json_object_get_array_member_safely(reply_json_object, "results");
         if (json_array) {
             guint json_array_length = MIN(json_array_get_length(json_array), MAX_VMS_IN_TABLE);
