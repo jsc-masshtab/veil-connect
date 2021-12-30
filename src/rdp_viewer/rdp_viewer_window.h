@@ -18,8 +18,6 @@
 #include "conn_info_dialog.h"
 
 typedef struct{
-    GMainLoop **loop_p;
-
     // gui
     GtkBuilder *builder;
     GtkWidget *rdp_viewer_window;

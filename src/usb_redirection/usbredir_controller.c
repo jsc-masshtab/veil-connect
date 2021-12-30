@@ -204,7 +204,6 @@ static void free_usbredir_task_resault_data(UsbRedirTaskResaultData *usbredir_ta
 
     free_memory_safely(&usbredir_task_resault_data->message);
     free(usbredir_task_resault_data);
-    usbredir_task_resault_data = NULL;
 }
 
 static void usbredir_controller_task_finished(GObject *source_object G_GNUC_UNUSED,

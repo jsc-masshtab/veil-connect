@@ -414,9 +414,9 @@ static CLIPRDR_FORMAT_LIST rdp_cliprdr_get_client_format_list(RdpClipboard* clip
     g_info("%s", (const char *)__func__);
 
     ExtendedRdpContext *ex_context = clipboard->ex_context;
-    GdkAtom* targets;
+    GdkAtom* targets = NULL;
     gboolean result = FALSE;
-    gint n_targets;
+    gint n_targets = 0;
 
     CLIPRDR_FORMAT_LIST cliprdr_format_list;
     cliprdr_format_list.formats = NULL;

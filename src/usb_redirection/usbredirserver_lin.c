@@ -190,7 +190,7 @@ static void usbredirserver_run_main_loop(UsbRedirServerData *priv)
 static int usbredirserver_create_server_socket(const char *ipv4_addr, int port)
 {
     // Create server socket
-    int server_fd = -1;
+    int server_fd;
     char *ipv6_addr = NULL;
     union {
         struct sockaddr_in v4;

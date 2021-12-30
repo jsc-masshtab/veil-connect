@@ -855,12 +855,12 @@ void rdp_viewer_window_destroy(RdpWindowData *rdp_window_data)
 void rdp_viewer_window_stop(RdpWindowData *rdp_window_data, RemoteViewerState next_app_state,
         gboolean exit_if_cant_abort)
 {
-    *rdp_window_data->ex_rdp_context->next_app_state_p = next_app_state;
+    rdp_window_data->ex_rdp_context->next_app_state = next_app_state;
     rdp_window_data->ex_rdp_context->is_abort_demanded = TRUE;
 
     // Условие  из-за проблемы невозможности отмены стадии коннекта во freerdp (функция freerdp_connect)
     if (!rdp_window_data->ex_rdp_context->is_connecting) {
-        shutdown_loop(*rdp_window_data->loop_p);
+        shutdown_loop(rdp_window_data->ex_rdp_context->main_loop);
     } else if (exit_if_cant_abort) { // Завершаем приложения форсировано
         g_warning("%s: Forced exit", (const char *)__func__);
         usbredir_controller_deinit_static();

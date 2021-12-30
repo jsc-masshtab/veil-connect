@@ -93,7 +93,7 @@ static gboolean rdp_viewer_update_images(gpointer user_data)
 // Returns monitor geometry
 static RdpWindowData * set_monitor_data_and_create_rdp_viewer_window(
         GdkRectangle *geometry, int index, int monitor_num,
-        ExtendedRdpContext *ex_rdp_context, GMainLoop **loop_p)
+        ExtendedRdpContext *ex_rdp_context)
 {
     GdkDisplay *display = gdk_display_get_default();
     // get monitor geometry
@@ -111,9 +111,6 @@ static RdpWindowData * set_monitor_data_and_create_rdp_viewer_window(
     // create rdp viewer window
     RdpWindowData *rdp_window_data = rdp_viewer_window_create(ex_rdp_context, index, monitor_num, *geometry);
     g_array_append_val(ex_rdp_context->rdp_windows_array, rdp_window_data);
-
-    // set references
-    rdp_window_data->loop_p = loop_p;
 
     return rdp_window_data;
 }
@@ -179,9 +176,8 @@ gint rdp_viewer_compare_monitors(gconstpointer a, gconstpointer b)
 RemoteViewerState rdp_viewer_start(RemoteViewer *app, VeilRdpSettings *p_rdp_settings)
 {
     RemoteViewerData self;
-    RemoteViewerState next_app_state = APP_STATE_UNDEFINED;
     if (p_rdp_settings == NULL)
-        return next_app_state;
+        return APP_STATE_UNDEFINED;
 
     g_info("%s domain %s ip %s", (const char *)__func__, p_rdp_settings->domain, p_rdp_settings->ip);
 
@@ -190,13 +186,12 @@ RemoteViewerState rdp_viewer_start(RemoteViewer *app, VeilRdpSettings *p_rdp_set
     if (!ret)
         return APP_STATE_AUTH_DIALOG;
 
-    GMainLoop *loop = NULL;
     // create RDP context
     self.ex_rdp_context = create_rdp_context(p_rdp_settings,
                                              (UpdateCursorCallback)rdp_viewer_update_cursor,
                                              (GSourceFunc)rdp_viewer_update_images);
-    self.ex_rdp_context->p_loop = &loop;
-    self.ex_rdp_context->next_app_state_p = &next_app_state;
+    self.ex_rdp_context->main_loop = NULL;
+    self.ex_rdp_context->next_app_state = APP_STATE_UNDEFINED;
     self.ex_rdp_context->app = app;
 
     self.net_speedometer = net_speedometer_new();
@@ -277,7 +272,7 @@ RemoteViewerState rdp_viewer_start(RemoteViewer *app, VeilRdpSettings *p_rdp_set
         // get monitor data
         GdkRectangle geometry;
         RdpWindowData *rdp_window_data = set_monitor_data_and_create_rdp_viewer_window(
-                &geometry, i, monitor_num, self.ex_rdp_context, &loop);
+                &geometry, i, monitor_num, self.ex_rdp_context);
         total_monitor_width += geometry.width;
 
         // find the smallest height
@@ -309,7 +304,7 @@ RemoteViewerState rdp_viewer_start(RemoteViewer *app, VeilRdpSettings *p_rdp_set
     // start RDP routine in thread
     rdp_client_start_routine_thread(self.ex_rdp_context);
     // launch event loop
-    create_loop_and_launch(&loop);
+    create_loop_and_launch(&self.ex_rdp_context->main_loop);
     // stop usb tasks if there are any
     usbredir_controller_stop_all();
     /// Показать сообщение если завершение работы не было совершено пользователем намерено (произошла ошибка)
@@ -317,6 +312,7 @@ RemoteViewerState rdp_viewer_start(RemoteViewer *app, VeilRdpSettings *p_rdp_set
 
     // deinit all
     g_object_unref(self.net_speedometer);
+    RemoteViewerState next_app_state = self.ex_rdp_context->next_app_state;
     destroy_rdp_context(self.ex_rdp_context);
     // destroy rdp windows
     for (guint i = 0; i < rdp_windows_array->len; ++i) {

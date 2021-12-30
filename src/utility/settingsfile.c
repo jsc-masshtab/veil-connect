@@ -117,7 +117,7 @@ gint
 read_int_from_ini_file(const gchar *group_name,  const gchar *key, gint def_value)
 {
     GError *error = NULL;
-    gint value = 0;
+    gint value;
 
     open_ini_file();
     if (keyfile) {

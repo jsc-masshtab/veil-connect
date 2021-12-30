@@ -269,7 +269,7 @@ gboolean controller_session_logout()
         g_autofree gchar *response_body_str = NULL;
         response_body_str = controller_session_api_call("POST", url_str, NULL, NULL, &resp_code);
         g_object_set(controller_session_static->soup_session, "timeout", HTTP_RESPONSE_TIOMEOUT, NULL);
-
+        (void)response_body_str;
 
         return (resp_code == OK_RESPONSE);
     }

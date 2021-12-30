@@ -1397,14 +1397,11 @@ gboolean virt_viewer_connect_attempt(VirtViewerApp *self)
 
     g_debug("%s", (const char *)__func__);
 
-    gboolean created = FALSE;
-    gboolean is_connected = FALSE;
-
-    created = virt_viewer_app_create_session(self, "spice", NULL);
+    gboolean created = virt_viewer_app_create_session(self, "spice", NULL);
     if (!created)
         return TRUE;
 
-    is_connected = virt_viewer_app_initial_connect(self, NULL);
+    gboolean is_connected = virt_viewer_app_initial_connect(self, NULL);
 
     g_info("%s active %i created %i is_connected %i",
            (const char *)__func__, virt_viewer_app_is_active(self), created, is_connected);

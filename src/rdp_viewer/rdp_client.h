@@ -25,7 +25,6 @@
 #include "remote-viewer.h"
 #include "remote-viewer-util.h"
 
-typedef gboolean (*UpdateImageCallback) (rdpContext* context);
 typedef gboolean (*UpdateCursorCallback) (rdpContext* context);
 
 //#define MAX_DISPLAY_NUMBER 3
@@ -72,8 +71,8 @@ typedef struct {
     UINT32 last_rdp_error; // main freerdp error
     UINT32 rail_rdp_error; // remote app related error
 
-    GMainLoop **p_loop;
-    RemoteViewerState *next_app_state_p;
+    GMainLoop *main_loop;
+    RemoteViewerState next_app_state;
 
     GThread *rdp_client_routine_thread;
 

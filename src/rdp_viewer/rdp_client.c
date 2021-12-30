@@ -251,7 +251,6 @@ ExtendedRdpContext* create_rdp_context(VeilRdpSettings *p_rdp_settings, UpdateCu
     ExtendedRdpContext* ex_rdp_context = (ExtendedRdpContext*)context;
     ex_rdp_context->p_rdp_settings = p_rdp_settings;
     ex_rdp_context->is_running = FALSE;
-    //ex_rdp_context->update_image_callback = (UpdateImageCallback)update_image_callback;
     ex_rdp_context->update_cursor_callback = update_cursor_callback;
     ex_rdp_context->test_int = 777; // temp
     g_mutex_init(&ex_rdp_context->cursor_mutex);
@@ -290,7 +289,6 @@ void destroy_rdp_context(ExtendedRdpContext* ex_rdp_context)
         g_info("%s: context free no ", (const char *)__func__);
         freerdp_client_context_free((rdpContext*)ex_rdp_context);
         g_info("%s: context freed", (const char *)__func__);
-        ex_rdp_context = NULL;
     }
 }
 
@@ -426,7 +424,7 @@ end:
     // Если соединение было успешным то сигнализируем об отключении от ВМ
     if (ex_contect->is_connected_last_time)
         vdi_event_vm_changed_notify(NULL);
-    shutdown_loop(*(ex_contect->p_loop));
+    shutdown_loop(ex_contect->main_loop);
     return NULL;
 }
 
