@@ -34,7 +34,7 @@ JsonObject *json_get_data_or_errors_object(JsonParser *parser, const gchar *json
 JsonObject *json_get_data_or_errors_object_ecp(JsonParser *parser, const gchar *json_str,
                                                ServerReplyType *server_reply_type);
 
-gchar *string_to_json_value(const gchar *string);
+//gchar *string_to_json_value(const gchar *string);
 
 gchar *json_generate_from_builder(JsonBuilder *builder);
 

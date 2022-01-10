@@ -165,7 +165,7 @@ JsonObject *json_get_data_or_errors_object_ecp(JsonParser *parser, const gchar *
     *server_reply_type = SERVER_REPLY_TYPE_UNKNOWN;
     return NULL;
 }
-
+/*
 gchar *string_to_json_value(const gchar *string)
 {
     gchar *json_str_rep;
@@ -175,7 +175,7 @@ gchar *string_to_json_value(const gchar *string)
         json_str_rep = g_strdup("null");
     return json_str_rep;
 }
-
+*/
 /*
  * Generate json string. Must be freed
  */

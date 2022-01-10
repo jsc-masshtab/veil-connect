@@ -65,20 +65,21 @@ static void rdp_viewer_handle_mouse_btn_event(GtkWidget *widget G_GNUC_UNUSED, G
     rdpInput *input = context->input;
 
     UINT16 button = 0;
-    switch (event->button)
-    {
-    case GDK_BUTTON_PRIMARY:{
-        button = PTR_FLAGS_BUTTON1;
-        break;
-    }
-    case GDK_BUTTON_SECONDARY:{
-        button = PTR_FLAGS_BUTTON2;
-        break;
-    }
-    case GDK_BUTTON_MIDDLE:{
-        button = PTR_FLAGS_BUTTON3;
-        break;
-    }
+    switch (event->button) {
+        case GDK_BUTTON_PRIMARY: {
+            button = PTR_FLAGS_BUTTON1;
+            break;
+        }
+        case GDK_BUTTON_SECONDARY: {
+            button = PTR_FLAGS_BUTTON2;
+            break;
+        }
+        case GDK_BUTTON_MIDDLE: {
+            button = PTR_FLAGS_BUTTON3;
+            break;
+        }
+        default:
+            break;
     }
 
     if (button) {

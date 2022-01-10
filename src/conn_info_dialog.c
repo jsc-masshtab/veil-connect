@@ -116,7 +116,7 @@ void conn_info_dialog_update(ConnInfoDialog *self, VmRemoteProtocol protocol, Ne
         gtk_label_set_text(GTK_LABEL(self->write_speed_label), write_speed_str);
     }
 }
-
+/*
 void conn_info_dialog_reset(ConnInfoDialog *self)
 {
     gtk_label_set_text(GTK_LABEL(self->vm_conn_time_label), "");
@@ -127,3 +127,4 @@ void conn_info_dialog_reset(ConnInfoDialog *self)
     gtk_label_set_text(GTK_LABEL(self->read_speed_label), "-");
     gtk_label_set_text(GTK_LABEL(self->write_speed_label), "-");
 }
+*/

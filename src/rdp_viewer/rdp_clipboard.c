@@ -183,6 +183,8 @@ static void rdp_cliprdr_get_clipboard_data(RdpClipboardEventData *rdp_clipboard_
                 image = gtk_clipboard_wait_for_image(gtkClipboard);
                 break;
             }
+            default:
+                break;
         }
     }
 
@@ -238,6 +240,8 @@ static void rdp_cliprdr_get_clipboard_data(RdpClipboardEventData *rdp_clipboard_
                 g_object_unref(image);
                 break;
             }
+            default:
+                break;
         }
     }
 
@@ -675,6 +679,8 @@ static UINT rdp_cliprdr_server_format_data_response(CliprdrClientContext* contex
                 g_object_unref(pixbuf);
                 break;
             }
+            default:
+                break;
         }
     }
 
