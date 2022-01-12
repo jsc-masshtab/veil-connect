@@ -354,6 +354,11 @@ static void rdp_viewer_item_menu_usb_spice_activated(GtkWidget *menu G_GNUC_UNUS
     if (!rdp_viewer_window_is_usbredir_possible(rdp_window_data))
         return;
 
+    // Create spice session
+    if (usbredir_controller_get_static()->spice_usb_session == NULL)
+        usbredir_controller_get_static()->spice_usb_session = usbredir_spice_new();
+
+    // Get spice connection data and connect
     usbredir_spice_show_dialog(usbredir_controller_get_static()->spice_usb_session,
             GTK_WINDOW(rdp_window_data->rdp_viewer_window));
 }

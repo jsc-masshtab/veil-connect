@@ -19,6 +19,9 @@ typedef struct{
 
     SpiceSession *session;
 
+    gulong channel_new_sig_handle;
+    gulong channel_destroy_sig_handle;
+
     gboolean is_connected;
     gboolean is_fetching_vm_data;
 
