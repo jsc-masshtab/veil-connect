@@ -121,6 +121,7 @@ typedef struct{
 
     gboolean is_connect_to_prev_pool;
     gboolean to_save_pswd;
+    gboolean redirect_time_zone;
 
     gchar *vm_verbose_name;
 

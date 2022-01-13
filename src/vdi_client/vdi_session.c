@@ -20,6 +20,7 @@
 #include "vdi_session.h"
 #include "jsonhandler.h"
 #include "settingsfile.h"
+#include "veil_time.h"
 
 //#define RESPONSE_BUFFER_SIZE 200
 #define OK_RESPONSE 200
@@ -665,16 +666,36 @@ void vdi_session_get_vm_from_pool_task(GTask       *task,
     // form request body
     JsonBuilder *builder = json_builder_new();
     json_builder_begin_object(builder);
-
+    // remote_protocol
     json_builder_set_member_name(builder, "remote_protocol");
     json_builder_add_string_value(builder, util_remote_protocol_to_str(
             vdi_session_static->current_remote_protocol));
 
     if (task_data) {
-        int *current_vm_request_id_ptr = (int *)task_data;
+        RequestVmFromPoolData *vm_request_data = (RequestVmFromPoolData *)task_data;
+        // request_id
         json_builder_set_member_name(builder, "request_id");
-        json_builder_add_int_value(builder, *current_vm_request_id_ptr);
+        json_builder_add_int_value(builder, vm_request_data->request_id);
+        // time zone
+        if (vm_request_data->redirect_time_zone) {
+            json_builder_set_member_name(builder, "time_zone");
+            g_autofree gchar *time_zone = NULL;
+            time_zone = veil_time_get_time_zone();
+            json_builder_add_string_value(builder, time_zone);
+        }
+
+        free(vm_request_data);
     }
+
+    // OS
+    json_builder_set_member_name(builder, "os");
+#ifdef _WIN32
+    json_builder_add_string_value(builder, "Windows");
+#elif __linux__
+    json_builder_add_string_value(builder, "Linux");
+#else
+    json_builder_add_string_value(builder, "Other");
+#endif
 
     json_builder_end_object(builder);
 

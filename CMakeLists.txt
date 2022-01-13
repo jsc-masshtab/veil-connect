@@ -157,6 +157,10 @@ list(APPEND SRC_CODE
         src/controller_client/controller_session.c
         src/controller_client/controller_manager.h
         src/controller_client/controller_manager.c
+
+# veil_time
+        src/utility/veil_time.h
+        src/utility/veil_time.c
 )
 
 # usb_redirection

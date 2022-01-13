@@ -247,7 +247,7 @@
                       <packing>
                         <property name="expand">False</property>
                         <property name="fill">True</property>
-                        <property name="position">4</property>
+                        <property name="position">3</property>
                       </packing>
                     </child>
                     <child>
@@ -259,6 +259,21 @@
                         <property name="receives_default">False</property>
                         <property name="tooltip_text" translatable="yes">Save password in ini file</property>
                         <property name="halign">start</property>
+                        <property name="draw_indicator">True</property>
+                      </object>
+                      <packing>
+                        <property name="expand">False</property>
+                        <property name="fill">True</property>
+                        <property name="position">4</property>
+                      </packing>
+                    </child>
+                    <child>
+                      <object class="GtkCheckButton" id="redirect_time_zone_check_btn">
+                        <property name="label" translatable="yes">Redirect time zone</property>
+                        <property name="visible">True</property>
+                        <property name="can_focus">True</property>
+                        <property name="receives_default">False</property>
+                        <property name="tooltip_text" translatable="yes">Redirect the client's current time zone to the remote machine. Time zone redirection works in VDI connection mode and for non-RDS pools.</property>
                         <property name="draw_indicator">True</property>
                       </object>
                       <packing>

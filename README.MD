@@ -155,7 +155,7 @@ sudo /opt/local/bin/port install hiredis
 intltool-update --pot --gettext-package=veil-connect
 msgmerge ru.po veil-connect.pot -o ru.po
 ```
-- Написать перевод в файле ru.po.
+- Написать перевод в файле ru.po (Удалить строчки со словом fuzzy).
 - Выполнить в терминале в папке po.
 ```
 msgfmt ru.po -o ru/LC_MESSAGES/veil-connect.mo

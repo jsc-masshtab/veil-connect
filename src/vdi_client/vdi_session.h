@@ -79,6 +79,12 @@ typedef struct {
 
 } UserData;
 
+// Data for vm request
+typedef struct {
+    int request_id;
+    gboolean redirect_time_zone;
+} RequestVmFromPoolData;
+
 //VdiSession class
 
 #define TYPE_VDI_SESSION         ( vdi_session_get_type( ) )

@@ -37,6 +37,7 @@ typedef struct{
     GtkWidget *conn_to_prev_pool_checkbutton;
     GtkWidget *save_password_checkbtn;
     GtkWidget *remote_protocol_combobox;
+    GtkWidget *redirect_time_zone_check_btn;
 
     // spice settings
     GtkWidget *client_cursor_visible_checkbutton;
@@ -134,6 +135,7 @@ static void update_gui_according_to_app_mode(ConnectSettingsDialogData *dialog_d
     switch (global_app_mode) {
         case GLOBAL_APP_MODE_VDI: {
             gtk_widget_set_sensitive(dialog_data->conn_to_prev_pool_checkbutton, TRUE);
+            gtk_widget_set_sensitive(dialog_data->redirect_time_zone_check_btn, TRUE);
             gtk_widget_set_visible(dialog_data->remote_protocol_combobox, FALSE);
             gtk_widget_set_visible(dialog_data->btn_choose_rdp_file, FALSE);
             gtk_widget_set_visible(dialog_data->rdp_file_name_entry, FALSE);
@@ -142,6 +144,7 @@ static void update_gui_according_to_app_mode(ConnectSettingsDialogData *dialog_d
         }
         case GLOBAL_APP_MODE_DIRECT: {
             gtk_widget_set_sensitive(dialog_data->conn_to_prev_pool_checkbutton, FALSE);
+            gtk_widget_set_sensitive(dialog_data->redirect_time_zone_check_btn, FALSE);
             gtk_widget_set_visible(dialog_data->remote_protocol_combobox, TRUE);
             gtk_widget_set_visible(dialog_data->btn_choose_rdp_file, TRUE);
             gtk_widget_set_visible(dialog_data->rdp_file_name_entry, TRUE);
@@ -150,6 +153,7 @@ static void update_gui_according_to_app_mode(ConnectSettingsDialogData *dialog_d
         }
         case GLOBAL_APP_MODE_CONTROLLER: {
             gtk_widget_set_sensitive(dialog_data->conn_to_prev_pool_checkbutton, FALSE);
+            gtk_widget_set_sensitive(dialog_data->redirect_time_zone_check_btn, FALSE);
             gtk_widget_set_visible(dialog_data->remote_protocol_combobox, FALSE);
             gtk_widget_set_visible(dialog_data->btn_choose_rdp_file, FALSE);
             gtk_widget_set_visible(dialog_data->rdp_file_name_entry, FALSE);
@@ -628,6 +632,9 @@ fill_gui(ConnectSettingsDialogData *dialog_data)
         gtk_combo_box_set_active_id((GtkComboBox *) dialog_data->remote_protocol_combobox, protocol_str);
     }
 
+    gtk_toggle_button_set_active((GtkToggleButton *)dialog_data->redirect_time_zone_check_btn,
+            p_conn_data->redirect_time_zone);
+
     /// Spice settings
     gtk_toggle_button_set_active((GtkToggleButton*)dialog_data->client_cursor_visible_checkbutton,
                                  p_conn_data->spice_settings.is_spice_client_cursor_visible);
@@ -786,6 +793,9 @@ take_from_gui(ConnectSettingsDialogData *dialog_data)
         conn_data->protocol_in_direct_app_mode = util_str_to_remote_protocol(protocol_str);
     }
 
+    conn_data->redirect_time_zone = gtk_toggle_button_get_active(
+            (GtkToggleButton *)dialog_data->redirect_time_zone_check_btn);
+
     /// Spice debug cursor enabling
     conn_data->spice_settings.is_spice_client_cursor_visible =
             gtk_toggle_button_get_active((GtkToggleButton *)dialog_data->client_cursor_visible_checkbutton);
@@ -933,6 +943,8 @@ GtkResponseType remote_viewer_start_settings_dialog(RemoteViewer *p_remote_viewe
     dialog_data.conn_to_prev_pool_checkbutton = get_widget_from_builder(dialog_data.builder, "connect-to-prev-button");
     dialog_data.save_password_checkbtn = get_widget_from_builder(dialog_data.builder, "save_password_btn");
     dialog_data.remote_protocol_combobox = get_widget_from_builder(dialog_data.builder, "remote_protocol_combobox");
+    dialog_data.redirect_time_zone_check_btn =
+            get_widget_from_builder(dialog_data.builder, "redirect_time_zone_check_btn");
 
     // spice settings
     dialog_data.client_cursor_visible_checkbutton =

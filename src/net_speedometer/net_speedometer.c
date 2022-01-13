@@ -63,7 +63,7 @@ static void* net_speedometer_ping_job_linux(NetSpeedometer *self)
             /// rtt min/avg/max parsing
             GRegex *regex = g_regex_new("(\\d+.\\d+)/(\\d+.\\d+)/(\\d+.\\d+)/(\\d+.\\d+)",
                     G_REGEX_MULTILINE, 0, NULL);
-            GMatchInfo *match_info;
+            GMatchInfo *match_info = NULL;
             g_regex_match(regex, standard_output, 0, &match_info);
 
             gboolean is_success = g_match_info_matches(match_info);

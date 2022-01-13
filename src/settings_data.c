@@ -21,6 +21,9 @@ void settings_data_read_all(ConnectSettingsData *data)
 {
     settings_data_clear(data);
 
+    data->redirect_time_zone =
+            read_int_from_ini_file("General", "redirect_time_zone", 0);
+
     // Direct connection to VM data
     const gchar *manual_conn_group = get_cur_ini_group_direct();
     data->user = read_str_from_ini_file(manual_conn_group, "username");
@@ -98,6 +101,7 @@ void settings_data_read_all(ConnectSettingsData *data)
 void settings_data_save_all(ConnectSettingsData *data)
 {
     // Main
+    write_int_to_ini_file("General", "redirect_time_zone", data->redirect_time_zone);
     // Direct
     const gchar *manual_conn_group = get_cur_ini_group_direct();
     write_str_to_ini_file(manual_conn_group, "username", data->user);

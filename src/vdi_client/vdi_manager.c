@@ -159,10 +159,14 @@ static void refresh_vdi_get_vm_from_pool_async(VdiManager *self, const gchar *po
 
     self->current_vm_request_id = MAX(rand() % 10000, 1); // id чтобы распознать ws сообщения
     // относящиеся к запросу
+
     // execute task
+    RequestVmFromPoolData *vm_request_data = (RequestVmFromPoolData*)calloc(1, sizeof(RequestVmFromPoolData));
+    vm_request_data->request_id = self->current_vm_request_id;
+    vm_request_data->redirect_time_zone = self->p_conn_data->redirect_time_zone;
     execute_async_task(vdi_session_get_vm_from_pool_task,
             (GAsyncReadyCallback)on_vdi_session_get_vm_from_pool_finished,
-            &self->current_vm_request_id, self);
+            vm_request_data, self);
 }
 
 // start asynchronous task to get vm data from vdi
