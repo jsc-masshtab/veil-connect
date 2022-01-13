@@ -170,9 +170,9 @@ SpiceUsbSession *usbredir_spice_new()
     SpiceUsbSession *self = calloc(1, sizeof(SpiceUsbSession));
 
     self->session = spice_session_new();
-    g_signal_connect(self->session, "channel-new",
+    self->channel_new_sig_handle = g_signal_connect(self->session, "channel-new",
                      G_CALLBACK(usbredir_spice_channel_new), self);
-    g_signal_connect(self->session, "channel-destroy",
+    self->channel_destroy_sig_handle = g_signal_connect(self->session, "channel-destroy",
                      G_CALLBACK(usbredir_spice_channel_destroy), self);
 
     return self;
@@ -180,8 +180,15 @@ SpiceUsbSession *usbredir_spice_new()
 
 void usbredir_spice_destroy(SpiceUsbSession *self)
 {
-    usbredir_spice_disconnect(self);
+    if (self == NULL)
+        return;
 
+    // disconnect signals
+    g_signal_handler_disconnect(self->session, self->channel_new_sig_handle);
+    g_signal_handler_disconnect(self->session, self->channel_destroy_sig_handle);
+
+    usbredir_spice_disconnect(self);
+    // free
     g_object_unref(G_OBJECT(self->session));
     free_memory_safely(&self->host);
     free_memory_safely(&self->password);

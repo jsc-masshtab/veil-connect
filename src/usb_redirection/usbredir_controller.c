@@ -49,15 +49,17 @@ UsbRedirController *usbredir_controller_new()
     usbredir_controller->tasks_array = g_array_new(FALSE, FALSE, sizeof(UsbRedirRunningTask*));
     usbredir_controller->port = 17777;
     usbredir_controller->reset_tcp_usb_devices_required = TRUE;
-
-    usbredir_controller->spice_usb_session = usbredir_spice_new();
+    usbredir_controller->spice_usb_session = NULL;
 
     return usbredir_controller;
 }
 
 void usbredir_controller_stop_all()
 {
-    usbredir_spice_disconnect(usbredir_controller_static->spice_usb_session);
+    // destroy spice session
+    usbredir_spice_destroy(usbredir_controller_static->spice_usb_session);
+    usbredir_controller_static->spice_usb_session = NULL;
+
     usbredir_controller_stop_all_cur_tasks(FALSE);
 }
 
@@ -190,11 +192,8 @@ void usbredir_controller_deinit_static()
     g_array_free(usbredir_controller_static->tasks_array, TRUE);
     usbredir_controller_static->tasks_array = NULL;
 
-    usbredir_spice_destroy(usbredir_controller_static->spice_usb_session);
-
     g_object_unref(usbredir_controller_static);
 }
-
 
 // STATIC FUNCTIONS
 static void free_usbredir_task_resault_data(UsbRedirTaskResaultData *usbredir_task_resault_data)

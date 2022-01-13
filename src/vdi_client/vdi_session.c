@@ -1024,7 +1024,7 @@ void vdi_session_get_vm_data_task(GTask *task,
     if (server_reply_type == SERVER_REPLY_TYPE_DATA) {
         vdi_vm_data->vm_host = g_strdup(json_object_get_string_member_safely(
                 reply_json_object, "controller_address"));
-        vdi_vm_data->vm_port = json_object_get_int_member_safely(reply_json_object, "remote_access_port");
+        vdi_vm_data->vm_port = (int)json_object_get_int_member_safely(reply_json_object, "remote_access_port");
         vdi_vm_data->vm_password = g_strdup(json_object_get_string_member_safely(
                 reply_json_object, "graphics_password"));
     } else {
