@@ -391,9 +391,9 @@ btn_archive_logs_clicked_cb(GtkButton *button G_GNUC_UNUSED, ConnectSettingsDial
     gchar *log_dir = get_log_dir_path();
 
 #ifdef G_OS_UNIX
-    gchar *tar_cmd = g_strdup_printf("tar -czvf log.tar.gz %s", log_dir);
+    gchar *compress_cmd = g_strdup_printf("tar -czvf log.tar.gz %s", log_dir);
 
-    int res = system(tar_cmd);
+    int res = system(compress_cmd);
 
     // show log dir on gui
     gchar *cur_dir = g_get_current_dir();
@@ -401,17 +401,22 @@ btn_archive_logs_clicked_cb(GtkButton *button G_GNUC_UNUSED, ConnectSettingsDial
     free_memory_safely(&cur_dir);
 #elif _WIN32
     gchar *app_data_dir = get_windows_app_data_location();
-    gchar *tar_cmd = g_strdup_printf("tar.exe --exclude=%s -czvf \"%s\\log.tar.gz\" \"%s\"",
+    gchar *compress_cmd = g_strdup_printf("tar.exe --exclude=%s -a -c -f \"%s\\log.zip\" \"%s\"",
                                      veil_logger_get_log_start_date(), app_data_dir, log_dir);
-    //
-    int res = system(tar_cmd);
+
+    //gchar *compress_cmd = g_strdup_printf(
+    //        "powershell Compress-Archive -Force -Path \"%s\" -DestinationPath \"%s\\log.zip\"",
+    //        log_dir,
+    //        app_data_dir);
+
+    int res = system(compress_cmd); // powershell Compress-Archive -Force po po.zip
 
     gtk_label_set_text(GTK_LABEL(dialog_data->log_location_label), app_data_dir);
     g_free(app_data_dir);
 #endif
     (void)res;
 
-    g_free(tar_cmd);
+    g_free(compress_cmd);
     g_free(log_dir);
 }
 
