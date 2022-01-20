@@ -1288,7 +1288,11 @@ gchar *util_get_hostname()
 {
     size_t buffer_size = 128;
     gchar *hostname = g_strnfill(buffer_size, '\0');
-    gethostname(hostname, buffer_size - 1);
+    gethostname(hostname, (int)buffer_size - 1);
+
+    gchar *utf8 = g_locale_to_utf8(hostname, -1, NULL, NULL, NULL);
+    g_free(hostname);
+    hostname = utf8;
 
     return hostname;
 }

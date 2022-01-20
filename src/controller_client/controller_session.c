@@ -6,6 +6,8 @@
  * Author: http://mashtab.org/
  */
 
+#include <stdlib.h>
+
 #include <glib/gi18n.h>
 
 #include "remote-viewer-util.h"
