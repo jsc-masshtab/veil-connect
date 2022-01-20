@@ -155,8 +155,6 @@ VdiSession *vdi_session_new()
 
     vdi_session->login_time = NULL;
 
-    memset(&vdi_session->redis_client, 0, sizeof(RedisClient));
-
     memset(&vdi_session->vdi_ws_client, 0, sizeof(VdiWsClient));
     vdi_session->vdi_ws_client.reconnect_if_conn_lost = TRUE;
 
@@ -294,42 +292,6 @@ static gchar *vdi_session_auth_request()
             return reply_msg;
         }
     }
-}
-
-// connect to reddis and subscribe for licence handling. Legacy function. Remove it later
-static void vdi_api_session_register_for_license() {
-    if (vdi_session_static->redis_client.is_subscribed)
-        return;
-
-    // do request to vdi server in order to get data fot Redis connection
-    gchar *url_str = g_strdup_printf("%s/client/message_broker/", vdi_session_static->api_url);
-    gchar *response_body_str = vdi_session_api_call("GET", url_str, NULL, NULL);
-    // g_info("%s: response_body_str %s", (const char *) __func__, response_body_str);
-    g_free(url_str);
-
-    // parse the response
-    JsonParser *parser = json_parser_new();
-
-    ServerReplyType server_reply_type;
-    JsonObject *data_member_object = json_get_data_or_errors_object(parser, response_body_str, &server_reply_type);
-    free_memory_safely(&response_body_str);
-
-    if (server_reply_type == SERVER_REPLY_TYPE_DATA) {
-
-        // connect to Redis and subscribe to channel
-        vdi_redis_client_clear_connection_data(&vdi_session_static->redis_client);
-        vdi_session_static->redis_client.adress = g_strdup(vdi_session_static->vdi_ip);
-        vdi_session_static->redis_client.port = json_object_get_int_member_safely(data_member_object, "port");
-        vdi_session_static->redis_client.password =
-                g_strdup(json_object_get_string_member_safely(data_member_object, "password"));
-        vdi_session_static->redis_client.channel =
-                g_strdup(json_object_get_string_member_safely(data_member_object, "channel"));
-        vdi_session_static->redis_client.db = json_object_get_int_member_safely(data_member_object, "db");
-
-        vdi_redis_client_init(&vdi_session_static->redis_client);
-    }
-
-    g_object_unref(parser);
 }
 
 // some kind of singleton
@@ -635,8 +597,6 @@ void vdi_session_log_in_task(GTask       *task,
     // register for licensing.  Для поддержки предыдущих версий VDI. Редис не доступен из вне с версии VDI 3.1.1
     g_autofree gchar *jwt_str = NULL;
     jwt_str = atomic_string_get(&vdi_session_static->jwt);
-    if (jwt_str)
-        vdi_api_session_register_for_license();
 
     g_task_return_pointer(task, reply_msg, NULL); // reply_msg is freed in task callback
 }
@@ -1040,9 +1000,6 @@ void vdi_session_get_vm_data_task(GTask *task,
 
 gboolean vdi_session_logout(void)
 {
-    // disconnect from license server(redis)
-    vdi_redis_client_deinit(&vdi_session_static->redis_client);
-
     // stop websocket connection
     vdi_ws_client_stop(&vdi_session_static->vdi_ws_client);
 

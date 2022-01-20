@@ -122,8 +122,6 @@ list(APPEND SRC_CODE
         src/vdi_client/vdi_pool_widget.c
         src/vdi_client/vdi_ws_client.h
         src/vdi_client/vdi_ws_client.c
-        src/vdi_client/vdi_redis_client.h
-        src/vdi_client/vdi_redis_client.c
         src/vdi_client/vdi_app_selector.c
         src/vdi_client/vdi_app_selector.h
         src/vdi_client/vdi_user_settings_widget.h
@@ -209,10 +207,6 @@ if(UNIX AND NOT APPLE)
 endif (UNIX AND NOT APPLE)
 
 if (UNIX)
-    # redis hiredis
-    INCLUDE_DIRECTORIES(${LIBS_INCLUDE_PATH}hiredis)
-    SET(LIBS ${LIBS} hiredis)
-
     # freerdp
     INCLUDE_DIRECTORIES(${LIBS_INCLUDE_PATH}freerdp2)
     SET(LIBS ${LIBS} freerdp2 freerdp-client2)
@@ -238,13 +232,11 @@ if (WIN32)
         message(STATUS "Using 32bit dependencies")
         SET(LIBS_INCLUDE_PATH C:/msys32/mingw32/include/)
         SET(FREERDP_PATH C:/job/FreeRDP-2.0.0-rc4/)
-        SET(HIREDIS_PATH C:/job/hiredis-mingw/)
         SET(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
     else(BUILD_x32) # 64bit
         message(STATUS "Using 64bit dependencies")
         SET(LIBS_INCLUDE_PATH C:/msys32/mingw64/include/)
         SET(FREERDP_PATH C:/job/FreeRDP-2.3.2/)
-        SET(HIREDIS_PATH C:/job/hiredis-mingw/)
         SET(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
 
         # breakpad wrapper
@@ -253,10 +245,6 @@ if (WIN32)
 
         SET(APP_ICON_RESOURCE_WINDOWS resources/appicon.o) # Created with 'windres.exe appicon.rc -o appicon.o'
     endif(BUILD_x32)
-
-    # hiredis port to Windows
-    INCLUDE_DIRECTORIES(${HIREDIS_PATH})
-    SET(LIBS ${LIBS} ${HIREDIS_PATH}cmake-build-release/libhiredis.a)
 
     # freerdp
     INCLUDE_DIRECTORIES(${FREERDP_PATH}include)

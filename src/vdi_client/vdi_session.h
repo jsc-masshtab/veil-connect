@@ -9,8 +9,6 @@
 #ifndef VIRT_VIEWER_VEIL_VDI_API_SESSION_H
 #define VIRT_VIEWER_VEIL_VDI_API_SESSION_H
 
-#include "vdi_redis_client.h"
-
 #include <gtk/gtk.h>
 #include <json-glib/json-glib.h>
 #include <libsoup/soup-session.h>
@@ -126,7 +124,6 @@ struct _VdiSession
 
     gchar *login_time;
 
-    RedisClient redis_client;
     VdiWsClient vdi_ws_client;
 };
 
