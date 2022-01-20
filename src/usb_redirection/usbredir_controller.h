@@ -67,4 +67,6 @@ void usbredir_controller_set_usb_tcp_window_shown(gboolean is_shown);
 UsbRedirController *usbredir_controller_get_static(void);
 void usbredir_controller_deinit_static(void);
 
+gboolean usbredir_controller_is_spice_active(void);
+
 #endif //VEIL_CONNECT_USBREDIR_CONTROLLER_H

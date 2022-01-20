@@ -6,13 +6,15 @@
  * Author: http://mashtab.org/
  */
 
+#include "vdi_session.h"
+
 #include <string.h>
 #include <stdlib.h>
 
 #include "config.h"
 #include "usbredir_spice.h"
+#include "usbredir_controller.h"
 #include "remote-viewer-util.h"
-#include "vdi_session.h"
 
 
 static void usbredir_spice_set_status(SpiceUsbSession *self, const gchar *status)
@@ -32,6 +34,9 @@ static void usbredir_spice_usb_connect_failed(GObject               *object G_GN
                                GError                *error,
                                gpointer              data)
 {
+    if (!usbredir_controller_is_spice_active())
+        return;
+
     GtkWidget *dialog;
 
     if (error && (error->domain == G_IO_ERROR && error->code == G_IO_ERROR_CANCELLED))
@@ -71,6 +76,9 @@ static void usbredir_spice_show_usb_widget(SpiceUsbSession *self)
 // сервера
 static gboolean usbredir_spice_delayed_show_usb_widget(gpointer data)
 {
+    if (!usbredir_controller_is_spice_active())
+        return G_SOURCE_REMOVE;
+
     SpiceUsbSession *self = (SpiceUsbSession *)data;
     usbredir_spice_show_usb_widget(self);
     return G_SOURCE_REMOVE;
@@ -79,6 +87,9 @@ static gboolean usbredir_spice_delayed_show_usb_widget(gpointer data)
 static void usbredir_spice_main_channel_event(SpiceChannel *channel G_GNUC_UNUSED, SpiceChannelEvent event,
                                gpointer data)
 {
+    if (!usbredir_controller_is_spice_active())
+        return;
+
     SpiceUsbSession *self = (SpiceUsbSession *)data;
 
     if (event == SPICE_CHANNEL_OPENED) {
@@ -99,6 +110,9 @@ static void usbredir_spice_main_channel_event(SpiceChannel *channel G_GNUC_UNUSE
 static void usbredir_spice_usb_channel_event(SpiceChannel *channel G_GNUC_UNUSED,
         SpiceChannelEvent event, gpointer data)
 {
+    if (!usbredir_controller_is_spice_active())
+        return;
+
     if (event == SPICE_CHANNEL_OPENED) {
         g_timeout_add(200, usbredir_spice_delayed_show_usb_widget, data);
     }
@@ -106,6 +120,9 @@ static void usbredir_spice_usb_channel_event(SpiceChannel *channel G_GNUC_UNUSED
 
 static void usbredir_spice_channel_new(SpiceSession *s G_GNUC_UNUSED, SpiceChannel *channel, gpointer *data)
 {
+    if (!usbredir_controller_is_spice_active())
+        return;
+
     if (SPICE_IS_MAIN_CHANNEL(channel)) {
         g_signal_connect(channel, "channel-event",
                          G_CALLBACK(usbredir_spice_main_channel_event), data);
@@ -120,6 +137,9 @@ static void usbredir_spice_channel_destroy(SpiceSession *session G_GNUC_UNUSED,
                             SpiceChannel *channel,
                             gpointer data)
 {
+    if (!usbredir_controller_is_spice_active())
+        return;
+
     SpiceUsbSession *self = (SpiceUsbSession *)data;
 
     if (SPICE_IS_MAIN_CHANNEL(channel)) {
@@ -131,6 +151,9 @@ static void usbredir_spice_channel_destroy(SpiceSession *session G_GNUC_UNUSED,
 static void on_vdi_session_get_vm_data_task_finished(GObject *source_object G_GNUC_UNUSED,
         GAsyncResult *res, SpiceUsbSession *self)
 {
+    if (!usbredir_controller_is_spice_active())
+        return;
+
     self->is_fetching_vm_data = FALSE;
 
     gpointer ptr_res = g_task_propagate_pointer(G_TASK(res), NULL); // take ownership

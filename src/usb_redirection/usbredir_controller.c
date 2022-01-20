@@ -195,10 +195,15 @@ void usbredir_controller_deinit_static()
     g_object_unref(usbredir_controller_static);
 }
 
+gboolean usbredir_controller_is_spice_active()
+{
+    return usbredir_controller_get_static()->spice_usb_session != NULL;
+}
+
 // STATIC FUNCTIONS
 static void free_usbredir_task_resault_data(UsbRedirTaskResaultData *usbredir_task_resault_data)
 {
-    if (!usbredir_task_resault_data)
+    if (usbredir_task_resault_data == NULL)
         return;
 
     free_memory_safely(&usbredir_task_resault_data->message);
