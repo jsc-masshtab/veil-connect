@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-01-13 11:55+0300\n"
+"POT-Creation-Date: 2022-01-20 16:23+0300\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -42,7 +42,7 @@ msgstr "Открыть файл"
 #. Отменить
 #: ../src/remote_viewer_start_settings.c:290
 #: ../src/remote_viewer_start_settings.c:357
-#: ../src/remote_viewer_start_settings.c:493
+#: ../src/remote_viewer_start_settings.c:498
 #: ../resources/ui/vdi_manager_form.glade.h:6
 #: ../resources/ui/remote-viewer-connect_veil.glade.h:9
 #: ../resources/ui/start_settings_form.glade.h:4
@@ -55,18 +55,18 @@ msgstr "Отменить"
 msgid "Choose"
 msgstr "Выбрать"
 
-#: ../src/remote_viewer_start_settings.c:446
-#: ../src/remote_viewer_start_settings.c:492
+#: ../src/remote_viewer_start_settings.c:451
+#: ../src/remote_viewer_start_settings.c:497
 msgid "Ok"
 msgstr "Ок"
 
 #. Процесс обновления завершился с ошибками
-#: ../src/remote_viewer_start_settings.c:450
+#: ../src/remote_viewer_start_settings.c:455
 msgid "The update process ended with errors"
 msgstr "Процесс обновления завершился с ошибками"
 
 #. "Необходимо ввести пароль"
-#: ../src/remote_viewer_start_settings.c:518
+#: ../src/remote_viewer_start_settings.c:523
 msgid "Password required"
 msgstr "Необходимо ввести пароль"
 
@@ -268,25 +268,25 @@ msgid "USB redirection is not allowed"
 msgstr "Проброс USB запрещен администратором"
 
 #. Leave fullscreen
-#: ../src/rdp_viewer/rdp_viewer_window.c:548
+#: ../src/rdp_viewer/rdp_viewer_window.c:553
 msgid "Leave full screen"
 msgstr "Покинуть полный экран"
 
-#: ../src/rdp_viewer/rdp_viewer_window.c:562
+#: ../src/rdp_viewer/rdp_viewer_window.c:567
 #: ../src/virt_viewer/virt-viewer-window.c:1289
 msgid "Send key combination"
 msgstr "Послать комбинацию клавиш"
 
 #. Disconnect
 #. Отключиться
-#: ../src/rdp_viewer/rdp_viewer_window.c:569
+#: ../src/rdp_viewer/rdp_viewer_window.c:574
 #: ../src/virt_viewer/virt-viewer-window.c:1271
 #: ../resources/ui/virt-viewer_veil.glade.h:36
 msgid "Disconnect"
 msgstr "Отключиться"
 
 #. Перенаправление USB /dev/bus/usb/%03i/%03i завершилось с ошибкой. %s
-#: ../src/rdp_viewer/rdp_viewer_window.c:588
+#: ../src/rdp_viewer/rdp_viewer_window.c:593
 #, c-format
 msgid ""
 "USB redirection /dev/bus/usb/%03i/%03i finished with errors.\n"
@@ -296,7 +296,7 @@ msgstr ""
 "%s"
 
 #. ВМ: %s     Пользователь: %s  -  %s
-#: ../src/rdp_viewer/rdp_viewer_window.c:716
+#: ../src/rdp_viewer/rdp_viewer_window.c:721
 #, c-format
 msgid "VM: %s     User: %s     Monitor number: %i  -  %s"
 msgstr "ВМ: %s     Пользователь: %s     Номер монитора: %i  -  %s"
@@ -506,14 +506,14 @@ msgid "%s  Login time: %s  -  %s"
 msgstr "%s  Время входа: %s  -  %s"
 
 #. "Не удалось сформировать SoupMessage. %s"
-#: ../src/vdi_client/vdi_session.c:234
-#: ../src/controller_client/controller_session.c:298
+#: ../src/vdi_client/vdi_session.c:232
+#: ../src/controller_client/controller_session.c:300
 #, c-format
 msgid "Failed to form SoupMessage. %s"
 msgstr "Не удалось сформировать SoupMessage. %s"
 
 #. "Не удалось авторизоваться"
-#: ../src/vdi_client/vdi_session.c:290
+#: ../src/vdi_client/vdi_session.c:288
 msgid "Failed to login"
 msgstr "Не удалось авторизоваться"
 
@@ -860,15 +860,15 @@ msgid "Vm data requested."
 msgstr "Запрошены данные виртуальной машины."
 
 #. "Не удалось авторизоваться"
-#: ../src/controller_client/controller_session.c:227
+#: ../src/controller_client/controller_session.c:229
 msgid "ECP request failed"
 msgstr "Не удалось выполнить запрос на ECP."
 
-#: ../src/controller_client/controller_session.c:348
+#: ../src/controller_client/controller_session.c:350
 msgid "Failed to extract token. Probably unexpected msg format."
 msgstr "Не удалось извлечь токен. Возможно сообщение имеет неверный формат."
 
-#: ../src/controller_client/controller_session.c:453
+#: ../src/controller_client/controller_session.c:455
 msgid "Failed to fetch connection info. Possibly remote access is disabled."
 msgstr ""
 "Не удалось получить данные для подключения. Возможно удаленный доступ "
@@ -1245,6 +1245,9 @@ msgid ""
 "Redirect the client's current time zone to the remote machine. Time zone "
 "redirection works in VDI connection mode and for non-RDS pools."
 msgstr ""
+"Перенаправление временной зоны с клиентской машины на удаленную. Работает "
+"только в режиме подключения к VDI и для не RDS пулов. Для RDS пулов "
+"перенаправление временной зоны реализовано внутри самого сервиса RDS."
 
 #: ../resources/ui/start_settings_form.glade.h:23
 #: ../resources/ui/controller_manager_form.glade.h:9

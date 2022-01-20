@@ -52,7 +52,6 @@ src/qr_code_generation/qr_code_renderer.c
 src/qr_code_generation/qr_code_gen.c
 src/vdi_client/vdi_app_selector.c
 src/vdi_client/vdi_user_settings_widget.c
-src/vdi_client/vdi_redis_client.c
 src/vdi_client/vdi_pool_widget.c
 src/vdi_client/vdi_ws_client.c
 src/vdi_client/vdi_manager.c
