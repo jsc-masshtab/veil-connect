@@ -108,6 +108,10 @@ list(APPEND SRC_CODE
         src/utility/atomic_string.c
         src/utility/veil_logger.h
         src/utility/veil_logger.c
+        src/utility/veil_time.h
+        src/utility/veil_time.c
+        src/utility/veil_network.h
+        src/utility/veil_network.c
 
 # vdi client
         src/vdi_client/vdi_manager.h
@@ -157,10 +161,6 @@ list(APPEND SRC_CODE
         src/controller_client/controller_session.c
         src/controller_client/controller_manager.h
         src/controller_client/controller_manager.c
-
-# veil_time
-        src/utility/veil_time.h
-        src/utility/veil_time.c
 )
 
 # usb_redirection

@@ -235,6 +235,8 @@ void util_set_message_to_info_label(GtkLabel *label, const gchar *message);
 
 VmRemoteProtocol util_str_to_remote_protocol(const gchar *protocol_str);
 const gchar *util_remote_protocol_to_str(VmRemoteProtocol protocol);
+
+gchar *util_get_hostname(void);
 #endif
 
 /*

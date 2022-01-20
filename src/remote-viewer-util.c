@@ -1284,6 +1284,15 @@ const gchar *util_remote_protocol_to_str(VmRemoteProtocol protocol)
     }
 }
 
+gchar *util_get_hostname()
+{
+    size_t buffer_size = 128;
+    gchar *hostname = g_strnfill(buffer_size, '\0');
+    gethostname(hostname, buffer_size - 1);
+
+    return hostname;
+}
+
 /*
  * Local variables:
  *  c-indent-level: 4

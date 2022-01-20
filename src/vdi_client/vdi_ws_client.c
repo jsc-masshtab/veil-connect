@@ -20,6 +20,7 @@
 #include "settingsfile.h"
 #include "vdi_session.h"
 #include "vdi_event_types.h"
+#include "veil_network.h"
 
 #define WS_RECONNECT_TIMEOUT 5000
 
@@ -222,14 +223,25 @@ void vdi_ws_client_start(VdiWsClient *vdi_ws_client, const gchar *vdi_ip, int vd
     g_autofree gchar *base_query_pars = NULL;
     g_autofree gchar *token = NULL;
     token = vdi_session_get_token();
+
+    g_autofree gchar *mac_address = NULL;
+    mac_address = network_get_primary_mac_address();
+
+    g_autofree gchar *hostname = NULL;
+    hostname = util_get_hostname();
+
     base_query_pars = g_strdup_printf("?token=%s&"
                                       "is_conn_init_by_user=%i&"
                                       "veil_connect_version=%s&"
-                                      "tk_os=%s",
+                                      "tk_os=%s&"
+                                      "mac_address=%s&"
+                                      "hostname=%s",
                                       token,
                                       vdi_ws_client->is_connect_initiated_by_user,
                                       VERSION,
-                                      util_get_os_name());
+                                      util_get_os_name(),
+                                      mac_address,
+                                      hostname);
     vdi_ws_client->is_connect_initiated_by_user = FALSE; // reset
 
     g_autofree gchar *query_pars = NULL;
