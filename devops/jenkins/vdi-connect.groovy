@@ -3,15 +3,17 @@ def rocketNotify = true
 
 pipeline {
     agent {
-        label "bld-agent"
+        label "${AGENT}"
     }
 
     environment {
         APT_SRV = "192.168.11.118"
         PRJNAME = "veil-connect"
         DATE = "$currentDate"
-        AGENT = "bld-agent"
         NFS_DIR = "/nfs/veil-connect"
+        NEXUS_DOCKER_REGISTRY = "nexus.bazalt.team"
+        NEXUS_CREDS = credentials('nexus-jenkins-creds')
+        DOCKER_IMAGE_NAME = "${NEXUS_DOCKER_REGISTRY}/veil-connect-builder"
     }
 
     post {
@@ -42,19 +44,20 @@ pipeline {
     }
 
     parameters {
-        string(      name: 'BRANCH',               defaultValue: 'master',          description: 'branch')
-        string(      name: 'VERSION',              defaultValue: '1.10.0',           description: 'version')
-        booleanParam(name: 'STRETCH',              defaultValue: true,              description: 'create DEB?')
-        booleanParam(name: 'BUSTER',               defaultValue: true,              description: 'create DEB?')
-        booleanParam(name: 'BIONIC',               defaultValue: true,              description: 'create DEB?')
-        booleanParam(name: 'FOCAL',                defaultValue: true,              description: 'create DEB?')
-        booleanParam(name: 'EL7',                  defaultValue: true,              description: 'create RPM?')
-        booleanParam(name: 'EL8',                  defaultValue: true,              description: 'create RPM?')
-        booleanParam(name: 'RED73',                defaultValue: true,              description: 'create RPM?')
-        booleanParam(name: 'ALT9',                 defaultValue: true,              description: 'create RPM?')
-        booleanParam(name: 'WIN32',                defaultValue: true,              description: 'create EXE?')
-        booleanParam(name: 'WIN64',                defaultValue: true,              description: 'create EXE?')
-        booleanParam(name: 'EMBEDDED',             defaultValue: true,              description: 'create DEB?')
+        string(      name: 'BRANCH',   defaultValue: 'master',                    description: 'branch')
+        string(      name: 'VERSION',  defaultValue: '1.10.0',                    description: 'version')
+        choice(      name: 'AGENT',    choices: ['cloud-ubuntu-20', 'bld-agent'], description: 'jenkins build agent')
+        booleanParam(name: 'STRETCH',  defaultValue: true,                        description: 'create DEB?')
+        booleanParam(name: 'BUSTER',   defaultValue: true,                        description: 'create DEB?')
+        booleanParam(name: 'BIONIC',   defaultValue: true,                        description: 'create DEB?')
+        booleanParam(name: 'FOCAL',    defaultValue: true,                        description: 'create DEB?')
+        booleanParam(name: 'EL7',      defaultValue: true,                        description: 'create RPM?')
+        booleanParam(name: 'EL8',      defaultValue: true,                        description: 'create RPM?')
+        booleanParam(name: 'RED73',    defaultValue: true,                        description: 'create RPM?')
+        booleanParam(name: 'ALT9',     defaultValue: true,                        description: 'create RPM?')
+        booleanParam(name: 'WIN32',    defaultValue: true,                        description: 'create EXE?')
+        booleanParam(name: 'WIN64',    defaultValue: true,                        description: 'create EXE?')
+        booleanParam(name: 'EMBEDDED', defaultValue: true,                        description: 'create DEB?')
     }
 
     stages {
@@ -62,7 +65,13 @@ pipeline {
             steps {
                 notifyBuild(rocketNotify, ":bell: STARTED")
                 cleanWs()
-                git branch: '$BRANCH', url: 'git@gitlab.bazalt.team:vdi/veil-connect.git'
+                checkout([ $class: 'GitSCM',
+                    branches: [[name: '$BRANCH']],
+                    doGenerateSubmoduleConfigurations: false,
+                    extensions: [], submoduleCfg: [],
+                    userRemoteConfigs: [[credentialsId: 'jenkins-veil-connect-token',
+                    url: 'http://gitlab.bazalt.team/vdi/veil-connect.git']]
+                ])
                 stash name: 'src', includes: '**', excludes: '**/.git,**/.git/**'
             }
         }
@@ -75,7 +84,15 @@ pipeline {
                         expression { params.STRETCH == true }
                     }
                     steps {
-                        sh "docker build -f devops/docker/Dockerfile.stretch . -t veil-connect-builder-stretch:${VERSION}"
+                        sh script: '''
+                            DISTR="stretch"
+                            echo -n $NEXUS_CREDS_PSW | docker login -u $NEXUS_CREDS_USR --password-stdin $NEXUS_DOCKER_REGISTRY
+                            docker pull $DOCKER_IMAGE_NAME-$DISTR:latest || true
+                            docker build -f devops/docker/Dockerfile.$DISTR . --pull --cache-from $DOCKER_IMAGE_NAME-$DISTR:latest --tag $DOCKER_IMAGE_NAME-$DISTR:$VERSION
+                            docker push $DOCKER_IMAGE_NAME-$DISTR:$VERSION
+                            docker tag $DOCKER_IMAGE_NAME-$DISTR:$VERSION $DOCKER_IMAGE_NAME-$DISTR:latest
+                            docker push $DOCKER_IMAGE_NAME-$DISTR:latest
+                        '''
                     }
                 }
 
@@ -85,7 +102,15 @@ pipeline {
                         expression { params.BUSTER == true }
                     }
                     steps {
-                        sh "docker build -f devops/docker/Dockerfile.buster . -t veil-connect-builder-buster:${VERSION}"
+                        sh script: '''
+                            DISTR="buster"
+                            echo -n $NEXUS_CREDS_PSW | docker login -u $NEXUS_CREDS_USR --password-stdin $NEXUS_DOCKER_REGISTRY
+                            docker pull $DOCKER_IMAGE_NAME-$DISTR:latest || true
+                            docker build -f devops/docker/Dockerfile.$DISTR . --pull --cache-from $DOCKER_IMAGE_NAME-$DISTR:latest --tag $DOCKER_IMAGE_NAME-$DISTR:$VERSION
+                            docker push $DOCKER_IMAGE_NAME-$DISTR:$VERSION
+                            docker tag $DOCKER_IMAGE_NAME-$DISTR:$VERSION $DOCKER_IMAGE_NAME-$DISTR:latest
+                            docker push $DOCKER_IMAGE_NAME-$DISTR:latest
+                        '''
                     }
                 }
 
@@ -95,7 +120,15 @@ pipeline {
                         expression { params.BIONIC == true }
                     }
                     steps {
-                        sh "docker build -f devops/docker/Dockerfile.bionic . -t veil-connect-builder-bionic:${VERSION}"
+                        sh script: '''
+                            DISTR="bionic"
+                            echo -n $NEXUS_CREDS_PSW | docker login -u $NEXUS_CREDS_USR --password-stdin $NEXUS_DOCKER_REGISTRY
+                            docker pull $DOCKER_IMAGE_NAME-$DISTR:latest || true
+                            docker build -f devops/docker/Dockerfile.$DISTR . --pull --cache-from $DOCKER_IMAGE_NAME-$DISTR:latest --tag $DOCKER_IMAGE_NAME-$DISTR:$VERSION
+                            docker push $DOCKER_IMAGE_NAME-$DISTR:$VERSION
+                            docker tag $DOCKER_IMAGE_NAME-$DISTR:$VERSION $DOCKER_IMAGE_NAME-$DISTR:latest
+                            docker push $DOCKER_IMAGE_NAME-$DISTR:latest
+                        '''
                     }
                 }
 
@@ -105,7 +138,15 @@ pipeline {
                         expression { params.FOCAL == true }
                     }
                     steps {
-                        sh "docker build -f devops/docker/Dockerfile.focal . -t veil-connect-builder-focal:${VERSION}"
+                        sh script: '''
+                            DISTR="focal"
+                            echo -n $NEXUS_CREDS_PSW | docker login -u $NEXUS_CREDS_USR --password-stdin $NEXUS_DOCKER_REGISTRY
+                            docker pull $DOCKER_IMAGE_NAME-$DISTR:latest || true
+                            docker build -f devops/docker/Dockerfile.$DISTR . --pull --cache-from $DOCKER_IMAGE_NAME-$DISTR:latest --tag $DOCKER_IMAGE_NAME-$DISTR:$VERSION
+                            docker push $DOCKER_IMAGE_NAME-$DISTR:$VERSION
+                            docker tag $DOCKER_IMAGE_NAME-$DISTR:$VERSION $DOCKER_IMAGE_NAME-$DISTR:latest
+                            docker push $DOCKER_IMAGE_NAME-$DISTR:latest
+                        '''
                     }
                 }
 
@@ -115,7 +156,15 @@ pipeline {
                         expression { params.EL7 == true }
                     }
                     steps {
-                        sh "docker build -f devops/docker/Dockerfile.el7 . -t veil-connect-builder-el7:${VERSION}"
+                        sh script: '''
+                            DISTR="el7"
+                            echo -n $NEXUS_CREDS_PSW | docker login -u $NEXUS_CREDS_USR --password-stdin $NEXUS_DOCKER_REGISTRY
+                            docker pull $DOCKER_IMAGE_NAME-$DISTR:latest || true
+                            docker build -f devops/docker/Dockerfile.$DISTR . --pull --cache-from $DOCKER_IMAGE_NAME-$DISTR:latest --tag $DOCKER_IMAGE_NAME-$DISTR:$VERSION
+                            docker push $DOCKER_IMAGE_NAME-$DISTR:$VERSION
+                            docker tag $DOCKER_IMAGE_NAME-$DISTR:$VERSION $DOCKER_IMAGE_NAME-$DISTR:latest
+                            docker push $DOCKER_IMAGE_NAME-$DISTR:latest
+                        '''
                     }
                 }
 
@@ -125,7 +174,15 @@ pipeline {
                         expression { params.EL8 == true }
                     }
                     steps {
-                        sh "docker build -f devops/docker/Dockerfile.el8 . -t veil-connect-builder-el8:${VERSION}"
+                        sh script: '''
+                            DISTR="el8"
+                            echo -n $NEXUS_CREDS_PSW | docker login -u $NEXUS_CREDS_USR --password-stdin $NEXUS_DOCKER_REGISTRY
+                            docker pull $DOCKER_IMAGE_NAME-$DISTR:latest || true
+                            docker build -f devops/docker/Dockerfile.$DISTR . --pull --cache-from $DOCKER_IMAGE_NAME-$DISTR:latest --tag $DOCKER_IMAGE_NAME-$DISTR:$VERSION
+                            docker push $DOCKER_IMAGE_NAME-$DISTR:$VERSION
+                            docker tag $DOCKER_IMAGE_NAME-$DISTR:$VERSION $DOCKER_IMAGE_NAME-$DISTR:latest
+                            docker push $DOCKER_IMAGE_NAME-$DISTR:latest
+                        '''
                     }
                 }
 
@@ -135,7 +192,15 @@ pipeline {
                         expression { params.ALT9 == true }
                     }
                     steps {
-                        sh "docker build -f devops/docker/Dockerfile.alt9 . -t veil-connect-builder-alt9:${VERSION}"
+                        sh script: '''
+                            DISTR="alt9"
+                            echo -n $NEXUS_CREDS_PSW | docker login -u $NEXUS_CREDS_USR --password-stdin $NEXUS_DOCKER_REGISTRY
+                            docker pull $DOCKER_IMAGE_NAME-$DISTR:latest || true
+                            docker build -f devops/docker/Dockerfile.$DISTR . --pull --cache-from $DOCKER_IMAGE_NAME-$DISTR:latest --tag $DOCKER_IMAGE_NAME-$DISTR:$VERSION
+                            docker push $DOCKER_IMAGE_NAME-$DISTR:$VERSION
+                            docker tag $DOCKER_IMAGE_NAME-$DISTR:$VERSION $DOCKER_IMAGE_NAME-$DISTR:latest
+                            docker push $DOCKER_IMAGE_NAME-$DISTR:latest
+                        '''
                     }
                 }
 
@@ -145,7 +210,15 @@ pipeline {
                         expression { params.RED73 == true }
                     }
                     steps {
-                        sh "docker build -f devops/docker/Dockerfile.RED7-3 . -t veil-connect-builder-redos7.3:${VERSION}"
+                        sh script: '''
+                            DISTR="redos7.3"
+                            echo -n $NEXUS_CREDS_PSW | docker login -u $NEXUS_CREDS_USR --password-stdin $NEXUS_DOCKER_REGISTRY
+                            docker pull $DOCKER_IMAGE_NAME-$DISTR:latest || true
+                            docker build -f devops/docker/Dockerfile.$DISTR . --pull --cache-from $DOCKER_IMAGE_NAME-$DISTR:latest --tag $DOCKER_IMAGE_NAME-$DISTR:$VERSION
+                            docker push $DOCKER_IMAGE_NAME-$DISTR:$VERSION
+                            docker tag $DOCKER_IMAGE_NAME-$DISTR:$VERSION $DOCKER_IMAGE_NAME-$DISTR:latest
+                            docker push $DOCKER_IMAGE_NAME-$DISTR:latest
+                        '''
                     }
                 }
             }
@@ -163,7 +236,7 @@ pipeline {
                     }
                     agent {
                         docker {
-                            image "veil-connect-builder-stretch:${VERSION}"
+                            image "${DOCKER_IMAGE_NAME}-stretch:${VERSION}"
                             args '-u root:root'
                             reuseNode true
                             label "${AGENT}"
@@ -203,7 +276,7 @@ pipeline {
                     }
                     agent {
                         docker {
-                            image "veil-connect-builder-buster:${VERSION}"
+                            image "${DOCKER_IMAGE_NAME}-buster:${VERSION}"
                             args '-u root:root'
                             reuseNode true
                             label "${AGENT}"
@@ -243,7 +316,7 @@ pipeline {
                     }
                     agent {
                         docker {
-                            image "veil-connect-builder-bionic:${VERSION}"
+                            image "${DOCKER_IMAGE_NAME}-bionic:${VERSION}"
                             args '-u root:root'
                             reuseNode true
                             label "${AGENT}"
@@ -283,7 +356,7 @@ pipeline {
                     }
                     agent {
                         docker {
-                            image "veil-connect-builder-focal:${VERSION}"
+                            image "${DOCKER_IMAGE_NAME}-focal:${VERSION}"
                             args '-u root:root'
                             reuseNode true
                             label "${AGENT}"
@@ -323,7 +396,7 @@ pipeline {
                     }
                     agent {
                         docker {
-                            image "veil-connect-builder-el7:${VERSION}"
+                            image "${DOCKER_IMAGE_NAME}-el7:${VERSION}"
                             args '-u root:root'
                             reuseNode true
                             label "${AGENT}"
@@ -362,7 +435,7 @@ pipeline {
                     }
                     agent {
                         docker {
-                            image "veil-connect-builder-el8:${VERSION}"
+                            image "${DOCKER_IMAGE_NAME}-el8:${VERSION}"
                             args '-u root:root'
                             reuseNode true
                             label "${AGENT}"
@@ -401,7 +474,7 @@ pipeline {
                     }
                     agent {
                         docker {
-                            image "veil-connect-builder-alt9:${VERSION}"
+                            image "${DOCKER_IMAGE_NAME}-alt9:${VERSION}"
                             reuseNode true
                             label "${AGENT}"
                         }
@@ -439,7 +512,7 @@ pipeline {
                     }
                     agent {
                         docker {
-                            image "veil-connect-builder-redos7.3:${VERSION}"
+                            image "${DOCKER_IMAGE_NAME}-redos7.3:${VERSION}"
                             args '-u root:root'
                             reuseNode true
                             label "${AGENT}"
@@ -576,7 +649,7 @@ pipeline {
             }
             agent {
                 docker {
-                    image "veil-connect-builder-bionic:${VERSION}"
+                    image "${DOCKER_IMAGE_NAME}-bionic:${VERSION}"
                     args '-u root:root'
                     reuseNode true
                     label "${AGENT}"
@@ -702,15 +775,16 @@ pipeline {
                         DISTR = "el7"
                     }
                     steps {
-                        sh script: '''
-                            ssh uploader@192.168.10.144 "mkdir -p /local_storage/veil-connect/linux/yum/${DISTR}/x86_64/Packages"
-                            scp ${WORKSPACE}/rpmbuild-${DISTR}/RPMS/x86_64/*.rpm uploader@192.168.10.144:/local_storage/veil-connect/linux/yum/${DISTR}/x86_64/Packages/
-
-                            ssh uploader@192.168.10.144 "
-                              rpm --resign /local_storage/veil-connect/linux/yum/${DISTR}/x86_64/Packages/*.rpm
-                              createrepo --update /local_storage/veil-connect/linux/yum/${DISTR}/x86_64
-                            "
-                        '''
+                        withCredentials([sshUserPrivateKey(credentialsId: 'uploader_ssh_key.id_rsa', keyFileVariable: 'SSH_KEY')]) {
+                            sh script: '''
+                                ssh -o StrictHostKeyChecking=no -i $SSH_KEY uploader@192.168.10.144 "mkdir -p /local_storage/veil-connect/linux/yum/${DISTR}/x86_64/Packages"
+                                scp -o StrictHostKeyChecking=no -i $SSH_KEY ${WORKSPACE}/rpmbuild-${DISTR}/RPMS/x86_64/*.rpm uploader@192.168.10.144:/local_storage/veil-connect/linux/yum/${DISTR}/x86_64/Packages/
+                                ssh -o StrictHostKeyChecking=no -i $SSH_KEY uploader@192.168.10.144 "
+                                  rpm --resign /local_storage/veil-connect/linux/yum/${DISTR}/x86_64/Packages/*.rpm
+                                  createrepo --update /local_storage/veil-connect/linux/yum/${DISTR}/x86_64
+                                "
+                            '''
+                        }
                     }
                 }
 
@@ -723,15 +797,16 @@ pipeline {
                         DISTR = "el8"
                     }
                     steps {
-                        sh script: '''
-                            ssh uploader@192.168.10.144 "mkdir -p /local_storage/veil-connect/linux/yum/${DISTR}/x86_64/Packages"
-                            scp ${WORKSPACE}/rpmbuild-${DISTR}/RPMS/x86_64/*.rpm uploader@192.168.10.144:/local_storage/veil-connect/linux/yum/${DISTR}/x86_64/Packages/
-
-                            ssh uploader@192.168.10.144 "
-                              rpm --resign /local_storage/veil-connect/linux/yum/${DISTR}/x86_64/Packages/*.rpm
-                              createrepo --update /local_storage/veil-connect/linux/yum/${DISTR}/x86_64
-                            "
-                        '''
+                        withCredentials([sshUserPrivateKey(credentialsId: 'uploader_ssh_key.id_rsa', keyFileVariable: 'SSH_KEY')]) {
+                            sh script: '''
+                                ssh -o StrictHostKeyChecking=no -i $SSH_KEY uploader@192.168.10.144 "mkdir -p /local_storage/veil-connect/linux/yum/${DISTR}/x86_64/Packages"
+                                scp -o StrictHostKeyChecking=no -i $SSH_KEY ${WORKSPACE}/rpmbuild-${DISTR}/RPMS/x86_64/*.rpm uploader@192.168.10.144:/local_storage/veil-connect/linux/yum/${DISTR}/x86_64/Packages/
+                                ssh -o StrictHostKeyChecking=no -i $SSH_KEY uploader@192.168.10.144 "
+                                  rpm --resign /local_storage/veil-connect/linux/yum/${DISTR}/x86_64/Packages/*.rpm
+                                  createrepo --update /local_storage/veil-connect/linux/yum/${DISTR}/x86_64
+                                "
+                            '''
+                        }
                     }
                 }
 
@@ -745,11 +820,13 @@ pipeline {
                         ARCH = "x86_64"
                     }
                     steps {
-                        sh script: '''
-                            ssh uploader@192.168.10.144 "mkdir -p /local_storage/veil-connect/linux/apt-rpm/${ARCH}/RPMS.${DISTR}"
-                            scp ${WORKSPACE}/rpmbuild-${DISTR}/RPMS/${ARCH}/${PRJNAME}-${VERSION}*.rpm uploader@192.168.10.144:/local_storage/veil-connect/linux/apt-rpm/${ARCH}/RPMS.${DISTR}/
-                            ssh uploader@192.168.10.144 "cd /local_storage/veil-connect/linux/apt-rpm/${ARCH}/RPMS.${DISTR}; ln -sf ${PRJNAME}-${VERSION}*.rpm ${PRJNAME}-latest.rpm"
-                        '''
+                        withCredentials([sshUserPrivateKey(credentialsId: 'uploader_ssh_key.id_rsa', keyFileVariable: 'SSH_KEY')]) {
+                            sh script: '''
+                                ssh -o StrictHostKeyChecking=no -i $SSH_KEY uploader@192.168.10.144 "mkdir -p /local_storage/veil-connect/linux/apt-rpm/${ARCH}/RPMS.${DISTR}"
+                                scp -o StrictHostKeyChecking=no -i $SSH_KEY ${WORKSPACE}/rpmbuild-${DISTR}/RPMS/${ARCH}/${PRJNAME}-${VERSION}*.rpm uploader@192.168.10.144:/local_storage/veil-connect/linux/apt-rpm/${ARCH}/RPMS.${DISTR}/
+                                ssh -o StrictHostKeyChecking=no -i $SSH_KEY uploader@192.168.10.144 "cd /local_storage/veil-connect/linux/apt-rpm/${ARCH}/RPMS.${DISTR}; ln -sf ${PRJNAME}-${VERSION}*.rpm ${PRJNAME}-latest.rpm"
+                            '''
+                        }
                     }
                 }
 
@@ -762,15 +839,16 @@ pipeline {
                         DISTR = "redos7.3"
                     }
                     steps {
-                        sh script: '''
-                            ssh uploader@192.168.10.144 "mkdir -p /local_storage/veil-connect/linux/yum/${DISTR}/x86_64/Packages"
-                            scp ${WORKSPACE}/rpmbuild-${DISTR}/RPMS/x86_64/*.rpm uploader@192.168.10.144:/local_storage/veil-connect/linux/yum/${DISTR}/x86_64/Packages/
-
-                            ssh uploader@192.168.10.144 "
-                              rpm --resign /local_storage/veil-connect/linux/yum/${DISTR}/x86_64/Packages/*.rpm
-                              createrepo --update /local_storage/veil-connect/linux/yum/${DISTR}/x86_64
-                            "
-                        '''
+                        withCredentials([sshUserPrivateKey(credentialsId: 'uploader_ssh_key.id_rsa', keyFileVariable: 'SSH_KEY')]) {
+                            sh script: '''
+                                ssh -o StrictHostKeyChecking=no -i $SSH_KEY uploader@192.168.10.144 "mkdir -p /local_storage/veil-connect/linux/yum/${DISTR}/x86_64/Packages"
+                                scp -o StrictHostKeyChecking=no -i $SSH_KEY ${WORKSPACE}/rpmbuild-${DISTR}/RPMS/x86_64/*.rpm uploader@192.168.10.144:/local_storage/veil-connect/linux/yum/${DISTR}/x86_64/Packages/
+                                ssh -o StrictHostKeyChecking=no -i $SSH_KEY uploader@192.168.10.144 "
+                                  rpm --resign /local_storage/veil-connect/linux/yum/${DISTR}/x86_64/Packages/*.rpm
+                                  createrepo --update /local_storage/veil-connect/linux/yum/${DISTR}/x86_64
+                                "
+                            '''
+                        }
                     }
                 }
 
@@ -816,19 +894,23 @@ pipeline {
                 expression { params.EMBEDDED == true }
             }
             steps {
-                sh script: '''
-                    ssh uploader@192.168.10.144 mkdir -p /local_storage/veil-connect-embedded/${VERSION}
-                    scp ${WORKSPACE}/devops/deb_embedded/*.deb uploader@192.168.10.144:/local_storage/veil-connect-embedded/${VERSION}/
-                    ssh uploader@192.168.10.144 "cd /local_storage/veil-connect-embedded/; ln -sfT ${VERSION} latest"
-                '''
+                withCredentials([sshUserPrivateKey(credentialsId: 'uploader_ssh_key.id_rsa', keyFileVariable: 'SSH_KEY')]) {
+                    sh script: '''
+                        ssh -o StrictHostKeyChecking=no -i $SSH_KEY uploader@192.168.10.144 mkdir -p /local_storage/veil-connect-embedded/${VERSION}
+                        scp -o StrictHostKeyChecking=no -i $SSH_KEY ${WORKSPACE}/devops/deb_embedded/*.deb uploader@192.168.10.144:/local_storage/veil-connect-embedded/${VERSION}/
+                        ssh -o StrictHostKeyChecking=no -i $SSH_KEY uploader@192.168.10.144 "cd /local_storage/veil-connect-embedded/; ln -sfT ${VERSION} latest"
+                    '''
+                }
             }
         }
 
         stage ('deploy universal linux installer') {
             steps {
-                sh script: '''
-                    scp ${WORKSPACE}/devops/veil-connect-linux-installer.sh uploader@192.168.10.144:/local_storage/veil-connect/linux/
-                '''
+                withCredentials([sshUserPrivateKey(credentialsId: 'uploader_ssh_key.id_rsa', keyFileVariable: 'SSH_KEY')]) {
+                    sh script: '''
+                        scp -o StrictHostKeyChecking=no -i $SSH_KEY ${WORKSPACE}/devops/veil-connect-linux-installer.sh uploader@192.168.10.144:/local_storage/veil-connect/linux/
+                    '''
+                }
             }
         }
     }
