@@ -12,6 +12,7 @@
 #include <gtk/gtk.h>
 
 #ifdef G_OS_WIN32
+#include <winsock2.h>
 #include <minwindef.h>
 #include <windef.h>
 #include <wincred.h>
@@ -270,11 +271,11 @@ launch_native_rdp_client(GtkWindow *parent, const VeilRdpSettings *p_rdp_setting
 
     // launch event loop
 #if defined(_WIN32)
-    vdi_event_vm_changed_notify(vdi_session_get_current_vm_id());
+    vdi_event_vm_changed_notify(vdi_session_get_current_vm_id(), VDI_EVENT_TYPE_VM_CONNECTED);
 #endif
     create_loop_and_launch(&data.loop);
 #if defined(_WIN32)
-    vdi_event_vm_changed_notify(NULL);
+    vdi_event_vm_changed_notify(vdi_session_get_current_vm_id(), VDI_EVENT_TYPE_VM_DISCONNECTED);
 #endif
 
     g_signal_handler_disconnect(get_vdi_session_static(), ws_cmd_received_handle);

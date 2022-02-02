@@ -19,7 +19,6 @@
 #include "vdi_ws_client.h"
 #include "settingsfile.h"
 #include "vdi_session.h"
-#include "vdi_event_types.h"
 #include "veil_network.h"
 
 #define WS_RECONNECT_TIMEOUT 5000
@@ -35,8 +34,10 @@ static const gchar *vdi_ws_client_vi_event_to_str(VdiEventType vd_event_type)
     switch (vd_event_type) {
         case VDI_EVENT_TYPE_UNKNOWN:
             return "";
-        case VDI_EVENT_TYPE_VM_CHANGED:
-            return "vm_changed";
+        case VDI_EVENT_TYPE_VM_CONNECTED:
+            return "vm_connected";
+        case VDI_EVENT_TYPE_VM_DISCONNECTED:
+            return "vm_disconnected";
         case VDI_EVENT_TYPE_CONN_ERROR:
             return "vm_connection_error";
         default:
@@ -74,14 +75,14 @@ static void vdi_ws_client_on_message(SoupWebsocketConnection *ws_conn G_GNUC_UNU
             if (g_strcmp0(resource, "/domains/") == 0) {
                 // object
                 JsonObject *vm_member_object = json_object_get_object_member_safely(root_object, "object");
-                int power_state = json_object_get_int_member_safely(vm_member_object, "user_power_state");
+                int power_state = (int)json_object_get_int_member_safely(vm_member_object, "user_power_state");
                 vdi_session_vm_state_change_notify(power_state);
 
             } else if (g_strcmp0(resource, "/events_thin_client/") == 0) {
                 const gchar *event = json_object_get_string_member_safely(root_object, "event");
                 if (g_strcmp0(event, "vm_preparation_progress") == 0) {
-                    int request_id = json_object_get_int_member_safely(root_object, "request_id");
-                    int progress = json_object_get_int_member_safely(root_object, "progress");
+                    int request_id = (int)json_object_get_int_member_safely(root_object, "request_id");
+                    int progress = (int)json_object_get_int_member_safely(root_object, "progress");
                     const gchar *msg = json_object_get_string_member_safely(root_object, "msg");
                     vdi_session_vm_prep_progress_received_notify(request_id, progress, msg);
                 }
@@ -244,13 +245,7 @@ void vdi_ws_client_start(VdiWsClient *vdi_ws_client, const gchar *vdi_ip, int vd
                                       hostname);
     vdi_ws_client->is_connect_initiated_by_user = FALSE; // reset
 
-    g_autofree gchar *query_pars = NULL;
-    if (vdi_session_get_current_vm_id())
-        query_pars = g_strdup_printf("%s&vm_id=%s", base_query_pars, vdi_session_get_current_vm_id());
-    else
-        query_pars = g_strdup(base_query_pars);
-
-    vdi_ws_client->vdi_url = g_strdup_printf("%s/%s", base_url, query_pars);
+    vdi_ws_client->vdi_url = g_strdup_printf("%s/%s", base_url, base_query_pars);
 
     // msg
     // handshake preparation
@@ -320,7 +315,7 @@ const gchar *vdi_ws_client_get_conn_time(VdiWsClient *ws_vdi_client)
     return ws_vdi_client->conn_time;
 }
 
-void vdi_ws_client_send_vm_changed(VdiWsClient *ws_vdi_client, const gchar *vm_id)
+void vdi_ws_client_send_vm_changed(VdiWsClient *ws_vdi_client, const gchar *vm_id, VdiEventType event)
 {
     if (!ws_vdi_client->ws_conn)
         return;
@@ -333,10 +328,21 @@ void vdi_ws_client_send_vm_changed(VdiWsClient *ws_vdi_client, const gchar *vm_i
     json_builder_add_string_value(builder, "UPDATED");
 
     json_builder_set_member_name(builder, "event");
-    json_builder_add_string_value(builder, vdi_ws_client_vi_event_to_str(VDI_EVENT_TYPE_VM_CHANGED));
+    // API немного изменилось на версии 3.2.0, поэтому ветвление для поддержки старых версий сервера
+    if (vdi_session_version_older_than_320()) {
+        json_builder_add_string_value(builder, "vm_changed");
 
-    json_builder_set_member_name(builder, "vm_id");
-    json_builder_add_string_value(builder, vm_id);
+        json_builder_set_member_name(builder, "vm_id");
+        if (event == VDI_EVENT_TYPE_VM_CONNECTED) {
+            json_builder_add_string_value(builder, vm_id);
+        } else {
+            json_builder_add_null_value(builder);
+        }
+    } else {
+        json_builder_add_string_value(builder, vdi_ws_client_vi_event_to_str(event));
+        json_builder_set_member_name(builder, "vm_id");
+        json_builder_add_string_value(builder, vm_id);
+    }
 
     json_builder_set_member_name(builder, "connection_type");
     VmRemoteProtocol protocol = vdi_session_get_current_remote_protocol();
@@ -441,6 +447,9 @@ void vdi_ws_client_send_rdp_network_stats(VdiWsClient *ws_vdi_client, guint64 rd
     json_builder_set_member_name(builder, "event");
     json_builder_add_string_value(builder, "network_stats");
 
+    json_builder_set_member_name(builder, "vm_id");
+    json_builder_add_string_value(builder, vdi_session_get_current_vm_id());
+
     json_builder_set_member_name(builder, "connection_type");
     json_builder_add_string_value(builder, "RDP");
 
@@ -487,6 +496,9 @@ void vdi_ws_client_send_spice_network_stats(VdiWsClient *ws_vdi_client,
 
     json_builder_set_member_name(builder, "event");
     json_builder_add_string_value(builder, "network_stats");
+
+    json_builder_set_member_name(builder, "vm_id");
+    json_builder_add_string_value(builder, vdi_session_get_current_vm_id());
 
     json_builder_set_member_name(builder, "connection_type");
     json_builder_add_string_value(builder, "SPICE");

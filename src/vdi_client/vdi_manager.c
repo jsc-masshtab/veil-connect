@@ -390,12 +390,12 @@ static void on_vdi_session_get_vm_from_pool_finished(GObject *source_object G_GN
         }
 
     } else {
-        const gchar *user_message = (strlen_safely(vdi_vm_data->message) != 0) ?
+        const gchar *final_err_msg = (strlen_safely(vdi_vm_data->message) != 0) ?
                                     vdi_vm_data->message : err_msg;
-        set_vdi_client_state(self, VDI_RECEIVED_RESPONSE, user_message, TRUE);
+        set_vdi_client_state(self, VDI_RECEIVED_RESPONSE, final_err_msg, TRUE);
 
-        if (strlen_safely(user_message) > MSG_TRIM_LENGTH)
-            show_msg_box_dialog(GTK_WINDOW(self->window), user_message);
+        if (strlen_safely(final_err_msg) > MSG_TRIM_LENGTH)
+            show_msg_box_dialog(GTK_WINDOW(self->window), final_err_msg);
     }
     //
     util_free_veil_vm_data(vdi_vm_data);

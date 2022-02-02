@@ -1,20 +1,248 @@
 
-n.n.n / 2021-08-04
+n.n.n / 2022-01-20
 ==================
 
-  * FEATURE TG-13969 QR code painting 2
-  * FEATURE TG-13969 QR code painting
-  * FEATURE TG-13969 try
-  * FEATURE TG-13969 Added qr generator
-  * FEATURE TG-13969 warnings fix
+  * Fix for building
+
+1.10.0 / 2022-01-20
+===================
+
+  * Переводы
+  * Removed redis client
+  * usb spice fix
+  * FEATURE TG-15522 Правки на винде
+  * Merge feature_tg_15522 into dev
+  * FEATURE TG-15519 Создание архива в формате zip
+  * Merge master into dev
+  * Merge feature_tg_15520 into dev
+  * FEATURE TG-15538 Рефакторинг. Убраны предупреждения статического анализатора ч 2
+  * FEATURE TG-15538 Рефакторинг. Убраны предупреждения статического анализатора
+  * FEATURE TG-15432 Правки после проверок на Windows
+  * FEATURE TG-15432 Переводы
+  * FEATURE TG-15432 Отображение предупреждения о включененом нестведартном режиме тк
+  * Dialog. Small fix
+  * Фикс. Не закрывались модальные окна если они были открыты в момент дисконнекта
+  * Refactoring
+  * Vm control button disabled in non vdi modes
+  * Fix on mac after merge
+  * Merge feature_tg_15275 into dev
+  * FEATURE TG-15465 Rdp native client. Fix on Windows
+  * Fix of fullscreen leaving in mac
+  * FEATURE TG-15465 Фикс выхода с фул скрина на маке
+  * Merge feature_tg_15465 into dev
+  * FEATURE TG-15465 Reset data upon logout
+  * FEATURE TG-15465 Native RDP on mac
+
+1.9.2 / 2022-01-12
+==================
+
+  * Crash fix
+
+1.9.1 / 2021-12-21
+==================
+
+  * Patch bump
+  * Форсированный выход из приложения по запросу пользователя, если freerdp повис на стадии коннекта (ее невозможно отменить)
+  * Кнопка ldap на первом окне для удобства и унификации
+  * Merge feature_tg_15362 into dev
+
+1.9.0 / 2021-12-10
+==================
+
+  * FEATURE TG-15360 buttons fix
+  * FEATURE TG-15360 Правка порядка кнопок
+  * FEATURE TG-15360 Правка порядка кнопок
+  * Merge feature_tg_15360 into dev
+  * Merge feature_tg_15337 into dev
+  * FEATURE TG-15229 Поприличнее картинка индикатор доступности
+  * FEATURE TG-15229 Условная компиляция для разных версий gtk чтоб слияния с ubuntu_16 были менее болезнены
+  * FEATURE TG-15229 Меньше кнопки управления в полном экране
+  * FEATURE TG-15229 Возможость отмены запроса на авторизацию
+
+1.8.10 / 2021-11-30
+===================
+
+  * Patch bump
+  * FIX TG-15237 Переводы
+  * FIX TG-15237 возможность логирования дебаг вывода freerdp на windows
+  * FIX TG-15237 Возможность выделить текст в диалоге сообщении
+  * Merge fix_tg_15250 into dev
+
+1.8.9 / 2021-11-29
+==================
+
+  * FEATURE TG-15123 Отправка сообщений о подключении для x2go и native rdp
+  * FEATURE TG-15234 Возможность узнать текущую конфигурацию мониторов
+  * Fix spice disconnect
+  * Merge branch 'feature_tg_15232' into 'master'
+  * FEATURE TG-1232 Fix win installer
+
+1.8.8 / 2021-11-25
+==================
+
+  * Merge dev into master
+  * Правка перевода
+  * Patch bump
+  * Merge feature_tg_15119 into dev
+  * LICENSE added
+  * FEATURE TG-15123 Spice connect atempts refactor
+  * FEATURE TG-15123 Правка отправки событий
+  * FEATURE TG-15123 Оправка корректных событий подключения к ВМ/неудачи
+  * FEATURE TG-15123 Оправка корректных событий подключения к ВМ/неудачи
+  * FEATURE TG-15123 Наброски. Оправка корректных событий подключения к ВМ/неудачи
+  * CMakeLists.txt fix
+  * FEATURE TG-15117 Добавлена иконка для исполняемого файла на виндоус
+  * Правки названий окон
+
+1.8.7 / 2021-11-17
+==================
+
+  * Упрощение логики реконнекта при потере связи по RDP
+  * Вертикальный скрол в настройках RDP
+  * Patch bump
+  * FEATURE TG-15069 Возможность отправить сочетания клавиш WIN
+  * FEATURE TG-15069 More log messages
+  * FEATURE TG-15069 Мелкие правки
+  * Translations fix
+
+1.8.6 / 2021-11-11
+==================
+
+  * Build targets fix
+  * Merge dev into master
+  * Merge feature_tg_14972 into dev
+  * Merge branch 'dev'
+  * Patch bump
+  * FEATURE TG-15058 Фикс архивации на win10
+  * FIX TG-15050 Фикс сброса пароля при покидании формы авторизации
+  * Правки перевода
+  * Фикс сборки релиза
+
+1.8.5 / 2021-10-28
+==================
+
+  * Patch version bump
+  * Merge branch 'dev'
+  * FIX TG-14908 Фикс. Не отображался тип сжатия видеопотока до первого ручного выбора
+  * Merge branch 'fix_tg_14855' into 'master'
+  * FIX TG-14855 не влазила надпись choose os + черный экран RDP RED7.2
+  * FIX TG-14866 gtk_widget_is_drawable: assertion 'GTK_IS_WIDGET (widget)' failed Fix
+  * Merge feature_tg_14801 into dev
+  * Patch bump
+  * Merge branch 'dev'
+  * FEATURE TG-14745 Показывается окно если сообщение об ошибке получения ВМ не влезает в строку статуса
+
+1.8.4 / 2021-10-18
+==================
+
+  * Merge branch 'dev'
+  * Merge feature_tg_14715 into dev
+  * Merge branch 'feature_tg_14660' into 'master'
+  * FEATURE TG-14660 Alternative FreeRDP libs (win)
+
+1.8.3 / 2021-10-04
+==================
+
+  * FEATURE TG-14567 Got rid of some warnings
+  * Merge master into dev
+  * FEATURE TG-14567 Не печатаем пароль в лог
+  * Merge feature_tg_14567 into dev
+  * Merge branch 'feature_tg_14614' into 'master'
+  * FEATURE TG-14614 Fix dlls copy
+  * Merge branch 'feature_tg_14433' into 'master'
+  * Merge branch 'feature_tg_14433' of gitlab.bazalt.team:vdi/veil-connect into feature_tg_14433
+  * FEATURE TG-14433 Fix install script
+  * FIX TG-14433 Исправил размер окна установщика.
+  * FIX TG-14433 Иправил groovy
+  * FIX TG-14433 Иправил имя спекфайла в groovy
+  * FIX TG-14433 Исправил переменную groovy и опечатку в ридми
+  * FEATURE TG-14433 Подкорректировал README.MD
+  * FEATURE TG-14433 Переделал сборку, и установку для REDOS7.2
+  * FEATURE TG-14433 Добавил в ридми редос
+  * FEATURE TG-14562 Добавил сборку и установку Redos 7.2 и 7.3
+  * FEATURE TG-14541 Информационное сообщение о неудаче, если соединение не удалось, но freerdp не вернул ошибку
+  * Merge feature_tg_14541 into dev
+  * Merge branch 'dev'
+  * Фикс. Приложение завершалось в случае неудачи подключения по RDP вместо возвращения к окну пулов
+
+1.8.2 / 2021-09-20
+==================
+
+  * Merge dev into master
+  * Merge branch 'feature_tg_14437' into 'master'
+  * Update vdi_session.c
+  * FEATURE TG-14437 add clear after dialog/whiptial windows
+  * FEATURE TG-14456 Правильно показывается иконка при наличии обновлений
+  * Устанавливаются небольшие таймауты перед закрытием ws соединения так как нет смысла ожидать ответа
+  * Merge branch 'master' into dev
+  * Merge feature_tg_14501 into dev
+  * Merge branch 'feature_tg_14437' into 'master'
+  * FIX TG-14437 Update install script
+
+1.8.1 / 2021-09-16
+==================
+
+  * Merge branch 'dev'
+  * Merge feature_tg_14481 into dev
+  * FEATURE TG-14369 В гуи возможность задать время ожидания ВМ из пула
+  * FEATURE TG-14369 Возможность отиенить запрос пулов и ВМ с гуи
+  * FEATURE TG-14369 Оптимизация сохранения настроек
+  * Merge branch 'feature_tg_14373' into 'master'
+  * FEATURE TG-14373 Fix rpm builds
+  * Merge branch 'feature_tg_14308' into 'master'
+  * Add vcredist and usbdk to windows installer
+
+1.8.0 / 2021-09-08
+==================
+
+  * FEATURE TG-14118 Minor version bump
+  * FEATURE TG-14118 Возможность указать метод сжатия x2go
+  * FEATURE TG-14118 Gui fix
+  * FEATURE TG-_14118 Возможность выбора клиента для x2go
+  * FEATURE TG-_14118 Fix after testing
+  * FEATURE TG-_14118 Refactor
+  * Merge feature_tg_14173 into dev
+
+1.7.2 / 2021-09-03
+==================
+
+  * Merge fix_tg_14300 into dev
+  * FEATURE TG-_14118 small fix
+  * Merge feature_tg_14118 into dev
+  * Merge feature_tg_14118 into dev
+  * Merge branch 'master' into dev
+  * Merge tests_dev into dev
+  * Merge branch 'dev' of http://gitlab.bazalt.team/vdi/veil-connect into dev
+  * Merge feature_tg_13980 into dev
+
+1.7.1 / 2021-08-10
+==================
+
+  * Version bump
+  * Merge fix_tg_14012 into dev
+
+1.7.0 / 2021-08-06
+==================
+
+  * Merge branch 'dev'
+  * Merge feature_tg_13969 into dev
+  * Merge branch 'devops' into 'master'
+  * Починил veil-connect-linux-installer.sh
+  * Убрано из задания и описания Ubuntu 16.04 Xenial
+  * Merge branch 'dev'
   * Merge branch 'dev' of http://gitlab.bazalt.team/vdi/veil-connect into dev
   * FEATURE TG-13855 По умолчанию сжатие RemoteFX
   * FEATURE TG-13855 По умолчанию сжатие RemoteFX
   * Актуальная ссылка на доку
+  * Merge dev into master
   * Merge feature_tg_13855 into dev
+  * Merge branch 'dev'
   * Merge feature_tg_13665 into dev
+  * Merge branch 'dev' into 'master'
   * Deploy xenial
+  * Merge branch 'dev' into 'master'
   * Install cmake and libspice-client-gtk-3.0-dev from bionic repo
+  * Merge branch 'dev' into 'master'
   * change dockerfile xenial
   * Был потерян завершающий null элемент в параметрах rdp
 

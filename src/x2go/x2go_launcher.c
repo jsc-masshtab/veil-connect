@@ -17,7 +17,7 @@ extern void x2go_launcher_start_pyhoca(const gchar *user, const gchar *password,
 
 void x2go_launcher_start(const gchar *user, const gchar * password, const ConnectSettingsData *conn_data)
 {
-    vdi_event_vm_changed_notify(vdi_session_get_current_vm_id());
+    vdi_event_vm_changed_notify(vdi_session_get_current_vm_id(), VDI_EVENT_TYPE_VM_CONNECTED);
 
     switch (conn_data->x2Go_settings.app_type) {
         case X2GO_APP_QT_CLIENT:
@@ -28,7 +28,5 @@ void x2go_launcher_start(const gchar *user, const gchar * password, const Connec
             break;
     }
 
-    vdi_event_vm_changed_notify(NULL);
+    vdi_event_vm_changed_notify(vdi_session_get_current_vm_id(), VDI_EVENT_TYPE_VM_DISCONNECTED);
 }
-
-

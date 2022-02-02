@@ -45,7 +45,7 @@ pipeline {
 
     parameters {
         string(      name: 'BRANCH',   defaultValue: 'master',                    description: 'branch')
-        string(      name: 'VERSION',  defaultValue: '1.10.0',                    description: 'version')
+        string(      name: 'VERSION',  defaultValue: '1.10.1',                    description: 'version')
         choice(      name: 'AGENT',    choices: ['cloud-ubuntu-20', 'bld-agent'], description: 'jenkins build agent')
         booleanParam(name: 'STRETCH',  defaultValue: true,                        description: 'create DEB?')
         booleanParam(name: 'BUSTER',   defaultValue: true,                        description: 'create DEB?')
@@ -271,7 +271,7 @@ pipeline {
                         beforeAgent true
                         expression { params.BUSTER == true }
                     }
-                    environment { 
+                    environment {
                         DISTR = "buster"
                     }
                     agent {
@@ -311,7 +311,7 @@ pipeline {
                         beforeAgent true
                         expression { params.BIONIC == true || params.EMBEDDED == true }
                     }
-                    environment { 
+                    environment {
                         DISTR = "bionic"
                     }
                     agent {
@@ -351,7 +351,7 @@ pipeline {
                         beforeAgent true
                         expression { params.FOCAL == true }
                     }
-                    environment { 
+                    environment {
                         DISTR = "focal"
                     }
                     agent {
@@ -391,7 +391,7 @@ pipeline {
                         beforeAgent true
                         expression { params.EL7 == true }
                     }
-                    environment { 
+                    environment {
                         DISTR = "el7"
                     }
                     agent {
@@ -430,7 +430,7 @@ pipeline {
                         beforeAgent true
                         expression { params.EL8 == true }
                     }
-                    environment { 
+                    environment {
                         DISTR = "el8"
                     }
                     agent {
@@ -507,7 +507,7 @@ pipeline {
                         beforeAgent true
                         expression { params.RED73 == true }
                     }
-                    environment { 
+                    environment {
                         DISTR = "redos7.3"
                     }
                     agent {
@@ -671,7 +671,7 @@ pipeline {
                 '''
             }
         }
-        
+
         stage ('deploy to repo') {
             parallel {
                 stage ('stretch. deploy to repo') {

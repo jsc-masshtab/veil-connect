@@ -705,13 +705,13 @@ virt_viewer_parse_monitor_mappings(gchar **mappings, const gsize nmappings, cons
             goto configerror;
         }
 
-        display = strtol(tokens[0], &endptr, 10);
+        display = (gint)strtol(tokens[0], &endptr, 10);
         if ((endptr && *endptr != '\0') || display < 0) {
             g_warning("Invalid monitor-mapping configuration: display id is invalid: %s %p='%s'", tokens[0], endptr, endptr);
             g_strfreev(tokens);
             goto configerror;
         }
-        monitor = strtol(tokens[1], &endptr, 10);
+        monitor = (gint)strtol(tokens[1], &endptr, 10);
         if ((endptr && *endptr != '\0') || monitor < 0) {
             g_warning("Invalid monitor-mapping configuration: monitor id '%s' is invalid", tokens[1]);
             g_strfreev(tokens);
@@ -1003,6 +1003,7 @@ void show_msg_box_dialog(GtkWindow *parent, const gchar *message)
                                                    GTK_BUTTONS_OK,
                                                    "%s", message);
     gtk_dialog_set_default_response(GTK_DIALOG(dialog_msg), GTK_RESPONSE_ACCEPT);
+    // gtk_window_set_title(GTK_WINDOW(dialog_msg), "");
 
     GtkWidget *area = gtk_message_dialog_get_message_area(GTK_MESSAGE_DIALOG(dialog_msg));
     GtkContainer *box = (GtkContainer *) area;
@@ -1048,7 +1049,7 @@ gchar *get_current_readable_time()
 
 void copy_file_content(FILE *sourceFile, FILE *destFile)
 {
-    char ch;
+    int ch;
     /* Copy file contents character by character. */
     while ((ch = fgetc(sourceFile)) != EOF)
     {
@@ -1077,7 +1078,7 @@ void util_show_monitor_config_window(GtkWindow *parent, GdkDisplay *display)
 {
     // get config
     int monitor_amount = gdk_display_get_n_monitors(display);
-    gchar *final_string = NULL;
+    gchar *final_string = g_strdup(_("Client monitors info:\n"));
 
     for (int i = 0; i < monitor_amount; ++i) {
         GdkMonitor *monitor = gdk_display_get_monitor(display, i);

@@ -111,6 +111,8 @@ struct _VdiSession
     gchar *auth_url;
     gboolean is_ldap;
     AtomicString jwt;
+    AtomicString vdi_version;
+    gboolean version_older_than_320;
 
     // data about current pool and vm
     VdiPoolType pool_type;
@@ -168,6 +170,8 @@ const gchar *vdi_session_get_vdi_username(void);
 const gchar *vdi_session_get_vdi_password(void);
 //get copy of the current token. memory must be freed
 gchar *vdi_session_get_token(void);
+//get copy of VDI version string. memory must be freed
+gboolean vdi_session_version_older_than_320(void);
 
 // cancell pending requests
 void vdi_session_cancel_pending_requests(void);

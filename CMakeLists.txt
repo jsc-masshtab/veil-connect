@@ -247,12 +247,12 @@ if (WIN32)
     endif(BUILD_x32)
 
     # freerdp
-    INCLUDE_DIRECTORIES(${FREERDP_PATH}include)
+    INCLUDE_DIRECTORIES(SYSTEM ${FREERDP_PATH}include) # SYSTEM is used to suppress warnings from the library
     SET(LIBS ${LIBS} ${FREERDP_PATH}Release/freerdp2.dll)
     SET(LIBS ${LIBS} ${FREERDP_PATH}Release/freerdp-client2.dll)
 
     # winpr2
-    INCLUDE_DIRECTORIES(${FREERDP_PATH}winpr/include)
+    INCLUDE_DIRECTORIES(SYSTEM ${FREERDP_PATH}winpr/include)  # SYSTEM is used to suppress warnings from the library
     SET(LIBS ${LIBS} ${FREERDP_PATH}Release/winpr-tools2.dll)
     SET(LIBS ${LIBS} ${FREERDP_PATH}Release/winpr2.dll)
 

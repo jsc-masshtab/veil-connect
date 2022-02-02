@@ -449,7 +449,7 @@ virt_viewer_window_get_real_zoom_level(VirtViewerWindow *self)
     gtk_widget_get_allocation(GTK_WIDGET(self->priv->display), &allocation);
     virt_viewer_display_get_desktop_size(self->priv->display, &width, &height);
 
-    return round((double) NORMAL_ZOOM_LEVEL * allocation.width / width);
+    return (gint)round((double) NORMAL_ZOOM_LEVEL * allocation.width / width);
 }
 
 G_MODULE_EXPORT void
@@ -1741,7 +1741,7 @@ virt_viewer_window_get_minimal_zoom_level(VirtViewerWindow *self)
      */
     width_ratio = (double) min_width / width;
     height_ratio = (double) min_height / height;
-    zoom = ceil(10 * MAX(width_ratio, height_ratio));
+    zoom = (gint)ceil(10 * MAX(width_ratio, height_ratio));
 
     /* make sure that the returned zoom level is in the range from MIN_ZOOM_LEVEL to NORMAL_ZOOM_LEVEL */
     return CLAMP(zoom * ZOOM_STEP, MIN_ZOOM_LEVEL, NORMAL_ZOOM_LEVEL);

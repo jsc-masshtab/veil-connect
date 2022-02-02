@@ -85,11 +85,11 @@ static gboolean usbredir_util_parse_usbids(gchar *path)
         if (!isxdigit(line[0]) || !isxdigit(line[1]))
             continue;
 
-        id = strtoul(line, &line, 16);
+        id = (int)strtoul(line, &line, 16);
         while (isspace(line[0]))
             line++;
 
-        usbids_vendor_info[usbids_vendor_count].vendor_id = id;
+        usbids_vendor_info[usbids_vendor_count].vendor_id = (guint16)id;
         snprintf(usbids_vendor_info[usbids_vendor_count].name,
                  VENDOR_NAME_LEN, "%s", line);
 
@@ -103,10 +103,10 @@ static gboolean usbredir_util_parse_usbids(gchar *path)
             if (line[0] != '\t' || !isxdigit(line[1]))
                 continue;
 
-            id = strtoul(line + 1, &line, 16);
+            id = (int)strtoul(line + 1, &line, 16);
             while (isspace(line[0]))
                 line++;
-            product_info[product_count].product_id = id;
+            product_info[product_count].product_id = (guint16)id;
             snprintf(product_info[product_count].name,
                      PRODUCT_NAME_LEN, "%s", line);
 

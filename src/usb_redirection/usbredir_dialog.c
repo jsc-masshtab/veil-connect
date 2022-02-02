@@ -126,7 +126,7 @@ usbredir_dialog_usb_task_finished(gpointer source G_GNUC_UNUSED, int code, const
     for (ssize_t i = 0; i < self->widget->cur_usb_devices_number; i++) {
         if (self->widget->usb_dev_data_array[i].usbbus == usbbus &&
         self->widget->usb_dev_data_array[i].usbaddr == usbaddr) {
-            found_usb_index = i;
+            found_usb_index = (int)i;
             break;
         }
     }
@@ -186,7 +186,7 @@ usbredir_dialog_on_usb_tcp_reset_finished(GObject *source_object G_GNUC_UNUSED,
 
     gboolean is_success = g_task_propagate_boolean(G_TASK(res), NULL);
     if (is_success) {
-        gtk_widget_set_sensitive((GtkWidget*)self->widget->usb_devices_list_view, TRUE);
+        gtk_widget_set_sensitive(self->widget->usb_devices_list_view, TRUE);
     } else {
         // "<span color=\"red\">Не удалось сбросить USB TCP устройства на виртуальной машине</span>"
         gtk_label_set_text(GTK_LABEL(self->widget->status_label),
@@ -352,7 +352,7 @@ usbredir_dialog_check_if_reset_required_and_reset(UsbredirMainDialog *self)
 {
     if (usbredir_controller_is_tcp_usb_devices_reset_required()) {
         // set GUI
-        gtk_widget_set_sensitive((GtkWidget*)self->widget->usb_devices_list_view, FALSE);
+        gtk_widget_set_sensitive(self->widget->usb_devices_list_view, FALSE);
         gtk_spinner_start(GTK_SPINNER(self->widget->status_spinner));
 
         // send request to vdi (veil)
@@ -397,7 +397,7 @@ static void usbredir_dialog_set_initial_gui_state(UsbredirMainDialog *self)
                 self->widget->usb_dev_data_array[i].usb_state = USB_STATE_CANCELLING_REDIRECTION;
         }
 
-        const gchar *status_text = usb_selector_widget_get_usb_status_text(self->widget, i);
+        const gchar *status_text = usb_selector_widget_get_usb_status_text(self->widget, (int)i);
         gboolean usb_toggle_value = (self->widget->usb_dev_data_array[i].usb_state == USB_STATE_BEING_REDIRECTED);
 
         // set to gui

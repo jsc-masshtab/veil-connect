@@ -142,6 +142,7 @@ VdiSession *vdi_session_new()
     vdi_session->auth_url = NULL;
 
     atomic_string_init(&vdi_session->jwt);
+    atomic_string_init(&vdi_session->vdi_version);
 
     vdi_session->pool_type = VDI_POOL_TYPE_UNKNOWN;
     vdi_session->current_pool_id = NULL;
@@ -181,6 +182,7 @@ static void free_session_memory()
     free_memory_safely(&vdi_session_static->auth_url);
 
     atomic_string_set(&vdi_session_static->jwt, NULL);
+    atomic_string_set(&vdi_session_static->vdi_version, NULL);
 
     vdi_session_reset_current_data();
 }
@@ -294,6 +296,29 @@ static gchar *vdi_session_auth_request()
     }
 }
 
+// Get server version
+static void vdi_session_request_version()
+{
+    gchar *url_str = g_strdup_printf("%s/version", vdi_session_static->api_url);
+    g_autofree gchar *response_body_str = NULL;
+    response_body_str = vdi_session_api_call("GET", url_str, NULL, NULL);
+    g_free(url_str);
+
+    // Parse
+    JsonParser *parser = json_parser_new();
+    ServerReplyType server_reply_type;
+    JsonObject *reply_json_object = json_get_data_or_errors_object(parser, response_body_str, &server_reply_type);
+    if (server_reply_type == SERVER_REPLY_TYPE_DATA) {
+        const gchar *vdi_version = json_object_get_string_member_safely(reply_json_object, "version");
+        atomic_string_set(&vdi_session_static->vdi_version, vdi_version);
+
+        if (vdi_version) {
+            vdi_session_static->version_older_than_320 = (virt_viewer_compare_version(vdi_version, "3.2.0") < 0);
+            g_debug("!!! Is server version_older_than_320: %i", vdi_session_static->version_older_than_320);
+        }
+    }
+}
+
 // some kind of singleton
 VdiSession *get_vdi_session_static()
 {
@@ -369,19 +394,24 @@ gboolean vdi_session_is_ldap()
     return vdi_session_static->is_ldap;
 }
 
-const gchar *vdi_session_get_vdi_username(void)
+const gchar *vdi_session_get_vdi_username()
 {
     return vdi_session_static->vdi_username;
 }
 
-const gchar *vdi_session_get_vdi_password(void)
+const gchar *vdi_session_get_vdi_password()
 {
     return vdi_session_static->vdi_password;
 }
 
-gchar *vdi_session_get_token(void)
+gchar *vdi_session_get_token()
 {
     return atomic_string_get(&vdi_session_static->jwt);
+}
+
+gboolean vdi_session_version_older_than_320()
+{
+    return vdi_session_static->version_older_than_320;
 }
 
 void vdi_session_cancel_pending_requests()
@@ -594,9 +624,8 @@ void vdi_session_log_in_task(GTask       *task,
     atomic_string_set(&vdi_session_static->jwt, NULL);
     gchar *reply_msg = vdi_session_auth_request();
 
-    // register for licensing.  Для поддержки предыдущих версий VDI. Редис не доступен из вне с версии VDI 3.1.1
-    g_autofree gchar *jwt_str = NULL;
-    jwt_str = atomic_string_get(&vdi_session_static->jwt);
+    // Get VDI version
+    vdi_session_request_version();
 
     g_task_return_pointer(task, reply_msg, NULL); // reply_msg is freed in task callback
 }
@@ -689,7 +718,7 @@ void vdi_session_get_vm_from_pool_task(GTask       *task,
 
     if (server_reply_type == SERVER_REPLY_TYPE_DATA) {
         vdi_vm_data->vm_host = g_strdup(json_object_get_string_member_safely(reply_json_object, "host"));
-        vdi_vm_data->vm_port = json_object_get_int_member_safely(reply_json_object, "port");
+        vdi_vm_data->vm_port = (int)json_object_get_int_member_safely(reply_json_object, "port");
         vdi_vm_data->vm_password = g_strdup(json_object_get_string_member_safely(reply_json_object, "password"));
         vdi_vm_data->vm_verbose_name = g_strdup(json_object_get_string_member_safely(
                 reply_json_object, "vm_verbose_name"));

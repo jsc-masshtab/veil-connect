@@ -356,8 +356,8 @@ static void virt_viewer_display_get_preferred_dimension_from_desktop(VirtViewerD
 
     if (virt_viewer_display_get_zoom(display)) {
         guint zoom_level = virt_viewer_display_get_zoom_level(display);
-        *preferred_dim = round(desktop_dim * zoom_level / (double) NORMAL_ZOOM_LEVEL);
-        *minimal_dim = round(minimal_size * zoom_level / (double) NORMAL_ZOOM_LEVEL);
+        *preferred_dim = (int)round(desktop_dim * zoom_level / (double) NORMAL_ZOOM_LEVEL);
+        *minimal_dim = (int)round(minimal_size * zoom_level / (double) NORMAL_ZOOM_LEVEL);
     } else {
         *preferred_dim = desktop_dim;
         *minimal_dim = minimal_size;
@@ -427,15 +427,15 @@ virt_viewer_display_size_allocate(GtkWidget *widget,
     actualAspect = (double) width / (double) height;
 
     if (actualAspect > desktopAspect) {
-        child_allocation.width = round(height * desktopAspect);
+        child_allocation.width = (int)round(height * desktopAspect);
         child_allocation.height = height;
     } else {
         child_allocation.width = width;
-        child_allocation.height = round(width / desktopAspect);
+        child_allocation.height = (int)round(width / desktopAspect);
     }
 
-    child_allocation.x = 0.5 * (width - child_allocation.width) + allocation->x + border_width;
-    child_allocation.y = 0.5 * (height - child_allocation.height) + allocation->y + border_width;
+    child_allocation.x = (int)(0.5 * (width - child_allocation.width) + allocation->x + border_width);
+    child_allocation.y = (int)(0.5 * (height - child_allocation.height) + allocation->y + border_width);
 
     // g_debug("Child allocate %dx%d", child_allocation.width, child_allocation.height);
     gtk_widget_size_allocate(child, &child_allocation);
@@ -723,8 +723,8 @@ void virt_viewer_display_get_preferred_monitor_geometry(VirtViewerDisplay* self,
     if (virt_viewer_display_get_zoom(self)) {
         guint zoom = virt_viewer_display_get_zoom_level(self);
 
-        preferred->width = round(preferred->width * NORMAL_ZOOM_LEVEL / (double) zoom);
-        preferred->height = round(preferred->height * NORMAL_ZOOM_LEVEL / (double) zoom);
+        preferred->width = (int)round(preferred->width * NORMAL_ZOOM_LEVEL / (double) zoom);
+        preferred->height = (int)round(preferred->height * NORMAL_ZOOM_LEVEL / (double) zoom);
     }
 }
 
