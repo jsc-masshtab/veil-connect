@@ -283,8 +283,8 @@ static gboolean vm_list_tree_view_mouse_btn_pressed(GtkWidget *widget G_GNUC_UNU
         GtkTreePath *path = NULL;
 
         gtk_tree_view_get_path_at_pos(GTK_TREE_VIEW(self->vm_list_tree_view),
-                                      event->x,
-                                      event->y,
+                                      (gint)event->x,
+                                      (gint)event->y,
                                       &path,
                                       NULL,
                                       NULL,

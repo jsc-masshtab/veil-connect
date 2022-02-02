@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-01-20 16:23+0300\n"
+"POT-Creation-Date: 2022-02-02 13:11+0300\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -69,6 +69,10 @@ msgstr "Процесс обновления завершился с ошибка
 #: ../src/remote_viewer_start_settings.c:523
 msgid "Password required"
 msgstr "Необходимо ввести пароль"
+
+#: ../src/remote-viewer-util.c:1081
+msgid "Client monitors info:\n"
+msgstr "Информация о клиентских мониторах:\n"
 
 #: ../src/remote-viewer-connect.c:164
 #: ../resources/ui/start_settings_form.glade.h:217
@@ -1276,7 +1280,7 @@ msgstr "Показывать клиентский курсор"
 
 #: ../resources/ui/start_settings_form.glade.h:32
 msgid "Full screen. Application restart required to apply changes."
-msgstr ""
+msgstr "Полный экран. Требуется перезапуск приложения, чтобы применить изменения."
 
 #: ../resources/ui/start_settings_form.glade.h:33
 msgid "Monitor mapping (Display:Monitor)"

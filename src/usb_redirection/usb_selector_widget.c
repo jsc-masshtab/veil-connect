@@ -256,7 +256,7 @@ void usb_selector_widget_set_selected_usb_str(UsbSelectorWidget *self, const gch
 
             // toggle if string 'usb_devices' contains USB
             g_autofree gchar *usb_addr_str = NULL;
-            usb_addr_str = get_usb_addr_str(self, i);
+            usb_addr_str = get_usb_addr_str(self, (guint)i);
 
             if (strstr(usb_devices, usb_addr_str) != NULL) {
                 gtk_list_store_set(self->usb_list_store, &iter, COLUMN_USB_REDIR_TOGGLE, TRUE, -1);
@@ -283,10 +283,10 @@ gchar *usb_selector_widget_get_selected_usb_str(UsbSelectorWidget *self)
             // Если toggled то забираем
             if (is_toggled) {
                 if (final_string == NULL) {
-                    final_string = get_usb_addr_str(self, i);
+                    final_string = get_usb_addr_str(self, (guint)i);
                 } else {
                     g_autofree gchar *usb_addr_str = NULL;
-                    usb_addr_str = get_usb_addr_str(self, i);
+                    usb_addr_str = get_usb_addr_str(self, (guint)i);
                     gchar *new_final_string = g_strdup_printf("%s#%s", final_string, usb_addr_str);
                     g_free(final_string);
                     final_string = new_final_string;

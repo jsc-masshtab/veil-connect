@@ -22,13 +22,16 @@
  * Author: Daniel P. Berrange <berrange@redhat.com>
  */
 
+#ifdef _WIN32
+#include <winsock2.h>
+#endif
+
 #include <config.h>
 
 #include <glib/gi18n.h>
 #include <spice-client-gtk.h>
 #include <spice/vd_agent.h>
 
-#include "vdi_session.h"
 #include "usbredir_util.h"
 #include <usb-device-widget.h>
 #include "virt-viewer-file.h"
@@ -38,7 +41,7 @@
 #include "virt-viewer-display-spice.h"
 #include "virt-viewer-auth.h"
 #include "veil_logger.h"
-
+#include "vdi_session.h"
 
 G_DEFINE_TYPE (VirtViewerSessionSpice, virt_viewer_session_spice, VIRT_VIEWER_TYPE_SESSION)
 
@@ -1010,7 +1013,7 @@ on_clipboard_from_client_to_vm(SpiceMainChannel *main G_GNUC_UNUSED, guint selec
         GtkClipboard *gtk_clipboard = gtk_clipboard_get(GDK_SELECTION_CLIPBOARD);
         gchar *text = gtk_clipboard_wait_for_text(gtk_clipboard);
         if (text) {
-            logger_save_clipboard_data(text, strlen_safely(text), CLIPBOARD_LOGGER_FROM_CLIENT_TO_VM);
+            logger_save_clipboard_data(text, (guint)strlen_safely(text), CLIPBOARD_LOGGER_FROM_CLIENT_TO_VM);
             g_free(text);
         }
     }

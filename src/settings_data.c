@@ -81,15 +81,16 @@ void settings_data_read_all(ConnectSettingsData *data)
     // X2Go
     x2go_settings_read(&data->x2Go_settings);
     // Service
-    data->global_app_mode = read_int_from_ini_file("ServiceSettings", "global_app_mode", GLOBAL_APP_MODE_VDI);
+    data->global_app_mode = (GlobalAppMode)read_int_from_ini_file(
+            "ServiceSettings", "global_app_mode", GLOBAL_APP_MODE_VDI);
 
     data->windows_updates_url = read_str_from_ini_file_default("ServiceSettings",
-                                                                "windows_updates_url", VEIL_CONNECT_WIN_RELEASE_URL);
+            "windows_updates_url", VEIL_CONNECT_WIN_RELEASE_URL);
     data->vm_await_timeout = read_int_from_ini_file("ServiceSettings", "vm_await_timeout", 65);
 
     // cur_remote_protocol_index
-    VmRemoteProtocol protocol = read_int_from_ini_file("General",
-                                                       "cur_remote_protocol_index", SPICE_PROTOCOL);
+    VmRemoteProtocol protocol = (VmRemoteProtocol)read_int_from_ini_file("General",
+            "cur_remote_protocol_index", SPICE_PROTOCOL);
     vdi_session_set_current_remote_protocol(protocol);
     data->protocol_in_direct_app_mode = protocol;
     controller_session_set_current_remote_protocol(protocol);
@@ -478,7 +479,7 @@ void x2go_settings_read(VeilX2GoSettings *x2go_settings)
 {
     const gchar *x2go_group = "X2GoSettings";
 
-    x2go_settings->app_type = read_int_from_ini_file(x2go_group, "app_type", X2GO_APP_QT_CLIENT);
+    x2go_settings->app_type = (X2goApplication)read_int_from_ini_file(x2go_group, "app_type", X2GO_APP_QT_CLIENT);
 
     g_autofree gchar *session_type = NULL;
     session_type = read_str_from_ini_file_with_def(x2go_group, "session_type", "XFCE");

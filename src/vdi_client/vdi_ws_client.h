@@ -14,6 +14,8 @@
 #include <glib.h>
 
 #include "remote-viewer-util.h"
+#include "vdi_event_types.h"
+
 
 typedef struct{
     SoupSession *ws_soup_session;
@@ -44,7 +46,7 @@ SoupWebsocketState vdi_ws_client_get_conn_state(VdiWsClient *ws_vdi_client);
 const gchar *vdi_ws_client_get_conn_time(VdiWsClient *ws_vdi_client);
 
 // Сообщить  vdi серверу что произошло событие смены ВМ
-void vdi_ws_client_send_vm_changed(VdiWsClient *ws_vdi_client, const gchar *vm_id);
+void vdi_ws_client_send_vm_changed(VdiWsClient *ws_vdi_client, const gchar *vm_id, VdiEventType event);
 // Сообщить  vdi серверу что произошла ошибка подключения
 void vdi_ws_client_send_conn_error(VdiWsClient *ws_vdi_client, guint32 conn_error_code, const gchar *conn_error_str);
 // Сообщить  vdi серверу что юзер взаимодействовал с gui

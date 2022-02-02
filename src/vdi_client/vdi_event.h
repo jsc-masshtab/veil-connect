@@ -16,7 +16,7 @@
 #include "vdi_ws_client.h"
 
 
-void vdi_event_vm_changed_notify(const gchar *vm_id);
+void vdi_event_vm_changed_notify(const gchar *vm_id, VdiEventType event);
 void vdi_event_conn_error_notify(guint32 conn_error_code, const gchar *conn_error_str);
 
 

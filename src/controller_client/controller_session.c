@@ -378,9 +378,9 @@ void controller_session_get_vm_list_task(GTask *task,
 
     GHashTable *query = g_hash_table_new((GHashFunc)g_str_hash, (GEqualFunc)g_str_equal);
     if (strlen_safely(vm_list_request_data->name_filter))
-        g_hash_table_insert(query, "name", (gchar*)vm_list_request_data->name_filter);
+        g_hash_table_insert(query, "name", vm_list_request_data->name_filter);
     if (strlen_safely(vm_list_request_data->ordering))
-        g_hash_table_insert(query, "ordering", (gchar*)vm_list_request_data->ordering);
+        g_hash_table_insert(query, "ordering", vm_list_request_data->ordering);
     g_hash_table_insert(query, "template", "False");
     g_autofree gchar *limit_str = NULL;
     limit_str = g_strdup_printf("%i", vm_list_request_data->limit);
@@ -435,7 +435,7 @@ void controller_session_get_vm_data_task(GTask *task,
                         reply_json_object, "graphics_password");
                 vdi_vm_data->vm_password = g_strdup(password);
 
-                vdi_vm_data->vm_port = json_object_get_int_member_safely(reply_json_object, "remote_access_port");
+                vdi_vm_data->vm_port = (int)json_object_get_int_member_safely(reply_json_object, "remote_access_port");
                 if (vdi_vm_data->vm_port == 0) {
                     vdi_vm_data->message = g_strdup(
                             "Failed to fetch connection info. Possibly remote access is disabled.");
@@ -448,7 +448,7 @@ void controller_session_get_vm_data_task(GTask *task,
                         reply_json_object, "graphics_password");
                 vdi_vm_data->vm_password = g_strdup(password);
 
-                vdi_vm_data->vm_port = json_object_get_int_member_safely(
+                vdi_vm_data->vm_port = (int)json_object_get_int_member_safely(
                         reply_json_object, "real_remote_access_port");
                 if (vdi_vm_data->vm_port == 0) {
                     vdi_vm_data->message = g_strdup(

@@ -82,8 +82,8 @@ static UINT rdp_rail_server_start_cmd(RailClientContext* context)
     sysparam.params |= SPI_MASK_SET_WORK_AREA;
     sysparam.workArea.left = 0;
     sysparam.workArea.top = 0;
-    sysparam.workArea.right = settings->DesktopWidth;
-    sysparam.workArea.bottom = settings->DesktopHeight;
+    sysparam.workArea.right = (UINT16)settings->DesktopWidth;
+    sysparam.workArea.bottom = (UINT16)settings->DesktopHeight;
     sysparam.dragFullWindows = FALSE;
     status = context->ClientSystemParam(context, &sysparam);
 

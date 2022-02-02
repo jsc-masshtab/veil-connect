@@ -1456,7 +1456,7 @@ virt_viewer_app_deactivate(VirtViewerApp *self, gboolean connect_error)
     VirtViewerAppPrivate *priv = self->priv;
 
     if (priv->connected)
-        vdi_event_vm_changed_notify(NULL); // notify vdi server about disconnect
+        vdi_event_vm_changed_notify(vdi_session_get_current_vm_id(), VDI_EVENT_TYPE_VM_DISCONNECTED); // notify vdi
 
     if (priv->active) {
 
@@ -1504,7 +1504,7 @@ virt_viewer_app_connected(VirtViewerSession *session G_GNUC_UNUSED,
     }
 
     // notify vdi server about connect
-    vdi_event_vm_changed_notify(vdi_session_get_current_vm_id());
+    vdi_event_vm_changed_notify(vdi_session_get_current_vm_id(), VDI_EVENT_TYPE_VM_CONNECTED);
 }
 
 static void

@@ -35,10 +35,9 @@ static gboolean vdi_event_occurred(TkEventData *event_data)
     g_info("%s  EVENT: %i", (const char *)__func__, (int)event_data->event);
 
     // В основном потоке шлем сообщения VDI серверу
-    if (event_data->event == VDI_EVENT_TYPE_VM_CHANGED) {
-        vdi_ws_client_send_vm_changed(vdi_session_get_ws_client(), event_data->vm_id);
-    }
-    else if (event_data->event == VDI_EVENT_TYPE_CONN_ERROR) {
+    if (event_data->event == VDI_EVENT_TYPE_VM_CONNECTED || event_data->event == VDI_EVENT_TYPE_VM_DISCONNECTED) {
+        vdi_ws_client_send_vm_changed(vdi_session_get_ws_client(), event_data->vm_id, event_data->event);
+    } else if (event_data->event == VDI_EVENT_TYPE_CONN_ERROR) {
         vdi_ws_client_send_conn_error(vdi_session_get_ws_client(),
                                       event_data->conn_error_code, event_data->conn_error_str);
     }
@@ -47,10 +46,10 @@ static gboolean vdi_event_occurred(TkEventData *event_data)
     return FALSE;
 }
 
-void vdi_event_vm_changed_notify(const gchar *vm_id)
+void vdi_event_vm_changed_notify(const gchar *vm_id, VdiEventType event)
 {
     TkEventData *event_data = calloc(1, sizeof(TkEventData));
-    event_data->event = VDI_EVENT_TYPE_VM_CHANGED;
+    event_data->event = event;
     event_data->vm_id = g_strdup(vm_id);
 
     gdk_threads_add_idle((GSourceFunc)vdi_event_occurred, event_data);

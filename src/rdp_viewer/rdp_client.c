@@ -344,7 +344,7 @@ void* rdp_client_routine(ExtendedRdpContext *ex_contect)
         goto end;
 
     // MAIN RDP LOOP
-    freerdp* instance = (freerdp*)ex_contect->context.instance;
+    freerdp* instance = ex_contect->context.instance;
     HANDLE handles[64];
     UINT32 conn_try = 0;
 
@@ -374,7 +374,7 @@ void* rdp_client_routine(ExtendedRdpContext *ex_contect)
         // Подключение удачно
         conn_try = 0; // Сброс счетчика
         ex_contect->last_rdp_error = 0; // Сброс инфы о последней ошибке
-        vdi_event_vm_changed_notify(vdi_session_get_current_vm_id()); // Событие подключения к ВМ
+        vdi_event_vm_changed_notify(vdi_session_get_current_vm_id(), VDI_EVENT_TYPE_VM_CONNECTED); // Событие
 
         g_info("RDP successfully connected");
         while (!freerdp_shall_disconnect(instance)) {
@@ -423,7 +423,7 @@ end:
 
     // Если соединение было успешным то сигнализируем об отключении от ВМ
     if (ex_contect->is_connected_last_time)
-        vdi_event_vm_changed_notify(NULL);
+        vdi_event_vm_changed_notify(vdi_session_get_current_vm_id(), VDI_EVENT_TYPE_VM_DISCONNECTED);
     shutdown_loop(ex_contect->main_loop);
     return NULL;
 }

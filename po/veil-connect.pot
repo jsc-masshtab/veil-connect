@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-01-20 16:23+0300\n"
+"POT-Creation-Date: 2022-02-02 13:13+0300\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -69,6 +69,10 @@ msgstr ""
 #. "Необходимо ввести пароль"
 #: ../src/remote_viewer_start_settings.c:523
 msgid "Password required"
+msgstr ""
+
+#: ../src/remote-viewer-util.c:1081
+msgid "Client monitors info:\n"
 msgstr ""
 
 #: ../src/remote-viewer-connect.c:164

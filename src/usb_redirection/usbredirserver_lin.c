@@ -78,7 +78,7 @@ static int usbredirserver_read(void *priv, uint8_t *data, int count)
 {
     //fprintf(stdout, "%s\n", (const char *)__func__);
     UsbRedirServerData *usb_redir_server_data = (UsbRedirServerData*)priv;
-    int r = read(usb_redir_server_data->client_fd, data, count);
+    int r = (int)read(usb_redir_server_data->client_fd, data, count);
     if (r < 0) {
         if (errno == EAGAIN)
             return 0;
@@ -95,7 +95,7 @@ static int usbredirserver_write(void *priv, uint8_t *data, int count)
 {
     //fprintf(stdout, "%s\n", (const char *)__func__);
     UsbRedirServerData *usb_redir_server_data = (UsbRedirServerData*)priv;
-    int r = write(usb_redir_server_data->client_fd, data, count);
+    int r = (int)write(usb_redir_server_data->client_fd, data, count);
     if (r < 0) {
         if (errno == EAGAIN)
             return 0;
@@ -220,7 +220,7 @@ static int usbredirserver_create_server_socket(const char *ipv4_addr, int port)
     // set address
     if (ipv4_addr) {
         serveraddr.v4.sin_family = AF_INET;
-        serveraddr.v4.sin_port   = htons(port);
+        serveraddr.v4.sin_port = htons((uint16_t)port);
         if ((inet_pton(AF_INET, ipv4_addr, &serveraddr.v4.sin_addr)) != 1) {
             perror("Error convert ipv4 address");
             close(server_fd);
@@ -228,7 +228,7 @@ static int usbredirserver_create_server_socket(const char *ipv4_addr, int port)
         }
     } else {
         serveraddr.v6.sin6_family = AF_INET6;
-        serveraddr.v6.sin6_port   = htons(port);
+        serveraddr.v6.sin6_port   = htons((uint16_t)port);
         if (ipv6_addr) {
             if ((inet_pton(AF_INET6, ipv6_addr, &serveraddr.v6.sin6_addr)) != 1) {
                 perror("Error convert ipv6 address");
@@ -315,7 +315,7 @@ libusb_device_handle *usbredirserver_find_usb_device_and_open(UsbRedirServerData
     libusb_device_handle *handle = NULL;
 
     if (usbvendor != -1) {
-        handle = libusb_open_device_with_vid_pid(priv->ctx, usbvendor, usbproduct);
+        handle = libusb_open_device_with_vid_pid(priv->ctx, (uint16_t)usbvendor, (uint16_t)usbproduct);
         if (!handle) {
             fprintf(stderr,
                     "Could not open an usb-device with vid:pid %04x:%04x\n",

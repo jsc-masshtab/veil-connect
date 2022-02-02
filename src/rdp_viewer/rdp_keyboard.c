@@ -57,5 +57,5 @@ void rdp_keyboard_focus_in(ExtendedRdpContext* ex_context)
 {
     rdpInput* input = ex_context->context.input;
     UINT32 syncFlags = rdp_keyboard_get_toggle_keys_state();
-    input->FocusInEvent(input, syncFlags);
+    input->FocusInEvent(input, (UINT16)syncFlags);
 }

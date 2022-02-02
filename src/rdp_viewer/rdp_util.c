@@ -205,7 +205,7 @@ gchar *rdp_util_get_full_error_msg(UINT32 last_rdp_error, UINT32 rail_rdp_error)
     if (rail_rdp_error) {
         // Ошибка удаленного приложения. 0x%X  %s
         rail_rdp_err_msg = g_strdup_printf(_("Remote app error. 0x%X  %s"), rail_rdp_error,
-                                           rail_error_to_string(rail_rdp_error));
+                                           rail_error_to_string((UINT16)rail_rdp_error));
     } else {
         rail_rdp_err_msg = g_strdup("");
     }
