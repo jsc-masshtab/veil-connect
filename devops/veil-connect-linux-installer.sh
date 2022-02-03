@@ -107,9 +107,9 @@ EOF
         ;;
     9)
         if [ -n "$WINDOW" ]; then
-            $WINDOW --title  "$TITLE" --msgbox "Please visit https://veil.mashtab.org/docs/vdi/connect/how_to/install for the more info" $HEIGHT $WIDTH  2>/dev/null
+            $WINDOW --title  "$TITLE" --msgbox "Please visit https://veil.mashtab.org/vdi-docs/connect/operator_guide/install/cd/linux/ for the more info" $HEIGHT $WIDTH  2>/dev/null
         else
-            echo "Please visit https://veil.mashtab.org/docs/vdi/connect/how_to/install for info" 
+            echo "Please visit https://veil.mashtab.org/vdi-docs/connect/operator_guide/install/cd/linux/ for info" 
         fi
         exit 1
         ;;
