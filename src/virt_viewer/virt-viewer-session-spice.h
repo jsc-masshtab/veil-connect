@@ -72,6 +72,7 @@ void virt_viewer_session_spice_enable_auto_clipboard(VirtViewerSessionSpice *sel
 
 void virt_viewer_session_spice_get_stats(VirtViewerSessionSpice *self, SpiceReadBytes *spice_read_bytes);
 
+void virt_viewer_session_spice_set_params(VirtViewerSessionSpice *self, ConnectSettingsData *p_conn_data);
 G_END_DECLS
 
 

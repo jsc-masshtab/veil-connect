@@ -204,6 +204,14 @@ void spice_settings_read(VeilSpiceSettings *spice_settings)
     g_autofree gchar *monitor_mapping = NULL;
     monitor_mapping = read_str_from_ini_file(spice_group, "monitor-mapping");
     update_string_safely(&spice_settings->monitor_mapping, monitor_mapping);
+
+    g_autofree gchar *usb_auto_connect_filter = NULL;
+    usb_auto_connect_filter = read_str_from_ini_file(spice_group, "usb_auto_connect_filter");
+    update_string_safely(&spice_settings->usb_auto_connect_filter, usb_auto_connect_filter);
+
+    g_autofree gchar *usb_redirect_on_connect = NULL;
+    usb_redirect_on_connect = read_str_from_ini_file(spice_group, "usb_redirect_on_connect");
+    update_string_safely(&spice_settings->usb_redirect_on_connect, usb_redirect_on_connect);
 }
 
 void spice_settings_write(VeilSpiceSettings *spice_settings)
@@ -214,11 +222,15 @@ void spice_settings_write(VeilSpiceSettings *spice_settings)
             spice_settings->is_spice_client_cursor_visible);
     write_int_to_ini_file(spice_group, "full_screen", spice_settings->full_screen);
     write_str_to_ini_file(spice_group, "monitor-mapping", spice_settings->monitor_mapping);
+    write_str_to_ini_file(spice_group, "usb_auto_connect_filter", spice_settings->usb_auto_connect_filter);
+    write_str_to_ini_file(spice_group, "usb_redirect_on_connect", spice_settings->usb_redirect_on_connect);
 }
 
 void spice_settings_clear(VeilSpiceSettings *spice_settings)
 {
     free_memory_safely(&spice_settings->monitor_mapping);
+    free_memory_safely(&spice_settings->usb_auto_connect_filter);
+    free_memory_safely(&spice_settings->usb_redirect_on_connect);
 }
 
 void rdp_settings_set_connect_data(VeilRdpSettings *rdp_settings, const gchar *user_name, const gchar *password,

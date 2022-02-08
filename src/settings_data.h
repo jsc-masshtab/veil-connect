@@ -32,6 +32,10 @@ typedef struct{
     gboolean full_screen;
     gchar *monitor_mapping;
 
+    gboolean auto_connect_plugged_usb;
+    gchar *usb_auto_connect_filter;
+    gchar *usb_redirect_on_connect;
+
 } VeilSpiceSettings;
 
 

@@ -232,9 +232,7 @@ remote_viewer_connect_to_vm(RemoteViewer *self, VmRemoteProtocol protocol)
     } else if (protocol == X2GO_PROTOCOL) {
         x2go_launcher_start(self->conn_data.user, self->conn_data.password, &self->conn_data);
     } else { // spice by default
-        virt_viewer_app_set_spice_session_data(self->virt_viewer_obj, &self->conn_data);
-        virt_viewer_app_set_window_name(self->virt_viewer_obj, self->conn_data.vm_verbose_name, self->conn_data.user);
-        next_app_state = virt_viewer_app_instant_start(self->virt_viewer_obj);
+        next_app_state = virt_viewer_app_instant_start(self->virt_viewer_obj, &self->conn_data);
     }
 
     return next_app_state;
@@ -285,10 +283,7 @@ remote_viewer_start(RemoteViewer *self)
             } else if (self->conn_data.protocol_in_direct_app_mode == X2GO_PROTOCOL) {
                 x2go_launcher_start(self->conn_data.user, self->conn_data.password, &self->conn_data);
             } else { // SPICE by default
-                virt_viewer_app_set_spice_session_data(self->virt_viewer_obj, &self->conn_data);
-                virt_viewer_app_set_window_name(self->virt_viewer_obj, self->conn_data.vm_verbose_name,
-                                                self->conn_data.user);
-                next_app_state = virt_viewer_app_instant_start(self->virt_viewer_obj);
+                next_app_state = virt_viewer_app_instant_start(self->virt_viewer_obj, &self->conn_data);
             }
 
             if (next_app_state == APP_STATE_CONNECT_TO_VM)
@@ -318,4 +313,3 @@ remote_viewer_start(RemoteViewer *self)
     to_exit:
     settings_data_save_all(&self->conn_data);
 }
-

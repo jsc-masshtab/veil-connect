@@ -45,6 +45,11 @@ typedef struct{
     GtkWidget *spice_monitor_mapping_entry;
     GtkWidget *btn_show_monitor_config_spice;
 
+    GtkWidget *spice_usb_auto_connect_filter_entry;
+    GtkWidget *spice_usb_redirect_on_connect_entry;
+    GtkWidget *btn_show_usb_filter_tooltip_spice_0;
+    GtkWidget *btn_show_usb_filter_tooltip_spice_1;
+
     // RDP settings
     GtkWidget *rdp_image_pixel_format_combobox;
     GtkWidget *rdp_fps_spin_btn;
@@ -553,6 +558,29 @@ btn_show_monitor_config_clicked(GtkButton *button G_GNUC_UNUSED, ConnectSettings
 }
 
 static void
+btn_show_usb_filter_tooltip_spice_clicked(GtkButton *button G_GNUC_UNUSED, ConnectSettingsDialogData *dialog_data) {
+    show_msg_box_dialog(GTK_WINDOW(dialog_data->window),
+                        _("Filter string format:\n\n"
+                        "Filter consists of one or more rules. Where each rule has the form of:\n"
+                        "\n"
+                        "class ,vendor ,product ,version ,allow\n"
+                        "\n"
+                        "Use -1 for class /vendor /product /version to accept any value.\n"
+                        "\n"
+                        "And the rules themselves are concatenated like this:\n"
+                        "\n"
+                        "rule1 |rule2 |rule3\n"
+                        "\n"
+                        "The default setting filters out HID (class 0x03) USB devices from auto connect and auto"
+                        " connects anything else. Note the explicit allow rule at the end, this is necessary since"
+                        " by default all devices without a matching filter rule will not auto-connect.\n"
+                        "\n"
+                        "Filter strings in this format can be easily created with the RHEV-M USB filter editor tool.\n"
+                        "\n"
+                        "Default value: \"0x03,-1,-1,-1,0|-1,-1,-1,-1,1\""));
+}
+
+static void
 on_app_mode_combobox_changed(GtkComboBox *widget G_GNUC_UNUSED, gpointer user_data)
 {
     g_info("%s", (const char*)__func__);
@@ -649,6 +677,12 @@ fill_gui(ConnectSettingsDialogData *dialog_data)
         gtk_entry_set_text(GTK_ENTRY(dialog_data->spice_monitor_mapping_entry),
                            p_conn_data->spice_settings.monitor_mapping);
     }
+    if (p_conn_data->spice_settings.usb_auto_connect_filter)
+        gtk_entry_set_text(GTK_ENTRY(dialog_data->spice_usb_auto_connect_filter_entry),
+                           p_conn_data->spice_settings.usb_auto_connect_filter);
+    if (p_conn_data->spice_settings.usb_redirect_on_connect)
+        gtk_entry_set_text(GTK_ENTRY(dialog_data->spice_usb_redirect_on_connect_entry),
+                           p_conn_data->spice_settings.usb_redirect_on_connect);
 
     /// RDP settings
     UINT32 freerdp_pix_index = (g_strcmp0(p_conn_data->rdp_settings.rdp_pixel_format_str, "BGRA32") == 0) ? 1 : 0;
@@ -808,6 +842,10 @@ take_from_gui(ConnectSettingsDialogData *dialog_data)
             gtk_toggle_button_get_active((GtkToggleButton *)dialog_data->spice_full_screen_check_btn);
     update_string_safely(&conn_data->spice_settings.monitor_mapping,
                          gtk_entry_get_text(GTK_ENTRY(dialog_data->spice_monitor_mapping_entry)));
+    update_string_safely(&conn_data->spice_settings.usb_auto_connect_filter,
+                         gtk_entry_get_text(GTK_ENTRY(dialog_data->spice_usb_auto_connect_filter_entry)));
+    update_string_safely(&conn_data->spice_settings.usb_redirect_on_connect,
+                         gtk_entry_get_text(GTK_ENTRY(dialog_data->spice_usb_redirect_on_connect_entry)));
 
     /// RDP settings
     update_string_safely(&conn_data->rdp_settings.rdp_pixel_format_str,
@@ -960,6 +998,14 @@ GtkResponseType remote_viewer_start_settings_dialog(RemoteViewer *p_remote_viewe
             get_widget_from_builder(dialog_data.builder, "spice_monitor_mapping_entry");
     dialog_data.btn_show_monitor_config_spice =
             get_widget_from_builder(dialog_data.builder, "btn_show_monitor_config_spice");
+    dialog_data.spice_usb_auto_connect_filter_entry =
+            get_widget_from_builder(dialog_data.builder, "spice_usb_auto_connect_filter_entry");
+    dialog_data.spice_usb_redirect_on_connect_entry =
+            get_widget_from_builder(dialog_data.builder, "spice_usb_redirect_on_connect_entry");
+    dialog_data.btn_show_usb_filter_tooltip_spice_0 =
+            get_widget_from_builder(dialog_data.builder, "btn_show_usb_filter_tooltip_spice_0");
+    dialog_data.btn_show_usb_filter_tooltip_spice_1 =
+            get_widget_from_builder(dialog_data.builder, "btn_show_usb_filter_tooltip_spice_1");
 
     // rdp settings
     dialog_data.rdp_image_pixel_format_combobox =
@@ -1102,6 +1148,10 @@ GtkResponseType remote_viewer_start_settings_dialog(RemoteViewer *p_remote_viewe
                      G_CALLBACK(btn_show_monitor_config_clicked), &dialog_data);
     g_signal_connect(dialog_data.btn_show_monitor_config_rdp, "clicked",
                      G_CALLBACK(btn_show_monitor_config_clicked), &dialog_data);
+    g_signal_connect(dialog_data.btn_show_usb_filter_tooltip_spice_0, "clicked",
+                     G_CALLBACK(btn_show_usb_filter_tooltip_spice_clicked), &dialog_data);
+    g_signal_connect(dialog_data.btn_show_usb_filter_tooltip_spice_1, "clicked",
+                     G_CALLBACK(btn_show_usb_filter_tooltip_spice_clicked), &dialog_data);
 
     dialog_data.on_app_mode_combobox_changed_id =
             g_signal_connect(dialog_data.app_mode_combobox, "changed",

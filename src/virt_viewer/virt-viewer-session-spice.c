@@ -1288,6 +1288,26 @@ void virt_viewer_session_spice_get_stats(VirtViewerSessionSpice *self, SpiceRead
     // g_info("!!! spice_read_bytes->bytes_display: %lu", spice_read_bytes->bytes_display);
 }
 
+void virt_viewer_session_spice_set_params(VirtViewerSessionSpice *self, ConnectSettingsData *p_conn_data)
+{
+    if (p_conn_data == NULL)
+        return;
+
+    // Set some session parameters
+    SpiceSession *session = self->priv->session;
+    SpiceUsbDeviceManager *manager = spice_usb_device_manager_get(session, NULL);
+    if (manager) {
+        //g_object_set(manager, "auto-connect",
+        //             p_conn_data->spice_settings.auto_connect_plugged_usb, NULL);
+        if (p_conn_data->spice_settings.usb_auto_connect_filter)
+            g_object_set(manager, "auto-connect-filter",
+                    p_conn_data->spice_settings.usb_auto_connect_filter, NULL);
+        if (p_conn_data->spice_settings.usb_redirect_on_connect)
+        g_object_set(manager, "redirect-on-connect",
+                p_conn_data->spice_settings.usb_redirect_on_connect, NULL);
+    }
+}
+
 static void
 virt_viewer_session_spice_smartcard_insert(VirtViewerSession *session G_GNUC_UNUSED)
 {

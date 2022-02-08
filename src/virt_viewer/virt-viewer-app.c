@@ -1038,6 +1038,7 @@ virt_viewer_app_create_session(VirtViewerApp *self, const gchar *type, GError **
         virt_viewer_app_trace(self, "Guest %s has a %s display",
                               priv->guest_name, type);
         priv->session = virt_viewer_session_spice_new(self, window);
+        virt_viewer_session_spice_set_params(VIRT_VIEWER_SESSION_SPICE(priv->session), self->p_conn_data);
     } else
 #endif
     {
@@ -1409,8 +1410,11 @@ gboolean virt_viewer_connect_attempt(VirtViewerApp *self)
     return FALSE;
 }
 
-RemoteViewerState virt_viewer_app_instant_start(VirtViewerApp *self)
+RemoteViewerState virt_viewer_app_instant_start(VirtViewerApp *self, ConnectSettingsData *p_conn_data)
 {
+    virt_viewer_app_set_spice_session_data(self, p_conn_data);
+    virt_viewer_app_set_window_name(self, p_conn_data->vm_verbose_name, p_conn_data->user);
+
     self->priv->is_polling_enabled = TRUE;
     virt_viewer_connect_attempt(self);
 
@@ -1865,19 +1869,18 @@ void virt_viewer_app_set_app_pointer(VirtViewerApp *self, GtkApplication *applic
     self->application_p = application;
 }
 
-void virt_viewer_app_set_spice_session_data(VirtViewerApp *self, const ConnectSettingsData *p_conn_data)
+void virt_viewer_app_set_spice_session_data(VirtViewerApp *self, ConnectSettingsData *p_conn_data)
 {
     g_info("%s port %i\n", (const char *)__func__, p_conn_data->port);
     g_info("%s user %s\n", (const char *)__func__, p_conn_data->user);
+
+    self->p_conn_data = p_conn_data;
 
     gchar *guri = g_strdup_printf("spice://%s:%i", p_conn_data->ip, p_conn_data->port);
     g_strstrip(guri);
     g_object_set(self, "guri", guri, NULL);
     g_free(guri);
 
-    //VirtViewerSessionSpice *spice_session =
-    //        VIRT_VIEWER_SESSION_SPICE(virt_viewer_app_get_session(self));
-    //virt_viewer_session_spice_set_credentials(spice_session, user, password);
     // remember credentials
     g_object_set_data_full(G_OBJECT(self), "username", g_strdup(p_conn_data->user), (GDestroyNotify) g_free);
     g_object_set_data_full(G_OBJECT(self), "password", g_strdup(p_conn_data->password), (GDestroyNotify) g_free);
