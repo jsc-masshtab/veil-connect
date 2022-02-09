@@ -133,12 +133,7 @@ static void
 on_ws_cmd_received(gpointer data G_GNUC_UNUSED, const gchar *cmd, NativeRdpData *native_rdp_data)
 {
     if (g_strcmp0(cmd, "DISCONNECT") == 0) {
-#if  defined(_WIN32)
-        TerminateProcess(native_rdp_data->pid, 0);
-#else
-        (void)cmd;
-        (void)native_rdp_data;
-#endif
+        terminate_process(native_rdp_data->pid);
     }
 }
 

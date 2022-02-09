@@ -237,6 +237,8 @@ VmRemoteProtocol util_str_to_remote_protocol(const gchar *protocol_str);
 const gchar *util_remote_protocol_to_str(VmRemoteProtocol protocol);
 
 gchar *util_get_hostname(void);
+
+void terminate_process(GPid pid);
 #endif
 
 /*

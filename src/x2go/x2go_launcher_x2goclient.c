@@ -200,6 +200,14 @@ static gboolean x2go_launcher_setup_client()
     return TRUE;
 }
 
+static void
+on_ws_cmd_received(gpointer data G_GNUC_UNUSED, const gchar *cmd, X2goData *x2go_data)
+{
+    if (g_strcmp0(cmd, "DISCONNECT") == 0) {
+        terminate_process(x2go_data->pid);
+    }
+}
+
 void x2go_launcher_start_qt_client(const gchar *user, const gchar *password, const ConnectSettingsData *con_data)
 {
     X2goData data = {};
@@ -220,7 +228,12 @@ void x2go_launcher_start_qt_client(const gchar *user, const gchar *password, con
         return;
     }
 
+    gulong ws_cmd_received_handle = g_signal_connect(get_vdi_session_static(), "ws-cmd-received",
+                                                     G_CALLBACK(on_ws_cmd_received), &data);
+
     create_loop_and_launch(&data.loop);
+
+    g_signal_handler_disconnect(get_vdi_session_static(), ws_cmd_received_handle);
 
     // Release resources
     g_free(data.user);

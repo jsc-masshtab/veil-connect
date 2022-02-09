@@ -1298,6 +1298,15 @@ gchar *util_get_hostname()
     return hostname;
 }
 
+void terminate_process(GPid pid)
+{
+#if  defined(_WIN32)
+    TerminateProcess(pid, 0);
+#else
+    kill(pid, 9);
+#endif
+}
+
 /*
  * Local variables:
  *  c-indent-level: 4
