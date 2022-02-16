@@ -17,7 +17,8 @@
 
 #include "remote-viewer.h"
 
-GtkResponseType remote_viewer_start_settings_dialog(RemoteViewer *p_remote_viewer, GtkWindow *parent);
+GtkResponseType remote_viewer_start_settings_dialog(ConnectSettingsData *conn_data,
+                                                    AppUpdater *app_updater, GtkWindow *parent);
 
 
 #endif // REMOTE_VIEWER_START_SETTINGS_H

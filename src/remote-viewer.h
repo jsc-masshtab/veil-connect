@@ -16,6 +16,12 @@
 #include "controller_client/controller_manager.h"
 #include "messenger.h"
 #include "net_speedometer.h"
+#include "remote-viewer-connect.h"
+#include "x2go/x2go_launcher.h"
+#include "rdp_viewer.h"
+#if defined(_WIN32) || defined(__MACH__)
+#include "native_rdp_launcher.h"
+#endif
 
 G_BEGIN_DECLS
 
@@ -35,12 +41,21 @@ typedef struct {
 
     ConnectSettingsData conn_data; // Структура, в которой содержаться текущие настройкм приложения
 
+    RemoteViewerConnect *remote_viewer_connect;
+
+    RdpViewer *rdp_viewer;
     VirtViewerApp *virt_viewer_obj;
+    X2goLauncher *x2go_launcher;
+#if defined(_WIN32) || defined(__MACH__)
+    NativeRdpLauncher *native_rdp_launcher;
+#endif
     AppUpdater *app_updater;
     VeilMessenger *veil_messenger;
 
     VdiManager *vdi_manager;
     ControllerManager *controller_manager;
+
+    GtkCssProvider *css_provider;
 
 } RemoteViewer;
 
@@ -50,7 +65,7 @@ typedef struct {
 
 GType remote_viewer_get_type(void);
 
-RemoteViewer *remote_viewer_new(void);
+RemoteViewer *remote_viewer_new(gboolean unique_app);
 void remote_viewer_free_resources(RemoteViewer *self);
 
 G_END_DECLS

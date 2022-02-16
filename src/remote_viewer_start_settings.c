@@ -120,15 +120,17 @@ typedef struct{
 
     GtkWidget *app_mode_combobox;
     GtkWidget *vm_await_time_spinbox;
+    GtkWidget *unique_app_check_btn;
 
     // control buttons
     GtkWidget *bt_cancel;
     GtkWidget *bt_ok;
 
-    RemoteViewer *p_remote_viewer;
-
     // signal handler ids
     gulong on_app_mode_combobox_changed_id;
+
+    ConnectSettingsData *p_conn_data;
+    AppUpdater *p_app_updater;
 
 } ConnectSettingsDialogData;
 
@@ -446,7 +448,7 @@ on_app_updater_status_changed(gpointer data G_GNUC_UNUSED,
         gtk_spinner_stop((GtkSpinner *) dialog_data->check_updates_spinner);
 
         // show the last output if there was an error
-        AppUpdater *app_updater = dialog_data->p_remote_viewer->app_updater;
+        AppUpdater *app_updater = dialog_data->p_app_updater;
         gchar *last_process_output = app_updater_get_last_process_output(app_updater);
 
         if (app_updater->_last_exit_status != 0 && last_process_output ) {
@@ -491,7 +493,7 @@ static void
 btn_get_app_updates_clicked_cb(GtkButton *button G_GNUC_UNUSED, ConnectSettingsDialogData *dialog_data)
 {
     g_info("%s", (const char *)__func__);
-    AppUpdater *app_updater = dialog_data->p_remote_viewer->app_updater;
+    AppUpdater *app_updater = dialog_data->p_app_updater;
     if (app_updater_is_getting_updates(app_updater))
         return;
 
@@ -596,16 +598,10 @@ on_app_mode_combobox_changed(GtkComboBox *widget G_GNUC_UNUSED, gpointer user_da
         gtk_spin_button_set_value(GTK_SPIN_BUTTON(dialog_data->port_spinbox), 443);
 }
 
-static ConnectSettingsData *
-get_conn_data(ConnectSettingsDialogData *dialog_data)
-{
-    return &dialog_data->p_remote_viewer->conn_data;
-}
-
 static void
 fill_gui(ConnectSettingsDialogData *dialog_data)
 {
-    ConnectSettingsData *p_conn_data = get_conn_data(dialog_data);
+    ConnectSettingsData *p_conn_data = dialog_data->p_conn_data;
 
     update_gui_according_to_app_mode(dialog_data, p_conn_data->global_app_mode);
 
@@ -622,6 +618,7 @@ fill_gui(ConnectSettingsDialogData *dialog_data)
     g_signal_handler_unblock(dialog_data->app_mode_combobox, handler_id);
 
     gtk_spin_button_set_value(GTK_SPIN_BUTTON(dialog_data->vm_await_time_spinbox), p_conn_data->vm_await_timeout);
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(dialog_data->unique_app_check_btn), p_conn_data->unique_app);
 
     /// General settings
     // domain
@@ -789,7 +786,7 @@ fill_gui(ConnectSettingsDialogData *dialog_data)
 static void
 take_from_gui(ConnectSettingsDialogData *dialog_data)
 {
-    ConnectSettingsData *conn_data = get_conn_data(dialog_data);
+    ConnectSettingsData *conn_data = dialog_data->p_conn_data;
 
     // Service settings
     update_string_safely(&conn_data->windows_updates_url,
@@ -798,7 +795,7 @@ take_from_gui(ConnectSettingsDialogData *dialog_data)
             gtk_combo_box_get_active_id(GTK_COMBO_BOX(dialog_data->app_mode_combobox)));
     conn_data->vm_await_timeout =
             gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(dialog_data->vm_await_time_spinbox));
-
+    conn_data->unique_app = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(dialog_data->unique_app_check_btn));
     // Main
     // domain
     update_string_safely(&conn_data->domain, gtk_entry_get_text(GTK_ENTRY(dialog_data->domain_entry)));
@@ -954,7 +951,7 @@ static void
 ok_button_clicked_cb(GtkButton *button G_GNUC_UNUSED, ConnectSettingsDialogData *dialog_data)
 {
     // fill p_conn_data from gui
-    gboolean is_success = check_parameters(get_conn_data(dialog_data), dialog_data);
+    gboolean is_success = check_parameters(dialog_data->p_conn_data, dialog_data);
 
     // Close the window if settings are ok
     if (is_success) {
@@ -964,11 +961,13 @@ ok_button_clicked_cb(GtkButton *button G_GNUC_UNUSED, ConnectSettingsDialogData 
     }
 }
 
-GtkResponseType remote_viewer_start_settings_dialog(RemoteViewer *p_remote_viewer, GtkWindow *parent)
+GtkResponseType remote_viewer_start_settings_dialog(ConnectSettingsData *conn_data,
+                                                    AppUpdater *app_updater, GtkWindow *parent)
 {
     ConnectSettingsDialogData dialog_data = {};
 
-    dialog_data.p_remote_viewer = p_remote_viewer;
+    dialog_data.p_conn_data = conn_data;
+    dialog_data.p_app_updater = app_updater;
     dialog_data.dialog_window_response = GTK_RESPONSE_OK;
 
     // gui widgets
@@ -1096,10 +1095,9 @@ GtkResponseType remote_viewer_start_settings_dialog(RemoteViewer *p_remote_viewe
     dialog_data.btn_open_doc = get_widget_from_builder(dialog_data.builder, "btn_open_doc");
 
     // В этот момент может происходить процесс обновления софта.  Setup gui
-    AppUpdater *app_updater = dialog_data.p_remote_viewer->app_updater;
-    if (app_updater_is_getting_updates(app_updater)) {
+    if (app_updater_is_getting_updates(dialog_data.p_app_updater)) {
 
-        gchar *app_updater_cur_status_msg = app_updater_get_cur_status_msg(app_updater);
+        gchar *app_updater_cur_status_msg = app_updater_get_cur_status_msg(dialog_data.p_app_updater);
         gtk_label_set_text(GTK_LABEL(dialog_data.check_updates_label), app_updater_cur_status_msg);
         free_memory_safely(&app_updater_cur_status_msg);
         gtk_spinner_start((GtkSpinner *) dialog_data.check_updates_spinner);
@@ -1107,8 +1105,8 @@ GtkResponseType remote_viewer_start_settings_dialog(RemoteViewer *p_remote_viewe
     }
 
     dialog_data.app_mode_combobox = get_widget_from_builder(dialog_data.builder, "app_mode_combobox");
-    dialog_data.vm_await_time_spinbox = get_widget_from_builder(
-            dialog_data.builder, "vm_await_time_spinbox");
+    dialog_data.vm_await_time_spinbox = get_widget_from_builder(dialog_data.builder, "vm_await_time_spinbox");
+    dialog_data.unique_app_check_btn = get_widget_from_builder(dialog_data.builder, "unique_app_check_btn");
 
     // Signals
     g_signal_connect_swapped(dialog_data.window, "delete-event", G_CALLBACK(window_deleted_cb), &dialog_data);
@@ -1157,10 +1155,10 @@ GtkResponseType remote_viewer_start_settings_dialog(RemoteViewer *p_remote_viewe
             g_signal_connect(dialog_data.app_mode_combobox, "changed",
                              G_CALLBACK(on_app_mode_combobox_changed), &dialog_data);
 
-    gulong st_msg_hdle = g_signal_connect(p_remote_viewer->app_updater, "status-msg-changed",
-                                          G_CALLBACK(on_app_updater_status_msg_changed),&dialog_data);
-    gulong state_hdle = g_signal_connect(p_remote_viewer->app_updater, "state-changed",
-                                         G_CALLBACK(on_app_updater_status_changed),&dialog_data);
+    gulong st_msg_hdle = g_signal_connect(dialog_data.p_app_updater, "status-msg-changed",
+                                          G_CALLBACK(on_app_updater_status_msg_changed), &dialog_data);
+    gulong state_hdle = g_signal_connect(dialog_data.p_app_updater, "state-changed",
+                                         G_CALLBACK(on_app_updater_status_changed), &dialog_data);
 
     // show window
     gtk_window_set_transient_for(GTK_WINDOW(dialog_data.window), parent);
@@ -1175,11 +1173,11 @@ GtkResponseType remote_viewer_start_settings_dialog(RemoteViewer *p_remote_viewe
     create_loop_and_launch(&dialog_data.loop);
 
     // save
-    settings_data_save_all(get_conn_data(&dialog_data));
+    settings_data_save_all(dialog_data.p_conn_data);
 
     // disconnect signals from external sources
-    g_signal_handler_disconnect(p_remote_viewer->app_updater, st_msg_hdle);
-    g_signal_handler_disconnect(p_remote_viewer->app_updater, state_hdle);
+    g_signal_handler_disconnect(dialog_data.p_app_updater, st_msg_hdle);
+    g_signal_handler_disconnect(dialog_data.p_app_updater, state_hdle);
 
     // clear
     usb_selector_widget_free(dialog_data.usb_selector_widget);

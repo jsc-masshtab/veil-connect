@@ -16,39 +16,41 @@
 #include "remote-viewer-util.h"
 #include "settingsfile.h"
 #include "settings_data.h"
+#include "x2go_launcher.h"
+#include "vdi_event.h"
 
 
 #define MAX_PARAM_AMOUNT 30
 
-typedef struct
+
+static void x2go_launcher_clear(X2goLauncher *self)
 {
-    GMainLoop *loop;
+    // Release resources
+    g_free(self->qt_client_data.user);
+    g_free(self->qt_client_data.password);
 
-    GPid pid;
-    gboolean is_launched;
-
-    gchar *user;
-    gchar *password;
-    const ConnectSettingsData *p_data;
-
-} X2goData;
+    if (self->send_signal_upon_job_finish)
+        g_signal_emit_by_name(self, "job-finished");
+}
 
 // Вызывается когда процесс завершился
 static void
-x2go_launcher_cb_child_watch( GPid  pid, gint status, X2goData *data )
+x2go_launcher_cb_child_watch( GPid pid, gint status, X2goLauncher *self )
 {
     g_info("FINISHED. %s Status: %i", __func__, status);
     /* Close pid */
     g_spawn_close_pid( pid );
-    data->is_launched = FALSE;
-    data->pid = 0;
+    self->qt_client_data.is_launched = FALSE;
+    self->qt_client_data.pid = 0;
 
-    shutdown_loop(data->loop);
+    x2go_launcher_clear(self);
+
+    vdi_event_vm_changed_notify(vdi_session_get_current_vm_id(), VDI_EVENT_TYPE_VM_DISCONNECTED);
 }
 
-static gboolean x2go_launcher_fill_settings_file(X2goData *data, const gchar *x2go_data_file_name)
+static gboolean x2go_launcher_fill_settings_file(X2goLauncher *self, const gchar *x2go_data_file_name)
 {
-    const ConnectSettingsData *conn_data = data->p_data;
+    const ConnectSettingsData *conn_data = self->p_conn_data;
 
     GKeyFile *x2go_keyfile = g_key_file_new();
     GError *error = NULL;
@@ -71,8 +73,8 @@ static gboolean x2go_launcher_fill_settings_file(X2goData *data, const gchar *x2
     }
     if (conn_data->ip)
         g_key_file_set_value(x2go_keyfile, group_name, "host", conn_data->ip);
-    if (data->user)
-        g_key_file_set_value(x2go_keyfile, group_name, "user", data->user);
+    if (self->qt_client_data.user)
+        g_key_file_set_value(x2go_keyfile, group_name, "user", self->qt_client_data.user);
     if (conn_data->x2Go_settings.x2go_session_type)
         g_key_file_set_value(x2go_keyfile, group_name, "command", conn_data->x2Go_settings.x2go_session_type);
     g_key_file_set_integer(x2go_keyfile, group_name, "fullscreen", conn_data->x2Go_settings.full_screen);
@@ -94,7 +96,7 @@ static gboolean x2go_launcher_fill_settings_file(X2goData *data, const gchar *x2
     return TRUE;
 }
 
-static gboolean x2go_launcher_launch_process(X2goData *data, gchar **error_msg)
+static gboolean x2go_launcher_launch_process(X2goLauncher *self, gchar **error_msg)
 {
     // Create base settings file
     // Open template settings file
@@ -129,7 +131,7 @@ static gboolean x2go_launcher_launch_process(X2goData *data, gchar **error_msg)
     fclose(destFile);
 
     // Fill settings file
-    if(!x2go_launcher_fill_settings_file(data, x2go_data_file_name)) {
+    if(!x2go_launcher_fill_settings_file(self, x2go_data_file_name)) {
         *error_msg = g_strdup_printf(_("Unable to prepare x2go config file"));
         return FALSE;
     }
@@ -149,15 +151,15 @@ static gboolean x2go_launcher_launch_process(X2goData *data, gchar **error_msg)
 
     /* Spawn child process */
     GError *error = NULL;
-    data->is_launched = g_spawn_async(NULL, argv, NULL,
+    self->qt_client_data.is_launched = g_spawn_async(NULL, argv, NULL,
             G_SPAWN_DO_NOT_REAP_CHILD | G_SPAWN_SEARCH_PATH , NULL,
-            NULL, &data->pid, &error);
+            NULL, &self->qt_client_data.pid, &error);
 
     for (guint i = 0; i < (sizeof(argv) / sizeof(gchar *)); i++) {
         g_free(argv[i]);
     }
 
-    if(!data->is_launched || data->pid <= 0) {
+    if(!self->qt_client_data.is_launched || self->qt_client_data.pid <= 0) {
         if (error) {
             g_warning("%s", error->message);
             g_clear_error(&error);
@@ -166,9 +168,11 @@ static gboolean x2go_launcher_launch_process(X2goData *data, gchar **error_msg)
         return FALSE;
     }
 
+    vdi_event_vm_changed_notify(vdi_session_get_current_vm_id(), VDI_EVENT_TYPE_VM_CONNECTED);
+
     /* Add watch function to catch termination of the process. This function
      * will clean any remnants of process. */
-    g_child_watch_add(data->pid, (GChildWatchFunc)x2go_launcher_cb_child_watch, data);
+    g_child_watch_add(self->qt_client_data.pid, (GChildWatchFunc)x2go_launcher_cb_child_watch, self);
 
     return TRUE;
 }
@@ -200,42 +204,21 @@ static gboolean x2go_launcher_setup_client()
     return TRUE;
 }
 
-static void
-on_ws_cmd_received(gpointer data G_GNUC_UNUSED, const gchar *cmd, X2goData *x2go_data)
+void x2go_launcher_start_qt_client(X2goLauncher *self, const gchar *user, const gchar *password)
 {
-    if (g_strcmp0(cmd, "DISCONNECT") == 0) {
-        terminate_process(x2go_data->pid);
-    }
-}
+    self->qt_client_data.user = g_strdup(user);
+    self->qt_client_data.password = g_strdup(password);
 
-void x2go_launcher_start_qt_client(const gchar *user, const gchar *password, const ConnectSettingsData *con_data)
-{
-    X2goData data = {};
-    data.user = g_strdup(user);
-    data.password = g_strdup(password);
-    data.p_data = con_data;
-
-    // При закрытии окна проыесс клиента x2go не завершается, из-за чего пользователь не
+    // При закрытии окна процесс клиента x2go не завершается, из-за чего пользователь не
     // может вернутся к вбору пулов. Поэтому ключаем настройку для заввершения процесса при
     // закрытии окна
     x2go_launcher_setup_client();
 
     // Process
     g_autofree gchar *error_msg = NULL;
-    if (!x2go_launcher_launch_process(&data, &error_msg)) {
+    if (!x2go_launcher_launch_process(self, &error_msg)) {
         g_warning("%s", error_msg);
         show_msg_box_dialog(NULL, error_msg);
-        return;
+        g_signal_emit_by_name(self, "job-finished");
     }
-
-    gulong ws_cmd_received_handle = g_signal_connect(get_vdi_session_static(), "ws-cmd-received",
-                                                     G_CALLBACK(on_ws_cmd_received), &data);
-
-    create_loop_and_launch(&data.loop);
-
-    g_signal_handler_disconnect(get_vdi_session_static(), ws_cmd_received_handle);
-
-    // Release resources
-    g_free(data.user);
-    g_free(data.password);
 }

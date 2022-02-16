@@ -997,6 +997,8 @@ msg_box_parent_hidden(GtkWidget *widget G_GNUC_UNUSED, gpointer user_data)
 
 void show_msg_box_dialog(GtkWindow *parent, const gchar *message)
 {
+    g_info("%s", message);
+
     GtkWidget *dialog_msg = gtk_message_dialog_new(parent,
                                                    GTK_DIALOG_MODAL | GTK_DIALOG_DESTROY_WITH_PARENT,
                                                    GTK_MESSAGE_WARNING,

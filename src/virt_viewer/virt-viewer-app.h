@@ -63,6 +63,10 @@ typedef struct {
     void (*deactivated) (VirtViewerApp *self, gboolean connect_error);
     gboolean (*open_connection)(VirtViewerApp *self, int *fd);
     void (*add_option_entries)(VirtViewerApp *self, GOptionContext *context, GOptionGroup *group);
+
+    /* signals */
+    void (*job_finished)(VirtViewerApp *self);
+    void (*quit_requested)(VirtViewerApp *self);
 } VirtViewerAppClass;
 
 GType virt_viewer_app_get_type (void);
@@ -120,19 +124,15 @@ void virt_viewer_app_hide_all_windows_forced(VirtViewerApp *app);
 
 void virt_viewer_app_set_window_name(VirtViewerApp *app, const gchar *vm_verbose_name, const gchar *user_name);
 
-void virt_viewer_app_stop(VirtViewerApp *self);
+void virt_viewer_app_stop(VirtViewerApp *self, const gchar *signal_upon_job_finish);
 
 //
 void virt_viewer_app_deactivate(VirtViewerApp *self, gboolean connect_error);
-void virt_viewer_set_next_app_state(VirtViewerApp *self, RemoteViewerState next_app_state);
-RemoteViewerState virt_viewer_get_next_app_state(VirtViewerApp *self);
 
 void virt_viewer_app_enable_auto_clipboard(VirtViewerApp *self, gboolean enabled);
 
-void virt_viewer_app_start_loop(VirtViewerApp *self);
-
 gboolean virt_viewer_connect_attempt(VirtViewerApp *self);
-RemoteViewerState virt_viewer_app_instant_start(VirtViewerApp *self, ConnectSettingsData *p_conn_data);
+void virt_viewer_app_instant_start(VirtViewerApp *self, ConnectSettingsData *p_conn_data);
 
 
 G_END_DECLS

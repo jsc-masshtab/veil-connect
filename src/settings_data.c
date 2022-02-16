@@ -19,6 +19,8 @@
  */
 void settings_data_read_all(ConnectSettingsData *data)
 {
+    data->was_read_from_file = TRUE;
+
     settings_data_clear(data);
 
     data->redirect_time_zone =
@@ -87,6 +89,7 @@ void settings_data_read_all(ConnectSettingsData *data)
     data->windows_updates_url = read_str_from_ini_file_default("ServiceSettings",
             "windows_updates_url", VEIL_CONNECT_WIN_RELEASE_URL);
     data->vm_await_timeout = read_int_from_ini_file("ServiceSettings", "vm_await_timeout", 65);
+    data->unique_app = read_int_from_ini_file("ServiceSettings", "unique_app", TRUE);
 
     // cur_remote_protocol_index
     VmRemoteProtocol protocol = (VmRemoteProtocol)read_int_from_ini_file("General",
@@ -101,6 +104,9 @@ void settings_data_read_all(ConnectSettingsData *data)
  */
 void settings_data_save_all(ConnectSettingsData *data)
 {
+    if (!data->was_read_from_file)
+        return;
+
     // Main
     write_int_to_ini_file("General", "redirect_time_zone", data->redirect_time_zone);
     // Direct
@@ -172,6 +178,7 @@ void settings_data_save_all(ConnectSettingsData *data)
     write_int_to_ini_file("ServiceSettings", "global_app_mode", data->global_app_mode);
     write_str_to_ini_file("ServiceSettings", "windows_updates_url", data->windows_updates_url);
     write_int_to_ini_file("ServiceSettings", "vm_await_timeout", data->vm_await_timeout);
+    write_int_to_ini_file("ServiceSettings", "unique_app", data->unique_app);
 
     g_key_file_save_to_file(get_ini_keyfile(), get_ini_file_name(), NULL);
 }

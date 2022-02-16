@@ -46,6 +46,33 @@ static void controller_manager_class_init(ControllerManagerClass *klass )
 {
     GObjectClass *gobject_class = G_OBJECT_CLASS(klass);
     gobject_class->finalize = controller_manager_finalize;
+
+    // signals
+    g_signal_new("logged-out",
+                 G_OBJECT_CLASS_TYPE(gobject_class),
+                 G_SIGNAL_RUN_FIRST,
+                 G_STRUCT_OFFSET(ControllerManagerClass, logged_out),
+                 NULL, NULL,
+                 g_cclosure_marshal_VOID__STRING,
+                 G_TYPE_NONE,
+                 1,
+                 G_TYPE_STRING);
+    g_signal_new("connect-to-vm-requested",
+                 G_OBJECT_CLASS_TYPE(gobject_class),
+                 G_SIGNAL_RUN_FIRST,
+                 G_STRUCT_OFFSET(ControllerManagerClass, connect_to_vm_requested),
+                 NULL, NULL,
+                 g_cclosure_marshal_VOID__VOID,
+                 G_TYPE_NONE,
+                 0);
+    g_signal_new("quit-requested",
+                 G_OBJECT_CLASS_TYPE(gobject_class),
+                 G_SIGNAL_RUN_FIRST,
+                 G_STRUCT_OFFSET(ControllerManagerClass, quit_requested),
+                 NULL, NULL,
+                 g_cclosure_marshal_VOID__VOID,
+                 G_TYPE_NONE,
+                 0);
 }
 
 static void controller_manager_set_status(ControllerManager *self, const gchar *message, gboolean is_error_msg)
@@ -209,9 +236,8 @@ static void on_controller_session_get_vm_data_task_finished(GObject *source_obje
         update_string_safely(&self->p_conn_data->password, vm_data->vm_password);
         self->p_conn_data->port = vm_data->vm_port;
         //
-        self->ci.response = TRUE;
-        self->ci.next_app_state = APP_STATE_CONNECT_TO_VM;
-        shutdown_loop(self->ci.loop);
+        controller_manager_finish_job(self);
+        g_signal_emit_by_name(self, "connect-to-vm-requested");
     } else {
         const gchar *message = vm_data->message ? vm_data->message : err_msg;
         controller_manager_set_status(self, message, TRUE);
@@ -251,10 +277,8 @@ static void on_btn_logout_clicked(GtkButton *button G_GNUC_UNUSED, ControllerMan
 
     // logout
     controller_session_logout();
-
-    self->ci.response = FALSE;
-    self->ci.next_app_state = APP_STATE_AUTH_DIALOG;
-    shutdown_loop(self->ci.loop);
+    controller_manager_finish_job(self);
+    g_signal_emit_by_name(self, "logged-out", "");
 }
 
 static void on_btn_cancel_requests_clicked(GtkButton *button G_GNUC_UNUSED, ControllerManager *self G_GNUC_UNUSED)
@@ -267,9 +291,8 @@ static gboolean on_window_deleted_cb(ControllerManager *self)
 {
     g_info("%s", (const char *)__func__);
 
-    self->ci.response = FALSE;
-    self->ci.next_app_state = APP_STATE_EXITING;
-    shutdown_loop(self->ci.loop);
+    controller_manager_finish_job(self);
+    g_signal_emit_by_name(self, "quit-requested");
     return TRUE;
 }
 
@@ -327,10 +350,6 @@ static void controller_manager_init(ControllerManager *self)
 {
     g_info("%s", (const char *) __func__);
 
-    self->ci.response = FALSE;
-    self->ci.loop = NULL;
-    self->ci.next_app_state = APP_STATE_AUTH_DIALOG;
-
     self->builder = remote_viewer_util_load_ui("controller_manager_form.glade");
     self->window = GTK_WIDGET(gtk_builder_get_object(self->builder, "main-window"));
 
@@ -368,8 +387,23 @@ static void controller_manager_init(ControllerManager *self)
             G_CALLBACK(on_vm_verbose_name_entry_activated), self);
 }
 
-RemoteViewerState controller_manager_dialog(ControllerManager *self, ConnectSettingsData *conn_data)
+void controller_manager_finish_job(ControllerManager *self)
 {
+    if (!self->is_active)
+        return;
+
+    gtk_list_store_clear(self->vm_list_store);
+    gtk_widget_hide(self->window);
+
+    self->is_active = FALSE;
+}
+
+void controller_manager_show(ControllerManager *self, ConnectSettingsData *conn_data)
+{
+    if (self->is_active)
+        return;
+    self->is_active = TRUE;
+
     self->p_conn_data = conn_data;
 
     g_autofree gchar *login_time_str = NULL;
@@ -389,14 +423,6 @@ RemoteViewerState controller_manager_dialog(ControllerManager *self, ConnectSett
 
     // Request vm list
     controller_manager_get_vms_async(self);
-
-    create_loop_and_launch(&self->ci.loop);
-
-    // free, hide
-    gtk_list_store_clear(self->vm_list_store);
-    gtk_widget_hide(self->window);
-
-    return self->ci.next_app_state;
 }
 
 ControllerManager *controller_manager_new()

@@ -115,6 +115,8 @@ typedef struct{
 
 
 typedef struct{
+    gboolean was_read_from_file; // at least one time
+
     // General settings
     gchar *user;
     gchar *password;
@@ -140,8 +142,9 @@ typedef struct{
     GlobalAppMode global_app_mode;
     gchar *windows_updates_url;
     int vm_await_timeout;
+    gboolean unique_app;
 
-    // Параметры актуальные тольео во время работы приложения (не гужно сохранять в файл)
+    // Параметры актуальные тольео во время работы приложения (не нужно сохранять в файл)
     gboolean not_connected_to_prev_pool_yet; // Подключалось ли приложение автоматом к предыдущему пулу при старте
 
     VmRemoteProtocol protocol_in_direct_app_mode;

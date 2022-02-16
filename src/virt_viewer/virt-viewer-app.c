@@ -130,13 +130,10 @@ struct _VirtViewerAppPrivate {
     gboolean direct;
     gboolean verbose;
     gboolean enable_accel;
-    gboolean authretry;
     gboolean fullscreen;
     gboolean attach;
     gboolean quitting;
     gboolean kiosk;
-
-    RemoteViewerState next_app_state;
 
     VirtViewerSession *session;
     gboolean active;
@@ -169,8 +166,6 @@ struct _VirtViewerAppPrivate {
     guint reconnect_poll; // id for reconnect timer
     guint conn_try; // Номер попытки подключения
     gboolean is_polling_enabled;
-
-    GMainLoop *virt_viewer_loop;
 };
 
 
@@ -249,15 +244,11 @@ virt_viewer_app_quit(VirtViewerApp *self)
     g_return_if_fail(!self->priv->kiosk);
     VirtViewerAppPrivate *priv = self->priv;
 
-    virt_viewer_app_stop(self);
+    virt_viewer_app_stop(self, "quit-requested");
     priv->quitting = TRUE;
-    priv->next_app_state = APP_STATE_EXITING;
 
     if (priv->session) {
         virt_viewer_session_close(VIRT_VIEWER_SESSION(priv->session));
-        if (priv->connected) {
-            return;
-        }
     }
 }
 
@@ -1330,16 +1321,6 @@ virt_viewer_app_initial_connect(VirtViewerApp *self, GError **error)
     return klass->initial_connect(self, error);
 }
 
-static gboolean
-virt_viewer_app_retryauth(gpointer opaque)
-{
-    VirtViewerApp *self = opaque;
-
-    virt_viewer_app_initial_connect(self, NULL);
-
-    return FALSE;
-}
-
 static void
 virt_viewer_app_default_deactivated(VirtViewerApp *self, gboolean connect_error)
 {
@@ -1361,26 +1342,11 @@ virt_viewer_app_deactivated(VirtViewerApp *self, gboolean connect_error)
     klass->deactivated(self, connect_error);
 }
 
-void virt_viewer_set_next_app_state(VirtViewerApp *self, RemoteViewerState next_app_state)
-{
-    self->priv->next_app_state = next_app_state;
-}
-
-RemoteViewerState virt_viewer_get_next_app_state(VirtViewerApp *self)
-{
-    return self->priv->next_app_state;
-}
-
 void virt_viewer_app_enable_auto_clipboard(VirtViewerApp *self, gboolean enabled)
 {
     VirtViewerSessionSpice *spice_session =
             VIRT_VIEWER_SESSION_SPICE(virt_viewer_app_get_session(self));
     virt_viewer_session_spice_enable_auto_clipboard(spice_session, enabled);
-}
-
-void virt_viewer_app_start_loop(VirtViewerApp *self)
-{
-    create_loop_and_launch(&self->priv->virt_viewer_loop);
 }
 
 /*
@@ -1410,7 +1376,7 @@ gboolean virt_viewer_connect_attempt(VirtViewerApp *self)
     return FALSE;
 }
 
-RemoteViewerState virt_viewer_app_instant_start(VirtViewerApp *self, ConnectSettingsData *p_conn_data)
+void virt_viewer_app_instant_start(VirtViewerApp *self, ConnectSettingsData *p_conn_data)
 {
     virt_viewer_app_set_spice_session_data(self, p_conn_data);
     virt_viewer_app_set_window_name(self, p_conn_data->vm_verbose_name, p_conn_data->user);
@@ -1419,9 +1385,6 @@ RemoteViewerState virt_viewer_app_instant_start(VirtViewerApp *self, ConnectSett
     virt_viewer_connect_attempt(self);
 
     virt_viewer_app_show_main_window(self);
-    virt_viewer_app_start_loop(self);
-
-    return self->priv->next_app_state;
 }
 
 /*
@@ -1435,22 +1398,26 @@ static void virt_viewer_app_stats_data_updated(gpointer data G_GNUC_UNUSED, VmRe
     }
 }
 
-void virt_viewer_app_stop(VirtViewerApp *self)
+void virt_viewer_app_stop(VirtViewerApp *self, const gchar *signal_upon_job_finish)
 {
-    // hide monitor windows
-    virt_viewer_app_hide_all_windows_forced(self);
+    if (self->priv->active) {
+        // hide monitor windows
+        virt_viewer_app_hide_all_windows_forced(self);
 
-    // cancel connect polling
-    self->priv->is_polling_enabled = FALSE;
-    self->priv->conn_try = 0;
-    if (self->priv->reconnect_poll) {
-        g_source_remove(self->priv->reconnect_poll);
-        self->priv->reconnect_poll = 0;
+        // cancel connect polling
+        self->priv->is_polling_enabled = FALSE;
+        self->priv->conn_try = 0;
+        if (self->priv->reconnect_poll) {
+            g_source_remove(self->priv->reconnect_poll);
+            self->priv->reconnect_poll = 0;
+        }
+
+        //deactivate app
+        virt_viewer_app_deactivate(self, FALSE);
+
+        if (signal_upon_job_finish)
+            g_signal_emit_by_name(self, signal_upon_job_finish);
     }
-
-    //deactivate app
-    virt_viewer_app_deactivate(self, FALSE);
-    shutdown_loop(self->priv->virt_viewer_loop);
 }
 
 /*static */void
@@ -1473,13 +1440,9 @@ virt_viewer_app_deactivate(VirtViewerApp *self, gboolean connect_error)
         priv->grabbed = FALSE;
         virt_viewer_app_update_title(self);
 
-        if (priv->authretry) {
-            priv->authretry = FALSE;
-            g_idle_add(virt_viewer_app_retryauth, self);
-        } else {
-            g_clear_object(&priv->session);
-            virt_viewer_app_deactivated(self, connect_error);
-        }
+        g_clear_object(&priv->session);
+        virt_viewer_app_deactivated(self, connect_error);
+
     } else { // If app is not active then just go to preveous state
         virt_viewer_app_deactivated(self, connect_error);
     }
@@ -1528,9 +1491,6 @@ virt_viewer_app_disconnected(VirtViewerSession *session G_GNUC_UNUSED, const gch
 
     g_autofree gchar *err_msg = NULL;
 
-    if (priv->cancelled)
-        priv->authretry = TRUE;
-
     if (connect_error) {
         // Попадание сюда говорит о том, что соединение не удалось
         // Следующая попытка переподключения
@@ -1551,10 +1511,10 @@ virt_viewer_app_disconnected(VirtViewerSession *session G_GNUC_UNUSED, const gch
             gtk_dialog_run(GTK_DIALOG(dialog));
             gtk_widget_destroy(dialog);
             // Stop
-            virt_viewer_app_stop(self);
+            virt_viewer_app_stop(self, "job-finished");
         }
     } else {
-        virt_viewer_app_stop(self);
+        virt_viewer_app_stop(self, "job-finished");
     }
 
     virt_viewer_app_set_usb_options_sensitive(self, FALSE);
@@ -1570,7 +1530,7 @@ static void virt_viewer_app_cancelled(VirtViewerSession *session,
 }
 
 
-static void virt_viewer_app_auth_refused(VirtViewerSession *session,
+static void virt_viewer_app_auth_refused(VirtViewerSession *session G_GNUC_UNUSED,
                                          const char *msg,
                                          VirtViewerApp *self)
 {
@@ -1581,13 +1541,7 @@ static void virt_viewer_app_auth_refused(VirtViewerSession *session,
                               priv->pretty_address, msg);
     vdi_event_conn_error_notify(1, err_msg);
     virt_viewer_app_simple_message_dialog(self, err_msg);
-    virt_viewer_app_stop(self);
-
-    /* if the session implementation cannot retry auth automatically, the
-     * VirtViewerApp needs to schedule a new connection to retry */
-    priv->authretry = (!virt_viewer_session_can_retry_auth(session) &&
-                       !virt_viewer_session_get_file(session));
-
+    virt_viewer_app_stop(self, "job-finished");
 }
 
 static void virt_viewer_app_auth_unsupported(VirtViewerSession *session G_GNUC_UNUSED,
@@ -1598,7 +1552,7 @@ static void virt_viewer_app_auth_unsupported(VirtViewerSession *session G_GNUC_U
     err_msg = g_strdup_printf(_("Unable to authenticate with remote desktop server: %s"), msg);
     vdi_event_conn_error_notify(1, err_msg);
     virt_viewer_app_simple_message_dialog(self, err_msg);
-    virt_viewer_app_stop(self);
+    virt_viewer_app_stop(self, "job-finished");
 }
 
 static void virt_viewer_app_usb_failed(VirtViewerSession *session G_GNUC_UNUSED,
@@ -1941,7 +1895,6 @@ virt_viewer_app_init(VirtViewerApp *self)
 {
     GError *error  = NULL;
     self->priv = GET_PRIVATE(self);
-    self->priv->next_app_state = APP_STATE_CONNECT_TO_VM;
 
     GdkPixbuf *gdkPixbuf =
             gdk_pixbuf_new_from_resource(VIRT_VIEWER_RESOURCE_PREFIX"/icons/content/img/veil-32x32.png", &error);
@@ -2095,6 +2048,22 @@ virt_viewer_app_class_init (VirtViewerAppClass *klass)
                                                         G_PARAM_STATIC_STRINGS));
 
     // signals
+    g_signal_new("job-finished",
+                 G_OBJECT_CLASS_TYPE(object_class),
+                 G_SIGNAL_RUN_FIRST,
+                 G_STRUCT_OFFSET(VirtViewerAppClass, job_finished),
+                 NULL, NULL,
+                 g_cclosure_marshal_VOID__VOID,
+                 G_TYPE_NONE,
+                 0);
+    g_signal_new("quit-requested",
+                 G_OBJECT_CLASS_TYPE(object_class),
+                 G_SIGNAL_RUN_FIRST,
+                 G_STRUCT_OFFSET(VirtViewerAppClass, quit_requested),
+                 NULL, NULL,
+                 g_cclosure_marshal_VOID__VOID,
+                 G_TYPE_NONE,
+                 0);
 }
 
 void
