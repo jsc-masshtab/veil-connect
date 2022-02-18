@@ -468,6 +468,15 @@ on_auth_fail_detected(gpointer data G_GNUC_UNUSED, VdiManager *self)
 }
 
 static void
+on_pool_entitlement_changed(gpointer data G_GNUC_UNUSED, VdiManager *self)
+{
+    if (!self->is_active)
+        return;
+
+    refresh_vdi_pool_data_async(self);
+}
+
+static void
 on_vm_prep_progress_received(gpointer data G_GNUC_UNUSED, int request_id, int progress, const gchar *text,
         VdiManager *self)
 {
@@ -510,6 +519,7 @@ static void vdi_manager_finalize(GObject *object)
     VdiManager *self = VDI_MANAGER(object);
     g_signal_handler_disconnect(get_vdi_session_static(), self->ws_conn_changed_handle);
     g_signal_handler_disconnect(get_vdi_session_static(), self->auth_fail_detected_handle);
+    g_signal_handler_disconnect(get_vdi_session_static(), self->pool_entitlement_changed_handle);
     enable_vm_prep_progress_messages(self, FALSE);
 
     unregister_all_pools(self);
@@ -587,6 +597,8 @@ static void vdi_manager_init(VdiManager *self)
                                                       "ws-conn-changed", G_CALLBACK(on_ws_conn_changed), self);
     self->auth_fail_detected_handle = g_signal_connect(get_vdi_session_static(), "auth-fail-detected",
                                              G_CALLBACK(on_auth_fail_detected), self);
+    self->pool_entitlement_changed_handle = g_signal_connect(get_vdi_session_static(),
+            "pool-entitlement-changed", G_CALLBACK(on_pool_entitlement_changed), self);
 }
 
 void vdi_manager_finish_job(VdiManager *self)
