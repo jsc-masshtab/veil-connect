@@ -54,6 +54,7 @@ struct _VdiManager
 
     gulong ws_conn_changed_handle;
     gulong auth_fail_detected_handle;
+    gulong pool_entitlement_changed_handle;
     gulong vm_prep_progress_handle;
 
     int current_vm_request_id;

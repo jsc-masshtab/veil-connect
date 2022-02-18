@@ -45,6 +45,15 @@ static const gchar *vdi_ws_client_vi_event_to_str(VdiEventType vd_event_type)
     }
 }
 
+static void vdi_ws_client_parse_vm_prep_and_notify(JsonObject *root_object)
+{
+    // Сообщение о прогрессе подготовки ВМ перед выдачей тонкому клиенту
+    int request_id = (int)json_object_get_int_member_safely(root_object, "request_id");
+    int progress = (int)json_object_get_int_member_safely(root_object, "progress");
+    const gchar *msg = json_object_get_string_member_safely(root_object, "msg");
+    vdi_session_vm_prep_progress_received_notify(request_id, progress, msg);
+}
+
 // ws сообщения от брокера. Ожидаем json
 static void vdi_ws_client_on_message(SoupWebsocketConnection *ws_conn G_GNUC_UNUSED, gint type, GBytes *message,
                                      VdiWsClient *vdi_ws_client)
@@ -71,20 +80,34 @@ static void vdi_ws_client_on_message(SoupWebsocketConnection *ws_conn G_GNUC_UNU
         if (g_strcmp0(msg_type, "data") == 0) {
 
             const gchar *resource = json_object_get_string_member_safely(root_object, "resource");
-            // ретранслированное от вейла сообщение
             if (g_strcmp0(resource, "/domains/") == 0) {
-                // object
-                JsonObject *vm_member_object = json_object_get_object_member_safely(root_object, "object");
-                int power_state = (int)json_object_get_int_member_safely(vm_member_object, "user_power_state");
-                vdi_session_vm_state_change_notify(power_state);
+
+                const gchar *event = json_object_get_string_member_safely(root_object, "event");
+
+                if (g_strcmp0(event, "UPDATED") == 0) {
+                    // ретранслированное от вейла сообщение
+                    // object
+                    JsonObject *vm_member_object = json_object_get_object_member_safely(root_object, "object");
+                    if (vm_member_object) {
+                        int power_state = (int)json_object_get_int_member_safely(vm_member_object, "user_power_state");
+                        vdi_session_vm_state_change_notify(power_state);
+                    }
+                } else if (g_strcmp0(event, "vm_preparation_progress") == 0) {
+                    vdi_ws_client_parse_vm_prep_and_notify(root_object);
+                }
+
+            } else if (g_strcmp0(resource, "/pools/") == 0) {
+                const gchar *event = json_object_get_string_member_safely(root_object, "event");
+                if (g_strcmp0(event, "pool_entitlement_changed") == 0)
+                    vdi_session_pool_entitlement_changed_notify();
 
             } else if (g_strcmp0(resource, "/events_thin_client/") == 0) {
+                // Блок кода оставлен для поддержки VDI версий до 3.2.0 включительно.
+                // Удалить при повышении мажорной версии тонкого клиента. Текущая версия тк 1.11.0
                 const gchar *event = json_object_get_string_member_safely(root_object, "event");
+
                 if (g_strcmp0(event, "vm_preparation_progress") == 0) {
-                    int request_id = (int)json_object_get_int_member_safely(root_object, "request_id");
-                    int progress = (int)json_object_get_int_member_safely(root_object, "progress");
-                    const gchar *msg = json_object_get_string_member_safely(root_object, "msg");
-                    vdi_session_vm_prep_progress_received_notify(request_id, progress, msg);
+                    vdi_ws_client_parse_vm_prep_and_notify(root_object);
                 }
             }
 
@@ -101,7 +124,8 @@ static void vdi_ws_client_on_message(SoupWebsocketConnection *ws_conn G_GNUC_UNU
             // текстовое сообщение от администратора  VeiL VDI
             const gchar *sender_name = json_object_get_string_member_safely(root_object, "sender_name");
             const gchar *text_message = json_object_get_string_member_safely(root_object, "message");
-            vdi_session_text_msg_received_notify(sender_name, text_message);
+            if (text_message)
+                vdi_session_text_msg_received_notify(sender_name, text_message);
         }
 
         g_object_unref(parser);

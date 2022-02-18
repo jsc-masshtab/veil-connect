@@ -105,6 +105,15 @@ static void vdi_session_class_init( VdiSessionClass *klass )
                  G_TYPE_NONE,
                  3,
                  G_TYPE_INT, G_TYPE_INT, G_TYPE_STRING);
+
+    g_signal_new("pool-entitlement-changed",
+                 G_OBJECT_CLASS_TYPE(gobject_class),
+                 G_SIGNAL_RUN_FIRST,
+                 G_STRUCT_OFFSET(VdiSessionClass, pool_entitlement_changed),
+                 NULL, NULL,
+                 NULL,
+                 G_TYPE_NONE,
+                 0);
 }
 
 static void vdi_session_init( VdiSession *self G_GNUC_UNUSED)
@@ -368,6 +377,11 @@ void vdi_session_vm_prep_progress_received_notify(int request_id, int progress, 
 {
     g_signal_emit_by_name(vdi_session_static, "vm-prep-progress-received",
                           request_id, progress, text);
+}
+
+void vdi_session_pool_entitlement_changed_notify()
+{
+    g_signal_emit_by_name(vdi_session_static, "pool-entitlement-changed");
 }
 
 // Вызывается в главном потоке при получении кода 401

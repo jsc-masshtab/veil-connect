@@ -140,6 +140,7 @@ struct _VdiSessionClass
     void (*text_msg_received)(VdiSession *self, const gchar *author, const gchar *text);
     void (*auth_fail_detected)(VdiSession *self);
     void (*vm_prep_progress_received)(VdiSession *self, int request_id, int progress, const gchar *text);
+    void (*pool_entitlement_changed)(VdiSession *self);
 };
 
 GType vdi_session_get_type( void ) G_GNUC_CONST;
@@ -157,6 +158,7 @@ void vdi_session_ws_conn_change_notify(int ws_connected);
 void vdi_session_ws_cmd_received_notify(const gchar *cmd);
 void vdi_session_text_msg_received_notify(const gchar *author, const gchar *text);
 void vdi_session_vm_prep_progress_received_notify(int request_id, int progress, const gchar *text);
+void vdi_session_pool_entitlement_changed_notify(void);
 
 // get vid server ip
 const gchar *vdi_session_get_vdi_ip(void);
