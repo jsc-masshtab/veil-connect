@@ -414,7 +414,7 @@ rdp_viewer_window_menu_close_window(GtkWidget *menu G_GNUC_UNUSED, gpointer user
 {
     g_info("%s", (const char *)__func__);
     RdpViewerWindow *rdp_window = (RdpViewerWindow *)userdata;
-    g_signal_emit_by_name(rdp_window, "stop-requested", "job-finished", TRUE);
+    g_signal_emit_by_name(rdp_window, "stop-requested", "quit-requested", TRUE);
 }
 
 static void
