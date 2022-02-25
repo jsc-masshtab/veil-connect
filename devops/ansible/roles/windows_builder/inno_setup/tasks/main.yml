@@ -1,0 +1,15 @@
+---
+
+- name: Install Inno Setup (x64)
+  win_package:
+    path: http://nexus.bazalt.team/repository/files/windows_builder/innosetup-6.2.0.exe
+    creates_path: 'C:\Program Files (x86)\Inno Setup 6\iscc.exe'
+    arguments:
+      - /VERYSILENT
+      - /NORESTART
+      - /ALLUSERS
+
+- name: Add Inno Setup to PATH
+  win_path:
+    elements:
+    - 'C:\Program Files (x86)\Inno Setup 6'

@@ -1,0 +1,8 @@
+---
+
+- name: Install Java 8 (x64)
+  win_package:
+    path: http://nexus.bazalt.team/repository/files/windows_builder/jre-8u321-windows-x64.exe
+    product_id: '{26A24AE4-039D-4CA4-87B4-2F64180321F0}'
+    arguments:
+      - /s

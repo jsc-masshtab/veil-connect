@@ -1,0 +1,14 @@
+---
+
+- name: Install cmake
+  win_package:
+    path: http://nexus.bazalt.team/repository/files/windows_builder/cmake-3.22.2-windows-x86_64.msi
+    product_id: '{55537FF7-1BD2-45BD-8C1B-199834F95C9B}'
+    arguments:
+      - /quiet
+      - /norestart
+
+- name: Add cmake to PATH
+  win_path:
+    elements:
+    - 'C:\Program Files\CMake\bin'

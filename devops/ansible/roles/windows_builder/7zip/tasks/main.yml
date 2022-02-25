@@ -1,0 +1,13 @@
+---
+
+- name: Install 7zip
+  win_package:
+    path: http://nexus.bazalt.team/repository/files/windows_builder/7z2107-x64.exe
+    creates_path: 'C:\Program Files\7-Zip\'
+    arguments:
+      - /S
+
+- name: Add 7zip to PATH
+  win_path:
+    elements:
+    - 'C:\Program Files\7-Zip\'

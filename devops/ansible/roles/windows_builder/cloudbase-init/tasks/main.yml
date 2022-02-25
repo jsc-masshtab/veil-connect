@@ -1,0 +1,18 @@
+---
+
+- name: Uninstall old Cloudbase-init
+  win_package:
+    product_id: '{ED85F19F-057A-4EE6-BC8D-F576DEACE78D}'
+    state: absent
+
+- name: Install new Cloudbase-init
+  win_package:
+    path: http://nexus.bazalt.team/repository/files/windows_builder/CloudbaseInitSetup_1_1_2_x64.msi
+    arguments: >-
+      /qn
+      /lp! "C:\log.txt"
+      LOGGINGSERIALPORTNAME="COM1"
+      USERNAME="Admin"
+      INJECTMETADATAPASSWORD="TRUE"
+      USERGROUPS="Administrators"
+      RUN_SERVICE_AS_LOCAL_SYSTEM="TRUE"

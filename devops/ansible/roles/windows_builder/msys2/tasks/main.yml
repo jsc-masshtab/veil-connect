@@ -1,0 +1,29 @@
+---
+
+- name: Check MSYS2 folder
+  win_stat:
+    path: C:\msys32
+  register: msys_folder
+
+- name: Install MSYS2
+  block:
+    - name: Get zip with MSYS2
+      win_get_url:
+        url: http://nexus.bazalt.team/repository/files/windows_builder/msys32.zip
+        dest: C:\Windows\Temp\msys32.zip
+
+    - name: Unzip MSYS2
+      win_shell: |
+        7z x C:\Windows\Temp\msys32.zip -oc:\
+
+    - name: Remove zip with MSYS2
+      win_file:
+        path: C:\Windows\Temp\msys32.zip
+        state: absent
+  when: not msys_folder.stat.exists
+
+- name: Add MSYS2 to system PATH
+  win_path:
+    elements:
+    - 'C:\msys32\mingw64\bin'
+    - 'C:\msys32\usr\bin'

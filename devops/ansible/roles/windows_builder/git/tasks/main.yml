@@ -1,0 +1,9 @@
+---
+
+- name: Install git (x64)
+  win_package:
+    path: http://nexus.bazalt.team/repository/files/windows_builder/Git-2.35.1.2-64-bit.exe
+    creates_path: 'C:\Program Files\Git\bin\git.exe'
+    arguments:
+      - /VERYSILENT
+      - /NORESTART

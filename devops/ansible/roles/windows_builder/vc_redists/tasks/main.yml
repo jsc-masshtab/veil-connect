@@ -1,0 +1,19 @@
+---
+
+- name: Install Visual C++ 2013 (x86)
+  win_package:
+    path: http://nexus.bazalt.team/repository/files/windows_builder/vcredist_2013_x86.exe
+    product_id: '{13A4EE12-23EA-3371-91EE-EFB36DDFFF3E}'
+    arguments:
+      - /install
+      - /passive
+      - /norestart
+
+- name: Install Visual C++ 2013 (x64)
+  win_package:
+    path: http://nexus.bazalt.team/repository/files/windows_builder/vcredist_2013_x64.exe
+    product_id: '{A749D8E6-B613-3BE3-8F5F-045C84EBA29B}'
+    arguments:
+      - /install
+      - /passive
+      - /norestart
