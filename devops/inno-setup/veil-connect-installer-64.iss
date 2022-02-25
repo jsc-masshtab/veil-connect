@@ -73,7 +73,7 @@ Source: "C:\Jenkins\workspace\vdi-connect\build\usbdk.msi"; DestDir: "{tmp}"; Fl
 Source: "C:\Jenkins\workspace\vdi-connect\build\gspawn-win64-helper*.exe"; DestDir: "{app}"; Flags: ignoreversion; Components: app
 Source: "C:\Jenkins\workspace\vdi-connect\build\*.dll"; Excludes: "\freerdp2.dll,\freerdp-client2.dll,\winpr2.dll,\winpr-tools2.dll"; DestDir: "{app}"; Flags: ignoreversion; Components: app
 Source: "C:\Jenkins\workspace\vdi-connect\build\*.css"; DestDir: "{app}"; Flags: ignoreversion; Components: app
-Source: "C:\Jenkins\workspace\vdi-connect\build\*.bak"; DestDir: "{app}"; Flags: ignoreversion; Components: app
+;Source: "C:\Jenkins\workspace\vdi-connect\build\*.bak"; DestDir: "{app}"; Flags: ignoreversion; Components: app
 Source: "C:\Jenkins\workspace\vdi-connect\build\*.vbs"; DestDir: "{app}"; Flags: ignoreversion; Components: app
 Source: "C:\Jenkins\workspace\vdi-connect\build\*.ico"; DestDir: "{app}"; Flags: ignoreversion; Components: app
 

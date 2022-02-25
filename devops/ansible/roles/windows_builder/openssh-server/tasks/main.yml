@@ -1,0 +1,85 @@
+---
+
+- name: Check OpenSSH Server folder
+  win_stat:
+    path: C:\Program Files\OpenSSH-Win64
+  register: openssh_server_folder
+
+- name: Install OpenSSH Server
+  block:
+    - name: Get zip with OpenSSH Server
+      win_get_url:
+        url: http://nexus.bazalt.team/repository/files/windows_builder/OpenSSH-Win64.zip
+        dest: C:\Windows\Temp\OpenSSH-Win64.zip
+
+    - name: Unzip OpenSSH Server
+      win_unzip:
+        src: C:\Windows\Temp\OpenSSH-Win64.zip
+        dest: C:\Program Files
+
+    - name: Install OpenSSH Server
+      win_shell: |
+        .\install-sshd.ps1
+      args:
+        chdir: C:\Program Files\OpenSSH-Win64
+
+    - name: Add OpenSSH Server to PATH
+      win_path:
+        elements:
+        - 'C:\Program Files\OpenSSH-Win64'
+
+    - name: Create ssh folder
+      win_file:
+        path: C:\ProgramData\ssh
+        state: directory
+
+    - name: Configure sshd_config
+      win_template:
+        src: sshd_config.j2
+        dest: C:\ProgramData\ssh\sshd_config
+
+    - name: Set correct permissions on ssh directory
+      win_acl:
+        path: C:\ProgramData\ssh
+        user: '{{ item }}'
+        rights: FullControl
+        type: allow
+        state: present
+        inherit: ContainerInherit, ObjectInherit
+        propagation: None
+      with_items:
+      - S-1-5-18 # "SYSTEM" group independent of localization
+      - S-1-5-32-544 # "Administrators" group independent of localization
+
+    - name: Disable ACL inheritence on ssh directory
+      win_acl_inheritance:
+        path: C:\ProgramData\ssh
+        reorganize: False
+        state: absent
+
+#    - name: Generate keys
+#      win_shell: |
+#        .\ssh-keygen.exe -A
+#      args:
+#        chdir: C:\Program Files\OpenSSH-Win64
+
+    - name: Open port 22 for inbound SSH connections
+      win_firewall_rule:
+        name: OpenSSH inbound
+        protocol: tcp
+        localport: 22
+        direction: in
+        action: allow
+        state: present
+        enabled: yes
+        profiles: domain,private,public
+
+    - name: Ensure sshd and ssh-agent service are set to start on boot
+      win_service:
+        name: '{{ item }}'
+        start_mode: auto
+        state: started
+      with_items:
+      - sshd
+      - ssh-agent
+  when: not openssh_server_folder.stat.exists

@@ -1,0 +1,19 @@
+---
+
+- name: Check freerdp folder
+  win_stat:
+    path: C:\job
+  register: freerdp_folder
+
+- name: Install freerdp
+  block:
+    - name: Get zip with freerdp
+      win_get_url:
+        url: http://nexus.bazalt.team/repository/files/windows_builder/job.zip
+        dest: C:\Windows\Temp\job.zip
+
+    - name: Unzip freerdp
+      win_unzip:
+        src: C:\Windows\Temp\job.zip
+        dest: C:\
+  when: not freerdp_folder.stat.exists

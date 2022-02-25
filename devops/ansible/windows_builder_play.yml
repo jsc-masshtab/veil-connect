@@ -1,0 +1,25 @@
+---
+
+- hosts: windows_builder
+  gather_facts: false
+  tasks:
+    - include_role:
+        name: "{{ item }}"
+      vars:
+        ansible_user: Administrator
+        ansible_password: 123qweASD
+        ansible_connection: winrm
+        ansible_winrm_transport: basic
+        ansible_winrm_server_cert_validation: ignore
+        ansible_winrm_port: 5985
+      with_items:
+        - windows_builder/7zip
+        - windows_builder/cmake
+        - windows_builder/freerdp
+        - windows_builder/git
+        - windows_builder/inno_setup
+        - windows_builder/java
+        - windows_builder/msys2
+        - windows_builder/openssh-server
+        - windows_builder/vc_redists
+        - windows_builder/cloudbase-init
