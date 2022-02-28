@@ -498,7 +498,7 @@ pipeline {
                             cp -r build-${DISTR}/* doc/veil-connect.ico rpmbuild-${DISTR}/BUILD/opt/veil-connect
                             cp doc/veil-connect.desktop rpmbuild-${DISTR}/BUILD/usr/share/applications
                             cd rpmbuild-${DISTR}
-                            rpmbuild --define "_topdir `pwd`" -v -bb SPECS/veil-connect-alt.spec
+                            rpmbuild --define "_topdir `pwd`" --define "_tmppath %{_topdir}/tmp" -v -bb SPECS/veil-connect-alt.spec
                         '''
                     }
                 }

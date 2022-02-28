@@ -6,4 +6,5 @@ RUN apt-get update && \
     libspice-gtk3-devel libfreerdp-devel libjson-glib-devel libsoup-devel \
     libxml2-devel gcc cmake make libhiredis-devel libusbredir-devel \
     libusb-devel curl && \
-    rm -f /var/cache/apt/archives/*.rpm /var/cache/apt/archives/partial/*.rpm /var/cache/apt/*.bin || true
+    rm -f /var/cache/apt/archives/*.rpm /var/cache/apt/archives/partial/*.rpm /var/cache/apt/*.bin || true && \
+    chmod 777 /tmp
