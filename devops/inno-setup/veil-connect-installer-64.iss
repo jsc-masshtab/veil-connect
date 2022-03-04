@@ -29,9 +29,9 @@ UsedUserAreasWarning=no
 ; Uncomment the following line to run in non administrative install mode (install for current user only.)
 ;PrivilegesRequired=lowest
 PrivilegesRequiredOverridesAllowed=dialog
-OutputDir=C:\Jenkins\workspace\vdi-connect
+OutputDir=C:\Jenkins\workspace\veil-connect-win
 OutputBaseFilename=veil-connect-installer
-SetupIconFile=C:\Jenkins\workspace\vdi-connect\doc\veil-connect.ico
+SetupIconFile=C:\Jenkins\workspace\veil-connect-win\doc\veil-connect.ico
 Compression=lzma
 SolidCompression=yes
 WizardStyle=modern
@@ -57,25 +57,25 @@ Name: "quicklaunchicon"; Description: "{cm:CreateQuickLaunchIcon}"; GroupDescrip
 
 [Files]
 ; Folders
-Source: "C:\Jenkins\workspace\vdi-connect\build\lib\*"; DestDir: "{app}\lib"; Flags: ignoreversion recursesubdirs createallsubdirs; Components: app
-Source: "C:\Jenkins\workspace\vdi-connect\build\locale\*"; DestDir: "{app}\locale"; Flags: ignoreversion recursesubdirs createallsubdirs; Components: app
-Source: "C:\Jenkins\workspace\vdi-connect\build\log"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs; Components: app
-Source: "C:\Jenkins\workspace\vdi-connect\build\rdp_data\*"; DestDir: "{app}\rdp_data"; Flags: ignoreversion recursesubdirs createallsubdirs; Components: app
-Source: "C:\Jenkins\workspace\vdi-connect\build\share\*"; DestDir: "{app}\share"; Flags: ignoreversion recursesubdirs createallsubdirs; Components: app
-Source: "C:\Jenkins\workspace\vdi-connect\build\x2go_data\*"; DestDir: "{app}\x2go_data"; Flags: ignoreversion recursesubdirs createallsubdirs; Components: app
+Source: "C:\Jenkins\workspace\veil-connect-win\build\lib\*"; DestDir: "{app}\lib"; Flags: ignoreversion recursesubdirs createallsubdirs; Components: app
+Source: "C:\Jenkins\workspace\veil-connect-win\build\locale\*"; DestDir: "{app}\locale"; Flags: ignoreversion recursesubdirs createallsubdirs; Components: app
+Source: "C:\Jenkins\workspace\veil-connect-win\build\log"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs; Components: app
+Source: "C:\Jenkins\workspace\veil-connect-win\build\rdp_data\*"; DestDir: "{app}\rdp_data"; Flags: ignoreversion recursesubdirs createallsubdirs; Components: app
+Source: "C:\Jenkins\workspace\veil-connect-win\build\share\*"; DestDir: "{app}\share"; Flags: ignoreversion recursesubdirs createallsubdirs; Components: app
+Source: "C:\Jenkins\workspace\veil-connect-win\build\x2go_data\*"; DestDir: "{app}\x2go_data"; Flags: ignoreversion recursesubdirs createallsubdirs; Components: app
 ; FreeRDP
-Source: "C:\Jenkins\workspace\vdi-connect\build\freerdp_2.2.0\*.dll"; DestDir: "{app}"; Flags: ignoreversion; CopyMode: alwaysoverwrite; Components: freerdp\220
-Source: "C:\Jenkins\workspace\vdi-connect\build\freerdp_2.3.2\*.dll"; DestDir: "{app}"; Flags: ignoreversion; CopyMode: alwaysoverwrite; Components: freerdp\232
+Source: "C:\Jenkins\workspace\veil-connect-win\build\freerdp_2.2.0\*.dll"; DestDir: "{app}"; Flags: ignoreversion; CopyMode: alwaysoverwrite; Components: freerdp\220
+Source: "C:\Jenkins\workspace\veil-connect-win\build\freerdp_2.3.2\*.dll"; DestDir: "{app}"; Flags: ignoreversion; CopyMode: alwaysoverwrite; Components: freerdp\232
 ; Files
-Source: "C:\Jenkins\workspace\vdi-connect\build\veil_connect.exe"; DestDir: "{app}"; Flags: ignoreversion; Components: app
-Source: "C:\Jenkins\workspace\vdi-connect\build\vc_redist.exe"; DestDir: "{tmp}"; Flags: deleteafterinstall; Components: app
-Source: "C:\Jenkins\workspace\vdi-connect\build\usbdk.msi"; DestDir: "{tmp}"; Flags: deleteafterinstall; Components: usbdk
-Source: "C:\Jenkins\workspace\vdi-connect\build\gspawn-win64-helper*.exe"; DestDir: "{app}"; Flags: ignoreversion; Components: app
-Source: "C:\Jenkins\workspace\vdi-connect\build\*.dll"; Excludes: "\freerdp2.dll,\freerdp-client2.dll,\winpr2.dll,\winpr-tools2.dll"; DestDir: "{app}"; Flags: ignoreversion; Components: app
-Source: "C:\Jenkins\workspace\vdi-connect\build\*.css"; DestDir: "{app}"; Flags: ignoreversion; Components: app
-;Source: "C:\Jenkins\workspace\vdi-connect\build\*.bak"; DestDir: "{app}"; Flags: ignoreversion; Components: app
-Source: "C:\Jenkins\workspace\vdi-connect\build\*.vbs"; DestDir: "{app}"; Flags: ignoreversion; Components: app
-Source: "C:\Jenkins\workspace\vdi-connect\build\*.ico"; DestDir: "{app}"; Flags: ignoreversion; Components: app
+Source: "C:\Jenkins\workspace\veil-connect-win\build\veil_connect.exe"; DestDir: "{app}"; Flags: ignoreversion; Components: app
+Source: "C:\Jenkins\workspace\veil-connect-win\build\vc_redist.exe"; DestDir: "{tmp}"; Flags: deleteafterinstall; Components: app
+Source: "C:\Jenkins\workspace\veil-connect-win\build\usbdk.msi"; DestDir: "{tmp}"; Flags: deleteafterinstall; Components: usbdk
+Source: "C:\Jenkins\workspace\veil-connect-win\build\gspawn-win64-helper*.exe"; DestDir: "{app}"; Flags: ignoreversion; Components: app
+Source: "C:\Jenkins\workspace\veil-connect-win\build\*.dll"; Excludes: "\freerdp2.dll,\freerdp-client2.dll,\winpr2.dll,\winpr-tools2.dll"; DestDir: "{app}"; Flags: ignoreversion; Components: app
+Source: "C:\Jenkins\workspace\veil-connect-win\build\*.css"; DestDir: "{app}"; Flags: ignoreversion; Components: app
+;Source: "C:\Jenkins\workspace\veil-connect-win\build\*.bak"; DestDir: "{app}"; Flags: ignoreversion; Components: app
+Source: "C:\Jenkins\workspace\veil-connect-win\build\*.vbs"; DestDir: "{app}"; Flags: ignoreversion; Components: app
+Source: "C:\Jenkins\workspace\veil-connect-win\build\*.ico"; DestDir: "{app}"; Flags: ignoreversion; Components: app
 
 [Icons]
 Name: "{group}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"
