@@ -166,7 +166,7 @@ static void on_controller_session_get_vm_list_task_finished(GObject *source_obje
         gint64 count = json_object_get_int_member_safely(reply_json_object, "count");
 
         g_autofree gchar *info_msg = NULL;
-        info_msg = g_strdup_printf(_("List of VMs received. Amount: %li."), count);
+        info_msg = g_strdup_printf(_("List of VMs received. Amount: %lli."), (long long int)count);
         controller_manager_set_status(self, info_msg, FALSE);
 
         JsonArray *json_array = json_object_get_array_member_safely(reply_json_object, "results");

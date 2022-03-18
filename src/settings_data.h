@@ -125,11 +125,13 @@ typedef struct{
     gchar *ip;
     int port;
 
-    gboolean is_connect_to_prev_pool;
+    gboolean connect_to_prev_pool;
     gboolean to_save_pswd;
     gboolean redirect_time_zone;
 
     gchar *vm_verbose_name;
+
+    gboolean pass_through_auth;
 
     // RDP specific
     VeilRdpSettings rdp_settings;
@@ -144,10 +146,11 @@ typedef struct{
     int vm_await_timeout;
     gboolean unique_app;
 
+    VmRemoteProtocol protocol_in_direct_app_mode;
+
     // Параметры актуальные тольео во время работы приложения (не нужно сохранять в файл)
     gboolean not_connected_to_prev_pool_yet; // Подключалось ли приложение автоматом к предыдущему пулу при старте
-
-    VmRemoteProtocol protocol_in_direct_app_mode;
+    gboolean not_pass_through_authenticated_yet; // Производилась ли сквозная аутентификация
 
 } ConnectSettingsData;
 

@@ -217,6 +217,9 @@ void usbredir_util_get_device_strings(int bus, int address,
 #if __linux__
     *manufacturer = usbredir_util_get_sysfs_attribute(bus, address, "manufacturer");
     *product = usbredir_util_get_sysfs_attribute(bus, address, "product");
+#else
+    (void)bus;
+    (void)address;
 #endif
 
     if ((!*manufacturer || !*product) &&

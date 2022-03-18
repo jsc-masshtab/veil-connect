@@ -187,6 +187,10 @@ gchar *util_remove_all_spaces(const gchar *src);
 
 // Conver string from local to utf8
 void convert_string_from_utf8_to_locale(gchar **utf8_str);
+#if defined(_WIN32)
+wchar_t *util_multibyte_str_to_wchar_str(const gchar *g_str);
+char* util_wstr_to_multibyte_str(const wchar_t* wstr);
+#endif
 
 gchar *get_windows_app_data_location(void);
 gchar *get_windows_app_temp_location(void);

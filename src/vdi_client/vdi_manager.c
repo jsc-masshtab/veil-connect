@@ -645,18 +645,18 @@ void vdi_manager_show(VdiManager *self, ConnectSettingsData *conn_data)
     g_autofree gchar *last_pool_id = NULL;
     last_pool_id = read_str_from_ini_file(get_cur_ini_group_vdi(), "pool_id");
     if (!last_pool_id)
-        conn_data->is_connect_to_prev_pool = FALSE;
+        conn_data->connect_to_prev_pool = FALSE;
 
-    if(conn_data->is_connect_to_prev_pool && conn_data->not_connected_to_prev_pool_yet) {
+    if(conn_data->connect_to_prev_pool && conn_data->not_connected_to_prev_pool_yet) {
         // Получение ВМ из предыдущего пула
         refresh_vdi_get_vm_from_pool_async(self, last_pool_id);
-        conn_data->not_connected_to_prev_pool_yet = FALSE; // lower flag
     } else {
         // Пытаемся соединиться с vdi и получить список пулов. Получив список пулов нужно сгенерить
         // соответствующие кнопки  в скрол области.
         // get pool data
         refresh_vdi_pool_data_async(self);
     }
+    conn_data->not_connected_to_prev_pool_yet = FALSE; // lower flag
 }
 
 void vdi_manager_raise(VdiManager *self)

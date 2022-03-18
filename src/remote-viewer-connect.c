@@ -23,6 +23,9 @@
 #include "remote_viewer_start_settings.h"
 #include "usbredir_dialog.h"
 #include "controller_client/controller_session.h"
+#if defined(_WIN32)
+#include "local_ipc/win_service_ipc.h"
+#endif
 
 
 G_DEFINE_TYPE( RemoteViewerConnect, remote_viewer_connect, G_TYPE_OBJECT )
@@ -68,6 +71,9 @@ static void remote_viewer_connect_finish_job(RemoteViewerConnect *self)
     g_info("%s", (const char *)__func__);
     if (!self->is_active)
         return;
+
+    // interupt settings dialog loop
+    shutdown_loop(self->connect_settings_dialog.loop);
 
     // forget password if required
     if (!self->p_conn_data->to_save_pswd)
@@ -212,8 +218,6 @@ on_controller_session_log_in_finished(GObject *source_object G_GNUC_UNUSED,
 // connect to VDI server
 static void connect_to_vdi_server(RemoteViewerConnect *self)
 {
-    if (self->auth_dialog_state == AUTH_GUI_CONNECT_TRY_STATE)
-        return;
     vdi_session_get_ws_client()->is_connect_initiated_by_user = TRUE;
 
     // set credential for connection to VDI server
@@ -248,6 +252,9 @@ handle_connect_request(RemoteViewerConnect *self)
                                           _("Connection address is not specified"));
                 return;
             }
+
+            if (self->auth_dialog_state == AUTH_GUI_CONNECT_TRY_STATE)
+                return;
 
             connect_to_vdi_server(self);
             break;
@@ -313,8 +320,10 @@ static void
 settings_button_clicked_cb(GtkButton *button G_GNUC_UNUSED, gpointer data)
 {
     RemoteViewerConnect *self = data;
-    GtkResponseType res = remote_viewer_start_settings_dialog(self->p_conn_data, self->p_app_updater,
-            GTK_WINDOW(self->window));
+    GtkResponseType res = remote_viewer_start_settings_dialog(&self->connect_settings_dialog,
+                                                              self->p_conn_data,
+                                                              self->p_app_updater,
+                                                              GTK_WINDOW(self->window));
     // update gui state
     if (res == GTK_RESPONSE_OK)
         fill_gui(self);
@@ -352,18 +361,6 @@ btn_cancel_auth_clicked_cb(GtkButton *button G_GNUC_UNUSED, gpointer data)
         }
         default:
             break;
-    }
-}
-
-// В этом режиме сразу автоматом пытаемся подключиться к предыдущему пулу, не дожидаясь действий пользователя.
-// Поступаем так только один раз при старте приложения, чтоб у пользователя была возможносмть
-// попасть на начальную форму и настройки (not_connected_to_prev_pool_yet)
-static void fast_forward_connect_to_prev_pool_if_enabled(RemoteViewerConnect *self)
-{
-    if(self->p_conn_data->global_app_mode == GLOBAL_APP_MODE_VDI &&
-    self->p_conn_data->is_connect_to_prev_pool &&
-            self->p_conn_data->not_connected_to_prev_pool_yet) {
-        connect_to_vdi_server(self);
     }
 }
 
@@ -428,6 +425,49 @@ RemoteViewerConnect *remote_viewer_connect_new()
 {
     RemoteViewerConnect *obj = REMOTE_VIEWER_CONNECT( g_object_new( TYPE_REMOTE_VIEWER_CONNECT, NULL ) );
     return obj;
+}
+
+#if defined(_WIN32)
+static void on_shared_memory_ipc_get_logon_data_finished(GObject *source_object G_GNUC_UNUSED,
+        GAsyncResult *res, gpointer user_data) {
+
+    RemoteViewerConnect *self = user_data;
+
+    // Get system logon data and update GUI
+    SharedMemoryIpcLogonData *shared_memory_ipc_logon_data = g_task_propagate_pointer(G_TASK(res), NULL);
+
+    if (shared_memory_ipc_logon_data->login) {
+        gtk_entry_set_text(GTK_ENTRY(self->login_entry), shared_memory_ipc_logon_data->login);
+        gtk_entry_set_text(GTK_ENTRY(self->password_entry), shared_memory_ipc_logon_data->password);
+        connect_to_vdi_server(self);
+    } else {
+        util_set_message_to_info_label(GTK_LABEL(self->message_display_label),
+                                       _("Failed to fetch system credentials"));
+        set_auth_dialog_state(AUTH_GUI_DEFAULT_STATE, self);
+    }
+
+    shared_memory_ipc_logon_data_free(shared_memory_ipc_logon_data);
+}
+#endif
+
+// Path through auth or auto connect to prev pool
+static void fast_forward_connect_if_enabled(RemoteViewerConnect *self)
+{
+    if (self->p_conn_data->global_app_mode == GLOBAL_APP_MODE_VDI) {
+#if defined(_WIN32)
+        if (self->p_conn_data->pass_through_auth && self->p_conn_data->not_pass_through_authenticated_yet) {
+            self->p_conn_data->not_pass_through_authenticated_yet = FALSE;
+            set_auth_dialog_state(AUTH_GUI_CONNECT_TRY_STATE, self);
+            execute_async_task(shared_memory_ipc_get_logon_data,
+                               on_shared_memory_ipc_get_logon_data_finished, NULL, self);
+            return;
+        }
+#endif
+        if (self->p_conn_data->connect_to_prev_pool && self->p_conn_data->not_connected_to_prev_pool_yet) {
+            // connect to the prev pool if required
+            connect_to_vdi_server(self);
+        }
+    }
 }
 
 /**
@@ -505,8 +545,7 @@ remote_viewer_connect_show(RemoteViewerConnect *self, ConnectSettingsData *conn_
     // check if there is a new version
     app_updater_execute_task_check_updates(self->p_app_updater);
 
-    // connect to the prev pool if required
-    fast_forward_connect_to_prev_pool_if_enabled(self);
+    fast_forward_connect_if_enabled(self);
 }
 
 void remote_viewer_connect_raise(RemoteViewerConnect *self)

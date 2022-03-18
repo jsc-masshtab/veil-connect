@@ -51,9 +51,10 @@ void settings_data_read_all(ConnectSettingsData *data)
         vdi_session_set_ldap(is_ldap);
 
         data->domain = read_str_from_ini_file(param_group_vdi, "domain");
-        data->is_connect_to_prev_pool =
+        data->connect_to_prev_pool =
                 read_int_from_ini_file(param_group_vdi, "connect_to_pool", 0);
         data->to_save_pswd = read_int_from_ini_file(param_group_vdi, "to_save_pswd", 1);
+        data->pass_through_auth = read_int_from_ini_file(param_group_vdi, "pass_through_auth", 0);
     }
 
     // controller
@@ -131,8 +132,9 @@ void settings_data_save_all(ConnectSettingsData *data)
     write_int_to_ini_file(param_group_vdi, "is_ldap", vdi_session_is_ldap());
 
     write_str_to_ini_file(param_group_vdi, "domain", data->domain);
-    write_int_to_ini_file(param_group_vdi, "connect_to_pool", data->is_connect_to_prev_pool);
+    write_int_to_ini_file(param_group_vdi, "connect_to_pool", data->connect_to_prev_pool);
     write_int_to_ini_file(param_group_vdi, "to_save_pswd", data->to_save_pswd);
+    write_int_to_ini_file(param_group_vdi, "pass_through_auth", data->pass_through_auth);
 
     // cur_remote_protocol_index
     switch (data->global_app_mode) {

@@ -357,7 +357,8 @@ static void* rdp_viewer_job_routine(RdpViewer *self)
 
             DWORD wait_status = WaitForMultipleObjects(nCount, handles, FALSE, 100);
             if (wait_status == WAIT_FAILED) {
-                g_warning("%s: WaitForMultipleObjects failed with %u" PRIu32 "", __FUNCTION__, wait_status);
+                g_warning("%s: WaitForMultipleObjects failed with %lu" PRIu32 "", __FUNCTION__,
+                        (long unsigned int)wait_status);
                 break;
             }
 

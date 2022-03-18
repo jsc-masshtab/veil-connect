@@ -28,7 +28,6 @@
 #include "remote-viewer-util.h"
 #include "veil_logger.h"
 
-
 int
 main(int argc, char **argv)
 {

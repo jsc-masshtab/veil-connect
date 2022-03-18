@@ -59,21 +59,6 @@ static void native_rdp_launcher_init(NativeRdpLauncher *self G_GNUC_UNUSED)
 }
 
 #if defined(_WIN32)
-// Конвертирует мультибайт строку в wide characters строку.
-// Возвращаемая строка должна быть освобождена с free
-wchar_t *
-native_rdp_launcher_multibyte_str_to_wchar_str(const gchar *g_str)
-{
-    if (g_str == NULL)
-        return NULL;
-
-    size_t required_size = mbstowcs(NULL, g_str, 0) + 1; //Plus null
-    wchar_t *wtext = (wchar_t *)calloc(1, required_size * sizeof(wchar_t));
-    mbstowcs(wtext, g_str, required_size);
-
-    return wtext;
-}
-
 // Сохраняем пароль для возможности входа через нативный клиент без ввода пароля
 static void
 native_rdp_launcher_store_conn_data(const VeilRdpSettings *p_rdp_settings)
@@ -105,9 +90,9 @@ native_rdp_launcher_store_conn_data(const VeilRdpSettings *p_rdp_settings)
     convert_string_from_utf8_to_locale(&target_name_converted);
 
     // Convert to wide char strings
-    wchar_t *user_name_converted_w = native_rdp_launcher_multibyte_str_to_wchar_str(user_name_converted);
-    wchar_t *password_converted_w = native_rdp_launcher_multibyte_str_to_wchar_str(password_converted);
-    wchar_t *target_name_converted_w = native_rdp_launcher_multibyte_str_to_wchar_str(target_name_converted);
+    wchar_t *user_name_converted_w = util_multibyte_str_to_wchar_str(user_name_converted);
+    wchar_t *password_converted_w = util_multibyte_str_to_wchar_str(password_converted);
+    wchar_t *target_name_converted_w = util_multibyte_str_to_wchar_str(target_name_converted);
 
     // Store credentials
     DWORD cbCredentialBlobSize = (DWORD)(wcslen(password_converted_w) * sizeof(wchar_t));

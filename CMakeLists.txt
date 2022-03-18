@@ -186,6 +186,9 @@ endif (UNIX)
 if (WIN32)
 list(APPEND SRC_CODE
         src/usb_redirection/usbredirserver_win.c
+
+        src/local_ipc/win_service_ipc.h
+        src/local_ipc/win_service_ipc.c
 )
 endif (WIN32)
 

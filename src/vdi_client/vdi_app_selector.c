@@ -112,7 +112,7 @@ static void vdi_app_selector_add_app(VdiAppSelector *self, VeilAppData app_data)
         g_free(icon_binary_data);
         g_object_unref(loader);
     } else {
-        g_warning("Wrong icon_base64_len: %lu", icon_base64_len);
+        g_warning("Wrong icon_base64_len: %zu", icon_base64_len);
     }
 }
 

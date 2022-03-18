@@ -14,6 +14,7 @@
 #include "vdi_session.h"
 #include "settings_data.h"
 #include "app_updater.h"
+#include "remote_viewer_start_settings.h"
 
 #define TYPE_REMOTE_VIEWER_CONNECT ( remote_viewer_connect_get_type( ) )
 #define REMOTE_VIEWER_CONNECT( obj ) ( G_TYPE_CHECK_INSTANCE_CAST( (obj), \
@@ -62,6 +63,8 @@ typedef struct
     AuthDialogState auth_dialog_state;
 
     gulong updates_checked_handle;
+
+    ConnectSettingsDialog connect_settings_dialog;
 
 } RemoteViewerConnect;
 
