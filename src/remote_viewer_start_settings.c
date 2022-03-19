@@ -17,7 +17,6 @@ static void update_gui_according_to_app_mode(ConnectSettingsDialog *dialog_data,
     switch (global_app_mode) {
         case GLOBAL_APP_MODE_VDI: {
             gtk_widget_set_sensitive(dialog_data->conn_to_prev_pool_checkbutton, TRUE);
-            gtk_widget_set_sensitive(dialog_data->pass_through_auth_btn, TRUE);
             gtk_widget_set_sensitive(dialog_data->redirect_time_zone_check_btn, TRUE);
             gtk_widget_set_visible(dialog_data->remote_protocol_combobox, FALSE);
             gtk_widget_set_visible(dialog_data->btn_choose_rdp_file, FALSE);
@@ -27,7 +26,6 @@ static void update_gui_according_to_app_mode(ConnectSettingsDialog *dialog_data,
         }
         case GLOBAL_APP_MODE_DIRECT: {
             gtk_widget_set_sensitive(dialog_data->conn_to_prev_pool_checkbutton, FALSE);
-            gtk_widget_set_sensitive(dialog_data->pass_through_auth_btn, FALSE);
             gtk_widget_set_sensitive(dialog_data->redirect_time_zone_check_btn, FALSE);
             gtk_widget_set_visible(dialog_data->remote_protocol_combobox, TRUE);
             gtk_widget_set_visible(dialog_data->btn_choose_rdp_file, TRUE);
@@ -37,7 +35,6 @@ static void update_gui_according_to_app_mode(ConnectSettingsDialog *dialog_data,
         }
         case GLOBAL_APP_MODE_CONTROLLER: {
             gtk_widget_set_sensitive(dialog_data->conn_to_prev_pool_checkbutton, FALSE);
-            gtk_widget_set_sensitive(dialog_data->pass_through_auth_btn, FALSE);
             gtk_widget_set_sensitive(dialog_data->redirect_time_zone_check_btn, FALSE);
             gtk_widget_set_visible(dialog_data->remote_protocol_combobox, FALSE);
             gtk_widget_set_visible(dialog_data->btn_choose_rdp_file, FALSE);
@@ -534,9 +531,6 @@ fill_gui(ConnectSettingsDialog *dialog_data)
     // pswd
     gtk_toggle_button_set_active((GtkToggleButton *)dialog_data->save_password_checkbtn, p_conn_data->to_save_pswd);
 
-    gtk_toggle_button_set_active((GtkToggleButton *)dialog_data->pass_through_auth_btn,
-                                 p_conn_data->pass_through_auth);
-
     if (gtk_widget_get_visible(dialog_data->remote_protocol_combobox)) {
         // Текст и id совпадают
         const gchar *protocol_str = util_remote_protocol_to_str(p_conn_data->protocol_in_direct_app_mode);
@@ -705,9 +699,6 @@ take_from_gui(ConnectSettingsDialog *dialog_data)
     // pswd
     conn_data->to_save_pswd = gtk_toggle_button_get_active((GtkToggleButton *)dialog_data->save_password_checkbtn);
 
-    conn_data->pass_through_auth =
-            gtk_toggle_button_get_active((GtkToggleButton *)dialog_data->pass_through_auth_btn);
-
     if (gtk_widget_get_visible(dialog_data->remote_protocol_combobox)) {
         const gchar *protocol_str = gtk_combo_box_get_active_id((GtkComboBox*)dialog_data->remote_protocol_combobox);
         conn_data->protocol_in_direct_app_mode = util_str_to_remote_protocol(protocol_str);
@@ -867,7 +858,6 @@ GtkResponseType remote_viewer_start_settings_dialog(ConnectSettingsDialog *self,
     self->address_entry = get_widget_from_builder(self->builder, "connection-address-entry");
     self->port_spinbox = get_widget_from_builder(self->builder, "port_spinbox");
     self->conn_to_prev_pool_checkbutton = get_widget_from_builder(self->builder, "connect-to-prev-button");
-    self->pass_through_auth_btn = get_widget_from_builder(self->builder, "pass_through_auth_btn");
     self->save_password_checkbtn = get_widget_from_builder(self->builder, "save_password_btn");
     self->remote_protocol_combobox = get_widget_from_builder(self->builder, "remote_protocol_combobox");
     self->redirect_time_zone_check_btn =
@@ -1052,7 +1042,6 @@ GtkResponseType remote_viewer_start_settings_dialog(ConnectSettingsDialog *self,
     fill_gui(self);
 #ifndef  _WIN32
     gtk_widget_hide(self->windows_updates_url_entry);
-    gtk_widget_hide(self->pass_through_auth_btn);
 #endif
     gtk_window_set_resizable(GTK_WINDOW(self->window), FALSE);
 

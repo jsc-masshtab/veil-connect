@@ -45,6 +45,7 @@ typedef struct
     GtkWidget *disposable_password_entry;
     GtkWidget *check_btn_2fa_password;
     GtkWidget *ldap_check_btn;
+    GtkWidget *pass_through_auth_btn;
 
     GtkWidget *window;
     GtkWidget *connect_spinner;

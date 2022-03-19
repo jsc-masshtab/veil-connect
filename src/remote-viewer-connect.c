@@ -103,6 +103,9 @@ take_from_gui(RemoteViewerConnect *self)
         case GLOBAL_APP_MODE_VDI: {
             vdi_session_set_credentials(login, password, disposable_password);
             vdi_session_set_ldap(is_ldap);
+
+            self->p_conn_data->pass_through_auth =
+                    gtk_toggle_button_get_active((GtkToggleButton *)self->pass_through_auth_btn);
             break;
         }
         case GLOBAL_APP_MODE_DIRECT: {
@@ -134,6 +137,16 @@ fill_gui(RemoteViewerConnect *self)
             gtk_widget_set_sensitive(self->ldap_check_btn, TRUE);
 
             gtk_widget_set_visible(self->global_application_mode_image, FALSE);
+
+#ifdef  _WIN32
+            gtk_widget_set_visible(self->pass_through_auth_btn, TRUE);
+#else
+            gtk_widget_set_visible(self->pass_through_auth_btn, FALSE);
+#endif
+            gtk_toggle_button_set_active((GtkToggleButton *)self->pass_through_auth_btn,
+                                         self->p_conn_data->pass_through_auth);
+            gtk_widget_set_sensitive(self->pass_through_auth_btn, vdi_session_is_ldap());
+
             break;
         }
         case GLOBAL_APP_MODE_DIRECT: {
@@ -147,6 +160,8 @@ fill_gui(RemoteViewerConnect *self)
 
             gtk_widget_set_visible(self->global_application_mode_image, TRUE);
             gtk_widget_set_tooltip_text(self->global_application_mode_image, _("VM connection mode"));
+
+            gtk_widget_set_visible(self->pass_through_auth_btn, FALSE);
             break;
         }
         case GLOBAL_APP_MODE_CONTROLLER: {
@@ -161,6 +176,8 @@ fill_gui(RemoteViewerConnect *self)
 
             gtk_widget_set_visible(self->global_application_mode_image, TRUE);
             gtk_widget_set_tooltip_text(self->global_application_mode_image, _("Controller connection mode"));
+
+            gtk_widget_set_visible(self->pass_through_auth_btn, FALSE);
             break;
         }
     }
@@ -344,6 +361,15 @@ on_check_btn_2fa_password_toggled(GtkToggleButton *button, gpointer data)
 }
 
 static void
+on_ldap_check_btn_toggled(GtkToggleButton *check_btn, gpointer data)
+{
+    RemoteViewerConnect *self = data;
+    gboolean is_check_btn_toggled = gtk_toggle_button_get_active(check_btn);
+    if (gtk_widget_is_visible(self->pass_through_auth_btn))
+        gtk_widget_set_sensitive(self->pass_through_auth_btn, is_check_btn_toggled);
+}
+
+static void
 connect_button_clicked_cb(GtkButton *button G_GNUC_UNUSED, gpointer data)
 {
     RemoteViewerConnect *self = (RemoteViewerConnect *)data;
@@ -524,6 +550,7 @@ remote_viewer_connect_show(RemoteViewerConnect *self, ConnectSettingsData *conn_
     self->disposable_password_entry = GTK_WIDGET(gtk_builder_get_object(builder, "disposable_password_entry"));
     self->check_btn_2fa_password = GTK_WIDGET(gtk_builder_get_object(builder, "check_btn_2fa_password"));
     self->ldap_check_btn = get_widget_from_builder(builder, "ldap_check_btn");
+    self->pass_through_auth_btn = get_widget_from_builder(self->builder, "pass_through_auth_btn");
 
     self->global_application_mode_image = GTK_WIDGET(gtk_builder_get_object(builder, "global_application_mode_image"));
 
@@ -535,16 +562,20 @@ remote_viewer_connect_show(RemoteViewerConnect *self, ConnectSettingsData *conn_
     g_signal_connect(self->btn_cancel_auth, "clicked", G_CALLBACK(btn_cancel_auth_clicked_cb), self);
     self->updates_checked_handle = g_signal_connect(self->p_app_updater, "updates-checked",
                                           G_CALLBACK(remote_viewer_on_updates_checked), self);
-    g_signal_connect(self->check_btn_2fa_password, "toggled", G_CALLBACK(on_check_btn_2fa_password_toggled), self);
+    g_signal_connect(self->check_btn_2fa_password, "toggled",
+            G_CALLBACK(on_check_btn_2fa_password_toggled), self);
+    g_signal_connect(self->ldap_check_btn, "toggled",
+                     G_CALLBACK(on_ldap_check_btn_toggled), self);
 
     set_auth_dialog_state(AUTH_GUI_DEFAULT_STATE, self);
-    fill_gui(self);
 
     /* show and wait for response */
     gtk_window_set_position(GTK_WINDOW(self->window), GTK_WIN_POS_CENTER);
     //gtk_window_resize(GTK_WINDOW(window), 340, 340);
 
     gtk_widget_show_all(self->window);
+    fill_gui(self);
+
     gtk_window_set_resizable(GTK_WINDOW(self->window), FALSE);
 
     // check if there is a new version
