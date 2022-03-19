@@ -30,6 +30,8 @@
 
 G_DEFINE_TYPE( RemoteViewerConnect, remote_viewer_connect, G_TYPE_OBJECT )
 
+static void take_from_gui(RemoteViewerConnect *self);
+
 // set gui state
 static void
 set_auth_dialog_state(AuthDialogState auth_dialog_state, RemoteViewerConnect *self)
@@ -85,6 +87,7 @@ static void remote_viewer_connect_finish_job(RemoteViewerConnect *self)
     // disconnect signals
     g_signal_handler_disconnect(self->p_app_updater, self->updates_checked_handle);
 
+    take_from_gui(self);
     g_object_unref(self->builder);
     gtk_widget_destroy(self->window);
 
@@ -143,8 +146,11 @@ fill_gui(RemoteViewerConnect *self)
 #else
             gtk_widget_set_visible(self->pass_through_auth_btn, FALSE);
 #endif
-            gtk_toggle_button_set_active((GtkToggleButton *)self->pass_through_auth_btn,
+            if (vdi_session_is_ldap())
+                gtk_toggle_button_set_active((GtkToggleButton *)self->pass_through_auth_btn,
                                          self->p_conn_data->pass_through_auth);
+            else
+                gtk_toggle_button_set_active((GtkToggleButton *)self->pass_through_auth_btn, FALSE);
             gtk_widget_set_sensitive(self->pass_through_auth_btn, vdi_session_is_ldap());
 
             break;
@@ -486,7 +492,9 @@ static void fast_forward_connect_if_enabled(RemoteViewerConnect *self)
 {
     if (self->p_conn_data->global_app_mode == GLOBAL_APP_MODE_VDI) {
 #if defined(_WIN32)
-        if (self->p_conn_data->pass_through_auth && self->p_conn_data->not_pass_through_authenticated_yet) {
+        if (vdi_session_is_ldap() &&
+        self->p_conn_data->pass_through_auth &&
+        self->p_conn_data->not_pass_through_authenticated_yet) {
             self->p_conn_data->not_pass_through_authenticated_yet = FALSE;
             set_auth_dialog_state(AUTH_GUI_CONNECT_TRY_STATE, self);
             execute_async_task(shared_memory_ipc_get_logon_data,
