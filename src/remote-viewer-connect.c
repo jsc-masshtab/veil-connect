@@ -176,20 +176,25 @@ on_vdi_session_log_in_finished(GObject *source_object G_GNUC_UNUSED,
 
     set_auth_dialog_state(AUTH_GUI_DEFAULT_STATE, self);
 
-    g_autofree gchar *reply_msg = NULL;
-    reply_msg = g_task_propagate_pointer(G_TASK(res), NULL);
-    g_info("%s: is_token_refreshed %s", (const char *)__func__, reply_msg);
+    LoginData *login_data = g_task_propagate_pointer(G_TASK(res), NULL);
+    if (login_data->reply_msg)
+        g_info("%s: is_token_refreshed %s", (const char *)__func__, login_data->reply_msg);
 
     g_autofree gchar *token = NULL;
     token = vdi_session_get_token();
     if (token) {
+        // update domain
+        update_string_safely(&self->p_conn_data->domain, login_data->domain);
+
         vdi_session_refresh_login_time();
         take_from_gui(self);
         remote_viewer_connect_finish_job(self);
         g_signal_emit_by_name(self, "show-vm-selector-requested");
     } else {
-        util_set_message_to_info_label(GTK_LABEL(self->message_display_label), reply_msg);
+        util_set_message_to_info_label(GTK_LABEL(self->message_display_label), login_data->reply_msg);
     }
+
+    vdi_api_session_free_login_data(login_data);
 }
 
 // token fetch callback (controller)

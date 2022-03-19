@@ -77,6 +77,11 @@ typedef struct {
 
 } UserData;
 
+typedef struct {
+    gchar *reply_msg;
+    gchar *domain;
+} LoginData;
+
 // Data for vm request
 typedef struct {
     int request_id;
@@ -295,5 +300,6 @@ void vdi_api_session_free_attach_usb_data(AttachUsbData *attach_usb_data);
 void vdi_api_session_free_detach_usb_data(DetachUsbData *detach_usb_data);
 void vdi_api_session_free_text_message_data(TextMessageData *text_message_data);
 void vdi_api_session_free_tk_user_data(UserData *tk_user_data);
+void vdi_api_session_free_login_data(LoginData *login_data);
 
 #endif //VIRT_VIEWER_VEIL_VDI_API_SESSION_H

@@ -464,7 +464,7 @@ static void
 on_auth_fail_detected(gpointer data G_GNUC_UNUSED, VdiManager *self)
 {
     vdi_session_logout();
-    g_signal_emit_by_name(self, "logged-out", _("HTTP code 401 received"));
+    g_signal_emit_by_name(self, "logged-out", _("401 Authorization required"));
 }
 
 static void

@@ -230,19 +230,21 @@ static gboolean vdi_api_session_restart_vdi_ws_client(gpointer data G_GNUC_UNUSE
 }
 
 // Получаем токен
-static gchar *vdi_session_auth_request()
+static LoginData *vdi_session_auth_request()
 {
     g_info("%s", (const char *)__func__);
 
+    LoginData *login_data = calloc(1, sizeof(LoginData)); // free in callback!
+
     if(vdi_session_static->auth_url == NULL)
-        return NULL;
+        return login_data;
 
     // create request message
     SoupMessage *msg = soup_message_new("POST", vdi_session_static->auth_url);
     if(msg == NULL) { // "Не удалось сформировать SoupMessage. %s"
-        gchar *text_msg = g_strdup_printf(_("Failed to form SoupMessage. %s"), vdi_session_static->auth_url);
-        g_info("%s: %s", (const char*)__func__, text_msg);
-        return text_msg;
+        login_data->reply_msg = g_strdup_printf(_("Failed to form SoupMessage. %s"), vdi_session_static->auth_url);
+        g_info("%s: %s", (const char*)__func__, login_data->reply_msg);
+        return login_data;
     }
 
     // set header
@@ -275,6 +277,9 @@ static gchar *vdi_session_auth_request()
 
     switch (server_reply_type) {
         case SERVER_REPLY_TYPE_DATA: {
+            const gchar *domain = json_object_get_string_member_safely(reply_json_object, "domain");
+            login_data->domain = g_strdup(domain);
+
             const gchar *jwt_str = json_object_get_string_member_safely(reply_json_object, "access_token");
             atomic_string_set(&vdi_session_static->jwt, jwt_str);
             // В основном потоке вызывается на смену токена
@@ -282,25 +287,24 @@ static gchar *vdi_session_auth_request()
 
             g_object_unref(msg);
             g_object_unref(parser);
-            return NULL;
+            return login_data;
         }
         case SERVER_REPLY_TYPE_ERROR:
         case SERVER_REPLY_TYPE_UNKNOWN:
         default: {
-            gchar *reply_msg;
 
             const gchar *message = json_object_get_string_member_safely(reply_json_object, "message");
             g_info("%s : Unable to get token. %s %s", (const char *)__func__, message, msg->reason_phrase);
             if (strlen_safely(message) != 0)
-                reply_msg = g_strdup(message);
+                login_data->reply_msg = g_strdup(message);
             else if (msg->reason_phrase != NULL && strlen_safely(msg->reason_phrase) != 0)
-                reply_msg = g_strdup(msg->reason_phrase);
+                login_data->reply_msg = g_strdup(msg->reason_phrase);
             else // "Не удалось авторизоваться"
-                reply_msg = g_strdup(_("Failed to login"));
+                login_data->reply_msg = g_strdup(_("Failed to login"));
 
             g_object_unref(msg);
             g_object_unref(parser);
-            return reply_msg;
+            return login_data;
         }
     }
 }
@@ -636,12 +640,12 @@ void vdi_session_log_in_task(GTask       *task,
 {
     // get token
     atomic_string_set(&vdi_session_static->jwt, NULL);
-    gchar *reply_msg = vdi_session_auth_request();
+    LoginData *login_data = vdi_session_auth_request();
 
     // Get VDI version
     vdi_session_request_version();
 
-    g_task_return_pointer(task, reply_msg, NULL); // reply_msg is freed in task callback
+    g_task_return_pointer(task, login_data, NULL); // reply_msg is freed in task callback
 }
 
 void vdi_session_get_vdi_pool_data_task(GTask   *task,
@@ -1315,4 +1319,11 @@ void vdi_api_session_free_tk_user_data(UserData *tk_user_data)
     free_memory_safely(&tk_user_data->secret);
     free_memory_safely(&tk_user_data->error_message);
     free(tk_user_data);
+}
+
+void vdi_api_session_free_login_data(LoginData *login_data)
+{
+    free_memory_safely(&login_data->reply_msg);
+    free_memory_safely(&login_data->domain);
+    free(login_data);
 }

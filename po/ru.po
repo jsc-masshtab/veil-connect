@@ -555,8 +555,8 @@ msgid "Current requests cancelled"
 msgstr "Текущие запросы отменены"
 
 #: ../src/vdi_client/vdi_manager.c:467
-msgid "HTTP code 401 received"
-msgstr "Получен код 401. Нет прав"
+msgid "401 Authorization required"
+msgstr "401 Требуется авторизация"
 
 #. show window
 #. %s  Время входа: %s  -  %s
