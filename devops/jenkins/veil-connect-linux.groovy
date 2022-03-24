@@ -682,7 +682,7 @@ pipeline {
                                 scp -o StrictHostKeyChecking=no -i $SSH_KEY ${WORKSPACE}/rpmbuild-${DISTR}/RPMS/x86_64/*.rpm uploader@192.168.10.144:/local_storage/veil-connect/linux/yum/${DISTR}/x86_64/Packages/
                                 ssh -o StrictHostKeyChecking=no -i $SSH_KEY uploader@192.168.10.144 "
                                   rpm --resign /local_storage/veil-connect/linux/yum/${DISTR}/x86_64/Packages/*.rpm
-                                  createrepo --update /local_storage/veil-connect/linux/yum/${DISTR}/x86_64
+                                  createrepo_c --update /local_storage/veil-connect/linux/yum/${DISTR}/x86_64
                                 "
                             '''
                         }
@@ -704,7 +704,7 @@ pipeline {
                                 scp -o StrictHostKeyChecking=no -i $SSH_KEY ${WORKSPACE}/rpmbuild-${DISTR}/RPMS/x86_64/*.rpm uploader@192.168.10.144:/local_storage/veil-connect/linux/yum/${DISTR}/x86_64/Packages/
                                 ssh -o StrictHostKeyChecking=no -i $SSH_KEY uploader@192.168.10.144 "
                                   rpm --resign /local_storage/veil-connect/linux/yum/${DISTR}/x86_64/Packages/*.rpm
-                                  createrepo --update /local_storage/veil-connect/linux/yum/${DISTR}/x86_64
+                                  createrepo_c --update /local_storage/veil-connect/linux/yum/${DISTR}/x86_64
                                 "
                             '''
                         }
@@ -746,7 +746,7 @@ pipeline {
                                 scp -o StrictHostKeyChecking=no -i $SSH_KEY ${WORKSPACE}/rpmbuild-${DISTR}/RPMS/x86_64/*.rpm uploader@192.168.10.144:/local_storage/veil-connect/linux/yum/${DISTR}/x86_64/Packages/
                                 ssh -o StrictHostKeyChecking=no -i $SSH_KEY uploader@192.168.10.144 "
                                   rpm --resign /local_storage/veil-connect/linux/yum/${DISTR}/x86_64/Packages/*.rpm
-                                  createrepo --update /local_storage/veil-connect/linux/yum/${DISTR}/x86_64
+                                  createrepo_c --update /local_storage/veil-connect/linux/yum/${DISTR}/x86_64
                                 "
                             '''
                         }
