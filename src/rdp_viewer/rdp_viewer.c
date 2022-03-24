@@ -440,6 +440,15 @@ void rdp_viewer_start(RdpViewer *self, ConnectSettingsData *conn_data, VeilMesse
     guint monitor_configs_len = monitor_configs != NULL ? g_strv_length(monitor_configs) : 0;
     GArray *monitor_num_array = g_array_new(FALSE, FALSE, sizeof(int));
 
+    // array which will contain rdp windows
+    self->ex_rdp_context->rdp_windows_array = g_array_new(FALSE, FALSE, sizeof(RdpViewerWindow *));
+
+    // create rdp viewer windows
+    int total_monitor_width = 0; // Во freerdp нет мультимониторности. Единственный способ ее эмулиовать -
+    // это представить, что мониторы образуют прямоугольник и запросить картинку, шириной равной суммарной ширине
+    // мониторов.
+    int monitor_height = 0;
+
     if (p_rdp_settings->is_multimon) {
         // Берем из настроек
         if (monitor_configs_len > 0) {
@@ -459,6 +468,31 @@ void rdp_viewer_start(RdpViewer *self, ConnectSettingsData *conn_data, VeilMesse
             }
         }
 
+        // Сортировать по geometry.x (слева направо)
+        g_array_sort(monitor_num_array, rdp_viewer_compare_monitors);
+
+        // Запомнить geometry.x крайнего левого монитора из используемых
+        int left_monitor_num = g_array_index(monitor_num_array, int, 0);
+        GdkRectangle left_geometry;
+        util_get_monitor_geometry(display, left_monitor_num, &left_geometry);
+        int left_x = left_geometry.x;
+
+        for (int i = 0; i < (int)monitor_num_array->len; ++i) {
+
+            int monitor_num = g_array_index(monitor_num_array, int, i);
+            // get monitor data
+            GdkRectangle geometry;
+            RdpViewerWindow *rdp_window_data = set_monitor_data_and_create_rdp_viewer_window(
+                    self, &geometry, i, monitor_num, self->ex_rdp_context);
+            total_monitor_width += geometry.width;
+
+            // find the smallest height
+            monitor_height = (i == 0) ? geometry.height : MIN(monitor_height, geometry.height);
+
+            // Это необходимо, чтобы не было отступа при рисовании картинки или получени позиции мыши
+            rdp_window_data->rdp_display->geometry.x -= left_x;
+        }
+
     } else {
         int monitor_num = 0;
         // Берем либо первый номер из настроек (если он валидный), либо основной монитор(номер 0)
@@ -467,48 +501,17 @@ void rdp_viewer_start(RdpViewer *self, ConnectSettingsData *conn_data, VeilMesse
             monitor_num = first_monitor_num_in_config;
 
         g_array_append_val(monitor_num_array, monitor_num);
+
+        // create rdp viewer window
+        monitor_num = g_array_index(monitor_num_array, int, 0);
+        GdkRectangle geometry;
+        RdpViewerWindow *rdp_window_data = set_monitor_data_and_create_rdp_viewer_window(
+                self, &geometry, 0, monitor_num, self->ex_rdp_context);
+        total_monitor_width = geometry.width;
+        monitor_height = geometry.height;
+        rdp_window_data->rdp_display->geometry.x = rdp_window_data->rdp_display->geometry.y = 0;
     }
     g_strfreev(monitor_configs);
-
-    // Сортировать по geometry.x (слева направо)
-    g_array_sort(monitor_num_array, rdp_viewer_compare_monitors);
-
-    // set monitor data for rdp client
-    rdpSettings *settings = self->ex_rdp_context->context.settings;
-    settings->MonitorCount = monitor_num_array->len;
-    settings->UseMultimon = settings->ForceMultimon = p_rdp_settings->is_multimon;
-
-    // Запомнить geometry.x крайнего левого монитора из используемых
-    int left_monitor_num = g_array_index(monitor_num_array, int, 0);
-    GdkRectangle left_geometry;
-    util_get_monitor_geometry(display, left_monitor_num, &left_geometry);
-    int left_x = left_geometry.x;
-
-    // array which will contain rdp windows
-    self->ex_rdp_context->rdp_windows_array = g_array_new(FALSE, FALSE, sizeof(RdpViewerWindow *));
-
-    // create rdp viewer windows
-    int total_monitor_width = 0; // Во freerdp нет мультимониторности. Единственный способ ее эмулиовать -
-    // это представить, что мониторы образуют прямоугольник и запросить картинку, шириной равной суммарной ширине
-    // мониторов.
-    int monitor_height = 0;
-    for (int i = 0; i < (int)monitor_num_array->len; ++i) {
-
-        int monitor_num = g_array_index(monitor_num_array, int, i);
-        // get monitor data
-        GdkRectangle geometry;
-        RdpViewerWindow *rdp_window_data = set_monitor_data_and_create_rdp_viewer_window(self,
-                &geometry, i, monitor_num, self->ex_rdp_context);
-        total_monitor_width += geometry.width;
-
-        // find the smallest height
-        monitor_height = (i == 0) ? geometry.height : MIN(monitor_height, geometry.height);
-
-        // Это необходимо, чтобы не было отступа при рисовании картинки или получени позиции мыши
-        rdp_window_data->rdp_display->geometry.x -= left_x;
-    }
-
-    g_array_free(monitor_num_array, TRUE);
 
 #ifdef __APPLE__
     monitor_height = monitor_height - MAC_PANEL_HEIGHT;
@@ -526,6 +529,12 @@ void rdp_viewer_start(RdpViewer *self, ConnectSettingsData *conn_data, VeilMesse
         show_msg_box_dialog(NULL, _("Folders redirection is not allowed"));
     }
     free_memory_safely(&shared_folders_str);
+
+    // set monitor data for rdp client
+    rdpSettings *settings = self->ex_rdp_context->context.settings;
+    settings->MonitorCount = monitor_num_array->len;
+    settings->UseMultimon = settings->ForceMultimon = p_rdp_settings->is_multimon;
+    g_array_free(monitor_num_array, TRUE);
 
     // start RDP routine in thread
     rdp_viewer_start_routine_thread(self);

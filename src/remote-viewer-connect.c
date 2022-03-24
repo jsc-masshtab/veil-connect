@@ -106,9 +106,9 @@ take_from_gui(RemoteViewerConnect *self)
         case GLOBAL_APP_MODE_VDI: {
             vdi_session_set_credentials(login, password, disposable_password);
             vdi_session_set_ldap(is_ldap);
-
-            self->p_conn_data->pass_through_auth =
-                    gtk_toggle_button_get_active((GtkToggleButton *)self->pass_through_auth_btn);
+            // todo: finish after sso fix
+            //self->p_conn_data->pass_through_auth =
+            //        gtk_toggle_button_get_active((GtkToggleButton *)self->pass_through_auth_btn);
             break;
         }
         case GLOBAL_APP_MODE_DIRECT: {
@@ -141,11 +141,14 @@ fill_gui(RemoteViewerConnect *self)
 
             gtk_widget_set_visible(self->global_application_mode_image, FALSE);
 
-#ifdef  _WIN32
-            gtk_widget_set_visible(self->pass_through_auth_btn, TRUE);
-#else
+            // todo: finish after sso fix
+//#ifdef  _WIN32
+//            gtk_widget_set_visible(self->pass_through_auth_btn, TRUE);
+//#else
+//            gtk_widget_set_visible(self->pass_through_auth_btn, FALSE);
+//#endif
             gtk_widget_set_visible(self->pass_through_auth_btn, FALSE);
-#endif
+
             if (vdi_session_is_ldap())
                 gtk_toggle_button_set_active((GtkToggleButton *)self->pass_through_auth_btn,
                                          self->p_conn_data->pass_through_auth);
