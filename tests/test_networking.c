@@ -38,12 +38,13 @@ fixture_login_up(NetworkingFixture *fixture, gconstpointer user_data G_GNUC_UNUS
     vdi_session_set_credentials("vdiadmin", "Bazalt1!", "", "127.0.0.1", 8888, FALSE);
     GTask *task = execute_sync_task(vdi_session_log_in_task, NULL);
 
-    g_autofree gchar *reply_msg = NULL;
-    reply_msg = g_task_propagate_pointer(G_TASK(task), NULL);
-    g_info("reply_msg: %s", reply_msg);
-    g_assert_null(reply_msg);
+    LoginData *login_data = g_task_propagate_pointer(G_TASK(task), NULL);
+    g_info("reply_msg: %s", login_data->reply_msg);
+    g_assert_null(login_data->reply_msg);
 
     g_object_unref(task);
+
+    vdi_api_session_free_login_data(login_data);
 }
 
 static void

@@ -76,7 +76,7 @@ static int usbredirserver_read(void *priv, uint8_t *data, int count)
 {
     //fprintf(stdout, "read result: %s %i\n", __func__, count);
     UsbRedirServerData *usb_redir_server_data = (UsbRedirServerData*)priv;
-    int r = recv(usb_redir_server_data->client_fd, data, count, 0);
+    int r = recv(usb_redir_server_data->client_fd, (char *)data, count, 0);
     //fprintf(stdout, "read result: %i\n", r);
 
     if (r == 0) { /* Client disconnected */
@@ -107,7 +107,7 @@ static int usbredirserver_write(void *priv, uint8_t *data, int count)
 {
     //fprintf(stdout, "read result: %s %i\n", __func__, count);
     UsbRedirServerData *usb_redir_server_data = (UsbRedirServerData*)priv;
-    int r = send(usb_redir_server_data->client_fd, data, count, 0);
+    int r = send(usb_redir_server_data->client_fd, (const char *)data, count, 0);
     //fprintf(stdout, "write result: %i\n", r);
     if (r == SOCKET_ERROR) {
 
@@ -343,14 +343,14 @@ libusb_device_handle *usbredirserver_find_usb_device_and_open(UsbRedirServerData
 
     return handle;
 }
-
+/*
 static void usbredirserver_wait_until_handling_thread_stops(UsbRedirServerData *priv, HANDLE hThread)
 {
     *(priv->p_running_flag) = 0;
     HANDLE hThreadArray[] = {hThread};
     WaitForMultipleObjects(1, hThreadArray, TRUE, INFINITE);
     CloseHandle(hThread);
-}
+}*/
 
 //static int usbredirserver_init_win_sockets()
 //{

@@ -21,16 +21,11 @@
 #include "virt-viewer-session.h"
 #include "remote-viewer-util.h"
 #include "remote-viewer.h"
-#include "remote-viewer-connect.h"
 #include "vdi_manager.h"
 #include "settings_data.h"
 #include "usbredir_controller.h"
 #include "rdp_viewer.h"
-#include "x2go/x2go_launcher.h"
 #include "controller_client/controller_session.h"
-#if defined(_WIN32) || defined(__MACH__)
-#include "native_rdp_launcher.h"
-#endif
 
 
 struct _RemoteViewerPrivate {
@@ -48,7 +43,11 @@ enum RemoteViewerProperties {
 #endif
 };
 
-static void remote_viewer_start(RemoteViewer *self);
+static void on_logged_out(gpointer data G_GNUC_UNUSED, const gchar *reason_phrase, RemoteViewer *self);
+static void connect_to_vm(gpointer data G_GNUC_UNUSED, RemoteViewer *self);
+static void on_vm_connection_finished(gpointer data G_GNUC_UNUSED, RemoteViewer *self);
+static void show_vm_selector_window(gpointer data G_GNUC_UNUSED, RemoteViewer *self);
+static void on_quit_requested(gpointer data G_GNUC_UNUSED, RemoteViewer *self);
 
 static GtkCssProvider *setup_css()
 {
@@ -70,13 +69,39 @@ remote_viewer_startup(GApplication *app)
     // read ini file
     settings_data_read_all(&self->conn_data);
 
+    self->css_provider = setup_css(); // CSS setup
+
+    self->veil_messenger = veil_messenger_new();
+#if defined(_WIN32) || defined(__MACH__)
+    g_signal_connect(self->native_rdp_launcher, "job-finished", G_CALLBACK(on_vm_connection_finished), self);
+#endif
+    g_signal_connect(self->x2go_launcher, "job-finished", G_CALLBACK(on_vm_connection_finished), self);
+
+    g_signal_connect(self->rdp_viewer, "job-finished", G_CALLBACK(on_vm_connection_finished), self);
+    g_signal_connect(self->rdp_viewer, "quit-requested", G_CALLBACK(on_quit_requested), self);
+
     virt_viewer_app_setup(self->virt_viewer_obj, &self->conn_data);
+    g_signal_connect(self->virt_viewer_obj, "job-finished", G_CALLBACK(on_vm_connection_finished), self);
+    g_signal_connect(self->virt_viewer_obj, "quit-requested", G_CALLBACK(on_quit_requested), self);
 
-    GtkCssProvider *css_provider = setup_css(); // CSS setup
-    remote_viewer_start(self);
-    g_object_unref(css_provider);
+    self->remote_viewer_connect = remote_viewer_connect_new();
+    g_signal_connect(self->remote_viewer_connect, "show-vm-selector-requested",
+            G_CALLBACK(show_vm_selector_window), self);
+    g_signal_connect(self->remote_viewer_connect, "connect-to-vm-requested", G_CALLBACK(connect_to_vm), self);
+    g_signal_connect(self->remote_viewer_connect, "quit-requested", G_CALLBACK(on_quit_requested), self);
 
-    g_application_quit(app);
+    self->vdi_manager = vdi_manager_new();
+    g_signal_connect(self->vdi_manager, "logged-out", G_CALLBACK(on_logged_out), self);
+    g_signal_connect(self->vdi_manager, "connect-to-vm-requested", G_CALLBACK(connect_to_vm), self);
+    g_signal_connect(self->vdi_manager, "quit-requested", G_CALLBACK(on_quit_requested), self);
+
+    self->controller_manager = controller_manager_new();
+    g_signal_connect(self->controller_manager, "logged-out", G_CALLBACK(on_logged_out), self);
+    g_signal_connect(self->controller_manager, "connect-to-vm-requested", G_CALLBACK(connect_to_vm), self);
+    g_signal_connect(self->controller_manager, "quit-requested", G_CALLBACK(on_quit_requested), self);
+
+    // Show auth window
+    remote_viewer_connect_show(self->remote_viewer_connect, &self->conn_data, self->app_updater);
 }
 
 static void
@@ -133,21 +158,42 @@ remote_viewer_local_command_line (GApplication   *gapp,
     return ret;
 }
 
+int remote_viewer_command_line(GApplication *application, GApplicationCommandLine *command_line)
+{
+    g_info("%s", (const char*)__func__);
+    int ret = G_APPLICATION_CLASS(remote_viewer_parent_class)->command_line(application, command_line);
+
+    // Функция remote_viewer_command_line вызывается, если происходит попытка запуска второго экземпляра
+    // приложения. В этом случае показываем окно первого экземляра поверх других окон
+    remote_viewer_connect_raise(REMOTE_VIEWER(application)->remote_viewer_connect);
+    vdi_manager_raise(REMOTE_VIEWER(application)->vdi_manager);
+
+    return ret;
+}
+
+static void
+remote_viewer_on_ws_cmd_received(gpointer data G_GNUC_UNUSED, const gchar *cmd, RemoteViewer *self)
+{
+    if (g_strcmp0(cmd, "DISCONNECT") == 0) {
+        on_logged_out(NULL, _("Logout demanded by server"), self);
+    }
+}
+
 static void
 remote_viewer_class_init(RemoteViewerClass *klass)
 {
     GObjectClass *object_class = G_OBJECT_CLASS(klass);
     GApplicationClass *g_app_class = G_APPLICATION_CLASS(klass);
 
-    g_type_class_add_private (klass, sizeof (RemoteViewerPrivate));
+    g_type_class_add_private(klass, sizeof (RemoteViewerPrivate));
 
     g_app_class->startup = remote_viewer_startup;
-    g_app_class->command_line = NULL; /* inhibit GApplication default handler */
+    g_app_class->command_line = remote_viewer_command_line;
+    g_app_class->local_command_line = remote_viewer_local_command_line;
 
     object_class->dispose = remote_viewer_dispose;
     object_class->finalize = remote_viewer_finalize;
 
-    g_app_class->local_command_line = remote_viewer_local_command_line;
 }
 
 static void
@@ -158,11 +204,17 @@ remote_viewer_init(RemoteViewer *self)
 
     memset(&self->conn_data, 0, sizeof(ConnectSettingsData));
     self->conn_data.not_connected_to_prev_pool_yet = TRUE;
+    self->conn_data.not_pass_through_authenticated_yet = TRUE;
 
+    self->rdp_viewer = rdp_viewer_new();
     // virt-viewer
     self->virt_viewer_obj = virt_viewer_app_new();
     virt_viewer_app_set_app_pointer(self->virt_viewer_obj, GTK_APPLICATION(self));
 
+    self->x2go_launcher = x2go_launcher_new();
+#if defined(_WIN32) || defined(__MACH__)
+    self->native_rdp_launcher = native_rdp_launcher_new();
+#endif
     // app updater entity
     self->app_updater = app_updater_new();
 
@@ -174,28 +226,38 @@ remote_viewer_init(RemoteViewer *self)
 
     // create controller session
     get_controller_session_static();
+
+    // signals
+    g_signal_connect(get_vdi_session_static(), "ws-cmd-received",
+                     G_CALLBACK(remote_viewer_on_ws_cmd_received), self);
 }
 
 RemoteViewer *
-remote_viewer_new(void)
+remote_viewer_new(gboolean unique_app)
 {
     g_info("remote_viewer_new");
+
+    GApplicationFlags flags = unique_app ? G_APPLICATION_HANDLES_COMMAND_LINE : G_APPLICATION_NON_UNIQUE;
     return g_object_new(REMOTE_VIEWER_TYPE,
                         "application-id", "mashtab.veil-connect",
-                        "flags", G_APPLICATION_NON_UNIQUE,
+                        "flags", flags,
                         NULL);
 }
 
 void remote_viewer_free_resources(RemoteViewer *self)
 {
+    settings_data_save_all(&self->conn_data);
+#if defined(_WIN32) || defined(__MACH__)
+    g_object_unref(self->native_rdp_launcher);
+#endif
+    g_object_unref(self->x2go_launcher);
+    g_object_unref(self->rdp_viewer);
     g_object_unref(self->virt_viewer_obj);
     g_object_unref(self->app_updater);
+    g_object_unref(self->vdi_manager);
 
-    if (self->vdi_manager)
-        g_object_unref(self->vdi_manager);
     if (self->controller_manager)
         g_object_unref(self->controller_manager);
-
     if (self->veil_messenger)
         g_object_unref(self->veil_messenger);
 
@@ -204,118 +266,126 @@ void remote_viewer_free_resources(RemoteViewer *self)
     controller_session_static_destroy();
 
     settings_data_clear(&self->conn_data);
+
+    if (self->remote_viewer_connect)
+        g_object_unref(self->remote_viewer_connect);
+
+    g_object_unref(self->css_provider);
 }
 
-static RemoteViewerState
-remote_viewer_connect_to_vm(RemoteViewer *self, VmRemoteProtocol protocol)
+static void
+on_logged_out(gpointer data G_GNUC_UNUSED, const gchar *reason_phrase, RemoteViewer *self)
 {
-    RemoteViewerState next_app_state = APP_STATE_CONNECT_TO_VM;
+#if  defined(_WIN32) || defined(__MACH__)
+    native_rdp_launcher_stop(self->native_rdp_launcher);
+#endif
+    veil_messenger_hide(self->veil_messenger);
+    x2go_launcher_stop(self->x2go_launcher);
+    rdp_viewer_stop(self->rdp_viewer, NULL, TRUE);
+    virt_viewer_app_stop(self->virt_viewer_obj, NULL);
+    controller_manager_finish_job(self->controller_manager);
+    vdi_manager_finish_job(self->vdi_manager);
+
+    remote_viewer_connect_show(self->remote_viewer_connect, &self->conn_data, self->app_updater);
+    util_set_message_to_info_label(GTK_LABEL(
+            self->remote_viewer_connect->message_display_label), reason_phrase);
+}
+
+static void
+connect_to_vm(gpointer data G_GNUC_UNUSED, RemoteViewer *self)
+{
+    VmRemoteProtocol protocol = ANOTHER_REMOTE_PROTOCOL;
+    switch (self->conn_data.global_app_mode) {
+        case GLOBAL_APP_MODE_VDI: {
+            protocol = vdi_session_get_current_remote_protocol();
+            break;
+        }
+        case GLOBAL_APP_MODE_DIRECT: {
+            protocol = self->conn_data.protocol_in_direct_app_mode;
+            break;
+        }
+        case GLOBAL_APP_MODE_CONTROLLER: {
+            protocol = controller_session_get_current_remote_protocol();
+            break;
+        }
+    }
 
     // connect to vm depending on remote protocol
     if (protocol == RDP_PROTOCOL) {
-        // Читаем из ini настройки remote_app только если они еще не установлены ранее (они могут быть
-        // получены от RDS пула)
-        rdp_settings_read_ini_file(&self->conn_data.rdp_settings,
-                                   !self->conn_data.rdp_settings.is_remote_app);
-        rdp_settings_set_connect_data(&self->conn_data.rdp_settings, self->conn_data.user,
-                                      self->conn_data.password, self->conn_data.domain,
-                                      self->conn_data.ip, 0);
-        next_app_state = rdp_viewer_start(self, &self->conn_data.rdp_settings);
+        // В режиме прямого подключения к ВМ читаем настройки из стандартного RDP файла, если требуется
+        if (self->conn_data.global_app_mode == GLOBAL_APP_MODE_DIRECT && self->conn_data.rdp_settings.use_rdp_file) {
+            rdp_settings_read_standard_file(&self->conn_data.rdp_settings, NULL);
+        } else {
+            // Читаем из ini настройки remote_app только если они еще не установлены ранее (они могут быть
+            // получены от RDS пула)
+            rdp_settings_read_ini_file(&self->conn_data.rdp_settings,
+                                       !self->conn_data.rdp_settings.is_remote_app);
+            rdp_settings_set_connect_data(&self->conn_data.rdp_settings, self->conn_data.user,
+                                          self->conn_data.password, self->conn_data.domain,
+                                          self->conn_data.ip, 0);
+        }
+        rdp_viewer_start(self->rdp_viewer, &self->conn_data, self->veil_messenger, &self->conn_data.rdp_settings);
 #if  defined(_WIN32) || defined(__MACH__)
         } else if (protocol == RDP_NATIVE_PROTOCOL) {
                 rdp_settings_read_ini_file(&self->conn_data.rdp_settings, !self->conn_data.rdp_settings.is_remote_app);
                 rdp_settings_set_connect_data(&self->conn_data.rdp_settings, self->conn_data.user,
                                               self->conn_data.password, self->conn_data.domain,
                                               self->conn_data.ip, 0);
-                launch_native_rdp_client(NULL, &self->conn_data.rdp_settings);
+                native_rdp_launcher_start(self->native_rdp_launcher, NULL, &self->conn_data.rdp_settings);
 #endif
     } else if (protocol == X2GO_PROTOCOL) {
-        x2go_launcher_start(self->conn_data.user, self->conn_data.password, &self->conn_data);
+        x2go_launcher_start(self->x2go_launcher, self->conn_data.user, self->conn_data.password, &self->conn_data);
     } else { // spice by default
-        virt_viewer_app_set_spice_session_data(self->virt_viewer_obj, &self->conn_data);
-        virt_viewer_app_set_window_name(self->virt_viewer_obj, self->conn_data.vm_verbose_name, self->conn_data.user);
-        next_app_state = virt_viewer_app_instant_start(self->virt_viewer_obj);
+        virt_viewer_app_instant_start(self->virt_viewer_obj, &self->conn_data);
     }
-
-    return next_app_state;
 }
 
 static void
-remote_viewer_start(RemoteViewer *self)
+on_quit_requested(gpointer data G_GNUC_UNUSED, RemoteViewer *self)
 {
-    RemoteViewerState next_app_state = APP_STATE_AUTH_DIALOG;
-    //create veil messenger
-    self->veil_messenger = veil_messenger_new();
-    // remote connect dialog
-    retry_auth:
-    veil_messenger_hide(self->veil_messenger);
-    // Забираем из ui адрес и порт
-    GtkResponseType dialog_window_response = remote_viewer_connect_dialog(self);
-    if (dialog_window_response == GTK_RESPONSE_CLOSE)
-        goto to_exit;
+    g_application_quit(G_APPLICATION(self));
+}
 
-    // После такого как забрали адресс с логином и паролем действуем в зависимости от режима (1 из 3)
-    retry_connect_to_vm:
+static void
+on_vm_connection_finished(gpointer data G_GNUC_UNUSED, RemoteViewer *self)
+{
     switch (self->conn_data.global_app_mode) {
         case GLOBAL_APP_MODE_VDI: {
             // show VDI manager window
-            if (self->vdi_manager == NULL)
-                self->vdi_manager = vdi_manager_new();
-            next_app_state = vdi_manager_dialog(self->vdi_manager, &self->conn_data);
-
-            if (next_app_state == APP_STATE_CONNECT_TO_VM)
-                next_app_state = remote_viewer_connect_to_vm(self, vdi_session_get_current_remote_protocol());
-
-            break;
-        }
-        case GLOBAL_APP_MODE_DIRECT: {
-            if (self->conn_data.protocol_in_direct_app_mode == RDP_PROTOCOL) {
-                // Либо берем данные ГУИ, либо парсим rdp файл
-                gboolean read_from_std_rdp_file = read_int_from_ini_file("RDPSettings", "use_rdp_file", 0);
-                if (read_from_std_rdp_file) {
-                    rdp_settings_read_standard_file(&self->conn_data.rdp_settings, NULL);
-                } else {
-                    rdp_settings_read_ini_file(&self->conn_data.rdp_settings, TRUE);
-                    rdp_settings_set_connect_data(&self->conn_data.rdp_settings, self->conn_data.user,
-                                                  self->conn_data.password, self->conn_data.domain,
-                                                  self->conn_data.ip, self->conn_data.port);
-                }
-                next_app_state = rdp_viewer_start(self, &self->conn_data.rdp_settings);
-
-            } else if (self->conn_data.protocol_in_direct_app_mode == X2GO_PROTOCOL) {
-                x2go_launcher_start(self->conn_data.user, self->conn_data.password, &self->conn_data);
-            } else { // SPICE by default
-                virt_viewer_app_set_spice_session_data(self->virt_viewer_obj, &self->conn_data);
-                virt_viewer_app_set_window_name(self->virt_viewer_obj, self->conn_data.vm_verbose_name,
-                                                self->conn_data.user);
-                next_app_state = virt_viewer_app_instant_start(self->virt_viewer_obj);
-            }
-
-            if (next_app_state == APP_STATE_CONNECT_TO_VM)
-                next_app_state = APP_STATE_AUTH_DIALOG;
-
+            vdi_manager_show(self->vdi_manager, &self->conn_data);
             break;
         }
         case GLOBAL_APP_MODE_CONTROLLER: {
-            if (self->controller_manager == NULL)
-                self->controller_manager = controller_manager_new();
-            next_app_state = controller_manager_dialog(self->controller_manager, &self->conn_data);
-
-            if (next_app_state == APP_STATE_CONNECT_TO_VM)
-                next_app_state = remote_viewer_connect_to_vm(self, controller_session_get_current_remote_protocol());
-
+            controller_manager_show(self->controller_manager, &self->conn_data);
+            break;
+        }
+        case GLOBAL_APP_MODE_DIRECT:
+        default: {
+            remote_viewer_connect_show(self->remote_viewer_connect, &self->conn_data, self->app_updater);
             break;
         }
     }
-
-    if (next_app_state == APP_STATE_EXITING)
-        goto to_exit;
-    else if (next_app_state == APP_STATE_AUTH_DIALOG)
-        goto retry_auth;
-    else if (next_app_state == APP_STATE_CONNECT_TO_VM)
-        goto retry_connect_to_vm;
-
-    to_exit:
-    settings_data_save_all(&self->conn_data);
 }
 
+//
+static void
+show_vm_selector_window(gpointer data G_GNUC_UNUSED, RemoteViewer *self)
+{
+    switch (self->conn_data.global_app_mode) {
+        case GLOBAL_APP_MODE_VDI: {
+            // show VDI manager window
+            vdi_manager_show(self->vdi_manager, &self->conn_data);
+            break;
+        }
+        case GLOBAL_APP_MODE_CONTROLLER: {
+            controller_manager_show(self->controller_manager, &self->conn_data);
+            break;
+        }
+        case GLOBAL_APP_MODE_DIRECT:
+        default: {
+            // В режиме подключения к ВМ на прямую подключаемся к ВМ
+            connect_to_vm(NULL, self);
+            break;
+        }
+    }
+}

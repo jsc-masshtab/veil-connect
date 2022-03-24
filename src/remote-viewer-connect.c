@@ -23,75 +23,43 @@
 #include "remote_viewer_start_settings.h"
 #include "usbredir_dialog.h"
 #include "controller_client/controller_session.h"
+#if defined(_WIN32)
+#include "local_ipc/win_service_ipc.h"
+#endif
 
 
-typedef enum
-{
-    AUTH_GUI_DEFAULT_STATE,
-    AUTH_GUI_CONNECT_TRY_STATE
+G_DEFINE_TYPE( RemoteViewerConnect, remote_viewer_connect, G_TYPE_OBJECT )
 
-} AuthDialogState;
-
-typedef struct
-{
-    RemoteViewer *p_remote_viewer;
-
-    GMainLoop *loop;
-    GtkResponseType dialog_window_response;
-
-    // gui elements
-    GtkWidget *login_entry;
-    GtkWidget *password_entry;
-    GtkWidget *disposable_password_entry;
-    GtkWidget *check_btn_2fa_password;
-    GtkWidget *ldap_check_btn;
-
-    GtkWidget *window;
-    GtkWidget *connect_spinner;
-    GtkWidget *message_display_label;
-    GtkWidget *header_label;
-    GtkWidget *new_version_available_image;
-
-    GtkWidget *settings_button;
-    GtkWidget *connect_button;
-    GtkWidget *btn_cancel_auth;
-
-    GtkWidget *app_name_label;
-
-    GtkWidget *global_application_mode_image;
-
-    AuthDialogState auth_dialog_state;
-
-} RemoteViewerConnData;
+static void take_from_gui(RemoteViewerConnect *self);
 
 // set gui state
 static void
-set_auth_dialog_state(AuthDialogState auth_dialog_state, RemoteViewerConnData *ci)
+set_auth_dialog_state(AuthDialogState auth_dialog_state, RemoteViewerConnect *self)
 {
-    ci->auth_dialog_state = auth_dialog_state;
+    self->auth_dialog_state = auth_dialog_state;
 
     switch (auth_dialog_state) {
     case AUTH_GUI_DEFAULT_STATE: {
         // stop connect spinner
-        gtk_spinner_stop(GTK_SPINNER(ci->connect_spinner));
-        gtk_widget_set_visible(GTK_WIDGET(ci->btn_cancel_auth), FALSE);
+        gtk_spinner_stop(GTK_SPINNER(self->connect_spinner));
+        gtk_widget_set_visible(GTK_WIDGET(self->btn_cancel_auth), FALSE);
 
         //// enable connect button if address_entry is not empty
-        //if (gtk_entry_get_text_length(GTK_ENTRY(ci->address_entry)) > 0)
-        gtk_widget_set_sensitive(GTK_WIDGET(ci->connect_button), TRUE);
+        //if (gtk_entry_get_text_length(GTK_ENTRY(self->address_entry)) > 0)
+        gtk_widget_set_sensitive(GTK_WIDGET(self->connect_button), TRUE);
 
         break;
     }
     case AUTH_GUI_CONNECT_TRY_STATE: {
         // clear message display
-        gtk_label_set_text(GTK_LABEL(ci->message_display_label), " ");
+        gtk_label_set_text(GTK_LABEL(self->message_display_label), " ");
 
         // disable connect button
-        gtk_widget_set_sensitive(GTK_WIDGET(ci->connect_button), FALSE);
+        gtk_widget_set_sensitive(GTK_WIDGET(self->connect_button), FALSE);
 
         // start connect spinner
-        gtk_spinner_start(GTK_SPINNER(ci->connect_spinner));
-        gtk_widget_set_visible(GTK_WIDGET(ci->btn_cancel_auth), TRUE);
+        gtk_spinner_start(GTK_SPINNER(self->connect_spinner));
+        gtk_widget_set_visible(GTK_WIDGET(self->btn_cancel_auth), TRUE);
         break;
     }
     default: {
@@ -100,31 +68,54 @@ set_auth_dialog_state(AuthDialogState auth_dialog_state, RemoteViewerConnData *c
     }
 }
 
-static ConnectSettingsData *
-get_conn_data(RemoteViewerConnData *ci)
+static void remote_viewer_connect_finish_job(RemoteViewerConnect *self)
 {
-    return &(ci->p_remote_viewer->conn_data);
+    g_info("%s", (const char *)__func__);
+    if (!self->is_active)
+        return;
+
+    // interupt settings dialog loop
+    shutdown_loop(self->connect_settings_dialog.loop);
+
+    // forget password if required
+    if (!self->p_conn_data->to_save_pswd)
+        free_memory_safely(&self->p_conn_data->password);
+
+    // save data to ini file
+    settings_data_save_all(self->p_conn_data);
+
+    // disconnect signals
+    g_signal_handler_disconnect(self->p_app_updater, self->updates_checked_handle);
+
+    take_from_gui(self);
+    g_object_unref(self->builder);
+    gtk_widget_destroy(self->window);
+
+    self->is_active = FALSE;
 }
 
 static void
-take_from_gui(RemoteViewerConnData *ci)
+take_from_gui(RemoteViewerConnect *self)
 {
-    const gchar *login = gtk_entry_get_text(GTK_ENTRY(ci->login_entry));
-    const gchar *password = gtk_entry_get_text(GTK_ENTRY(ci->password_entry));
-    const gchar *disposable_password = gtk_entry_get_text(GTK_ENTRY(ci->disposable_password_entry));
-    gboolean is_ldap = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(ci->ldap_check_btn));
+    const gchar *login = gtk_entry_get_text(GTK_ENTRY(self->login_entry));
+    const gchar *password = gtk_entry_get_text(GTK_ENTRY(self->password_entry));
+    const gchar *disposable_password = gtk_entry_get_text(GTK_ENTRY(self->disposable_password_entry));
+    gboolean is_ldap = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(self->ldap_check_btn));
 
-    switch (get_conn_data(ci)->global_app_mode) {
+    switch (self->p_conn_data->global_app_mode) {
         case GLOBAL_APP_MODE_VDI: {
             vdi_session_set_credentials(login, password, disposable_password);
             vdi_session_set_ldap(is_ldap);
+            // todo: finish after sso fix
+            //self->p_conn_data->pass_through_auth =
+            //        gtk_toggle_button_get_active((GtkToggleButton *)self->pass_through_auth_btn);
             break;
         }
         case GLOBAL_APP_MODE_DIRECT: {
-            update_string_safely(&get_conn_data(ci)->user, login);
-            strstrip_safely(get_conn_data(ci)->user);
-            update_string_safely(&get_conn_data(ci)->password, password);
-            strstrip_safely(get_conn_data(ci)->password);
+            update_string_safely(&self->p_conn_data->user, login);
+            strstrip_safely(self->p_conn_data->user);
+            update_string_safely(&self->p_conn_data->password, password);
+            strstrip_safely(self->p_conn_data->password);
             break;
         }
         case GLOBAL_APP_MODE_CONTROLLER: {
@@ -136,46 +127,66 @@ take_from_gui(RemoteViewerConnData *ci)
 }
 
 static void
-fill_gui(RemoteViewerConnData *ci)
+fill_gui(RemoteViewerConnect *self)
 {
-    switch (get_conn_data(ci)->global_app_mode) {
+    switch (self->p_conn_data->global_app_mode) {
         case GLOBAL_APP_MODE_VDI: {
             if (vdi_session_get_vdi_username())
-                gtk_entry_set_text(GTK_ENTRY(ci->login_entry), vdi_session_get_vdi_username());
+                gtk_entry_set_text(GTK_ENTRY(self->login_entry), vdi_session_get_vdi_username());
             if (vdi_session_get_vdi_password())
-                gtk_entry_set_text(GTK_ENTRY(ci->password_entry), vdi_session_get_vdi_password());
+                gtk_entry_set_text(GTK_ENTRY(self->password_entry), vdi_session_get_vdi_password());
 
-            gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(ci->ldap_check_btn), vdi_session_is_ldap());
-            gtk_widget_set_sensitive(ci->ldap_check_btn, TRUE);
+            gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(self->ldap_check_btn), vdi_session_is_ldap());
+            gtk_widget_set_sensitive(self->ldap_check_btn, TRUE);
 
-            gtk_widget_set_visible(ci->global_application_mode_image, FALSE);
+            gtk_widget_set_visible(self->global_application_mode_image, FALSE);
+
+            // todo: finish after sso fix
+//#ifdef  _WIN32
+//            gtk_widget_set_visible(self->pass_through_auth_btn, TRUE);
+//#else
+//            gtk_widget_set_visible(self->pass_through_auth_btn, FALSE);
+//#endif
+            gtk_widget_set_visible(self->pass_through_auth_btn, FALSE);
+
+            if (vdi_session_is_ldap())
+                gtk_toggle_button_set_active((GtkToggleButton *)self->pass_through_auth_btn,
+                                         self->p_conn_data->pass_through_auth);
+            else
+                gtk_toggle_button_set_active((GtkToggleButton *)self->pass_through_auth_btn, FALSE);
+            gtk_widget_set_sensitive(self->pass_through_auth_btn, vdi_session_is_ldap());
+
             break;
         }
         case GLOBAL_APP_MODE_DIRECT: {
-            if (get_conn_data(ci)->user)
-                gtk_entry_set_text(GTK_ENTRY(ci->login_entry), get_conn_data(ci)->user);
-            if (get_conn_data(ci)->password)
-                gtk_entry_set_text(GTK_ENTRY(ci->password_entry), get_conn_data(ci)->password);
+            if (self->p_conn_data->user)
+                gtk_entry_set_text(GTK_ENTRY(self->login_entry), self->p_conn_data->user);
+            if (self->p_conn_data->password)
+                gtk_entry_set_text(GTK_ENTRY(self->password_entry), self->p_conn_data->password);
 
-            gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(ci->ldap_check_btn), FALSE);
-            gtk_widget_set_sensitive(ci->ldap_check_btn, FALSE);
+            gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(self->ldap_check_btn), FALSE);
+            gtk_widget_set_sensitive(self->ldap_check_btn, FALSE);
 
-            gtk_widget_set_visible(ci->global_application_mode_image, TRUE);
-            gtk_widget_set_tooltip_text(ci->global_application_mode_image, _("VM connection mode"));
+            gtk_widget_set_visible(self->global_application_mode_image, TRUE);
+            gtk_widget_set_tooltip_text(self->global_application_mode_image, _("VM connection mode"));
+
+            gtk_widget_set_visible(self->pass_through_auth_btn, FALSE);
             break;
         }
         case GLOBAL_APP_MODE_CONTROLLER: {
             if (get_controller_session_static()->username.string)
-                gtk_entry_set_text(GTK_ENTRY(ci->login_entry), get_controller_session_static()->username.string);
+                gtk_entry_set_text(GTK_ENTRY(self->login_entry), get_controller_session_static()->username.string);
             if (get_controller_session_static()->password.string)
-                gtk_entry_set_text(GTK_ENTRY(ci->password_entry), get_controller_session_static()->password.string);
+                gtk_entry_set_text(GTK_ENTRY(self->password_entry), get_controller_session_static()->password.string);
 
-            gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(ci->ldap_check_btn),
+            gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(self->ldap_check_btn),
                                          get_controller_session_static()->is_ldap);
-            gtk_widget_set_sensitive(ci->ldap_check_btn, TRUE);
+            gtk_widget_set_sensitive(self->ldap_check_btn, TRUE);
 
-            gtk_widget_set_visible(ci->global_application_mode_image, TRUE);
-            gtk_widget_set_tooltip_text(ci->global_application_mode_image, _("Controller connection mode"));
+            gtk_widget_set_visible(self->global_application_mode_image, TRUE);
+            gtk_widget_set_tooltip_text(self->global_application_mode_image, _("Controller connection mode"));
+
+            gtk_widget_set_visible(self->pass_through_auth_btn, FALSE);
             break;
         }
     }
@@ -187,23 +198,29 @@ on_vdi_session_log_in_finished(GObject *source_object G_GNUC_UNUSED,
                                       GAsyncResult *res,
                                       gpointer user_data)
 {
-    RemoteViewerConnData *ci = user_data;
+    RemoteViewerConnect *self = user_data;
 
-    g_autofree gchar *reply_msg = NULL;
-    reply_msg = g_task_propagate_pointer(G_TASK(res), NULL);
-    g_info("%s: is_token_refreshed %s", (const char *)__func__, reply_msg);
+    set_auth_dialog_state(AUTH_GUI_DEFAULT_STATE, self);
+
+    LoginData *login_data = g_task_propagate_pointer(G_TASK(res), NULL);
+    if (login_data->reply_msg)
+        g_info("%s: is_token_refreshed %s", (const char *)__func__, login_data->reply_msg);
 
     g_autofree gchar *token = NULL;
     token = vdi_session_get_token();
     if (token) {
+        // update domain
+        update_string_safely(&self->p_conn_data->domain, login_data->domain);
+
         vdi_session_refresh_login_time();
-        ci->dialog_window_response = GTK_RESPONSE_OK;
-        take_from_gui(ci);
-        shutdown_loop(ci->loop);
+        take_from_gui(self);
+        remote_viewer_connect_finish_job(self);
+        g_signal_emit_by_name(self, "show-vm-selector-requested");
     } else {
-        util_set_message_to_info_label(GTK_LABEL(ci->message_display_label), reply_msg);
-        set_auth_dialog_state(AUTH_GUI_DEFAULT_STATE, ci);
+        util_set_message_to_info_label(GTK_LABEL(self->message_display_label), login_data->reply_msg);
     }
+
+    vdi_api_session_free_login_data(login_data);
 }
 
 // token fetch callback (controller)
@@ -212,110 +229,112 @@ on_controller_session_log_in_finished(GObject *source_object G_GNUC_UNUSED,
                                GAsyncResult *res,
                                gpointer user_data)
 {
-    RemoteViewerConnData *ci = user_data;
+    RemoteViewerConnect *self = user_data;
+
+    set_auth_dialog_state(AUTH_GUI_DEFAULT_STATE, self);
 
     gboolean is_ok = g_task_propagate_boolean(G_TASK(res), NULL);
 
     if (is_ok) {
-        ci->dialog_window_response = GTK_RESPONSE_OK;
-        take_from_gui(ci);
-        shutdown_loop(ci->loop);
+        take_from_gui(self);
+        remote_viewer_connect_finish_job(self);
+        g_signal_emit_by_name(self, "show-vm-selector-requested");
     } else {
         g_autofree gchar *last_error_phrase = NULL;
         last_error_phrase = atomic_string_get(&get_controller_session_static()->last_error_phrase);
-        util_set_message_to_info_label(GTK_LABEL(ci->message_display_label), last_error_phrase);
-        set_auth_dialog_state(AUTH_GUI_DEFAULT_STATE, ci);
+        util_set_message_to_info_label(GTK_LABEL(self->message_display_label), last_error_phrase);
     }
 }
 
 // connect to VDI server
-static void connect_to_vdi_server(RemoteViewerConnData *ci)
+static void connect_to_vdi_server(RemoteViewerConnect *self)
 {
-    if (ci->auth_dialog_state == AUTH_GUI_CONNECT_TRY_STATE)
-        return;
     vdi_session_get_ws_client()->is_connect_initiated_by_user = TRUE;
 
     // set credential for connection to VDI server
-    take_from_gui(ci);
-    set_auth_dialog_state(AUTH_GUI_CONNECT_TRY_STATE, ci);
+    take_from_gui(self);
+    set_auth_dialog_state(AUTH_GUI_CONNECT_TRY_STATE, self);
 
     //start token fetching task
-    execute_async_task(vdi_session_log_in_task, on_vdi_session_log_in_finished, NULL, ci);
+    execute_async_task(vdi_session_log_in_task, on_vdi_session_log_in_finished, NULL, self);
 }
 
-// connecto to controller (ECP)
-static void connect_to_controller(RemoteViewerConnData *ci)
+// connect to controller (ECP)
+static void connect_to_controller(RemoteViewerConnect *self)
 {
-    if (ci->auth_dialog_state == AUTH_GUI_CONNECT_TRY_STATE)
+    if (self->auth_dialog_state == AUTH_GUI_CONNECT_TRY_STATE)
         return;
 
     // set credential for connection to controller
-    take_from_gui(ci);
-    set_auth_dialog_state(AUTH_GUI_CONNECT_TRY_STATE, ci);
+    take_from_gui(self);
+    set_auth_dialog_state(AUTH_GUI_CONNECT_TRY_STATE, self);
 
     //start token fetching task
-    execute_async_task(controller_session_log_in_task, on_controller_session_log_in_finished, NULL, ci);
+    execute_async_task(controller_session_log_in_task, on_controller_session_log_in_finished, NULL, self);
 }
 
 static void
-handle_connect_request(RemoteViewerConnData *ci)
+handle_connect_request(RemoteViewerConnect *self)
 {
-    switch (get_conn_data(ci)->global_app_mode) {
+    switch (self->p_conn_data->global_app_mode) {
         case GLOBAL_APP_MODE_VDI: {
             if (strlen_safely(vdi_session_get_vdi_ip()) == 0) {
-                util_set_message_to_info_label(GTK_LABEL(ci->message_display_label),
+                util_set_message_to_info_label(GTK_LABEL(self->message_display_label),
                                           _("Connection address is not specified"));
                 return;
             }
 
-            connect_to_vdi_server(ci);
+            if (self->auth_dialog_state == AUTH_GUI_CONNECT_TRY_STATE)
+                return;
+
+            connect_to_vdi_server(self);
             break;
         }
         case GLOBAL_APP_MODE_DIRECT: {
-            if (strlen_safely(get_conn_data(ci)->ip) == 0) {
+            if (strlen_safely(self->p_conn_data->ip) == 0) {
                 // "Не указан адрес подключения (Настройки->Основные)"
-                util_set_message_to_info_label(GTK_LABEL(ci->message_display_label),
+                util_set_message_to_info_label(GTK_LABEL(self->message_display_label),
                                           _("Connection address is not specified"));
                 return;
             }
 
-            ci->dialog_window_response = GTK_RESPONSE_OK;
-            take_from_gui(ci);
-            shutdown_loop(ci->loop);
+            take_from_gui(self);
+            remote_viewer_connect_finish_job(self);
+            g_signal_emit_by_name(self, "connect-to-vm-requested");
             break;
         }
         case GLOBAL_APP_MODE_CONTROLLER: {
             if (strlen_safely(get_controller_session_static()->address.string) == 0) {
-                util_set_message_to_info_label(GTK_LABEL(ci->message_display_label),
+                util_set_message_to_info_label(GTK_LABEL(self->message_display_label),
                                           _("Connection address is not specified"));
                 return;
             }
-            connect_to_controller(ci);
+            connect_to_controller(self);
             break;
         }
     }
 }
 
 static gboolean
-window_deleted_cb(RemoteViewerConnData *ci)
+window_deleted_cb(RemoteViewerConnect *self)
 {
-    ci->dialog_window_response = GTK_RESPONSE_CLOSE;
-    shutdown_loop(ci->loop);
+    remote_viewer_connect_finish_job(self);
+    g_signal_emit_by_name(self, "quit-requested");
     return TRUE;
 }
 
 static gboolean
 key_pressed_cb(GtkWidget *widget G_GNUC_UNUSED, GdkEvent *event, gpointer data)
 {
-    RemoteViewerConnData *ci = data;
-    GtkWidget *window = ci->window;
+    RemoteViewerConnect *self = data;
+    GtkWidget *window = self->window;
     gboolean retval;
     if (event->type == GDK_KEY_PRESS) {
         //g_info("GDK_KEY_PRESS event->key.keyval %i \n", event->key.keyval);
         switch (event->key.keyval) {
             case GDK_KEY_Return:
                 g_info("GDK_KEY_Return\n");
-                handle_connect_request(ci);
+                handle_connect_request(self);
                 return TRUE;
             case GDK_KEY_Escape:
                 g_signal_emit_by_name(window, "delete-event", NULL, &retval);
@@ -331,35 +350,47 @@ key_pressed_cb(GtkWidget *widget G_GNUC_UNUSED, GdkEvent *event, gpointer data)
 static void
 settings_button_clicked_cb(GtkButton *button G_GNUC_UNUSED, gpointer data)
 {
-    RemoteViewerConnData *ci = data;
-    GtkResponseType res = remote_viewer_start_settings_dialog(ci->p_remote_viewer, GTK_WINDOW(ci->window));
+    RemoteViewerConnect *self = data;
+    GtkResponseType res = remote_viewer_start_settings_dialog(&self->connect_settings_dialog,
+                                                              self->p_conn_data,
+                                                              self->p_app_updater,
+                                                              GTK_WINDOW(self->window));
     // update gui state
     if (res == GTK_RESPONSE_OK)
-        fill_gui(ci);
+        fill_gui(self);
 }
 
 static void
 on_check_btn_2fa_password_toggled(GtkToggleButton *button, gpointer data)
 {
-    RemoteViewerConnData *ci = data;
+    RemoteViewerConnect *self = data;
     gboolean is_active = gtk_toggle_button_get_active(button);
-    gtk_widget_set_sensitive(ci->disposable_password_entry, is_active);
-    gtk_entry_set_text(GTK_ENTRY(ci->disposable_password_entry), "");
+    gtk_widget_set_sensitive(self->disposable_password_entry, is_active);
+    gtk_entry_set_text(GTK_ENTRY(self->disposable_password_entry), "");
+}
+
+static void
+on_ldap_check_btn_toggled(GtkToggleButton *check_btn, gpointer data)
+{
+    RemoteViewerConnect *self = data;
+    gboolean is_check_btn_toggled = gtk_toggle_button_get_active(check_btn);
+    if (gtk_widget_is_visible(self->pass_through_auth_btn))
+        gtk_widget_set_sensitive(self->pass_through_auth_btn, is_check_btn_toggled);
 }
 
 static void
 connect_button_clicked_cb(GtkButton *button G_GNUC_UNUSED, gpointer data)
 {
-    RemoteViewerConnData *ci = (RemoteViewerConnData *)data;
-    handle_connect_request(ci);
+    RemoteViewerConnect *self = (RemoteViewerConnect *)data;
+    handle_connect_request(self);
 }
 
 static void
 btn_cancel_auth_clicked_cb(GtkButton *button G_GNUC_UNUSED, gpointer data)
 {
-    RemoteViewerConnData *ci = (RemoteViewerConnData *)data;
+    RemoteViewerConnect *self = (RemoteViewerConnect *)data;
 
-    switch (get_conn_data(ci)->global_app_mode) {
+    switch (self->p_conn_data->global_app_mode) {
         case GLOBAL_APP_MODE_VDI: {
             vdi_session_cancel_pending_requests();
             break;
@@ -373,123 +404,202 @@ btn_cancel_auth_clicked_cb(GtkButton *button G_GNUC_UNUSED, gpointer data)
     }
 }
 
-// В этом режиме сразу автоматом пытаемся подключиться к предыдущему пулу, не дожидаясь действий пользователя.
-// Поступаем так только один раз при старте приложения, чтоб у пользователя была возможносмть
-// попасть на начальную форму и настройки (not_connected_to_prev_pool_yet)
-static void fast_forward_connect_to_prev_pool_if_enabled(RemoteViewerConnData *ci)
-{
-    if(get_conn_data(ci)->global_app_mode == GLOBAL_APP_MODE_VDI &&
-    get_conn_data(ci)->is_connect_to_prev_pool &&
-            get_conn_data(ci)->not_connected_to_prev_pool_yet) {
-        connect_to_vdi_server(ci);
-    }
-}
-
 static void remote_viewer_on_updates_checked(gpointer data G_GNUC_UNUSED, int is_available,
-                                             RemoteViewerConnData *ci)
+                                             RemoteViewerConnect *self)
 {
     g_info("%s  is_available %i", (const char *)__func__, is_available);
 
     if (is_available) {
-        gtk_image_set_from_stock(GTK_IMAGE(ci->new_version_available_image),
+        gtk_image_set_from_stock(GTK_IMAGE(self->new_version_available_image),
                                      "gtk-dialog-warning", GTK_ICON_SIZE_SMALL_TOOLBAR);
         // Доступна новая версия. Чтобы обновиться нажмите Настройки->Служебные->Получить обновления.
-        gtk_widget_set_tooltip_text(ci->new_version_available_image,
+        gtk_widget_set_tooltip_text(self->new_version_available_image,
             _("A new version available. Press Settings->Service->Get updates"));
     }
 }
 
+static void remote_viewer_connect_finalize(GObject *object)
+{
+    GObjectClass *parent_class = G_OBJECT_CLASS( remote_viewer_connect_parent_class );
+    ( *parent_class->finalize )( object );
+}
+
+static void remote_viewer_connect_class_init(RemoteViewerConnectClass *klass )
+{
+    GObjectClass *gobject_class = G_OBJECT_CLASS(klass);
+    gobject_class->finalize = remote_viewer_connect_finalize;
+
+    // signals
+    g_signal_new("show-vm-selector-requested",
+                 G_OBJECT_CLASS_TYPE(gobject_class),
+                 G_SIGNAL_RUN_FIRST,
+                 G_STRUCT_OFFSET(RemoteViewerConnectClass, show_vm_selector_requested),
+                 NULL, NULL,
+                 g_cclosure_marshal_VOID__VOID,
+                 G_TYPE_NONE,
+                 0);
+    g_signal_new("connect-to-vm-requested",
+                 G_OBJECT_CLASS_TYPE(gobject_class),
+                 G_SIGNAL_RUN_FIRST,
+                 G_STRUCT_OFFSET(RemoteViewerConnectClass, connect_to_vm_requested),
+                 NULL, NULL,
+                 g_cclosure_marshal_VOID__VOID,
+                 G_TYPE_NONE,
+                 0);
+    g_signal_new("quit-requested",
+                 G_OBJECT_CLASS_TYPE(gobject_class),
+                 G_SIGNAL_RUN_FIRST,
+                 G_STRUCT_OFFSET(RemoteViewerConnectClass, quit_requested),
+                 NULL, NULL,
+                 g_cclosure_marshal_VOID__VOID,
+                 G_TYPE_NONE,
+                 0);
+}
+
+static void remote_viewer_connect_init(RemoteViewerConnect *self G_GNUC_UNUSED)
+{
+    g_info("%s", (const char *) __func__);
+}
+
+RemoteViewerConnect *remote_viewer_connect_new()
+{
+    RemoteViewerConnect *obj = REMOTE_VIEWER_CONNECT( g_object_new( TYPE_REMOTE_VIEWER_CONNECT, NULL ) );
+    return obj;
+}
+
+#if defined(_WIN32)
+static void on_shared_memory_ipc_get_logon_data_finished(GObject *source_object G_GNUC_UNUSED,
+        GAsyncResult *res, gpointer user_data) {
+
+    RemoteViewerConnect *self = user_data;
+
+    // Get system logon data and update GUI
+    SharedMemoryIpcLogonData *shared_memory_ipc_logon_data = g_task_propagate_pointer(G_TASK(res), NULL);
+
+    if (shared_memory_ipc_logon_data->login) {
+        gtk_entry_set_text(GTK_ENTRY(self->login_entry), shared_memory_ipc_logon_data->login);
+        gtk_entry_set_text(GTK_ENTRY(self->password_entry), shared_memory_ipc_logon_data->password);
+        connect_to_vdi_server(self);
+    } else {
+        util_set_message_to_info_label(GTK_LABEL(self->message_display_label),
+                                       _("Failed to fetch system credentials"));
+        set_auth_dialog_state(AUTH_GUI_DEFAULT_STATE, self);
+    }
+
+    shared_memory_ipc_logon_data_free(shared_memory_ipc_logon_data);
+}
+#endif
+
+// Path through auth or auto connect to prev pool
+static void fast_forward_connect_if_enabled(RemoteViewerConnect *self)
+{
+    if (self->p_conn_data->global_app_mode == GLOBAL_APP_MODE_VDI) {
+#if defined(_WIN32)
+        if (vdi_session_is_ldap() &&
+        self->p_conn_data->pass_through_auth &&
+        self->p_conn_data->not_pass_through_authenticated_yet) {
+            self->p_conn_data->not_pass_through_authenticated_yet = FALSE;
+            set_auth_dialog_state(AUTH_GUI_CONNECT_TRY_STATE, self);
+            execute_async_task(shared_memory_ipc_get_logon_data,
+                               on_shared_memory_ipc_get_logon_data_finished, NULL, self);
+            return;
+        }
+#endif
+        if (self->p_conn_data->connect_to_prev_pool && self->p_conn_data->not_connected_to_prev_pool_yet) {
+            // connect to the prev pool if required
+            connect_to_vdi_server(self);
+        }
+    }
+}
+
 /**
-* remote_viewer_connect_dialog
+* remote_viewer_connect_show
 *
 * @brief Opens connect dialog for remote viewer
 */
-GtkResponseType
-remote_viewer_connect_dialog(RemoteViewer *remote_viewer)
+void
+remote_viewer_connect_show(RemoteViewerConnect *self, ConnectSettingsData *conn_data,
+                           AppUpdater *app_updater)
 {
-    GtkBuilder *builder;
-
-    RemoteViewerConnData ci = {};
-    ci.dialog_window_response = GTK_RESPONSE_CLOSE;
+    if (self->is_active)
+        return;
+    self->is_active = TRUE;
 
     // save pointers
-    ci.p_remote_viewer = remote_viewer;
+    self->p_conn_data = conn_data;
+    self->p_app_updater = app_updater;
 
     /* Create the widgets */
-    builder = remote_viewer_util_load_ui("remote-viewer-connect_veil.glade");
-    g_return_val_if_fail(builder != NULL, GTK_RESPONSE_NONE);
+    GtkBuilder *builder = self->builder = remote_viewer_util_load_ui("remote-viewer-connect_veil.glade");
 
-    ci.window = GTK_WIDGET(gtk_builder_get_object(builder, "remote-viewer-connection-window"));
+    self->window = GTK_WIDGET(gtk_builder_get_object(builder, "remote-viewer-connection-window"));
 
-    ci.settings_button = GTK_WIDGET(gtk_builder_get_object(builder, "btn_settings"));
-    ci.connect_button = GTK_WIDGET(gtk_builder_get_object(builder, "connect-button"));
-    ci.btn_cancel_auth = GTK_WIDGET(gtk_builder_get_object(builder, "btn_cancel_auth"));
-    ci.connect_spinner = GTK_WIDGET(gtk_builder_get_object(builder, "connect-spinner"));
-    ci.message_display_label = GTK_WIDGET(gtk_builder_get_object(builder, "message-display-label"));
-    gtk_label_set_selectable(GTK_LABEL(ci.message_display_label), TRUE);
-    ci.header_label = GTK_WIDGET(gtk_builder_get_object(builder, "header-label"));
+    self->settings_button = GTK_WIDGET(gtk_builder_get_object(builder, "btn_settings"));
+    self->connect_button = GTK_WIDGET(gtk_builder_get_object(builder, "connect-button"));
+    self->btn_cancel_auth = GTK_WIDGET(gtk_builder_get_object(builder, "btn_cancel_auth"));
+    self->connect_spinner = GTK_WIDGET(gtk_builder_get_object(builder, "connect-spinner"));
+    self->message_display_label = GTK_WIDGET(gtk_builder_get_object(builder, "message-display-label"));
+    gtk_label_set_selectable(GTK_LABEL(self->message_display_label), TRUE);
+    self->header_label = GTK_WIDGET(gtk_builder_get_object(builder, "header-label"));
     g_autofree gchar *header_label_tooltip_text = NULL;
     header_label_tooltip_text = g_strdup_printf("Built with freerdp version: %s Application build date: %s %s",
             FREERDP_VERSION_FULL, __DATE__, __TIME__);
-    gtk_widget_set_tooltip_text(ci.header_label, header_label_tooltip_text);
-    gtk_label_set_text(GTK_LABEL(ci.header_label), VERSION);
-    ci.new_version_available_image = GTK_WIDGET(gtk_builder_get_object(builder, "new-version-available-image"));
+    gtk_widget_set_tooltip_text(self->header_label, header_label_tooltip_text);
+    gtk_label_set_text(GTK_LABEL(self->header_label), VERSION);
+    self->new_version_available_image = GTK_WIDGET(gtk_builder_get_object(builder, "new-version-available-image"));
 
-    ci.app_name_label = GTK_WIDGET(gtk_builder_get_object(builder, "app_name_label"));
+    self->app_name_label = GTK_WIDGET(gtk_builder_get_object(builder, "app_name_label"));
     gchar *uppercase_name = g_utf8_strup(APPLICATION_NAME, -1);
-    gtk_label_set_text(GTK_LABEL(ci.app_name_label), uppercase_name);
+    gtk_label_set_text(GTK_LABEL(self->app_name_label), uppercase_name);
     g_free(uppercase_name);
 
     // password entry
-    ci.password_entry = GTK_WIDGET(gtk_builder_get_object(builder, "password-entry"));
+    self->password_entry = GTK_WIDGET(gtk_builder_get_object(builder, "password-entry"));
     // login entry
-    ci.login_entry = GTK_WIDGET(gtk_builder_get_object(builder, "login-entry"));
+    self->login_entry = GTK_WIDGET(gtk_builder_get_object(builder, "login-entry"));
     // 2fa password
-    ci.disposable_password_entry = GTK_WIDGET(gtk_builder_get_object(builder, "disposable_password_entry"));
-    ci.check_btn_2fa_password = GTK_WIDGET(gtk_builder_get_object(builder, "check_btn_2fa_password"));
-    ci.ldap_check_btn = get_widget_from_builder(builder, "ldap_check_btn");
+    self->disposable_password_entry = GTK_WIDGET(gtk_builder_get_object(builder, "disposable_password_entry"));
+    self->check_btn_2fa_password = GTK_WIDGET(gtk_builder_get_object(builder, "check_btn_2fa_password"));
+    self->ldap_check_btn = get_widget_from_builder(builder, "ldap_check_btn");
+    self->pass_through_auth_btn = get_widget_from_builder(self->builder, "pass_through_auth_btn");
 
-    ci.global_application_mode_image = GTK_WIDGET(gtk_builder_get_object(builder, "global_application_mode_image"));
+    self->global_application_mode_image = GTK_WIDGET(gtk_builder_get_object(builder, "global_application_mode_image"));
 
     // Signal - callbacks connections
-    g_signal_connect(ci.window, "key-press-event", G_CALLBACK(key_pressed_cb), &ci);
-    g_signal_connect_swapped(ci.window, "delete-event", G_CALLBACK(window_deleted_cb), &ci);
-    g_signal_connect(ci.settings_button, "clicked", G_CALLBACK(settings_button_clicked_cb), &ci);
-    g_signal_connect(ci.connect_button, "clicked", G_CALLBACK(connect_button_clicked_cb), &ci);
-    g_signal_connect(ci.btn_cancel_auth, "clicked", G_CALLBACK(btn_cancel_auth_clicked_cb), &ci);
-    gulong updates_checked_handle = g_signal_connect(remote_viewer->app_updater, "updates-checked",
-                                          G_CALLBACK(remote_viewer_on_updates_checked), &ci);
-    g_signal_connect(ci.check_btn_2fa_password, "toggled", G_CALLBACK(on_check_btn_2fa_password_toggled), &ci);
+    g_signal_connect(self->window, "key-press-event", G_CALLBACK(key_pressed_cb), self);
+    g_signal_connect_swapped(self->window, "delete-event", G_CALLBACK(window_deleted_cb), self);
+    g_signal_connect(self->settings_button, "clicked", G_CALLBACK(settings_button_clicked_cb), self);
+    g_signal_connect(self->connect_button, "clicked", G_CALLBACK(connect_button_clicked_cb), self);
+    g_signal_connect(self->btn_cancel_auth, "clicked", G_CALLBACK(btn_cancel_auth_clicked_cb), self);
+    self->updates_checked_handle = g_signal_connect(self->p_app_updater, "updates-checked",
+                                          G_CALLBACK(remote_viewer_on_updates_checked), self);
+    g_signal_connect(self->check_btn_2fa_password, "toggled",
+            G_CALLBACK(on_check_btn_2fa_password_toggled), self);
+    g_signal_connect(self->ldap_check_btn, "toggled",
+                     G_CALLBACK(on_ldap_check_btn_toggled), self);
 
-    fill_gui(&ci);
+    set_auth_dialog_state(AUTH_GUI_DEFAULT_STATE, self);
 
     /* show and wait for response */
-    gtk_window_set_position(GTK_WINDOW(ci.window), GTK_WIN_POS_CENTER);
+    gtk_window_set_position(GTK_WINDOW(self->window), GTK_WIN_POS_CENTER);
     //gtk_window_resize(GTK_WINDOW(window), 340, 340);
 
-    gtk_widget_show_all(ci.window);
-    gtk_window_set_resizable(GTK_WINDOW(ci.window), FALSE);
+    gtk_widget_show_all(self->window);
+    fill_gui(self);
+
+    gtk_window_set_resizable(GTK_WINDOW(self->window), FALSE);
 
     // check if there is a new version
-    app_updater_execute_task_check_updates(remote_viewer->app_updater);
+    app_updater_execute_task_check_updates(self->p_app_updater);
 
-    // connect to the prev pool if required
-    fast_forward_connect_to_prev_pool_if_enabled(&ci);
+    fast_forward_connect_if_enabled(self);
+}
 
-    create_loop_and_launch(&ci.loop);
+void remote_viewer_connect_raise(RemoteViewerConnect *self)
+{
+    if (!self->is_active)
+        return;
 
-    // forget password if required
-    if(!get_conn_data(&ci)->to_save_pswd)
-        free_memory_safely(&get_conn_data(&ci)->password);
-
-    // save data to ini file
-    settings_data_save_all(get_conn_data(&ci));
-
-    // disconnect signals
-    g_signal_handler_disconnect(remote_viewer->app_updater, updates_checked_handle);
-
-    g_object_unref(builder);
-    gtk_widget_destroy(ci.window);
-
-    return ci.dialog_window_response;
+    if (self->window && gtk_widget_get_visible(self->window))
+        gtk_window_present(GTK_WINDOW(self->window));
 }

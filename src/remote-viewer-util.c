@@ -868,6 +868,31 @@ void convert_string_from_utf8_to_locale(gchar **utf8_str)
     g_free(*utf8_str);
     *utf8_str = local_str;
 }
+#if defined(_WIN32)
+// Конвертирует мультибайт строку в wide characters строку.
+// Возвращаемая строка должна быть освобождена с free
+wchar_t *util_multibyte_str_to_wchar_str(const gchar *g_str)
+{
+    if (g_str == NULL)
+        return NULL;
+
+    size_t required_size = mbstowcs(NULL, g_str, 0) + 1; //Plus null
+    wchar_t *wtext = (wchar_t *)calloc(1, required_size * sizeof(wchar_t));
+    mbstowcs(wtext, g_str, required_size);
+
+    return wtext;
+}
+
+char* util_wstr_to_multibyte_str(const wchar_t* wstr)
+{
+    int len = WideCharToMultiByte(CP_UTF8, 0, wstr, -1, NULL, 0, NULL, NULL);
+    char* str_multib = malloc((len + 1) * sizeof(char));
+    WideCharToMultiByte(CP_UTF8, 0, wstr, -1, str_multib, len, NULL, NULL);
+    str_multib[len] = 0;
+
+    return str_multib;
+}
+#endif
 
 gchar *get_windows_app_data_location()
 {
@@ -997,6 +1022,8 @@ msg_box_parent_hidden(GtkWidget *widget G_GNUC_UNUSED, gpointer user_data)
 
 void show_msg_box_dialog(GtkWindow *parent, const gchar *message)
 {
+    g_info("%s", message);
+
     GtkWidget *dialog_msg = gtk_message_dialog_new(parent,
                                                    GTK_DIALOG_MODAL | GTK_DIALOG_DESTROY_WITH_PARENT,
                                                    GTK_MESSAGE_WARNING,
@@ -1296,6 +1323,15 @@ gchar *util_get_hostname()
     hostname = utf8;
 
     return hostname;
+}
+
+void terminate_process(GPid pid)
+{
+#if  defined(_WIN32)
+    TerminateProcess(pid, 0);
+#else
+    kill(pid, 9);
+#endif
 }
 
 /*

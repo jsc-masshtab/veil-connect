@@ -13,7 +13,7 @@
 #include <gtk/gtk.h>
 
 
-#define TYPE_VEIL_MESSENGER  ( veil_messenger_get_type( ) )
+#define TYPE_VEIL_MESSENGER ( veil_messenger_get_type( ) )
 #define VEIL_MESSENGER( obj ) ( G_TYPE_CHECK_INSTANCE_CAST((obj), TYPE_VEIL_MESSENGER, VeilMessenger) )
 
 typedef struct{

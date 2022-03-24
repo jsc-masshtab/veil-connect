@@ -6,130 +6,12 @@
  * Author: http://mashtab.org/
  */
 
-#include <stdio.h>
-#include <ctype.h>
-#include <glib/gstdio.h>
-#include <glib/gi18n.h>
-
-#include <freerdp/codec/color.h>
-
-#include "remote-viewer-util.h"
-#include "settingsfile.h"
-
-#include "usb_selector_widget.h"
-
 #include "remote_viewer_start_settings.h"
-#include "veil_logger.h"
-#include "controller_client/controller_session.h"
 
-
-typedef struct{
-
-    GMainLoop *loop;
-    GtkResponseType dialog_window_response;
-
-    GtkBuilder *builder;
-    GtkWidget *window;
-
-    GtkWidget *domain_entry;
-    GtkWidget *address_entry;
-    GtkWidget *port_spinbox;
-    GtkWidget *conn_to_prev_pool_checkbutton;
-    GtkWidget *save_password_checkbtn;
-    GtkWidget *remote_protocol_combobox;
-    GtkWidget *redirect_time_zone_check_btn;
-
-    // spice settings
-    GtkWidget *client_cursor_visible_checkbutton;
-    GtkWidget *spice_full_screen_check_btn;
-    GtkWidget *spice_monitor_mapping_entry;
-    GtkWidget *btn_show_monitor_config_spice;
-
-    // RDP settings
-    GtkWidget *rdp_image_pixel_format_combobox;
-    GtkWidget *rdp_fps_spin_btn;
-
-    GtkWidget *is_rdp_vid_comp_used_check_btn;
-    GtkWidget *rdp_codec_combobox;
-    GtkWidget *rdp_shared_folders_entry;
-
-    GtkWidget *btn_add_remote_folder;
-    GtkWidget *btn_remove_remote_folder;
-
-    GtkWidget *is_multimon_check_btn;
-    GtkWidget *rdp_full_screen_check_btn;
-    GtkWidget *rdp_selected_monitors_entry;
-    GtkWidget *btn_show_monitor_config_rdp;
-
-    GtkWidget *redirect_printers_check_btn;
-    GtkWidget *rdp_redirect_microphone_check_btn;
-
-    GtkWidget *remote_app_check_btn;
-    GtkWidget *remote_app_name_entry;
-    GtkWidget *remote_app_options_entry;
-
-    GtkWidget *rdp_sec_protocol_check_btn;
-    GtkWidget *sec_type_combobox;
-
-    GtkWidget *rdp_network_check_btn;
-    GtkWidget *rdp_network_type_combobox;
-
-    GtkWidget *rdp_decorations_check_btn;
-    GtkWidget *rdp_fonts_check_btn;
-    GtkWidget *rdp_themes_check_btn;
-
-    GtkWidget *select_usb_btn;
-
-    GtkWidget *use_rdp_file_check_btn;
-    GtkWidget *btn_choose_rdp_file;
-    GtkWidget *rdp_file_name_entry;
-
-    UsbSelectorWidget *usb_selector_widget;
-
-    GtkWidget *use_rd_gateway_check_btn;
-    GtkWidget *gateway_address_entry;
-
-    GtkWidget *rdp_log_debug_info_check_btn;
-
-    // X2GO settings
-    GtkWidget *x2go_app_combobox;
-
-    GtkWidget *x2go_session_type_combobox;
-
-    GtkWidget *x2go_conn_type_check_btn;
-    GtkWidget *x2go_conn_type_combobox;
-
-    GtkWidget *x2go_full_screen_check_btn;
-
-    GtkWidget *x2go_compress_method_combobox;
-
-    // Service
-    GtkWidget *btn_archive_logs;
-    GtkWidget *log_location_label;
-
-    GtkWidget *btn_get_app_updates;
-    GtkWidget *btn_open_doc;
-    GtkWidget *check_updates_spinner;
-    GtkWidget *check_updates_label;
-    GtkWidget *windows_updates_url_entry;
-
-    GtkWidget *app_mode_combobox;
-    GtkWidget *vm_await_time_spinbox;
-
-    // control buttons
-    GtkWidget *bt_cancel;
-    GtkWidget *bt_ok;
-
-    RemoteViewer *p_remote_viewer;
-
-    // signal handler ids
-    gulong on_app_mode_combobox_changed_id;
-
-} ConnectSettingsDialogData;
 
 // D режиме по умолчанию подключение к VDI серверу. В ручном режиме прямое подключение к ВМ
 // GUI в разных режимах имеет небольшое отличие
-static void update_gui_according_to_app_mode(ConnectSettingsDialogData *dialog_data,
+static void update_gui_according_to_app_mode(ConnectSettingsDialog *dialog_data,
                                              GlobalAppMode global_app_mode)
 {
     switch (global_app_mode) {
@@ -166,7 +48,7 @@ static void update_gui_according_to_app_mode(ConnectSettingsDialogData *dialog_d
 }
 
 static gboolean
-window_deleted_cb(ConnectSettingsDialogData *dialog_data)
+window_deleted_cb(ConnectSettingsDialog *dialog_data)
 {
     dialog_data->dialog_window_response = GTK_RESPONSE_CLOSE;
     shutdown_loop(dialog_data->loop);
@@ -174,7 +56,7 @@ window_deleted_cb(ConnectSettingsDialogData *dialog_data)
 }
 
 static void
-cancel_button_clicked_cb(GtkButton *button G_GNUC_UNUSED, ConnectSettingsDialogData *dialog_data)
+cancel_button_clicked_cb(GtkButton *button G_GNUC_UNUSED, ConnectSettingsDialog *dialog_data)
 {
     dialog_data->dialog_window_response = GTK_RESPONSE_CANCEL;
     shutdown_loop(dialog_data->loop);
@@ -190,7 +72,7 @@ make_entry_red(GtkWidget *entry)
 /*Return true if there were no errors otherwise - false  */
 // У виджета есть понятие id имя, котоое уникально и есть понятие имя виджета, которое используется для css.
 static gboolean
-check_parameters(ConnectSettingsData *p_conn_data G_GNUC_UNUSED, ConnectSettingsDialogData *dialog_data)
+check_parameters(ConnectSettingsData *p_conn_data G_GNUC_UNUSED, ConnectSettingsDialog *dialog_data)
 {
     gboolean is_ok = TRUE;
     const gchar *pattern = "^$|[а-яА-ЯёЁa-zA-Z0-9]+[а-яА-ЯёЁa-zA-Z0-9.\\-_+ ]*$";
@@ -225,7 +107,7 @@ check_parameters(ConnectSettingsData *p_conn_data G_GNUC_UNUSED, ConnectSettings
 static void
 on_vid_comp_used_check_btn_toggled(GtkToggleButton *check_btn, gpointer user_data)
 {
-    ConnectSettingsDialogData *dialog_data = (ConnectSettingsDialogData *)user_data;
+    ConnectSettingsDialog *dialog_data = (ConnectSettingsDialog *)user_data;
     if (dialog_data->rdp_codec_combobox) {
         gboolean is_vid_comp_used = gtk_toggle_button_get_active(check_btn);
         gtk_widget_set_sensitive(dialog_data->rdp_codec_combobox, is_vid_comp_used);
@@ -235,7 +117,7 @@ on_vid_comp_used_check_btn_toggled(GtkToggleButton *check_btn, gpointer user_dat
 static void
 on_rdp_sec_protocol_check_btn_toggled(GtkToggleButton *check_btn, gpointer user_data)
 {
-    ConnectSettingsDialogData *dialog_data = (ConnectSettingsDialogData *)user_data;
+    ConnectSettingsDialog *dialog_data = (ConnectSettingsDialog *)user_data;
     gboolean is_check_btn_toggled = gtk_toggle_button_get_active(check_btn);
     gtk_widget_set_sensitive(dialog_data->sec_type_combobox, is_check_btn_toggled);
 }
@@ -243,7 +125,7 @@ on_rdp_sec_protocol_check_btn_toggled(GtkToggleButton *check_btn, gpointer user_
 static void
 on_rdp_network_check_btn_toggled(GtkToggleButton *rdp_network_check_btn, gpointer user_data)
 {
-    ConnectSettingsDialogData *dialog_data = (ConnectSettingsDialogData *)user_data;
+    ConnectSettingsDialog *dialog_data = (ConnectSettingsDialog *)user_data;
     gboolean is_rdp_network_check_btn_toggled = gtk_toggle_button_get_active(rdp_network_check_btn);
     gtk_widget_set_sensitive(dialog_data->rdp_network_type_combobox, is_rdp_network_check_btn_toggled);
 }
@@ -251,7 +133,7 @@ on_rdp_network_check_btn_toggled(GtkToggleButton *rdp_network_check_btn, gpointe
 static void
 on_remote_app_check_btn_toggled(GtkToggleButton *remote_app_check_btn, gpointer user_data)
 {
-    ConnectSettingsDialogData *dialog_data = (ConnectSettingsDialogData *)user_data;
+    ConnectSettingsDialog *dialog_data = (ConnectSettingsDialog *)user_data;
 
     gboolean is_remote_app_check_btn_toggled = gtk_toggle_button_get_active(remote_app_check_btn);
     gtk_widget_set_sensitive(dialog_data->remote_app_name_entry, is_remote_app_check_btn_toggled);
@@ -265,7 +147,7 @@ shared_folders_icon_released(GtkEntry            *entry,
                                GdkEvent            *event,
                                gpointer             user_data)
 {
-    ConnectSettingsDialogData *dialog_data = (ConnectSettingsDialogData *)user_data;
+    ConnectSettingsDialog *dialog_data = (ConnectSettingsDialog *)user_data;
 
 
     //folders_selector_widget_get_folders(GTK_WINDOW(dialog_data->window));
@@ -281,7 +163,7 @@ shared_folders_icon_released(GtkEntry            *entry,
 }*/
 
 static void
-btn_add_remote_folder_clicked_cb(GtkButton *button G_GNUC_UNUSED, ConnectSettingsDialogData *dialog_data)
+btn_add_remote_folder_clicked_cb(GtkButton *button G_GNUC_UNUSED, ConnectSettingsDialog *dialog_data)
 {
     // get folder name
     GtkWidget *dialog = gtk_file_chooser_dialog_new (_("Open File"),
@@ -327,14 +209,14 @@ btn_add_remote_folder_clicked_cb(GtkButton *button G_GNUC_UNUSED, ConnectSetting
 }
 
 static void
-btn_remove_remote_folder_clicked_cb(GtkButton *button G_GNUC_UNUSED, ConnectSettingsDialogData *dialog_data)
+btn_remove_remote_folder_clicked_cb(GtkButton *button G_GNUC_UNUSED, ConnectSettingsDialog *dialog_data)
 {
     // clear rdp_shared_folders_entry
     gtk_entry_set_text(GTK_ENTRY(dialog_data->rdp_shared_folders_entry), "");
 }
 
 static void
-on_use_rdp_file_check_btn_toggled(GtkToggleButton *button, ConnectSettingsDialogData *dialog_data)
+on_use_rdp_file_check_btn_toggled(GtkToggleButton *button, ConnectSettingsDialog *dialog_data)
 {
     gboolean use_rdp_file = gtk_toggle_button_get_active(button);
     gtk_widget_set_sensitive(dialog_data->btn_choose_rdp_file, use_rdp_file);
@@ -342,14 +224,14 @@ on_use_rdp_file_check_btn_toggled(GtkToggleButton *button, ConnectSettingsDialog
 }
 
 static void
-on_use_rd_gateway_check_btn_toggled(GtkToggleButton *button, ConnectSettingsDialogData *dialog_data)
+on_use_rd_gateway_check_btn_toggled(GtkToggleButton *button, ConnectSettingsDialog *dialog_data)
 {
     gboolean is_btn_active = gtk_toggle_button_get_active(button);
     gtk_widget_set_sensitive(dialog_data->gateway_address_entry, is_btn_active);
 }
 
 static void
-btn_choose_rdp_file_clicked(GtkButton *button G_GNUC_UNUSED, ConnectSettingsDialogData *dialog_data)
+btn_choose_rdp_file_clicked(GtkButton *button G_GNUC_UNUSED, ConnectSettingsDialog *dialog_data)
 {
     GtkWidget *dialog = gtk_file_chooser_dialog_new (_("Open File"),
                                                      GTK_WINDOW(dialog_data->window),
@@ -379,14 +261,14 @@ btn_choose_rdp_file_clicked(GtkButton *button G_GNUC_UNUSED, ConnectSettingsDial
 }
 
 static void
-on_conn_type_check_btn_toggled(GtkToggleButton *button, ConnectSettingsDialogData *dialog_data)
+on_conn_type_check_btn_toggled(GtkToggleButton *button, ConnectSettingsDialog *dialog_data)
 {
     gboolean is_toggled = gtk_toggle_button_get_active(button);
     gtk_widget_set_sensitive(dialog_data->x2go_conn_type_combobox, is_toggled);
 }
 
 static void
-btn_archive_logs_clicked_cb(GtkButton *button G_GNUC_UNUSED, ConnectSettingsDialogData *dialog_data)
+btn_archive_logs_clicked_cb(GtkButton *button G_GNUC_UNUSED, ConnectSettingsDialog *dialog_data)
 {
     gchar *log_dir = get_log_dir_path();
 
@@ -422,7 +304,7 @@ btn_archive_logs_clicked_cb(GtkButton *button G_GNUC_UNUSED, ConnectSettingsDial
 
 static void
 on_app_updater_status_msg_changed(gpointer data G_GNUC_UNUSED, const gchar *msg,
-                                  ConnectSettingsDialogData *dialog_data)
+                                  ConnectSettingsDialog *dialog_data)
 {
     g_info("%s", (const char *)__func__);
     gtk_label_set_text(GTK_LABEL(dialog_data->check_updates_label), msg);
@@ -431,7 +313,7 @@ on_app_updater_status_msg_changed(gpointer data G_GNUC_UNUSED, const gchar *msg,
 static void
 on_app_updater_status_changed(gpointer data G_GNUC_UNUSED,
                               int isworking,
-                              ConnectSettingsDialogData *dialog_data)
+                              ConnectSettingsDialog *dialog_data)
 {
     g_info("%s isworking: %i", (const char *)__func__, isworking);
     if (isworking) {
@@ -441,7 +323,7 @@ on_app_updater_status_changed(gpointer data G_GNUC_UNUSED,
         gtk_spinner_stop((GtkSpinner *) dialog_data->check_updates_spinner);
 
         // show the last output if there was an error
-        AppUpdater *app_updater = dialog_data->p_remote_viewer->app_updater;
+        AppUpdater *app_updater = dialog_data->p_app_updater;
         gchar *last_process_output = app_updater_get_last_process_output(app_updater);
 
         if (app_updater->_last_exit_status != 0 && last_process_output ) {
@@ -483,10 +365,10 @@ on_password_entry_activated(GtkEntry *entry G_GNUC_UNUSED, GtkWidget *ask_pass_d
 }
 
 static void
-btn_get_app_updates_clicked_cb(GtkButton *button G_GNUC_UNUSED, ConnectSettingsDialogData *dialog_data)
+btn_get_app_updates_clicked_cb(GtkButton *button G_GNUC_UNUSED, ConnectSettingsDialog *dialog_data)
 {
     g_info("%s", (const char *)__func__);
-    AppUpdater *app_updater = dialog_data->p_remote_viewer->app_updater;
+    AppUpdater *app_updater = dialog_data->p_app_updater;
     if (app_updater_is_getting_updates(app_updater))
         return;
 
@@ -541,22 +423,45 @@ btn_open_doc_clicked_cb()
 }
 
 static void
-on_select_usb_btn_clicked_cb(GtkButton *button G_GNUC_UNUSED, ConnectSettingsDialogData *dialog_data)
+on_select_usb_btn_clicked_cb(GtkButton *button G_GNUC_UNUSED, ConnectSettingsDialog *dialog_data)
 {
     usb_selector_widget_show_and_start_loop(dialog_data->usb_selector_widget, GTK_WINDOW(dialog_data->window));
 }
 
 static void
-btn_show_monitor_config_clicked(GtkButton *button G_GNUC_UNUSED, ConnectSettingsDialogData *dialog_data)
+btn_show_monitor_config_clicked(GtkButton *button G_GNUC_UNUSED, ConnectSettingsDialog *dialog_data)
 {
     util_show_monitor_config_window(GTK_WINDOW(dialog_data->window), gdk_display_get_default());
+}
+
+static void
+btn_show_usb_filter_tooltip_spice_clicked(GtkButton *button G_GNUC_UNUSED, ConnectSettingsDialog *dialog_data) {
+    show_msg_box_dialog(GTK_WINDOW(dialog_data->window),
+                        _("Filter string format:\n\n"
+                        "Filter consists of one or more rules. Where each rule has the form of:\n"
+                        "\n"
+                        "class ,vendor ,product ,version ,allow\n"
+                        "\n"
+                        "Use -1 for class /vendor /product /version to accept any value.\n"
+                        "\n"
+                        "And the rules themselves are concatenated like this:\n"
+                        "\n"
+                        "rule1 |rule2 |rule3\n"
+                        "\n"
+                        "The default setting filters out HID (class 0x03) USB devices from auto connect and auto"
+                        " connects anything else. Note the explicit allow rule at the end, this is necessary since"
+                        " by default all devices without a matching filter rule will not auto-connect.\n"
+                        "\n"
+                        "Filter strings in this format can be easily created with the RHEV-M USB filter editor tool.\n"
+                        "\n"
+                        "Default value: \"0x03,-1,-1,-1,0|-1,-1,-1,-1,1\""));
 }
 
 static void
 on_app_mode_combobox_changed(GtkComboBox *widget G_GNUC_UNUSED, gpointer user_data)
 {
     g_info("%s", (const char*)__func__);
-    ConnectSettingsDialogData *dialog_data = (ConnectSettingsDialogData *)user_data;
+    ConnectSettingsDialog *dialog_data = (ConnectSettingsDialog *)user_data;
     const gchar *mode_id = gtk_combo_box_get_active_id(GTK_COMBO_BOX(dialog_data->app_mode_combobox));
     GlobalAppMode global_app_mode = (GlobalAppMode)atoi(mode_id);
     update_gui_according_to_app_mode(dialog_data, global_app_mode);
@@ -568,16 +473,10 @@ on_app_mode_combobox_changed(GtkComboBox *widget G_GNUC_UNUSED, gpointer user_da
         gtk_spin_button_set_value(GTK_SPIN_BUTTON(dialog_data->port_spinbox), 443);
 }
 
-static ConnectSettingsData *
-get_conn_data(ConnectSettingsDialogData *dialog_data)
-{
-    return &dialog_data->p_remote_viewer->conn_data;
-}
-
 static void
-fill_gui(ConnectSettingsDialogData *dialog_data)
+fill_gui(ConnectSettingsDialog *dialog_data)
 {
-    ConnectSettingsData *p_conn_data = get_conn_data(dialog_data);
+    ConnectSettingsData *p_conn_data = dialog_data->p_conn_data;
 
     update_gui_according_to_app_mode(dialog_data, p_conn_data->global_app_mode);
 
@@ -594,6 +493,7 @@ fill_gui(ConnectSettingsDialogData *dialog_data)
     g_signal_handler_unblock(dialog_data->app_mode_combobox, handler_id);
 
     gtk_spin_button_set_value(GTK_SPIN_BUTTON(dialog_data->vm_await_time_spinbox), p_conn_data->vm_await_timeout);
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(dialog_data->unique_app_check_btn), p_conn_data->unique_app);
 
     /// General settings
     // domain
@@ -627,7 +527,7 @@ fill_gui(ConnectSettingsDialogData *dialog_data)
 
     // Connect to prev pool
     gtk_toggle_button_set_active((GtkToggleButton *)dialog_data->conn_to_prev_pool_checkbutton,
-                                 p_conn_data->is_connect_to_prev_pool);
+                                 p_conn_data->connect_to_prev_pool);
     // pswd
     gtk_toggle_button_set_active((GtkToggleButton *)dialog_data->save_password_checkbtn, p_conn_data->to_save_pswd);
 
@@ -649,6 +549,12 @@ fill_gui(ConnectSettingsDialogData *dialog_data)
         gtk_entry_set_text(GTK_ENTRY(dialog_data->spice_monitor_mapping_entry),
                            p_conn_data->spice_settings.monitor_mapping);
     }
+    if (p_conn_data->spice_settings.usb_auto_connect_filter)
+        gtk_entry_set_text(GTK_ENTRY(dialog_data->spice_usb_auto_connect_filter_entry),
+                           p_conn_data->spice_settings.usb_auto_connect_filter);
+    if (p_conn_data->spice_settings.usb_redirect_on_connect)
+        gtk_entry_set_text(GTK_ENTRY(dialog_data->spice_usb_redirect_on_connect_entry),
+                           p_conn_data->spice_settings.usb_redirect_on_connect);
 
     /// RDP settings
     UINT32 freerdp_pix_index = (g_strcmp0(p_conn_data->rdp_settings.rdp_pixel_format_str, "BGRA32") == 0) ? 1 : 0;
@@ -753,9 +659,9 @@ fill_gui(ConnectSettingsDialogData *dialog_data)
 }
 
 static void
-take_from_gui(ConnectSettingsDialogData *dialog_data)
+take_from_gui(ConnectSettingsDialog *dialog_data)
 {
-    ConnectSettingsData *conn_data = get_conn_data(dialog_data);
+    ConnectSettingsData *conn_data = dialog_data->p_conn_data;
 
     // Service settings
     update_string_safely(&conn_data->windows_updates_url,
@@ -764,7 +670,7 @@ take_from_gui(ConnectSettingsDialogData *dialog_data)
             gtk_combo_box_get_active_id(GTK_COMBO_BOX(dialog_data->app_mode_combobox)));
     conn_data->vm_await_timeout =
             gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(dialog_data->vm_await_time_spinbox));
-
+    conn_data->unique_app = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(dialog_data->unique_app_check_btn));
     // Main
     // domain
     update_string_safely(&conn_data->domain, gtk_entry_get_text(GTK_ENTRY(dialog_data->domain_entry)));
@@ -788,7 +694,7 @@ take_from_gui(ConnectSettingsDialogData *dialog_data)
     }
 
     // prev pool
-    conn_data->is_connect_to_prev_pool =
+    conn_data->connect_to_prev_pool =
             gtk_toggle_button_get_active((GtkToggleButton *)dialog_data->conn_to_prev_pool_checkbutton);
     // pswd
     conn_data->to_save_pswd = gtk_toggle_button_get_active((GtkToggleButton *)dialog_data->save_password_checkbtn);
@@ -808,6 +714,10 @@ take_from_gui(ConnectSettingsDialogData *dialog_data)
             gtk_toggle_button_get_active((GtkToggleButton *)dialog_data->spice_full_screen_check_btn);
     update_string_safely(&conn_data->spice_settings.monitor_mapping,
                          gtk_entry_get_text(GTK_ENTRY(dialog_data->spice_monitor_mapping_entry)));
+    update_string_safely(&conn_data->spice_settings.usb_auto_connect_filter,
+                         gtk_entry_get_text(GTK_ENTRY(dialog_data->spice_usb_auto_connect_filter_entry)));
+    update_string_safely(&conn_data->spice_settings.usb_redirect_on_connect,
+                         gtk_entry_get_text(GTK_ENTRY(dialog_data->spice_usb_redirect_on_connect_entry)));
 
     /// RDP settings
     update_string_safely(&conn_data->rdp_settings.rdp_pixel_format_str,
@@ -913,10 +823,10 @@ take_from_gui(ConnectSettingsDialogData *dialog_data)
 }
 
 static void
-ok_button_clicked_cb(GtkButton *button G_GNUC_UNUSED, ConnectSettingsDialogData *dialog_data)
+ok_button_clicked_cb(GtkButton *button G_GNUC_UNUSED, ConnectSettingsDialog *dialog_data)
 {
     // fill p_conn_data from gui
-    gboolean is_success = check_parameters(get_conn_data(dialog_data), dialog_data);
+    gboolean is_success = check_parameters(dialog_data->p_conn_data, dialog_data);
 
     // Close the window if settings are ok
     if (is_success) {
@@ -926,215 +836,228 @@ ok_button_clicked_cb(GtkButton *button G_GNUC_UNUSED, ConnectSettingsDialogData 
     }
 }
 
-GtkResponseType remote_viewer_start_settings_dialog(RemoteViewer *p_remote_viewer, GtkWindow *parent)
+GtkResponseType remote_viewer_start_settings_dialog(ConnectSettingsDialog *self,
+                                                    ConnectSettingsData *conn_data,
+                                                    AppUpdater *app_updater,
+                                                    GtkWindow *parent)
 {
-    ConnectSettingsDialogData dialog_data = {};
-
-    dialog_data.p_remote_viewer = p_remote_viewer;
-    dialog_data.dialog_window_response = GTK_RESPONSE_OK;
+    self->p_conn_data = conn_data;
+    self->p_app_updater = app_updater;
+    self->dialog_window_response = GTK_RESPONSE_OK;
 
     // gui widgets
-    dialog_data.builder = remote_viewer_util_load_ui("start_settings_form.glade");
+    self->builder = remote_viewer_util_load_ui("start_settings_form.glade");
 
-    dialog_data.window = get_widget_from_builder(dialog_data.builder, "start-settings-window");
+    self->window = get_widget_from_builder(self->builder, "start-settings-window");
     // main buttons
-    dialog_data.bt_cancel = get_widget_from_builder(dialog_data.builder, "btn_cancel");
-    dialog_data.bt_ok = get_widget_from_builder(dialog_data.builder, "btn_ok");
+    self->bt_cancel = get_widget_from_builder(self->builder, "btn_cancel");
+    self->bt_ok = get_widget_from_builder(self->builder, "btn_ok");
 
     // main settings
-    dialog_data.domain_entry = get_widget_from_builder(dialog_data.builder, "domain-entry");
-    dialog_data.address_entry = get_widget_from_builder(dialog_data.builder, "connection-address-entry");
-    dialog_data.port_spinbox = get_widget_from_builder(dialog_data.builder, "port_spinbox");
-    dialog_data.conn_to_prev_pool_checkbutton = get_widget_from_builder(dialog_data.builder, "connect-to-prev-button");
-    dialog_data.save_password_checkbtn = get_widget_from_builder(dialog_data.builder, "save_password_btn");
-    dialog_data.remote_protocol_combobox = get_widget_from_builder(dialog_data.builder, "remote_protocol_combobox");
-    dialog_data.redirect_time_zone_check_btn =
-            get_widget_from_builder(dialog_data.builder, "redirect_time_zone_check_btn");
+    self->domain_entry = get_widget_from_builder(self->builder, "domain-entry");
+    self->address_entry = get_widget_from_builder(self->builder, "connection-address-entry");
+    self->port_spinbox = get_widget_from_builder(self->builder, "port_spinbox");
+    self->conn_to_prev_pool_checkbutton = get_widget_from_builder(self->builder, "connect-to-prev-button");
+    self->save_password_checkbtn = get_widget_from_builder(self->builder, "save_password_btn");
+    self->remote_protocol_combobox = get_widget_from_builder(self->builder, "remote_protocol_combobox");
+    self->redirect_time_zone_check_btn =
+            get_widget_from_builder(self->builder, "redirect_time_zone_check_btn");
 
     // spice settings
-    dialog_data.client_cursor_visible_checkbutton =
-            get_widget_from_builder(dialog_data.builder, "menu-show-client-cursor");
-    dialog_data.spice_full_screen_check_btn =
-            get_widget_from_builder(dialog_data.builder, "spice_full_screen_check_btn");
-    dialog_data.spice_monitor_mapping_entry =
-            get_widget_from_builder(dialog_data.builder, "spice_monitor_mapping_entry");
-    dialog_data.btn_show_monitor_config_spice =
-            get_widget_from_builder(dialog_data.builder, "btn_show_monitor_config_spice");
+    self->client_cursor_visible_checkbutton =
+            get_widget_from_builder(self->builder, "menu-show-client-cursor");
+    self->spice_full_screen_check_btn =
+            get_widget_from_builder(self->builder, "spice_full_screen_check_btn");
+    self->spice_monitor_mapping_entry =
+            get_widget_from_builder(self->builder, "spice_monitor_mapping_entry");
+    self->btn_show_monitor_config_spice =
+            get_widget_from_builder(self->builder, "btn_show_monitor_config_spice");
+    self->spice_usb_auto_connect_filter_entry =
+            get_widget_from_builder(self->builder, "spice_usb_auto_connect_filter_entry");
+    self->spice_usb_redirect_on_connect_entry =
+            get_widget_from_builder(self->builder, "spice_usb_redirect_on_connect_entry");
+    self->btn_show_usb_filter_tooltip_spice_0 =
+            get_widget_from_builder(self->builder, "btn_show_usb_filter_tooltip_spice_0");
+    self->btn_show_usb_filter_tooltip_spice_1 =
+            get_widget_from_builder(self->builder, "btn_show_usb_filter_tooltip_spice_1");
 
     // rdp settings
-    dialog_data.rdp_image_pixel_format_combobox =
-            get_widget_from_builder(dialog_data.builder, "rdp_image_pixel_format_combobox");
-    dialog_data.rdp_fps_spin_btn = get_widget_from_builder(dialog_data.builder, "rdp_fps_spin_btn");
+    self->rdp_image_pixel_format_combobox =
+            get_widget_from_builder(self->builder, "rdp_image_pixel_format_combobox");
+    self->rdp_fps_spin_btn = get_widget_from_builder(self->builder, "rdp_fps_spin_btn");
 
-    dialog_data.is_rdp_vid_comp_used_check_btn =
-            get_widget_from_builder(dialog_data.builder, "is_rdp_vid_comp_used_check_btn");
-    dialog_data.rdp_codec_combobox = get_widget_from_builder(dialog_data.builder, "rdp_codec_combobox");
+    self->is_rdp_vid_comp_used_check_btn =
+            get_widget_from_builder(self->builder, "is_rdp_vid_comp_used_check_btn");
+    self->rdp_codec_combobox = get_widget_from_builder(self->builder, "rdp_codec_combobox");
 #ifdef _WIN32 // На Windows не работает AVC444
-    gtk_combo_box_text_remove(GTK_COMBO_BOX_TEXT(dialog_data.rdp_codec_combobox), 2);
+    gtk_combo_box_text_remove(GTK_COMBO_BOX_TEXT(self->rdp_codec_combobox), 2);
 #endif
-    dialog_data.rdp_shared_folders_entry = get_widget_from_builder(dialog_data.builder, "rdp_shared_folders_entry");
+    self->rdp_shared_folders_entry = get_widget_from_builder(self->builder, "rdp_shared_folders_entry");
 
-    dialog_data.btn_add_remote_folder = get_widget_from_builder(dialog_data.builder, "btn_add_remote_folder");
-    dialog_data.btn_remove_remote_folder = get_widget_from_builder(dialog_data.builder, "btn_remove_remote_folder");
+    self->btn_add_remote_folder = get_widget_from_builder(self->builder, "btn_add_remote_folder");
+    self->btn_remove_remote_folder = get_widget_from_builder(self->builder, "btn_remove_remote_folder");
 
-    dialog_data.is_multimon_check_btn = get_widget_from_builder(dialog_data.builder, "is_multimon_check_btn");
-    dialog_data.rdp_full_screen_check_btn =
-            get_widget_from_builder(dialog_data.builder, "rdp_full_screen_check_btn");
-    dialog_data.rdp_selected_monitors_entry =
-            get_widget_from_builder(dialog_data.builder, "rdp_selected_monitors_entry");
-    dialog_data.btn_show_monitor_config_rdp =
-            get_widget_from_builder(dialog_data.builder, "btn_show_monitor_config_rdp");
-    dialog_data.redirect_printers_check_btn =
-            get_widget_from_builder(dialog_data.builder, "redirect_printers_check_btn");
-    dialog_data.rdp_redirect_microphone_check_btn =
-            get_widget_from_builder(dialog_data.builder, "rdp_redirect_microphone_check_btn");
+    self->is_multimon_check_btn = get_widget_from_builder(self->builder, "is_multimon_check_btn");
+    self->rdp_full_screen_check_btn =
+            get_widget_from_builder(self->builder, "rdp_full_screen_check_btn");
+    self->rdp_selected_monitors_entry =
+            get_widget_from_builder(self->builder, "rdp_selected_monitors_entry");
+    self->btn_show_monitor_config_rdp =
+            get_widget_from_builder(self->builder, "btn_show_monitor_config_rdp");
+    self->redirect_printers_check_btn =
+            get_widget_from_builder(self->builder, "redirect_printers_check_btn");
+    self->rdp_redirect_microphone_check_btn =
+            get_widget_from_builder(self->builder, "rdp_redirect_microphone_check_btn");
 
-    dialog_data.remote_app_check_btn = get_widget_from_builder(dialog_data.builder, "remote_app_check_btn");
-    dialog_data.remote_app_name_entry = get_widget_from_builder(dialog_data.builder, "remote_app_name_entry");
-    dialog_data.remote_app_options_entry = get_widget_from_builder(dialog_data.builder, "remote_app_options_entry");
+    self->remote_app_check_btn = get_widget_from_builder(self->builder, "remote_app_check_btn");
+    self->remote_app_name_entry = get_widget_from_builder(self->builder, "remote_app_name_entry");
+    self->remote_app_options_entry = get_widget_from_builder(self->builder, "remote_app_options_entry");
 
-    dialog_data.rdp_sec_protocol_check_btn =
-            get_widget_from_builder(dialog_data.builder, "rdp_sec_protocol_check_btn");
-    dialog_data.sec_type_combobox = get_widget_from_builder(dialog_data.builder, "sec_type_combobox");
+    self->rdp_sec_protocol_check_btn =
+            get_widget_from_builder(self->builder, "rdp_sec_protocol_check_btn");
+    self->sec_type_combobox = get_widget_from_builder(self->builder, "sec_type_combobox");
 
-    dialog_data.rdp_network_check_btn = get_widget_from_builder(dialog_data.builder, "rdp_network_check_btn");
-    dialog_data.rdp_network_type_combobox = get_widget_from_builder(dialog_data.builder, "rdp_network_type_combobox");
+    self->rdp_network_check_btn = get_widget_from_builder(self->builder, "rdp_network_check_btn");
+    self->rdp_network_type_combobox = get_widget_from_builder(self->builder, "rdp_network_type_combobox");
 
-    dialog_data.rdp_decorations_check_btn = get_widget_from_builder(dialog_data.builder, "rdp_decorations_check_btn");
-    dialog_data.rdp_fonts_check_btn = get_widget_from_builder(dialog_data.builder, "rdp_fonts_check_btn");
-    dialog_data.rdp_themes_check_btn = get_widget_from_builder(dialog_data.builder, "rdp_themes_check_btn");
+    self->rdp_decorations_check_btn = get_widget_from_builder(self->builder, "rdp_decorations_check_btn");
+    self->rdp_fonts_check_btn = get_widget_from_builder(self->builder, "rdp_fonts_check_btn");
+    self->rdp_themes_check_btn = get_widget_from_builder(self->builder, "rdp_themes_check_btn");
 
-    dialog_data.select_usb_btn = get_widget_from_builder(dialog_data.builder, "select_usb_btn");
+    self->select_usb_btn = get_widget_from_builder(self->builder, "select_usb_btn");
 
-    dialog_data.use_rdp_file_check_btn = get_widget_from_builder(dialog_data.builder, "use_rdp_file_check_btn");
-    dialog_data.btn_choose_rdp_file = get_widget_from_builder(dialog_data.builder, "btn_choose_rdp_file");
-    dialog_data.rdp_file_name_entry = get_widget_from_builder(dialog_data.builder, "rdp_file_name_entry");
+    self->use_rdp_file_check_btn = get_widget_from_builder(self->builder, "use_rdp_file_check_btn");
+    self->btn_choose_rdp_file = get_widget_from_builder(self->builder, "btn_choose_rdp_file");
+    self->rdp_file_name_entry = get_widget_from_builder(self->builder, "rdp_file_name_entry");
 
     g_autofree gchar *title = NULL;
     title = g_strdup_printf("RemoteFX USB  -  %s ", APPLICATION_NAME);
-    dialog_data.usb_selector_widget = usb_selector_widget_new(title);
-    gtk_widget_destroy(dialog_data.usb_selector_widget->tk_address_entry);
-    gtk_widget_destroy(dialog_data.usb_selector_widget->tk_address_header);
-    usb_selector_widget_enable_auto_toggle(dialog_data.usb_selector_widget);
+    self->usb_selector_widget = usb_selector_widget_new(title);
+    gtk_widget_destroy(self->usb_selector_widget->tk_address_entry);
+    gtk_widget_destroy(self->usb_selector_widget->tk_address_header);
+    usb_selector_widget_enable_auto_toggle(self->usb_selector_widget);
 
-    dialog_data.use_rd_gateway_check_btn = get_widget_from_builder(dialog_data.builder, "use_rd_gateway_check_btn");
-    dialog_data.gateway_address_entry = get_widget_from_builder(dialog_data.builder, "gateway_address_entry");
-    dialog_data.rdp_log_debug_info_check_btn = get_widget_from_builder(dialog_data.builder, "rdp_log_debug_info_check_btn");
+    self->use_rd_gateway_check_btn = get_widget_from_builder(self->builder, "use_rd_gateway_check_btn");
+    self->gateway_address_entry = get_widget_from_builder(self->builder, "gateway_address_entry");
+    self->rdp_log_debug_info_check_btn = get_widget_from_builder(self->builder, "rdp_log_debug_info_check_btn");
 
     // X2Go settings
-    dialog_data.x2go_app_combobox = get_widget_from_builder(dialog_data.builder, "x2go_app_combobox");
-    dialog_data.x2go_session_type_combobox = get_widget_from_builder(dialog_data.builder,
+    self->x2go_app_combobox = get_widget_from_builder(self->builder, "x2go_app_combobox");
+    self->x2go_session_type_combobox = get_widget_from_builder(self->builder,
             "x2go_session_type_combobox");
 
-    dialog_data.x2go_conn_type_check_btn = get_widget_from_builder(dialog_data.builder, "x2go_conn_type_check_btn");
-    dialog_data.x2go_conn_type_combobox = get_widget_from_builder(dialog_data.builder, "x2go_conn_type_combobox");
+    self->x2go_conn_type_check_btn = get_widget_from_builder(self->builder, "x2go_conn_type_check_btn");
+    self->x2go_conn_type_combobox = get_widget_from_builder(self->builder, "x2go_conn_type_combobox");
 
-    dialog_data.x2go_full_screen_check_btn = get_widget_from_builder(dialog_data.builder,
+    self->x2go_full_screen_check_btn = get_widget_from_builder(self->builder,
             "x2go_full_screen_check_btn");
 
-    dialog_data.x2go_compress_method_combobox =
-            get_widget_from_builder(dialog_data.builder, "x2go_compress_method_combobox");
+    self->x2go_compress_method_combobox =
+            get_widget_from_builder(self->builder, "x2go_compress_method_combobox");
     //GtkTreeIter iter;
-    //GtkTreeModel *list_store = gtk_combo_box_get_model(GTK_COMBO_BOX(dialog_data.x2go_compress_method_combobox));
+    //GtkTreeModel *list_store = gtk_combo_box_get_model(GTK_COMBO_BOX(self->x2go_compress_method_combobox));
     //gboolean valid = gtk_tree_model_get_iter_first (list_store, &iter);
 
     // Service functions
-    dialog_data.btn_archive_logs = get_widget_from_builder(dialog_data.builder, "btn_archive_logs");
-    dialog_data.log_location_label = get_widget_from_builder(dialog_data.builder, "log_location_label");
-    gtk_label_set_selectable(GTK_LABEL(dialog_data.log_location_label), TRUE);
+    self->btn_archive_logs = get_widget_from_builder(self->builder, "btn_archive_logs");
+    self->log_location_label = get_widget_from_builder(self->builder, "log_location_label");
+    gtk_label_set_selectable(GTK_LABEL(self->log_location_label), TRUE);
 
-    dialog_data.btn_get_app_updates = get_widget_from_builder(dialog_data.builder, "btn_get_app_updates");
-    dialog_data.check_updates_spinner = get_widget_from_builder(dialog_data.builder, "check_updates_spinner");
-    dialog_data.check_updates_label = get_widget_from_builder(dialog_data.builder, "check_updates_label");
-    dialog_data.windows_updates_url_entry = get_widget_from_builder(dialog_data.builder, "windows_updates_url_entry");
-    dialog_data.btn_open_doc = get_widget_from_builder(dialog_data.builder, "btn_open_doc");
+    self->btn_get_app_updates = get_widget_from_builder(self->builder, "btn_get_app_updates");
+    self->check_updates_spinner = get_widget_from_builder(self->builder, "check_updates_spinner");
+    self->check_updates_label = get_widget_from_builder(self->builder, "check_updates_label");
+    self->windows_updates_url_entry = get_widget_from_builder(self->builder, "windows_updates_url_entry");
+    self->btn_open_doc = get_widget_from_builder(self->builder, "btn_open_doc");
 
     // В этот момент может происходить процесс обновления софта.  Setup gui
-    AppUpdater *app_updater = dialog_data.p_remote_viewer->app_updater;
-    if (app_updater_is_getting_updates(app_updater)) {
+    if (app_updater_is_getting_updates(self->p_app_updater)) {
 
-        gchar *app_updater_cur_status_msg = app_updater_get_cur_status_msg(app_updater);
-        gtk_label_set_text(GTK_LABEL(dialog_data.check_updates_label), app_updater_cur_status_msg);
+        gchar *app_updater_cur_status_msg = app_updater_get_cur_status_msg(self->p_app_updater);
+        gtk_label_set_text(GTK_LABEL(self->check_updates_label), app_updater_cur_status_msg);
         free_memory_safely(&app_updater_cur_status_msg);
-        gtk_spinner_start((GtkSpinner *) dialog_data.check_updates_spinner);
-        gtk_widget_set_sensitive(dialog_data.btn_get_app_updates, FALSE);
+        gtk_spinner_start((GtkSpinner *) self->check_updates_spinner);
+        gtk_widget_set_sensitive(self->btn_get_app_updates, FALSE);
     }
 
-    dialog_data.app_mode_combobox = get_widget_from_builder(dialog_data.builder, "app_mode_combobox");
-    dialog_data.vm_await_time_spinbox = get_widget_from_builder(
-            dialog_data.builder, "vm_await_time_spinbox");
+    self->app_mode_combobox = get_widget_from_builder(self->builder, "app_mode_combobox");
+    self->vm_await_time_spinbox = get_widget_from_builder(self->builder, "vm_await_time_spinbox");
+    self->unique_app_check_btn = get_widget_from_builder(self->builder, "unique_app_check_btn");
 
     // Signals
-    g_signal_connect_swapped(dialog_data.window, "delete-event", G_CALLBACK(window_deleted_cb), &dialog_data);
-    g_signal_connect(dialog_data.bt_cancel, "clicked", G_CALLBACK(cancel_button_clicked_cb), &dialog_data);
-    g_signal_connect(dialog_data.bt_ok, "clicked", G_CALLBACK(ok_button_clicked_cb), &dialog_data);
-    g_signal_connect(dialog_data.is_rdp_vid_comp_used_check_btn, "toggled",
-                     G_CALLBACK(on_vid_comp_used_check_btn_toggled), &dialog_data);
-    g_signal_connect(dialog_data.rdp_sec_protocol_check_btn, "toggled",
-                     G_CALLBACK(on_rdp_sec_protocol_check_btn_toggled), &dialog_data);
-    g_signal_connect(dialog_data.rdp_network_check_btn, "toggled",
-                     G_CALLBACK(on_rdp_network_check_btn_toggled), &dialog_data);
-    g_signal_connect(dialog_data.btn_add_remote_folder, "clicked",
-                     G_CALLBACK(btn_add_remote_folder_clicked_cb), &dialog_data);
-    g_signal_connect(dialog_data.btn_remove_remote_folder, "clicked",
-                     G_CALLBACK(btn_remove_remote_folder_clicked_cb), &dialog_data);
-    g_signal_connect(dialog_data.use_rdp_file_check_btn, "toggled",
-                     G_CALLBACK(on_use_rdp_file_check_btn_toggled), &dialog_data);
-    g_signal_connect(dialog_data.btn_choose_rdp_file, "clicked",
-                     G_CALLBACK(btn_choose_rdp_file_clicked), &dialog_data);
-    g_signal_connect(dialog_data.use_rd_gateway_check_btn, "toggled",
-                     G_CALLBACK(on_use_rd_gateway_check_btn_toggled), &dialog_data);
+    g_signal_connect_swapped(self->window, "delete-event", G_CALLBACK(window_deleted_cb), self);
+    g_signal_connect(self->bt_cancel, "clicked", G_CALLBACK(cancel_button_clicked_cb), self);
+    g_signal_connect(self->bt_ok, "clicked", G_CALLBACK(ok_button_clicked_cb), self);
+    g_signal_connect(self->is_rdp_vid_comp_used_check_btn, "toggled",
+                     G_CALLBACK(on_vid_comp_used_check_btn_toggled), self);
+    g_signal_connect(self->rdp_sec_protocol_check_btn, "toggled",
+                     G_CALLBACK(on_rdp_sec_protocol_check_btn_toggled), self);
+    g_signal_connect(self->rdp_network_check_btn, "toggled",
+                     G_CALLBACK(on_rdp_network_check_btn_toggled), self);
+    g_signal_connect(self->btn_add_remote_folder, "clicked",
+                     G_CALLBACK(btn_add_remote_folder_clicked_cb), self);
+    g_signal_connect(self->btn_remove_remote_folder, "clicked",
+                     G_CALLBACK(btn_remove_remote_folder_clicked_cb), self);
+    g_signal_connect(self->use_rdp_file_check_btn, "toggled",
+                     G_CALLBACK(on_use_rdp_file_check_btn_toggled), self);
+    g_signal_connect(self->btn_choose_rdp_file, "clicked",
+                     G_CALLBACK(btn_choose_rdp_file_clicked), self);
+    g_signal_connect(self->use_rd_gateway_check_btn, "toggled",
+                     G_CALLBACK(on_use_rd_gateway_check_btn_toggled), self);
 
-    g_signal_connect(dialog_data.x2go_conn_type_check_btn, "toggled",
-                     G_CALLBACK(on_conn_type_check_btn_toggled), &dialog_data);
+    g_signal_connect(self->x2go_conn_type_check_btn, "toggled",
+                     G_CALLBACK(on_conn_type_check_btn_toggled), self);
 
-    g_signal_connect(dialog_data.btn_archive_logs, "clicked",
-                     G_CALLBACK(btn_archive_logs_clicked_cb), &dialog_data);
-    g_signal_connect(dialog_data.remote_app_check_btn, "toggled", G_CALLBACK(on_remote_app_check_btn_toggled),
-                     &dialog_data);
-    g_signal_connect(dialog_data.btn_get_app_updates, "clicked", G_CALLBACK(btn_get_app_updates_clicked_cb),
-                     &dialog_data);
-    g_signal_connect(dialog_data.btn_open_doc, "clicked", G_CALLBACK(btn_open_doc_clicked_cb),
-                     &dialog_data);
-    g_signal_connect(dialog_data.select_usb_btn, "clicked", G_CALLBACK(on_select_usb_btn_clicked_cb), &dialog_data);
+    g_signal_connect(self->btn_archive_logs, "clicked",
+                     G_CALLBACK(btn_archive_logs_clicked_cb), self);
+    g_signal_connect(self->remote_app_check_btn, "toggled", G_CALLBACK(on_remote_app_check_btn_toggled),
+                     self);
+    g_signal_connect(self->btn_get_app_updates, "clicked", G_CALLBACK(btn_get_app_updates_clicked_cb),
+                     self);
+    g_signal_connect(self->btn_open_doc, "clicked", G_CALLBACK(btn_open_doc_clicked_cb),
+                     self);
+    g_signal_connect(self->select_usb_btn, "clicked", G_CALLBACK(on_select_usb_btn_clicked_cb), self);
 
-    g_signal_connect(dialog_data.btn_show_monitor_config_spice, "clicked",
-                     G_CALLBACK(btn_show_monitor_config_clicked), &dialog_data);
-    g_signal_connect(dialog_data.btn_show_monitor_config_rdp, "clicked",
-                     G_CALLBACK(btn_show_monitor_config_clicked), &dialog_data);
+    g_signal_connect(self->btn_show_monitor_config_spice, "clicked",
+                     G_CALLBACK(btn_show_monitor_config_clicked), self);
+    g_signal_connect(self->btn_show_monitor_config_rdp, "clicked",
+                     G_CALLBACK(btn_show_monitor_config_clicked), self);
+    g_signal_connect(self->btn_show_usb_filter_tooltip_spice_0, "clicked",
+                     G_CALLBACK(btn_show_usb_filter_tooltip_spice_clicked), self);
+    g_signal_connect(self->btn_show_usb_filter_tooltip_spice_1, "clicked",
+                     G_CALLBACK(btn_show_usb_filter_tooltip_spice_clicked), self);
 
-    dialog_data.on_app_mode_combobox_changed_id =
-            g_signal_connect(dialog_data.app_mode_combobox, "changed",
-                             G_CALLBACK(on_app_mode_combobox_changed), &dialog_data);
+    self->on_app_mode_combobox_changed_id =
+            g_signal_connect(self->app_mode_combobox, "changed",
+                             G_CALLBACK(on_app_mode_combobox_changed), self);
 
-    gulong st_msg_hdle = g_signal_connect(p_remote_viewer->app_updater, "status-msg-changed",
-                                          G_CALLBACK(on_app_updater_status_msg_changed),&dialog_data);
-    gulong state_hdle = g_signal_connect(p_remote_viewer->app_updater, "state-changed",
-                                         G_CALLBACK(on_app_updater_status_changed),&dialog_data);
+    gulong st_msg_hdle = g_signal_connect(self->p_app_updater, "status-msg-changed",
+                                          G_CALLBACK(on_app_updater_status_msg_changed), self);
+    gulong state_hdle = g_signal_connect(self->p_app_updater, "state-changed",
+                                         G_CALLBACK(on_app_updater_status_changed), self);
 
     // show window
-    gtk_window_set_transient_for(GTK_WINDOW(dialog_data.window), parent);
-    gtk_window_set_position(GTK_WINDOW(dialog_data.window), GTK_WIN_POS_CENTER);
-    gtk_widget_show_all(dialog_data.window);
-    fill_gui(&dialog_data);
+    gtk_window_set_transient_for(GTK_WINDOW(self->window), parent);
+    gtk_window_set_position(GTK_WINDOW(self->window), GTK_WIN_POS_CENTER);
+    gtk_widget_show_all(self->window);
+    fill_gui(self);
 #ifndef  _WIN32
-    gtk_widget_hide(dialog_data.windows_updates_url_entry);
+    gtk_widget_hide(self->windows_updates_url_entry);
 #endif
-    gtk_window_set_resizable(GTK_WINDOW(dialog_data.window), FALSE);
+    gtk_window_set_resizable(GTK_WINDOW(self->window), FALSE);
 
-    create_loop_and_launch(&dialog_data.loop);
+    create_loop_and_launch(&self->loop);
 
     // save
-    settings_data_save_all(get_conn_data(&dialog_data));
+    settings_data_save_all(self->p_conn_data);
 
     // disconnect signals from external sources
-    g_signal_handler_disconnect(p_remote_viewer->app_updater, st_msg_hdle);
-    g_signal_handler_disconnect(p_remote_viewer->app_updater, state_hdle);
+    g_signal_handler_disconnect(self->p_app_updater, st_msg_hdle);
+    g_signal_handler_disconnect(self->p_app_updater, state_hdle);
 
     // clear
-    usb_selector_widget_free(dialog_data.usb_selector_widget);
-    g_object_unref(dialog_data.builder);
-    gtk_widget_destroy(dialog_data.window);
+    usb_selector_widget_free(self->usb_selector_widget);
+    g_object_unref(self->builder);
+    gtk_widget_destroy(self->window);
 
-    return dialog_data.dialog_window_response;
+    return self->dialog_window_response;
 }

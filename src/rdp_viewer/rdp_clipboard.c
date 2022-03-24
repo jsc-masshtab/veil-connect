@@ -94,7 +94,7 @@ static GtkClipboard* get_gtk_clipboard(ExtendedRdpContext *ex_context)
     if (ex_context->rdp_windows_array->len == 0)
         return NULL;
 
-    RdpWindowData *rdp_window_data = g_array_index(ex_context->rdp_windows_array, RdpWindowData *, 0);
+    RdpViewerWindow *rdp_window_data = g_array_index(ex_context->rdp_windows_array, RdpViewerWindow *, 0);
     return gtk_widget_get_clipboard(rdp_window_data->rdp_viewer_window, GDK_SELECTION_CLIPBOARD);
 }
 
@@ -718,7 +718,7 @@ static gboolean rdp_event_on_clipboard(GtkClipboard *gtkClipboard G_GNUC_UNUSED,
     gboolean is_toplevel_focus = FALSE;
     GArray *rdp_windows_array = clipboard->ex_context->rdp_windows_array;
     for (guint i = 0; i < rdp_windows_array->len; ++i) {
-        RdpWindowData *rdp_window_data = g_array_index(rdp_windows_array, RdpWindowData *, i);
+        RdpViewerWindow *rdp_window_data = g_array_index(rdp_windows_array, RdpViewerWindow *, i);
         is_toplevel_focus = gtk_window_has_toplevel_focus(GTK_WINDOW(rdp_window_data->rdp_viewer_window));
     }
     g_info("%s is_focus: %i", (const char *)__func__, is_toplevel_focus);

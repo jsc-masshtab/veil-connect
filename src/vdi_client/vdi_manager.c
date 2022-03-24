@@ -301,26 +301,12 @@ static void on_vdi_session_get_vdi_pool_data_finished(GObject *source_object G_G
         g_free(ptr_res);
 }
 
-static void stop_event_loop_and_go_to_vm(VdiManager *self)
+static void go_to_vm(VdiManager *self)
 {
-#if defined(__MACH__)
-    // На маке единственное адекватное решение так как процесс завершится сразу после запуска RDP клиента
-    if (vdi_session_get_current_remote_protocol() == RDP_NATIVE_PROTOCOL) {
-        rdp_settings_read_ini_file(&self->p_conn_data->rdp_settings, !self->p_conn_data->rdp_settings.is_remote_app);
-        rdp_settings_set_connect_data(&self->p_conn_data->rdp_settings, vdi_session_get_vdi_username(),
-                                      vdi_session_get_vdi_password(), self->p_conn_data->domain,
-                                      self->p_conn_data->ip, 0);
-        launch_native_rdp_client(GTK_WINDOW(self->window), &self->p_conn_data->rdp_settings);
-    } else {
-        self->ci.response = TRUE;
-        self->ci.next_app_state = APP_STATE_CONNECT_TO_VM;
-        shutdown_loop(self->ci.loop);
-    }
-#else
-    self->ci.response = TRUE;
-    self->ci.next_app_state = APP_STATE_CONNECT_TO_VM;
-    shutdown_loop(self->ci.loop);
+#if !defined(__MACH__)
+    vdi_manager_finish_job(self);
 #endif
+    g_signal_emit_by_name(self, "connect-to-vm-requested");
 }
 
 // callback which is invoked when vm start request finished
@@ -383,10 +369,10 @@ static void on_vdi_session_get_vm_from_pool_finished(GObject *source_object G_GN
             self->p_conn_data->rdp_settings = selector_res.rdp_settings;
 
             if (selector_res.result_type != APP_SELECTOR_RESULT_NONE) {
-                stop_event_loop_and_go_to_vm(self); //stop event loop
+                go_to_vm(self);
             }
         } else {
-            stop_event_loop_and_go_to_vm(self); //stop event loop
+            go_to_vm(self);
         }
 
     } else {
@@ -430,9 +416,9 @@ static gboolean on_window_deleted_cb(VdiManager *self)
     g_info("%s", (const char *)__func__);
     vdi_ws_client_send_user_gui(vdi_session_get_ws_client()); // notify server
 
-    self->ci.response = FALSE;
-    self->ci.next_app_state = APP_STATE_EXITING;
-    shutdown_loop(self->ci.loop);
+    vdi_manager_finish_job(self);
+    g_signal_emit_by_name(self, "quit-requested");
+
     return TRUE;
 }
 // open user settings
@@ -464,10 +450,7 @@ static void on_button_quit_clicked(GtkButton *button G_GNUC_UNUSED, VdiManager *
 
     // logout
     vdi_session_logout();
-
-    self->ci.response = FALSE;
-    self->ci.next_app_state = APP_STATE_AUTH_DIALOG;
-    shutdown_loop(self->ci.loop);
+    g_signal_emit_by_name(self, "logged-out", "");
 }
 
 // ws conn state callback
@@ -478,19 +461,19 @@ on_ws_conn_changed(gpointer data G_GNUC_UNUSED, int ws_connected, VdiManager *se
 }
 
 static void
-on_ws_cmd_received(gpointer data G_GNUC_UNUSED, const gchar *cmd, VdiManager *self)
+on_auth_fail_detected(gpointer data G_GNUC_UNUSED, VdiManager *self)
 {
-    if (g_strcmp0(cmd, "DISCONNECT") == 0) {
-        self->ci.next_app_state = APP_STATE_AUTH_DIALOG;
-        shutdown_loop(self->ci.loop);
-    }
+    vdi_session_logout();
+    g_signal_emit_by_name(self, "logged-out", _("401 Authorization required"));
 }
 
 static void
-on_auth_fail_detected(gpointer data G_GNUC_UNUSED, VdiManager *self)
+on_pool_entitlement_changed(gpointer data G_GNUC_UNUSED, VdiManager *self)
 {
-    self->ci.next_app_state = APP_STATE_AUTH_DIALOG;
-    shutdown_loop(self->ci.loop);
+    if (!self->is_active)
+        return;
+
+    refresh_vdi_pool_data_async(self);
 }
 
 static void
@@ -535,8 +518,8 @@ static void vdi_manager_finalize(GObject *object)
     g_info("%s", (const char *)__func__);
     VdiManager *self = VDI_MANAGER(object);
     g_signal_handler_disconnect(get_vdi_session_static(), self->ws_conn_changed_handle);
-    g_signal_handler_disconnect(get_vdi_session_static(), self->ws_cmd_received_handle);
     g_signal_handler_disconnect(get_vdi_session_static(), self->auth_fail_detected_handle);
+    g_signal_handler_disconnect(get_vdi_session_static(), self->pool_entitlement_changed_handle);
     enable_vm_prep_progress_messages(self, FALSE);
 
     unregister_all_pools(self);
@@ -550,18 +533,39 @@ static void vdi_manager_finalize(GObject *object)
 static void vdi_manager_class_init(VdiManagerClass *klass)
 {
     GObjectClass *gobject_class = G_OBJECT_CLASS( klass );
-
     gobject_class->finalize = vdi_manager_finalize;
+
+    // signals
+    g_signal_new("logged-out",
+                 G_OBJECT_CLASS_TYPE(gobject_class),
+                 G_SIGNAL_RUN_FIRST,
+                 G_STRUCT_OFFSET(VdiManagerClass, logged_out),
+                 NULL, NULL,
+                 g_cclosure_marshal_VOID__STRING,
+                 G_TYPE_NONE,
+                 1,
+                 G_TYPE_STRING);
+    g_signal_new("connect-to-vm-requested",
+                 G_OBJECT_CLASS_TYPE(gobject_class),
+                 G_SIGNAL_RUN_FIRST,
+                 G_STRUCT_OFFSET(VdiManagerClass, connect_to_vm_requested),
+                 NULL, NULL,
+                 g_cclosure_marshal_VOID__VOID,
+                 G_TYPE_NONE,
+                 0);
+    g_signal_new("quit-requested",
+                 G_OBJECT_CLASS_TYPE(gobject_class),
+                 G_SIGNAL_RUN_FIRST,
+                 G_STRUCT_OFFSET(VdiManagerClass, quit_requested),
+                 NULL, NULL,
+                 g_cclosure_marshal_VOID__VOID,
+                 G_TYPE_NONE,
+                 0);
 }
 
 static void vdi_manager_init(VdiManager *self)
 {
     g_info("%s", (const char *)__func__);
-
-    self->ci.response = FALSE;
-    self->ci.loop = NULL;
-    self->ci.next_app_state = APP_STATE_AUTH_DIALOG;
-
     /* Create the widgets */
     self->builder = remote_viewer_util_load_ui("vdi_manager_form.glade");
     self->window = GTK_WIDGET(gtk_builder_get_object(self->builder, "vdi-main-window"));
@@ -591,15 +595,35 @@ static void vdi_manager_init(VdiManager *self)
     g_signal_connect(self->button_quit, "clicked", G_CALLBACK(on_button_quit_clicked), self);
     self->ws_conn_changed_handle = g_signal_connect(get_vdi_session_static(),
                                                       "ws-conn-changed", G_CALLBACK(on_ws_conn_changed), self);
-    self->ws_cmd_received_handle = g_signal_connect(get_vdi_session_static(), "ws-cmd-received",
-                     G_CALLBACK(on_ws_cmd_received), self);
     self->auth_fail_detected_handle = g_signal_connect(get_vdi_session_static(), "auth-fail-detected",
                                              G_CALLBACK(on_auth_fail_detected), self);
+    self->pool_entitlement_changed_handle = g_signal_connect(get_vdi_session_static(),
+            "pool-entitlement-changed", G_CALLBACK(on_pool_entitlement_changed), self);
 }
 
-/////////////////////////////////// main function
-RemoteViewerState vdi_manager_dialog(VdiManager *self, ConnectSettingsData *conn_data)
+void vdi_manager_finish_job(VdiManager *self)
 {
+    if (!self->is_active)
+        return;
+
+    // clear
+    vdi_session_cancel_pending_requests();
+    // save data to ini file
+    save_data_to_ini_file();
+
+    unregister_all_pools(self);
+
+    gtk_widget_hide(self->window);
+
+    self->is_active = FALSE;
+}
+
+void vdi_manager_show(VdiManager *self, ConnectSettingsData *conn_data)
+{
+    if (self->is_active)
+        return;
+    self->is_active = TRUE;
+
     self->p_conn_data = conn_data;
 
     // show window
@@ -621,31 +645,27 @@ RemoteViewerState vdi_manager_dialog(VdiManager *self, ConnectSettingsData *conn
     g_autofree gchar *last_pool_id = NULL;
     last_pool_id = read_str_from_ini_file(get_cur_ini_group_vdi(), "pool_id");
     if (!last_pool_id)
-        conn_data->is_connect_to_prev_pool = FALSE;
+        conn_data->connect_to_prev_pool = FALSE;
 
-    if(conn_data->is_connect_to_prev_pool && conn_data->not_connected_to_prev_pool_yet) {
+    if(conn_data->connect_to_prev_pool && conn_data->not_connected_to_prev_pool_yet) {
         // Получение ВМ из предыдущего пула
         refresh_vdi_get_vm_from_pool_async(self, last_pool_id);
-        conn_data->not_connected_to_prev_pool_yet = FALSE; // lower flag
     } else {
         // Пытаемся соединиться с vdi и получить список пулов. Получив список пулов нужно сгенерить
         // соответствующие кнопки  в скрол области.
         // get pool data
         refresh_vdi_pool_data_async(self);
     }
-    // event loop
-    create_loop_and_launch(&self->ci.loop);
+    conn_data->not_connected_to_prev_pool_yet = FALSE; // lower flag
+}
 
-    // clear
-    vdi_session_cancel_pending_requests();
-    // save data to ini file
-    save_data_to_ini_file();
+void vdi_manager_raise(VdiManager *self)
+{
+    if (!self->is_active)
+        return;
 
-    unregister_all_pools(self);
-
-    gtk_widget_hide(self->window);
-
-    return self->ci.next_app_state;
+    if (self->window && gtk_widget_get_visible(self->window))
+        gtk_window_present(GTK_WINDOW(self->window));
 }
 
 VdiManager *vdi_manager_new(void)

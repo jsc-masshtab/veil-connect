@@ -17,7 +17,12 @@
 #include "remote-viewer-timed-revealer.h"
 #include "conn_info_dialog.h"
 
+
+#define TYPE_RDP_VIEWER_WINDOW ( rdp_viewer_window_get_type( ) )
+#define RDP_VIEWER_WINDOW( obj ) ( G_TYPE_CHECK_INSTANCE_CAST((obj), TYPE_RDP_VIEWER_WINDOW, RdpViewerWindow) )
+
 typedef struct{
+    GObject parent;
     // gui
     GtkBuilder *builder;
     GtkWidget *rdp_viewer_window;
@@ -47,18 +52,20 @@ typedef struct{
 
     // signal handles
     gulong vm_changed_handle;
-    gulong ws_cmd_received_handle;
-    gulong auth_fail_detected_handle;
     gulong usb_redir_finished_handle;
 
-} RdpWindowData;
+} RdpViewerWindow;
 
+typedef struct{
+    GObjectClass parent_class;
 
-RdpWindowData *rdp_viewer_window_create(ExtendedRdpContext *ex_rdp_context,
+    /* signals */
+    void (*stop_requested)(RdpViewerWindow *self, gchar *signal_upon_job_finish, gboolean exit_if_cant_abort);
+} RdpViewerWindowClass;
+
+RdpViewerWindow *rdp_viewer_window_create(ExtendedRdpContext *ex_rdp_context,
         int index,  int monitor_num, GdkRectangle geometry);
-void rdp_viewer_window_destroy(RdpWindowData *rdp_window_data);
-void rdp_viewer_window_stop(RdpWindowData *rdp_window_data, RemoteViewerState next_app_state,
-        gboolean exit_if_cant_abort);
+void rdp_viewer_window_destroy(RdpViewerWindow *rdp_window_data);
 
 void rdp_viewer_window_send_key_shortcut(rdpContext* context, int key_shortcut_index);
 #endif // RDP_VIEWER_WINDOW_H

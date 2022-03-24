@@ -30,6 +30,8 @@ struct _VdiManager
 {
     GObject parent;
 
+    gboolean is_active;
+
     GtkBuilder *builder;
 
     GtkWidget *window;
@@ -51,8 +53,8 @@ struct _VdiManager
     ConnectionInfo ci;
 
     gulong ws_conn_changed_handle;
-    gulong ws_cmd_received_handle;
     gulong auth_fail_detected_handle;
+    gulong pool_entitlement_changed_handle;
     gulong vm_prep_progress_handle;
 
     int current_vm_request_id;
@@ -65,11 +67,16 @@ struct _VdiManagerClass
     GObjectClass parent_class;
 
     /* signals */
+    void (*logged_out)(VdiManager *self, const gchar *reason_phrase);
+    void (*connect_to_vm_requested)(VdiManager *self);
+    void (*quit_requested)(VdiManager *self);
 };
 
 GType vdi_manager_get_type( void ) G_GNUC_CONST;
 
-RemoteViewerState vdi_manager_dialog(VdiManager *self, ConnectSettingsData *conn_data);
+void vdi_manager_show(VdiManager *self, ConnectSettingsData *conn_data);
+void vdi_manager_raise(VdiManager *self);
+void vdi_manager_finish_job(VdiManager *self);
 
 VdiManager *vdi_manager_new(void);
 #endif //VIRT_VIEWER_VEIL_VDI_MANAGER_H

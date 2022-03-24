@@ -28,33 +28,37 @@
 #include "vdi_event.h"
 
 
-typedef struct
+G_DEFINE_TYPE( NativeRdpLauncher, native_rdp_launcher, G_TYPE_OBJECT )
+
+
+static void native_rdp_launcher_finalize(GObject *object)
 {
-    GMainLoop *loop;
-
-    GPid pid;
-    gboolean is_launched;
-
-    GtkWindow *parent_widget;
-
-} NativeRdpData;
-
-#if defined(_WIN32)
-// Конвертирует мультибайт строку в wide characters строку.
-// Возвращаемая строка должна быть освобождена с free
-wchar_t *
-native_rdp_launcher_multibyte_str_to_wchar_str(const gchar *g_str)
-{
-    if (g_str == NULL)
-        return NULL;
-
-    size_t required_size = mbstowcs(NULL, g_str, 0) + 1; //Plus null
-    wchar_t *wtext = (wchar_t *)calloc(1, required_size * sizeof(wchar_t));
-    mbstowcs(wtext, g_str, required_size);
-
-    return wtext;
+    GObjectClass *parent_class = G_OBJECT_CLASS( native_rdp_launcher_parent_class );
+    ( *parent_class->finalize )( object );
 }
 
+static void native_rdp_launcher_class_init(NativeRdpLauncherClass *klass )
+{
+    GObjectClass *gobject_class = G_OBJECT_CLASS(klass);
+    gobject_class->finalize = native_rdp_launcher_finalize;
+
+    // signals
+    g_signal_new("job-finished",
+                 G_OBJECT_CLASS_TYPE(gobject_class),
+                 G_SIGNAL_RUN_FIRST,
+                 G_STRUCT_OFFSET(NativeRdpLauncherClass, job_finished),
+                 NULL, NULL,
+                 g_cclosure_marshal_VOID__VOID,
+                 G_TYPE_NONE,
+                 0);
+}
+
+static void native_rdp_launcher_init(NativeRdpLauncher *self G_GNUC_UNUSED)
+{
+    g_info("%s", (const char *) __func__);
+}
+
+#if defined(_WIN32)
 // Сохраняем пароль для возможности входа через нативный клиент без ввода пароля
 static void
 native_rdp_launcher_store_conn_data(const VeilRdpSettings *p_rdp_settings)
@@ -86,9 +90,9 @@ native_rdp_launcher_store_conn_data(const VeilRdpSettings *p_rdp_settings)
     convert_string_from_utf8_to_locale(&target_name_converted);
 
     // Convert to wide char strings
-    wchar_t *user_name_converted_w = native_rdp_launcher_multibyte_str_to_wchar_str(user_name_converted);
-    wchar_t *password_converted_w = native_rdp_launcher_multibyte_str_to_wchar_str(password_converted);
-    wchar_t *target_name_converted_w = native_rdp_launcher_multibyte_str_to_wchar_str(target_name_converted);
+    wchar_t *user_name_converted_w = util_multibyte_str_to_wchar_str(user_name_converted);
+    wchar_t *password_converted_w = util_multibyte_str_to_wchar_str(password_converted);
+    wchar_t *target_name_converted_w = util_multibyte_str_to_wchar_str(target_name_converted);
 
     // Store credentials
     DWORD cbCredentialBlobSize = (DWORD)(wcslen(password_converted_w) * sizeof(wchar_t));
@@ -118,7 +122,19 @@ native_rdp_launcher_store_conn_data(const VeilRdpSettings *p_rdp_settings)
 #if defined(_WIN32) || defined(__MACH__)
 
 static void
-native_rdp_launcher_cb_child_watch(GPid pid, gint status, NativeRdpData *data)
+native_rdp_launcher_finish_job(NativeRdpLauncher *self)
+{
+#if defined(_WIN32)
+    vdi_event_vm_changed_notify(vdi_session_get_current_vm_id(), VDI_EVENT_TYPE_VM_DISCONNECTED);
+#endif
+    self->pid = NULL;
+    self->is_launched = FALSE;
+
+    g_signal_emit_by_name(self, "job-finished");
+}
+
+static void
+native_rdp_launcher_cb_child_watch(GPid pid, gint status, NativeRdpLauncher *self)
 {
     g_info("FINISHED. %s Status: %i", __func__, status);
     g_spawn_close_pid(pid);
@@ -126,20 +142,7 @@ native_rdp_launcher_cb_child_watch(GPid pid, gint status, NativeRdpData *data)
     if (status == 256)
         show_msg_box_dialog(data->parent_widget, _("Check if Microsoft Remote Client installed"));
 #endif
-    shutdown_loop(data->loop);
-}
-
-static void
-on_ws_cmd_received(gpointer data G_GNUC_UNUSED, const gchar *cmd, NativeRdpData *native_rdp_data)
-{
-    if (g_strcmp0(cmd, "DISCONNECT") == 0) {
-#if  defined(_WIN32)
-        TerminateProcess(native_rdp_data->pid, 0);
-#else
-        (void)cmd;
-        (void)native_rdp_data;
-#endif
-    }
+    native_rdp_launcher_finish_job(self);
 }
 
 static void
@@ -154,9 +157,13 @@ append_rdp_data(FILE *destFile, const gchar *param_name, const gchar *param_valu
 }
 #endif
 
+NativeRdpLauncher *native_rdp_launcher_new()
+{
+    return NATIVE_RDP_LAUNCHER( g_object_new( TYPE_NATIVE_RDP_LAUNCHER, NULL ) );
+}
 
 void
-launch_native_rdp_client(GtkWindow *parent, const VeilRdpSettings *p_rdp_settings)
+native_rdp_launcher_start(NativeRdpLauncher *self, GtkWindow *parent, const VeilRdpSettings *p_rdp_settings)
 {
 #if  defined(_WIN32) || defined(__MACH__)
     //create rdp file based on template
@@ -167,7 +174,9 @@ launch_native_rdp_client(GtkWindow *parent, const VeilRdpSettings *p_rdp_setting
     const char *rdp_template_filename = "rdp_data/rdp_template_file.txt";
     sourceFile = fopen(rdp_template_filename,"r");
     if (sourceFile == NULL) {
-        g_info("Unable to open file rdp_data/rdp_template_file.txt");
+        const gchar *err_msg = "Unable to open file rdp_data/rdp_template_file.txt";
+        show_msg_box_dialog(NULL, err_msg);
+        g_signal_emit_by_name(self, "job-finished");
         return;
     }
 
@@ -184,11 +193,14 @@ launch_native_rdp_client(GtkWindow *parent, const VeilRdpSettings *p_rdp_setting
     destFile = fopen(rdp_data_file_name, "w");
 
     /* fopen() return NULL if unable to open file in given mode. */
-    if (destFile == NULL)
-    {
+    if (destFile == NULL) {
+        g_autofree gchar *err_msg = NULL;
+        err_msg = g_strdup_printf("Unable to open file %s. \n"
+                                         "Please check if file exists and you have read/write privilege.",
+                                         rdp_data_file_name);
+        show_msg_box_dialog(NULL, err_msg);
+        g_signal_emit_by_name(self, "job-finished");
         // Unable to open
-        g_info("\nUnable to open file %s.", rdp_data_file_name);
-        g_info("Please check if file exists and you have read/write privilege.");
         fclose(sourceFile);
         return;
     }
@@ -228,8 +240,7 @@ launch_native_rdp_client(GtkWindow *parent, const VeilRdpSettings *p_rdp_setting
     native_rdp_launcher_store_conn_data(p_rdp_settings);
 #endif
 
-    NativeRdpData data = {.parent_widget = parent};
-    //data.parent_widget = parent;
+    self->parent_widget = parent;
 
     // launch process
     gchar *argv[3] = {};
@@ -245,42 +256,44 @@ launch_native_rdp_client(GtkWindow *parent, const VeilRdpSettings *p_rdp_setting
 #endif
 
     GError *error = NULL;
-    data.is_launched = g_spawn_async(NULL, argv, NULL,
+    self->is_launched = g_spawn_async(NULL, argv, NULL,
                                      G_SPAWN_DO_NOT_REAP_CHILD | G_SPAWN_SEARCH_PATH, NULL,
-                                     NULL, &data.pid, &error);
+                                     NULL, &self->pid, &error);
 
     for (guint i = 0; i < (sizeof(argv) / sizeof(gchar *)); i++) {
         g_free(argv[i]);
     }
 
-    if (!data.is_launched) {
-        g_warning("NATIVE CLIENT SPAWN FAILED");
+    if (!self->is_launched) {
+        g_autofree gchar *err_msg = NULL;
+        err_msg = g_strdup_printf("NATIVE CLIENT SPAWN FAILED");
         if (error) {
             g_warning("%s", error->message);
             g_clear_error(&error);
         }
+
+        show_msg_box_dialog(NULL, err_msg);
+        g_signal_emit_by_name(self, "job-finished");
         return;
     }
 
     // stop process callback
-    g_child_watch_add(data.pid, (GChildWatchFunc)native_rdp_launcher_cb_child_watch, &data);
+    g_child_watch_add(self->pid, (GChildWatchFunc)native_rdp_launcher_cb_child_watch, self);
 
-    // disconnect signal
-    gulong ws_cmd_received_handle = g_signal_connect(get_vdi_session_static(), "ws-cmd-received",
-                                                        G_CALLBACK(on_ws_cmd_received), &data);
-
-    // launch event loop
 #if defined(_WIN32)
     vdi_event_vm_changed_notify(vdi_session_get_current_vm_id(), VDI_EVENT_TYPE_VM_CONNECTED);
 #endif
-    create_loop_and_launch(&data.loop);
-#if defined(_WIN32)
-    vdi_event_vm_changed_notify(vdi_session_get_current_vm_id(), VDI_EVENT_TYPE_VM_DISCONNECTED);
-#endif
 
-    g_signal_handler_disconnect(get_vdi_session_static(), ws_cmd_received_handle);
 #else
+    (void)self;
     (void)parent;
     (void)p_rdp_settings;
 #endif
+}
+
+void native_rdp_launcher_stop(NativeRdpLauncher *self)
+{
+    if (self->pid) {
+        terminate_process(self->pid);
+    }
 }

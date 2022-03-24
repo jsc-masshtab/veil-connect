@@ -22,8 +22,9 @@
 #include <gtk/gtk.h>
 
 #include "rdp_cursor.h"
-#include "remote-viewer.h"
 #include "remote-viewer-util.h"
+#include "settings_data.h"
+#include "messenger.h"
 
 typedef gboolean (*UpdateCursorCallback) (rdpContext* context);
 
@@ -57,6 +58,7 @@ typedef struct {
     gboolean is_abort_demanded;
     gboolean is_connecting;
     gboolean is_connected_last_time; // флаг было ли успешное соединение на последней попытке
+    gchar *signal_upon_job_finish;
 
     // RDP settings
     VeilRdpSettings *p_rdp_settings; // указатель на данные. Не владеет этими данными
@@ -71,20 +73,18 @@ typedef struct {
     UINT32 last_rdp_error; // main freerdp error
     UINT32 rail_rdp_error; // remote app related error
 
-    GMainLoop *main_loop;
-    RemoteViewerState next_app_state;
-
-    GThread *rdp_client_routine_thread;
-
-    RemoteViewer *app;
-
     guint display_update_timeout_id;
     GMutex invalid_region_mutex;
     gboolean invalid_region_has_data;
     GdkRectangle invalid_region;
 
+    ConnectSettingsData *p_conn_data;
+    VeilMessenger *p_veil_messenger;
+
 } ExtendedRdpContext;
 
+
+void rdp_client_demand_image_update(ExtendedRdpContext* ex_context, int x, int y, int width, int height);
 
 ExtendedRdpContext* create_rdp_context(VeilRdpSettings *p_rdp_settings,
         UpdateCursorCallback update_cursor_callback, GSourceFunc update_images_func);
@@ -93,12 +93,9 @@ void destroy_rdp_context(ExtendedRdpContext* ex_rdp_context);
 void rdp_client_set_rdp_image_size(ExtendedRdpContext *ex_rdp_context,
                                          int whole_image_width, int whole_image_height);
 
-void* rdp_client_routine(ExtendedRdpContext *ex_contect);
-
 BOOL rdp_client_abort_connection(freerdp* instance);
 
-void rdp_client_start_routine_thread(ExtendedRdpContext *ex_rdp_context);
-void rdp_client_stop_routine_thread(ExtendedRdpContext *ex_rdp_context);
-
+GArray *rdp_client_create_params_array(ExtendedRdpContext* ex);
+void rdp_client_destroy_params_array(GArray *rdp_params_dyn_array);
 
 #endif /* FREERDP_CLIENT_SAMPLE_H */

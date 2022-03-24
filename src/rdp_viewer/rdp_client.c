@@ -46,17 +46,15 @@
 
 #include "async.h"
 #include "vdi_session.h"
-#include "vdi_event.h"
 
 #define PROGRAMM_NAME "rdp_gtk_client"
 #define TAG CLIENT_TAG(PROGRAMM_NAME)
-#define MAX_CONN_TRY_NUMBER 2 // Число попыток подключиться перед завершением сессии
 
 
 static int rdp_client_entry(RDP_CLIENT_ENTRY_POINTS* pEntryPoints);
 
 
-static void rdp_client_demand_image_update(ExtendedRdpContext* ex_context, int x, int y, int width, int height)
+void rdp_client_demand_image_update(ExtendedRdpContext* ex_context, int x, int y, int width, int height)
 {
     // Формируем область которую нужно перерисовать в главном потоке
     g_mutex_lock(&ex_context->invalid_region_mutex);
@@ -102,7 +100,7 @@ static void add_rdp_param(GArray *rdp_params_dyn_array, gchar *rdp_param)
     g_array_append_val(rdp_params_dyn_array, rdp_param);
 }
 
-static GArray *rdp_client_create_params_array(ExtendedRdpContext* ex)
+GArray *rdp_client_create_params_array(ExtendedRdpContext* ex)
 {
     g_info("%s W: %i x H:%i", (const char*)__func__, ex->whole_image_width, ex->whole_image_height);
 
@@ -232,7 +230,7 @@ static GArray *rdp_client_create_params_array(ExtendedRdpContext* ex)
     return rdp_params_dyn_array;
 }
 
-static void rdp_client_destroy_params_array(GArray *rdp_params_dyn_array)
+void rdp_client_destroy_params_array(GArray *rdp_params_dyn_array)
 {
     for (guint i = 0; i < rdp_params_dyn_array->len; ++i) {
         gchar *rdp_param = g_array_index(rdp_params_dyn_array, gchar*, i);
@@ -264,19 +262,17 @@ ExtendedRdpContext* create_rdp_context(VeilRdpSettings *p_rdp_settings, UpdateCu
     guint redraw_timeout = 1000 / rdp_fps;
     ex_rdp_context->display_update_timeout_id = g_timeout_add(redraw_timeout, update_images_func, ex_rdp_context);
 
+    ex_rdp_context->signal_upon_job_finish = g_strdup("job-finished"); // default
+
     return ex_rdp_context;
 }
 
 void destroy_rdp_context(ExtendedRdpContext* ex_rdp_context)
 {
     if (ex_rdp_context) {
-        // stopping RDP routine
-        rdp_client_stop_routine_thread(ex_rdp_context);
-
+        free_memory_safely(&ex_rdp_context->signal_upon_job_finish);
         // stop image updating
         g_source_remove_safely(&ex_rdp_context->display_update_timeout_id);
-        //g_async_queue_unref(ex_rdp_context->display_update_queue);
-        //ex_rdp_context->display_update_queue = NULL;
 
         // stop cursor updating
         g_source_remove_safely(&ex_rdp_context->cursor_update_timeout_id);
@@ -299,169 +295,11 @@ void rdp_client_set_rdp_image_size(ExtendedRdpContext *ex_rdp_context,
     ex_rdp_context->whole_image_height = whole_image_height;
 }
 
-//===============================Thread client routine==================================
-void* rdp_client_routine(ExtendedRdpContext *ex_contect)
-{
-    if (ex_contect->is_abort_demanded)
-        return NULL;
-
-    ex_contect->is_running = TRUE;
-
-    int status;
-    rdpContext *context = (rdpContext *)ex_contect;
-
-    if (!context)
-        goto end;
-
-    // rdp params
-    GArray *rdp_params_dyn_array = rdp_client_create_params_array(ex_contect);
-
-    g_info("%s ex_contect->user_name %s", (const char *)__func__, ex_contect->p_rdp_settings->user_name);
-    g_info("%s ex_contect->domain %s", (const char *)__func__, ex_contect->p_rdp_settings->domain);
-    // + 1 к размеру для завершающего NULL
-    gchar** argv = malloc((rdp_params_dyn_array->len + 1) * sizeof(gchar*));
-    for (guint i = 0; i < rdp_params_dyn_array->len; ++i) {
-        argv[i] = g_array_index(rdp_params_dyn_array, gchar*, i);
-        if(strstr(argv[i], "/p:") == NULL) // Do not print the password
-            g_info("%i RDP arg: %s", i, argv[i]);
-    }
-    argv[rdp_params_dyn_array->len] = NULL; // Завершающий NULL
-
-    int argc = (int)rdp_params_dyn_array->len;
-
-    // set rdp params
-    status = freerdp_client_settings_parse_command_line(context->settings, argc, argv, TRUE);
-    g_info("!!!status2: %i ", status);
-    if (status)
-        ex_contect->last_rdp_error = WRONG_FREERDP_ARGUMENTS;
-
-    status = freerdp_client_settings_command_line_status_print(context->settings, status, argc, argv);
-
-    // clear memory
-    free(argv);
-    rdp_client_destroy_params_array(rdp_params_dyn_array);
-    if (status)
-        goto end;
-
-    // MAIN RDP LOOP
-    freerdp* instance = ex_contect->context.instance;
-    HANDLE handles[64];
-    UINT32 conn_try = 0;
-
-    while (TRUE) {
-        if (ex_contect->is_abort_demanded)
-            break;
-
-        g_info("RDP. Connect attempt number: %i", conn_try + 1);
-        ex_contect->is_connecting = TRUE;
-        ex_contect->is_connected_last_time = freerdp_connect(instance);
-        ex_contect->is_connecting = FALSE;
-        if (!ex_contect->is_connected_last_time) {
-            g_info("connection failure");
-            // следующая попытка
-            conn_try++;
-            if (conn_try < MAX_CONN_TRY_NUMBER) {
-                g_usleep(500000);
-                continue; // to the next attempt
-            } else { // unable to connect
-                UINT32 error_code = freerdp_get_last_error(instance->context);
-                g_autofree gchar *err_str = NULL;
-                err_str = rdp_util_get_full_error_msg(error_code, 0);
-                vdi_event_conn_error_notify(error_code, err_str);
-                break;
-            }
-        }
-        // Подключение удачно
-        conn_try = 0; // Сброс счетчика
-        ex_contect->last_rdp_error = 0; // Сброс инфы о последней ошибке
-        vdi_event_vm_changed_notify(vdi_session_get_current_vm_id(), VDI_EVENT_TYPE_VM_CONNECTED); // Событие
-
-        g_info("RDP successfully connected");
-        while (!freerdp_shall_disconnect(instance)) {
-
-            if (ex_contect->is_abort_demanded)
-                break;
-
-            if (freerdp_focus_required(instance)) {
-                g_info(" if (freerdp_focus_required(instance))");
-                rdp_keyboard_focus_in(ex_contect);
-            }
-
-            DWORD nCount = freerdp_get_event_handles(instance->context, &handles[0], 64);
-
-            if (nCount == 0) {
-                WLog_ERR(TAG, "%s: freerdp_get_event_handles failed", __FUNCTION__);
-                break;
-            }
-
-            DWORD wait_status = WaitForMultipleObjects(nCount, handles, FALSE, 100);
-            if (wait_status == WAIT_FAILED) {
-                WLog_ERR(TAG, "%s: WaitForMultipleObjects failed with %" PRIu32 "", __FUNCTION__, wait_status);
-                break;
-            }
-
-            // выполнение следующего условия говорит о потере связи
-            if (!freerdp_check_event_handles(instance->context)) {
-                // выполнение следующего условия говорит о намеренном завершении сессии
-                UINT32 error_info = freerdp_error_info(instance);
-                if (error_info != 0)
-                    ex_contect->is_abort_demanded = TRUE;
-                g_info("freerdp_check_event_handles. Br. is_abort_demanded: %i  error_info: %i",
-                       ex_contect->is_abort_demanded, error_info);
-                break;
-            }
-        }
-
-        g_info("Before freerdp_disconnect");
-        BOOL diss_res = freerdp_disconnect(instance);
-        g_info("After freerdp_disconnect res: %i", diss_res);
-    }
-end:
-    g_info("%s: g_mutex_unlock", (const char *)__func__);
-    ex_contect->is_running = FALSE;
-    rdp_client_demand_image_update(ex_contect, 0, 0, ex_contect->whole_image_width, ex_contect->whole_image_height);
-
-    // Если соединение было успешным то сигнализируем об отключении от ВМ
-    if (ex_contect->is_connected_last_time)
-        vdi_event_vm_changed_notify(vdi_session_get_current_vm_id(), VDI_EVENT_TYPE_VM_DISCONNECTED);
-    shutdown_loop(ex_contect->main_loop);
-    return NULL;
-}
-
 BOOL rdp_client_abort_connection(freerdp* instance)
 {
     ExtendedRdpContext *ex_context = (ExtendedRdpContext*)instance->context;
     ex_context->is_abort_demanded = TRUE;
     return freerdp_abort_connect(instance);
-}
-
-void rdp_client_start_routine_thread(ExtendedRdpContext *ex_rdp_context)
-{
-    ex_rdp_context->is_abort_demanded = FALSE; // reset abort demand before start
-    ex_rdp_context->rdp_client_routine_thread = g_thread_new(NULL, (GThreadFunc)rdp_client_routine, ex_rdp_context);
-}
-
-void rdp_client_stop_routine_thread(ExtendedRdpContext *ex_rdp_context)
-{
-    if (!ex_rdp_context->rdp_client_routine_thread)
-        return;
-
-    // В режиме запуска удаленного приложения закрываем текущее окно послав alt f4, так как пользователь ожидает,
-    // что приложение закроется
-    rdpContext *context = (rdpContext *) ex_rdp_context;
-    if (context->settings->RemoteApplicationMode) {
-        rdp_viewer_window_send_key_shortcut(context, 14); // 14 - index in keyCombos
-    }
-
-    g_info("%s: rdp abort now", (const char *)__func__);
-    rdp_client_abort_connection(ex_rdp_context->context.instance);
-    // wait until rdp thread finishes (it should happen after abort)
-    g_info("%s: waiting for rdp thread completion", (const char *)__func__);
-    g_thread_join(ex_rdp_context->rdp_client_routine_thread);
-    g_info("%s: rdp thread stopped", (const char *)__func__);
-    ex_rdp_context->rdp_client_routine_thread = NULL;
-    // reset errors
-    freerdp_set_last_error(context, FREERDP_ERROR_SUCCESS);
 }
 
 /* This function is called whenever a new frame starts.

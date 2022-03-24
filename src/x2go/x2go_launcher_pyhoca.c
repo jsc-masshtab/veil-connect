@@ -16,6 +16,8 @@
 #include "remote-viewer-util.h"
 #include "settingsfile.h"
 #include "settings_data.h"
+#include "x2go_launcher.h"
+#include "vdi_event.h"
 
 // X2go клиент стартует довольно продолжительное время, поэтому необходимо показывать
 // пользователю информациорнное окно
@@ -23,75 +25,63 @@
 #define PYLIB_LOG "x2goguardian-pylib" // x2goguardian-pylib
 #define MAX_PARAM_AMOUNT 30
 
-typedef struct
+
+static void x2go_launcher_clear(X2goLauncher *self)
 {
-    GMainLoop *loop;
-    GtkBuilder *builder;
+    if (self->pyhoca_data.builder == NULL)
+        return;
 
-    GtkWidget *window;
-    GtkWidget *main_image;
-    GtkWidget *status_label;
+    // Release resources
+    g_object_unref(self->pyhoca_data.builder);
+    self->pyhoca_data.builder = NULL;
+    gtk_widget_destroy(self->pyhoca_data.window);
 
-    GtkWidget *cancel_btn;
-    GtkWidget *btn_close;
-    GtkWidget *btn_connect;
+    if (self->send_signal_upon_job_finish)
+        g_signal_emit_by_name(self, "job-finished");
+}
 
-    GtkWidget *user_name_entry;
-    GtkWidget *password_entry;
-    GtkWidget *address_label;
-    GtkWidget *credentials_image;
-
-    GtkWidget *proc_output_view;
-    GtkTextBuffer *output_buffer;
-
-    GPid pid;
-    gboolean is_launched;
-
-    gboolean is_close_pressed;
-
-    const ConnectSettingsData *p_data;
-
-} X2goData;
 // #ifdef G_OS_WIN32   #ifdef G_OS_UNIX
-static void x2go_launcher_stop_process(X2goData *data, int sig)
+void x2go_launcher_stop_pyhoca(X2goLauncher *self, int sig)
 {
     // If process is running than stop it
-    if (data->is_launched) {
-        if (data->pid) {
+    if (self->pyhoca_data.is_launched) {
+        if (self->pyhoca_data.pid) {
 #ifdef G_OS_WIN32
             (void)sig;
-            TerminateProcess(data->pid, 0);
+            TerminateProcess(self->pyhoca_data.pid, 0);
 #elif __linux__
-            kill(data->pid, sig);
+            kill(self->pyhoca_data.pid, sig);
 #endif
             g_info("%s SIG %i sent", __func__, sig);
 
         }
     } else {
-        shutdown_loop(data->loop);
+        x2go_launcher_clear(self);
     }
 }
 
 // Вызывается когда процесс завершился
 static void
-x2go_launcher_cb_child_watch( GPid  pid, gint status, X2goData *data )
+x2go_launcher_cb_child_watch( GPid  pid, gint status, X2goLauncher *self )
 {
     g_info("FINISHED. %s Status: %i", __func__, status);
     /* Close pid */
     g_spawn_close_pid(pid);
-    data->is_launched = FALSE;
-    data->pid = 0;
+    self->pyhoca_data.is_launched = FALSE;
+    self->pyhoca_data.pid = 0;
 
-    if (data->is_close_pressed) {
-        shutdown_loop(data->loop);
+    if (self->pyhoca_data.clear_all_upon_sig_termination) {
+        x2go_launcher_clear(self);
     } else {
-        gtk_widget_set_sensitive(data->btn_connect, TRUE);
-        gtk_label_set_text(GTK_LABEL(data->status_label), _("Connection closed"));
+        gtk_widget_set_sensitive(self->pyhoca_data.btn_connect, TRUE);
+        gtk_label_set_text(GTK_LABEL(self->pyhoca_data.status_label), _("Connection closed"));
     }
+
+    vdi_event_vm_changed_notify(vdi_session_get_current_vm_id(), VDI_EVENT_TYPE_VM_DISCONNECTED);
 }
 
 static gboolean
-x2go_launcher_cb_out_watch( GIOChannel *channel, GIOCondition cond,X2goData *data )
+x2go_launcher_cb_out_watch( GIOChannel *channel, GIOCondition cond, X2goLauncher *self )
 {
     gchar *string;
     gsize  size;
@@ -105,7 +95,7 @@ x2go_launcher_cb_out_watch( GIOChannel *channel, GIOCondition cond,X2goData *dat
     g_info("%s  %s", __func__, string);
     // Не показываем ненужные пользователю сообщения
     if (!strstr(string, PYLIB_LOG))
-        gtk_text_buffer_insert_at_cursor( data->output_buffer, string, -1 );
+        gtk_text_buffer_insert_at_cursor( self->pyhoca_data.output_buffer, string, -1 );
 
     g_free(string);
 
@@ -113,7 +103,7 @@ x2go_launcher_cb_out_watch( GIOChannel *channel, GIOCondition cond,X2goData *dat
 }
 
 static gboolean
-x2go_launcher_cb_err_watch( GIOChannel *channel, GIOCondition cond, X2goData *data )
+x2go_launcher_cb_err_watch( GIOChannel *channel, GIOCondition cond, X2goLauncher *self)
 {
     gchar *string;
     gsize  size;
@@ -122,6 +112,8 @@ x2go_launcher_cb_err_watch( GIOChannel *channel, GIOCondition cond, X2goData *da
         g_io_channel_unref( channel );
         return FALSE;
     }
+
+    X2goPyhocaData *data = &self->pyhoca_data;
 
     g_io_channel_read_line( channel, &string, &size, NULL, NULL );
     g_info("%s  %s", __func__, string);
@@ -148,7 +140,7 @@ x2go_launcher_cb_err_watch( GIOChannel *channel, GIOCondition cond, X2goData *da
         gtk_label_set_text(GTK_LABEL(data->status_label), _("Authorisation Error"));
         gtk_image_set_from_stock(GTK_IMAGE(data->credentials_image),
                 "gtk-dialog-error", GTK_ICON_SIZE_BUTTON);
-        x2go_launcher_stop_process(data, SIGINT);
+        x2go_launcher_stop_pyhoca(self, SIGINT);
     }
     g_free(string);
 
@@ -156,7 +148,7 @@ x2go_launcher_cb_err_watch( GIOChannel *channel, GIOCondition cond, X2goData *da
 }
 
 //static gboolean
-//x2go_launcher_cb_in_watch( GIOChannel *channel, GIOCondition cond, X2goData *data )
+//x2go_launcher_cb_in_watch( GIOChannel *channel, GIOCondition cond, X2goPyhocaData *data )
 //{
 //    g_info("%s", __func__);
 //
@@ -170,10 +162,12 @@ x2go_launcher_cb_err_watch( GIOChannel *channel, GIOCondition cond, X2goData *da
 //    return TRUE;
 //}
 
-static void x2go_launcher_launch_process(X2goData *data)
+static void x2go_launcher_launch_process(X2goLauncher *self)
 {
+    X2goPyhocaData *data = &self->pyhoca_data;
+    const ConnectSettingsData *conn_data = self->p_conn_data;
     // reset gui
-    gtk_widget_set_sensitive(GTK_WIDGET(data->btn_connect), FALSE);
+    gtk_widget_set_sensitive(GTK_WIDGET(data->btn_connect), TRUE);
     gtk_image_set_from_stock(GTK_IMAGE(data->credentials_image), "gtk-ok", GTK_ICON_SIZE_BUTTON);
 
     const gchar *user_name = gtk_entry_get_text(GTK_ENTRY(data->user_name_entry));
@@ -182,8 +176,6 @@ static void x2go_launcher_launch_process(X2goData *data)
         gtk_label_set_text(GTK_LABEL(data->status_label), _("Name is not specified"));
         return;
     }
-
-    const ConnectSettingsData *conn_data = data->p_data;
 
     gchar *argv[MAX_PARAM_AMOUNT] = {};
     int index = 0;
@@ -223,18 +215,21 @@ static void x2go_launcher_launch_process(X2goData *data)
         if (error) {
             g_warning("%s", error->message);
             g_autofree gchar *msg = NULL;
-            msg = g_strdup_printf("%s", error->message);
+            msg = g_strdup_printf("pyhoca-cli: %s", error->message);
             gtk_label_set_text(GTK_LABEL(data->status_label), msg);
             g_clear_error(&error);
         }
         return;
     } else {
+        gtk_widget_set_sensitive(GTK_WIDGET(data->btn_connect), FALSE);
         gtk_label_set_text(GTK_LABEL(data->status_label), _("Waiting for connection"));
     }
 
+    vdi_event_vm_changed_notify(vdi_session_get_current_vm_id(), VDI_EVENT_TYPE_VM_CONNECTED);
+
     /* Add watch function to catch termination of the process. This function
      * will clean any remnants of process. */
-    g_child_watch_add(data->pid, (GChildWatchFunc)x2go_launcher_cb_child_watch, data);
+    g_child_watch_add(data->pid, (GChildWatchFunc)x2go_launcher_cb_child_watch, self);
 
     /* Create channels that will be used to read data from pipes. */
 #ifdef G_OS_WIN32
@@ -248,36 +243,38 @@ static void x2go_launcher_launch_process(X2goData *data)
 #endif
 
     /* Add watches to channels */
-    g_io_add_watch( out_ch, G_IO_IN | G_IO_HUP, (GIOFunc)x2go_launcher_cb_out_watch, data );
-    g_io_add_watch( err_ch, G_IO_IN | G_IO_HUP, (GIOFunc)x2go_launcher_cb_err_watch, data );
+    g_io_add_watch( out_ch, G_IO_IN | G_IO_HUP, (GIOFunc)x2go_launcher_cb_out_watch, self );
+    g_io_add_watch( err_ch, G_IO_IN | G_IO_HUP, (GIOFunc)x2go_launcher_cb_err_watch, self );
     //g_io_add_watch( in_ch, G_IO_OUT | G_IO_HUP, (GIOFunc)x2go_launcher_cb_in_watch, data );
 }
 
-static void x2go_launcher_cancel_btn_clicked(GtkButton *button G_GNUC_UNUSED, X2goData *data)
+static void x2go_launcher_cancel_btn_clicked(GtkButton *button G_GNUC_UNUSED, X2goLauncher *self)
 {
     g_info("%s", __func__);
-    x2go_launcher_stop_process(data, SIGINT);
+    x2go_launcher_stop_pyhoca(self, SIGINT);
 }
 
-static void x2go_launcher_btn_close_clicked(GtkButton *button G_GNUC_UNUSED, X2goData *data)
+static void x2go_launcher_btn_close_clicked(GtkButton *button G_GNUC_UNUSED, X2goLauncher *self)
 {
     g_info("%s", __func__);
+    self->pyhoca_data.clear_all_upon_sig_termination = TRUE;
 #ifdef G_OS_WIN32
-    x2go_launcher_stop_process(data, 0);
+    x2go_launcher_stop_pyhoca(self, 0);
 #elif __linux__
-    x2go_launcher_stop_process(data, SIGKILL);
+    x2go_launcher_stop_pyhoca(self, SIGKILL);
 #endif
 }
 
-static void x2go_launcher_btn_connect_clicked(GtkButton *button G_GNUC_UNUSED, X2goData *data)
+static void x2go_launcher_btn_connect_clicked(GtkButton *button G_GNUC_UNUSED, X2goLauncher *self)
 {
-    x2go_launcher_launch_process(data);
+    x2go_launcher_launch_process(self);
 }
 
-static void x2go_launcher_setup_gui(const gchar *user, const gchar *password, X2goData *data)
+static void x2go_launcher_setup_gui(const gchar *user, const gchar *password, X2goLauncher *self)
 {
-    const ConnectSettingsData *conn_data = data->p_data;
+    const ConnectSettingsData *conn_data = self->p_conn_data;
 
+    X2goPyhocaData *data = &self->pyhoca_data;
     data->builder = remote_viewer_util_load_ui("x2go_control_form.glade");
 
     data->window = get_widget_from_builder(data->builder, "main_window");
@@ -301,35 +298,28 @@ static void x2go_launcher_setup_gui(const gchar *user, const gchar *password, X2
     gtk_label_set_text(GTK_LABEL(data->address_label), conn_data->ip);
     data->user_name_entry = get_widget_from_builder(data->builder, "user_name_entry");
     data->password_entry = get_widget_from_builder(data->builder, "password_entry");
-    gtk_entry_set_text(GTK_ENTRY(data->user_name_entry), user);
-    gtk_entry_set_text(GTK_ENTRY(data->password_entry), password);
+    if (user)
+        gtk_entry_set_text(GTK_ENTRY(data->user_name_entry), user);
+    if (password)
+        gtk_entry_set_text(GTK_ENTRY(data->password_entry), password);
     data->credentials_image = get_widget_from_builder(data->builder, "credentials_image");
 
     // connects
     g_signal_connect(G_OBJECT(data->cancel_btn ), "clicked",
-                     G_CALLBACK(x2go_launcher_cancel_btn_clicked ), data );
+                     G_CALLBACK(x2go_launcher_cancel_btn_clicked ), self );
     g_signal_connect(G_OBJECT(data->btn_close ), "clicked",
-                     G_CALLBACK(x2go_launcher_btn_close_clicked ), data );
+                     G_CALLBACK(x2go_launcher_btn_close_clicked ), self );
     g_signal_connect(G_OBJECT(data->btn_connect ), "clicked",
-                     G_CALLBACK(x2go_launcher_btn_connect_clicked ), data );
+                     G_CALLBACK(x2go_launcher_btn_connect_clicked ), self );
 
     gtk_widget_show_all(data->window);
 }
 
-void x2go_launcher_start_pyhoca(const gchar *user, const gchar *password, const ConnectSettingsData *conn_data)
+void x2go_launcher_start_pyhoca(X2goLauncher *self, const gchar *user, const gchar *password)
 {
-    X2goData data = {};
-    data.p_data = conn_data;
-
     // GUI
-    x2go_launcher_setup_gui(user, password, &data);
+    x2go_launcher_setup_gui(user, password, self);
 
     // Process
-    x2go_launcher_launch_process(&data);
-
-    create_loop_and_launch(&data.loop);
-
-    // Release resources
-    g_object_unref(data.builder);
-    gtk_widget_destroy(data.window);
+    x2go_launcher_launch_process(self);
 }

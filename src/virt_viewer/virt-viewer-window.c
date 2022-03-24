@@ -139,8 +139,6 @@ struct _VirtViewerWindowPrivate {
 
     // signal handles
     gulong vm_changed_handle;
-    gulong ws_cmd_received_handle;
-    gulong auth_fail_detected_handle;
 };
 
 static void
@@ -234,8 +232,6 @@ virt_viewer_window_dispose (GObject *object)
     conn_info_dialog_destroy(priv->conn_info_dialog);
 
     g_signal_handler_disconnect(get_vdi_session_static(), priv->vm_changed_handle);
-    g_signal_handler_disconnect(get_vdi_session_static(), priv->ws_cmd_received_handle);
-    g_signal_handler_disconnect(get_vdi_session_static(), priv->auth_fail_detected_handle);
 
     G_OBJECT_CLASS (virt_viewer_window_parent_class)->dispose (object);
 }
@@ -337,23 +333,6 @@ on_vm_status_changed (gpointer data G_GNUC_UNUSED,
 }
 
 static void
-on_ws_cmd_received (gpointer data G_GNUC_UNUSED,
-                    const gchar *cmd,
-                    VirtViewerWindow *self)
-{
-    if (g_strcmp0(cmd, "DISCONNECT") == 0 && virt_viewer_app_is_active(self->priv->app)) {
-        virt_viewer_set_next_app_state(self->priv->app, APP_STATE_AUTH_DIALOG);
-        virt_viewer_app_stop(self->priv->app);
-    }
-}
-
-static void
-on_auth_fail_detected (gpointer data G_GNUC_UNUSED, VirtViewerWindow *self) {
-    virt_viewer_set_next_app_state(self->priv->app, APP_STATE_AUTH_DIALOG);
-    virt_viewer_app_stop(self->priv->app);
-}
-
-static void
 virt_viewer_window_init (VirtViewerWindow *self)
 {
     VirtViewerWindowPrivate *priv;
@@ -398,10 +377,6 @@ virt_viewer_window_init (VirtViewerWindow *self)
     // vdi signals
     priv->vm_changed_handle = g_signal_connect(get_vdi_session_static(),
             "vm-changed", G_CALLBACK(on_vm_status_changed), self);
-    priv->ws_cmd_received_handle = g_signal_connect(get_vdi_session_static(),
-            "ws-cmd-received", G_CALLBACK(on_ws_cmd_received), self);
-    priv->auth_fail_detected_handle = g_signal_connect(get_vdi_session_static(),
-            "auth-fail-detected", G_CALLBACK(on_auth_fail_detected), self);
 
     vbox = GTK_WIDGET(gtk_builder_get_object(priv->builder, "viewer-box"));
     virt_viewer_window_toolbar_setup(self);
@@ -1194,7 +1169,7 @@ virt_viewer_window_menu_disconnect(GtkWidget *menu G_GNUC_UNUSED, VirtViewerWind
 {
     // Завершаем соединение, закрываем окно
     g_info("%s\n", (const char *)__func__);
-    virt_viewer_app_stop(self->priv->app);
+    virt_viewer_app_stop(self->priv->app, "job-finished");
 }
 
 G_MODULE_EXPORT void
@@ -1570,6 +1545,8 @@ virt_viewer_window_show(VirtViewerWindow *self)
             GLOBAL_APP_MODE_VDI;
     GtkWidget *menu_control = GTK_WIDGET(gtk_builder_get_object(self->priv->builder, "menu-control"));
     gtk_widget_set_sensitive(menu_control, is_vdi_mode);
+    GtkLabel *vm_status_display = GTK_LABEL(gtk_builder_get_object(self->priv->builder, "vm_status_display"));
+    gtk_label_set_text(vm_status_display, "");
 
     if (self->priv->display && !virt_viewer_display_get_enabled(self->priv->display))
         virt_viewer_display_enable(self->priv->display);

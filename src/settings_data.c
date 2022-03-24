@@ -19,6 +19,8 @@
  */
 void settings_data_read_all(ConnectSettingsData *data)
 {
+    data->was_read_from_file = TRUE;
+
     settings_data_clear(data);
 
     data->redirect_time_zone =
@@ -49,9 +51,10 @@ void settings_data_read_all(ConnectSettingsData *data)
         vdi_session_set_ldap(is_ldap);
 
         data->domain = read_str_from_ini_file(param_group_vdi, "domain");
-        data->is_connect_to_prev_pool =
+        data->connect_to_prev_pool =
                 read_int_from_ini_file(param_group_vdi, "connect_to_pool", 0);
         data->to_save_pswd = read_int_from_ini_file(param_group_vdi, "to_save_pswd", 1);
+        data->pass_through_auth = read_int_from_ini_file(param_group_vdi, "pass_through_auth", 0);
     }
 
     // controller
@@ -87,6 +90,7 @@ void settings_data_read_all(ConnectSettingsData *data)
     data->windows_updates_url = read_str_from_ini_file_default("ServiceSettings",
             "windows_updates_url", VEIL_CONNECT_WIN_RELEASE_URL);
     data->vm_await_timeout = read_int_from_ini_file("ServiceSettings", "vm_await_timeout", 65);
+    data->unique_app = read_int_from_ini_file("ServiceSettings", "unique_app", TRUE);
 
     // cur_remote_protocol_index
     VmRemoteProtocol protocol = (VmRemoteProtocol)read_int_from_ini_file("General",
@@ -101,6 +105,9 @@ void settings_data_read_all(ConnectSettingsData *data)
  */
 void settings_data_save_all(ConnectSettingsData *data)
 {
+    if (!data->was_read_from_file)
+        return;
+
     // Main
     write_int_to_ini_file("General", "redirect_time_zone", data->redirect_time_zone);
     // Direct
@@ -125,8 +132,9 @@ void settings_data_save_all(ConnectSettingsData *data)
     write_int_to_ini_file(param_group_vdi, "is_ldap", vdi_session_is_ldap());
 
     write_str_to_ini_file(param_group_vdi, "domain", data->domain);
-    write_int_to_ini_file(param_group_vdi, "connect_to_pool", data->is_connect_to_prev_pool);
+    write_int_to_ini_file(param_group_vdi, "connect_to_pool", data->connect_to_prev_pool);
     write_int_to_ini_file(param_group_vdi, "to_save_pswd", data->to_save_pswd);
+    write_int_to_ini_file(param_group_vdi, "pass_through_auth", data->pass_through_auth);
 
     // cur_remote_protocol_index
     switch (data->global_app_mode) {
@@ -172,6 +180,7 @@ void settings_data_save_all(ConnectSettingsData *data)
     write_int_to_ini_file("ServiceSettings", "global_app_mode", data->global_app_mode);
     write_str_to_ini_file("ServiceSettings", "windows_updates_url", data->windows_updates_url);
     write_int_to_ini_file("ServiceSettings", "vm_await_timeout", data->vm_await_timeout);
+    write_int_to_ini_file("ServiceSettings", "unique_app", data->unique_app);
 
     g_key_file_save_to_file(get_ini_keyfile(), get_ini_file_name(), NULL);
 }
@@ -204,6 +213,14 @@ void spice_settings_read(VeilSpiceSettings *spice_settings)
     g_autofree gchar *monitor_mapping = NULL;
     monitor_mapping = read_str_from_ini_file(spice_group, "monitor-mapping");
     update_string_safely(&spice_settings->monitor_mapping, monitor_mapping);
+
+    g_autofree gchar *usb_auto_connect_filter = NULL;
+    usb_auto_connect_filter = read_str_from_ini_file(spice_group, "usb_auto_connect_filter");
+    update_string_safely(&spice_settings->usb_auto_connect_filter, usb_auto_connect_filter);
+
+    g_autofree gchar *usb_redirect_on_connect = NULL;
+    usb_redirect_on_connect = read_str_from_ini_file(spice_group, "usb_redirect_on_connect");
+    update_string_safely(&spice_settings->usb_redirect_on_connect, usb_redirect_on_connect);
 }
 
 void spice_settings_write(VeilSpiceSettings *spice_settings)
@@ -214,11 +231,15 @@ void spice_settings_write(VeilSpiceSettings *spice_settings)
             spice_settings->is_spice_client_cursor_visible);
     write_int_to_ini_file(spice_group, "full_screen", spice_settings->full_screen);
     write_str_to_ini_file(spice_group, "monitor-mapping", spice_settings->monitor_mapping);
+    write_str_to_ini_file(spice_group, "usb_auto_connect_filter", spice_settings->usb_auto_connect_filter);
+    write_str_to_ini_file(spice_group, "usb_redirect_on_connect", spice_settings->usb_redirect_on_connect);
 }
 
 void spice_settings_clear(VeilSpiceSettings *spice_settings)
 {
     free_memory_safely(&spice_settings->monitor_mapping);
+    free_memory_safely(&spice_settings->usb_auto_connect_filter);
+    free_memory_safely(&spice_settings->usb_redirect_on_connect);
 }
 
 void rdp_settings_set_connect_data(VeilRdpSettings *rdp_settings, const gchar *user_name, const gchar *password,

@@ -20,6 +20,8 @@
 typedef struct{
     GObject parent;
 
+    gboolean is_active;
+
     GtkBuilder *builder;
     GtkWidget *window;
 
@@ -46,13 +48,17 @@ typedef struct
     GObjectClass parent_class;
 
     /* signals */
+    void (*logged_out)(ControllerManager *self, const gchar *reason_phrase);
+    void (*connect_to_vm_requested)(ControllerManager *self);
+    void (*quit_requested)(ControllerManager *self);
 
 } ControllerManagerClass;
 
 
 GType controller_manager_get_type( void ) G_GNUC_CONST;
 
-RemoteViewerState controller_manager_dialog(ControllerManager *self, ConnectSettingsData *conn_data);
+void controller_manager_show(ControllerManager *self, ConnectSettingsData *conn_data);
+void controller_manager_finish_job(ControllerManager *self);
 
 ControllerManager *controller_manager_new(void);
 
