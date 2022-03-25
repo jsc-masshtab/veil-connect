@@ -34,7 +34,7 @@ pipeline {
 
     parameters {
         string(      name: 'BRANCH',      defaultValue: 'master',                                        description: 'branch')
-        string(      name: 'VERSION',     defaultValue: '1.11.0',                                        description: 'version')
+        string(      name: 'VERSION',     defaultValue: '1.11.1',                                        description: 'version')
         choice(      name: 'WIN32_AGENT', choices: ['win7_x32'],                                         description: 'jenkins build agent')
         choice(      name: 'WIN64_AGENT', choices: ['cloud-windows-2012', 'win10_x64_veil_guest_agent'], description: 'jenkins build agent')
         booleanParam(name: 'WIN32',       defaultValue: true,                                            description: 'create EXE?')

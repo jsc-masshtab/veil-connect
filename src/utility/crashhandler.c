@@ -19,7 +19,7 @@
 #include <execinfo.h>
 #elif defined _WIN32 // Возможно стоит использовать breakpad и на unix
 #include "breakpad_wrapper/breakpad_wrapper.h"
-static CExceptionHandler breakpad_ex_handler;
+static CExceptionHandler breakpad_ex_handler = NULL;
 #elif __APPLE__ || __MACH__
 #else
 #error "current OS is not supported"

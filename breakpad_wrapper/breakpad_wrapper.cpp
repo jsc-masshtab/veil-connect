@@ -30,21 +30,29 @@ bool filterCallback(void* context, EXCEPTION_POINTERS* exinfo, MDRawAssertionInf
 
 extern "C" CExceptionHandler newCExceptionHandler(const char *dump_path)
 {
-    std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>> converter;
-    const std::wstring dump_path_w = converter.from_bytes(dump_path);
+    try {
+        std::wstring_convert <std::codecvt_utf8_utf16<wchar_t>> converter;
+        const std::wstring dump_path_w = converter.from_bytes(dump_path);
 
-    return reinterpret_cast<void *>(
-            new google_breakpad::ExceptionHandler(dump_path_w,
-                                                  filterCallback,
-                                                  NULL,
-                                                  NULL,
-                                                  (int)google_breakpad::ExceptionHandler::HANDLER_ALL));
+        return reinterpret_cast<void *>(
+                new google_breakpad::ExceptionHandler(dump_path_w,
+                                                      filterCallback,
+                                                      NULL,
+                                                      NULL,
+                                                      (int) google_breakpad::ExceptionHandler::HANDLER_ALL));
+    }
+    catch(const std::range_error &e){
+        printf("CExceptionHandler newCExceptionHandler: std::range_error\n");
+        return NULL;
+    }
 }
 
 extern "C" void removeCExceptionHandler(CExceptionHandler handler)
 {
-    google_breakpad::ExceptionHandler* google_breakpad_handler =
-            reinterpret_cast<google_breakpad::ExceptionHandler*>(handler);
+    if (handler) {
+        google_breakpad::ExceptionHandler *google_breakpad_handler =
+                reinterpret_cast<google_breakpad::ExceptionHandler *>(handler);
 
-    delete google_breakpad_handler;
+        delete google_breakpad_handler;
+    }
 }
