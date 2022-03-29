@@ -68,5 +68,7 @@ gchar *veil_time_get_time_zone()
 
     g_clear_error(&error);
     return time_zone;
+#else
+    return NULL;
 #endif
 }

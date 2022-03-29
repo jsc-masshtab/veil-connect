@@ -126,8 +126,10 @@ native_rdp_launcher_finish_job(NativeRdpLauncher *self)
 {
 #if defined(_WIN32)
     vdi_event_vm_changed_notify(vdi_session_get_current_vm_id(), VDI_EVENT_TYPE_VM_DISCONNECTED);
-#endif
     self->pid = NULL;
+#else
+    self->pid = 0;
+#endif
     self->is_launched = FALSE;
 
     g_signal_emit_by_name(self, "job-finished");
@@ -140,7 +142,7 @@ native_rdp_launcher_cb_child_watch(GPid pid, gint status, NativeRdpLauncher *sel
     g_spawn_close_pid(pid);
 #if defined(__MACH__)
     if (status == 256)
-        show_msg_box_dialog(data->parent_widget, _("Check if Microsoft Remote Client installed"));
+        show_msg_box_dialog(self->parent_widget, _("Check if Microsoft Remote Client installed"));
 #endif
     native_rdp_launcher_finish_job(self);
 }
