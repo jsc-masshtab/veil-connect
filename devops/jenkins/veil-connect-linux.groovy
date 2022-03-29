@@ -45,7 +45,7 @@ pipeline {
 
     parameters {
         string(      name: 'BRANCH',    defaultValue: 'master',                    description: 'branch')
-        string(      name: 'VERSION',   defaultValue: '1.11.1',                    description: 'version')
+        string(      name: 'VERSION',   defaultValue: '1.11.2',                    description: 'version')
         choice(      name: 'AGENT',     choices: ['cloud-ubuntu-20', 'bld-agent'], description: 'jenkins build agent')
         booleanParam(name: 'STRETCH',   defaultValue: true,                        description: 'create DEB?')
         booleanParam(name: 'BUSTER',    defaultValue: true,                        description: 'create DEB?')

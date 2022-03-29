@@ -252,12 +252,15 @@ static LoginData *vdi_session_auth_request()
     soup_message_headers_append(msg->request_headers, "User-Agent", "thin-client");
 
     // set body
+    // todo: use glib to create json msg
     gchar *message_body_str = g_strdup_printf(
-            "{\"username\": \"%s\", \"password\": \"%s\", \"code\": \"%s\", \"ldap\": %s}",
+            "{\"username\": \"%s\", \"password\": \"%s\", \"code\": \"%s\", "
+            "\"ldap\": %s, \"veil_connect_version\": \"%s\"}",
             vdi_session_static->vdi_username,
             vdi_session_static->vdi_password,
             vdi_session_static->disposable_password,
-            bool_to_str(vdi_session_static->is_ldap));
+            bool_to_str(vdi_session_static->is_ldap),
+            PACKAGE_VERSION);
     //g_info("%s  messageBodyStr %s", (const char *)__func__, messageBodyStr);
     soup_message_set_request(msg, "application/json",
                              SOUP_MEMORY_COPY, message_body_str, strlen_safely(message_body_str));
