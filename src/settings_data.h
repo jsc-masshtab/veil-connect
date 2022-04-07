@@ -150,7 +150,7 @@ typedef struct{
 
     // Параметры актуальные тольео во время работы приложения (не нужно сохранять в файл)
     gboolean not_connected_to_prev_pool_yet; // Подключалось ли приложение автоматом к предыдущему пулу при старте
-    gboolean not_pass_through_authenticated_yet; // Производилась ли сквозная аутентификация
+    gboolean is_first_auth_time; // Производилась ли аутентификация
 
 } ConnectSettingsData;
 

@@ -204,7 +204,7 @@ remote_viewer_init(RemoteViewer *self)
 
     memset(&self->conn_data, 0, sizeof(ConnectSettingsData));
     self->conn_data.not_connected_to_prev_pool_yet = TRUE;
-    self->conn_data.not_pass_through_authenticated_yet = TRUE;
+    self->conn_data.is_first_auth_time = TRUE;
 
     self->rdp_viewer = rdp_viewer_new();
     // virt-viewer

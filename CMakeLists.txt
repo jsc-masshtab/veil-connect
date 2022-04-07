@@ -186,9 +186,6 @@ endif (UNIX)
 if (WIN32)
 list(APPEND SRC_CODE
         src/usb_redirection/usbredirserver_win.c
-
-        src/local_ipc/win_service_ipc.h
-        src/local_ipc/win_service_ipc.c
 )
 endif (WIN32)
 
@@ -241,7 +238,7 @@ if (WIN32)
         SET(LIBS_INCLUDE_PATH C:/msys32/mingw64/include/)
         SET(FREERDP_PATH C:/job/FreeRDP-2.3.2/)
         SET(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
-
+        
         # breakpad wrapper
         add_subdirectory(breakpad_wrapper)
         SET(LIBS ${LIBS} breakpad_wrapper)
@@ -268,6 +265,7 @@ if (WIN32)
             -liphlpapi
             -lssp
             -lUrlmon
+            Secur32.lib
     )
 
     SET(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)

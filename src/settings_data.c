@@ -89,7 +89,8 @@ void settings_data_read_all(ConnectSettingsData *data)
 
     data->windows_updates_url = read_str_from_ini_file_default("ServiceSettings",
             "windows_updates_url", VEIL_CONNECT_WIN_RELEASE_URL);
-    data->vm_await_timeout = read_int_from_ini_file("ServiceSettings", "vm_await_timeout", 65);
+    data->vm_await_timeout =
+            CLAMP(read_int_from_ini_file("ServiceSettings", "vm_await_timeout", 65), 5, 10000);
     data->unique_app = read_int_from_ini_file("ServiceSettings", "unique_app", TRUE);
 
     // cur_remote_protocol_index

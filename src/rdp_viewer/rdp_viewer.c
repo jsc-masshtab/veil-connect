@@ -162,14 +162,21 @@ static RdpViewerWindow * set_monitor_data_and_create_rdp_viewer_window(RdpViewer
     return rdp_window;
 }
 
-static gboolean rdp_viewer_ask_for_credentials_if_required(VeilRdpSettings *p_rdp_settings)
+static gboolean rdp_viewer_ask_for_credentials_if_required(
+        ConnectSettingsData *conn_data, VeilRdpSettings *p_rdp_settings)
 {
-    if (p_rdp_settings->user_name == NULL || p_rdp_settings->password == NULL)
+
+    if (!conn_data->pass_through_auth &&
+    (strlen_safely(p_rdp_settings->user_name) == 0 ||
+            strlen_safely(p_rdp_settings->password) == 0)) {
+        g_autofree gchar *address = NULL;
+        address = g_strdup_printf("%s  %s", p_rdp_settings->ip, p_rdp_settings->domain);
         return virt_viewer_auth_collect_credentials(NULL,
-                                                    "RDP", p_rdp_settings->ip,
+                                                    "RDP", address,
                                                     &p_rdp_settings->user_name, &p_rdp_settings->password);
-    else
+    } else {
         return TRUE;
+    }
 }
 
 static void rdp_viewer_stats_data_updated(gpointer data G_GNUC_UNUSED, VmRemoteProtocol protocol,
@@ -408,7 +415,7 @@ void rdp_viewer_start(RdpViewer *self, ConnectSettingsData *conn_data, VeilMesse
     g_info("%s domain %s ip %s", (const char *)__func__, p_rdp_settings->domain, p_rdp_settings->ip);
 
     // Если имя и пароль по какой-либо причине отсутствуют, то предлагаем пользователю их ввести.
-    gboolean ret = rdp_viewer_ask_for_credentials_if_required(p_rdp_settings);
+    gboolean ret = rdp_viewer_ask_for_credentials_if_required(conn_data, p_rdp_settings);
     if (!ret) {
         g_signal_emit_by_name(self, "job-finished");
         return;

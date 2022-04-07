@@ -23,9 +23,6 @@
 #include "remote_viewer_start_settings.h"
 #include "usbredir_dialog.h"
 #include "controller_client/controller_session.h"
-#if defined(_WIN32)
-#include "local_ipc/win_service_ipc.h"
-#endif
 
 
 G_DEFINE_TYPE( RemoteViewerConnect, remote_viewer_connect, G_TYPE_OBJECT )
@@ -74,7 +71,7 @@ static void remote_viewer_connect_finish_job(RemoteViewerConnect *self)
     if (!self->is_active)
         return;
 
-    // interupt settings dialog loop
+    // interrupt settings dialog loop
     shutdown_loop(self->connect_settings_dialog.loop);
 
     // forget password if required
@@ -106,9 +103,8 @@ take_from_gui(RemoteViewerConnect *self)
         case GLOBAL_APP_MODE_VDI: {
             vdi_session_set_credentials(login, password, disposable_password);
             vdi_session_set_ldap(is_ldap);
-            // todo: finish after sso fix
-            //self->p_conn_data->pass_through_auth =
-            //        gtk_toggle_button_get_active((GtkToggleButton *)self->pass_through_auth_btn);
+            self->p_conn_data->pass_through_auth =
+                    gtk_toggle_button_get_active((GtkToggleButton *)self->pass_through_auth_btn);
             break;
         }
         case GLOBAL_APP_MODE_DIRECT: {
@@ -141,15 +137,13 @@ fill_gui(RemoteViewerConnect *self)
 
             gtk_widget_set_visible(self->global_application_mode_image, FALSE);
 
-            // todo: finish after sso fix
-//#ifdef  _WIN32
-//            gtk_widget_set_visible(self->pass_through_auth_btn, TRUE);
-//#else
-//            gtk_widget_set_visible(self->pass_through_auth_btn, FALSE);
-//#endif
+#ifdef  _WIN32
+            gtk_widget_set_visible(self->pass_through_auth_btn, TRUE);
+#else
             gtk_widget_set_visible(self->pass_through_auth_btn, FALSE);
+#endif
 
-            if (vdi_session_is_ldap())
+            if (gtk_widget_get_visible(self->pass_through_auth_btn) && vdi_session_is_ldap())
                 gtk_toggle_button_set_active((GtkToggleButton *)self->pass_through_auth_btn,
                                          self->p_conn_data->pass_through_auth);
             else
@@ -201,6 +195,7 @@ on_vdi_session_log_in_finished(GObject *source_object G_GNUC_UNUSED,
     RemoteViewerConnect *self = user_data;
 
     set_auth_dialog_state(AUTH_GUI_DEFAULT_STATE, self);
+    util_set_message_to_info_label(GTK_LABEL(self->message_display_label), "");
 
     LoginData *login_data = g_task_propagate_pointer(G_TASK(res), NULL);
     if (login_data->reply_msg)
@@ -249,14 +244,38 @@ on_controller_session_log_in_finished(GObject *source_object G_GNUC_UNUSED,
 // connect to VDI server
 static void connect_to_vdi_server(RemoteViewerConnect *self)
 {
+    self->p_conn_data->is_first_auth_time = FALSE;
     vdi_session_get_ws_client()->is_connect_initiated_by_user = TRUE;
 
-    // set credential for connection to VDI server
-    take_from_gui(self);
     set_auth_dialog_state(AUTH_GUI_CONNECT_TRY_STATE, self);
+    take_from_gui(self);
 
-    //start token fetching task
-    execute_async_task(vdi_session_log_in_task, on_vdi_session_log_in_finished, NULL, self);
+#if defined(_WIN32)
+    // there are 2 ways to log in: 1) SSO 2) standard using login name and password
+    if (vdi_session_is_ldap() && self->p_conn_data->pass_through_auth) {
+
+        util_set_message_to_info_label(GTK_LABEL(self->message_display_label),
+                                       _("SSO authorization..."));
+
+        // Set login to current system user
+        unsigned long size = 256;
+        char name[size];
+        GetUserName(name, &size);
+        gtk_entry_set_text(GTK_ENTRY(self->login_entry), name);
+        // Clear password
+        gtk_entry_set_text(GTK_ENTRY(self->password_entry), "");
+
+        // Start kerberos auth sequence task
+        execute_async_task(vdi_session_windows_sso_auth_task,
+                           on_vdi_session_log_in_finished, NULL, self);
+    } else
+#endif
+    {
+        util_set_message_to_info_label(GTK_LABEL(self->message_display_label),
+                                       _("Authorization..."));
+        //start token fetching task
+        execute_async_task(vdi_session_log_in_task, on_vdi_session_log_in_finished, NULL, self);
+    }
 }
 
 // connect to controller (ECP)
@@ -467,48 +486,25 @@ RemoteViewerConnect *remote_viewer_connect_new()
     return obj;
 }
 
-#if defined(_WIN32)
-static void on_shared_memory_ipc_get_logon_data_finished(GObject *source_object G_GNUC_UNUSED,
-        GAsyncResult *res, gpointer user_data) {
-
-    RemoteViewerConnect *self = user_data;
-
-    // Get system logon data and update GUI
-    SharedMemoryIpcLogonData *shared_memory_ipc_logon_data = g_task_propagate_pointer(G_TASK(res), NULL);
-
-    if (shared_memory_ipc_logon_data->login) {
-        gtk_entry_set_text(GTK_ENTRY(self->login_entry), shared_memory_ipc_logon_data->login);
-        gtk_entry_set_text(GTK_ENTRY(self->password_entry), shared_memory_ipc_logon_data->password);
-        connect_to_vdi_server(self);
-    } else {
-        util_set_message_to_info_label(GTK_LABEL(self->message_display_label),
-                                       _("Failed to fetch system credentials"));
-        set_auth_dialog_state(AUTH_GUI_DEFAULT_STATE, self);
-    }
-
-    shared_memory_ipc_logon_data_free(shared_memory_ipc_logon_data);
-}
-#endif
-
-// Path through auth or auto connect to prev pool
+// Auto connect if required
 static void fast_forward_connect_if_enabled(RemoteViewerConnect *self)
 {
-    if (self->p_conn_data->global_app_mode == GLOBAL_APP_MODE_VDI) {
-#if defined(_WIN32)
-        if (vdi_session_is_ldap() &&
-        self->p_conn_data->pass_through_auth &&
-        self->p_conn_data->not_pass_through_authenticated_yet) {
-            self->p_conn_data->not_pass_through_authenticated_yet = FALSE;
-            set_auth_dialog_state(AUTH_GUI_CONNECT_TRY_STATE, self);
-            execute_async_task(shared_memory_ipc_get_logon_data,
-                               on_shared_memory_ipc_get_logon_data_finished, NULL, self);
-            return;
+    if (self->p_conn_data->global_app_mode == GLOBAL_APP_MODE_VDI && self->p_conn_data->is_first_auth_time) {
+
+        gboolean sso = vdi_session_is_ldap() && self->p_conn_data->pass_through_auth;
+
+        // Авторизация, если включен режим подключения к предыдущему пулу и
+        // есть информация о предыдущем пуле
+        gboolean connect_to_prev_pool = self->p_conn_data->connect_to_prev_pool
+                && self->p_conn_data->not_connected_to_prev_pool_yet;
+        if (connect_to_prev_pool) {
+            g_autofree gchar *last_pool_id = NULL;
+            last_pool_id = read_str_from_ini_file(get_cur_ini_group_vdi(), "pool_id");
+            connect_to_prev_pool = (last_pool_id != NULL);
         }
-#endif
-        if (self->p_conn_data->connect_to_prev_pool && self->p_conn_data->not_connected_to_prev_pool_yet) {
-            // connect to the prev pool if required
+
+        if (sso || connect_to_prev_pool)
             connect_to_vdi_server(self);
-        }
     }
 }
 

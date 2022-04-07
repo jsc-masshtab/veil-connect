@@ -119,7 +119,8 @@ GArray *rdp_client_create_params_array(ExtendedRdpContext* ex)
 
     if (strlen_safely(ex->p_rdp_settings->domain))
         add_rdp_param(rdp_params_dyn_array, g_strdup_printf("/d:%s", ex->p_rdp_settings->domain));
-    add_rdp_param(rdp_params_dyn_array, g_strdup_printf("/p:%s", ex->p_rdp_settings->password));
+    if (strlen_safely(ex->p_rdp_settings->password))
+        add_rdp_param(rdp_params_dyn_array, g_strdup_printf("/p:%s", ex->p_rdp_settings->password));
     add_rdp_param(rdp_params_dyn_array, g_strdup_printf("/w:%i", ex->whole_image_width));
     add_rdp_param(rdp_params_dyn_array, g_strdup_printf("/h:%i", ex->whole_image_height));
     add_rdp_param(rdp_params_dyn_array, g_strdup("/cert-ignore"));

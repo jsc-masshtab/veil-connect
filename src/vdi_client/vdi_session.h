@@ -248,6 +248,12 @@ void vdi_session_do_action_on_vm_task(GTask *task,
                      gpointer       task_data,
                      GCancellable  *cancellable);
 
+#if defined(_WIN32)
+void vdi_session_windows_sso_auth_task(GTask *task,
+                                       gpointer       source_object,
+                                       gpointer       task_data,
+                                       GCancellable  *cancellable);
+#endif
 // Send text message
 void vdi_session_send_text_msg_task(GTask *task,
                                       gpointer       source_object,

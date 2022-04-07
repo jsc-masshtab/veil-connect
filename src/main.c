@@ -48,7 +48,7 @@ main(int argc, char **argv)
     gboolean unique_app = read_int_from_ini_file("ServiceSettings", "unique_app", TRUE);
     RemoteViewer *remote_viewer = remote_viewer_new(unique_app);
     GApplication *app = G_APPLICATION(remote_viewer);
-    
+
     int ret = g_application_run(app, argc, argv);
 
     // free resources

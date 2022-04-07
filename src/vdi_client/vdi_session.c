@@ -6,8 +6,23 @@
  * Author: http://mashtab.org/
  */
 
-#include <string.h>
+#ifdef _WIN32
+#include <winsock2.h>
+#include <windows.h>
+#include <winerror.h>
+#include <rpc.h>
+#include <io.h>
+#include <fcntl.h>
+#define SECURITY_WIN32
+#include <security.h>
+#include <ntsecapi.h>
+#endif
+
+#include <stdio.h>
 #include <stdlib.h>
+#include <stddef.h>
+#include <string.h>
+#include <sys/types.h>
 
 #include <libsoup/soup-session.h>
 
@@ -22,12 +37,16 @@
 #include "settingsfile.h"
 #include "veil_time.h"
 
-//#define RESPONSE_BUFFER_SIZE 200
 #define OK_RESPONSE 200
 #define ACCEPT_RESPONSE 202
 #define BAD_REQUEST 400
 #define AUTH_FAIL_RESPONSE 401
 #define HTTP_RESPONSE_TIOMEOUT 20
+
+#define USER_AGENT "thin-client"
+
+typedef unsigned long gss_uint32;
+typedef gss_uint32      OM_uint32;
 
 
 static VdiSession *vdi_session_static = NULL;
@@ -206,7 +225,7 @@ static void setup_header_for_vdi_session_api_call(SoupMessage *msg)
     soup_message_headers_append(msg->request_headers, "Authorization", auth_header);
     g_free(auth_header);
     soup_message_headers_append(msg->request_headers, "Content-Type", "application/json");
-    soup_message_headers_append(msg->request_headers, "User-Agent", "thin-client");
+    soup_message_headers_append(msg->request_headers, "User-Agent", USER_AGENT);
 }
 
 static guint send_message(SoupMessage *msg, const char *uri_string)
@@ -229,6 +248,50 @@ static gboolean vdi_api_session_restart_vdi_ws_client(gpointer data G_GNUC_UNUSE
     return G_SOURCE_REMOVE;
 }
 
+// Parse response and fill login_data
+static void vdi_session_parse_login_response(SoupMessage *msg, LoginData *login_data)
+{
+    // parse response
+    g_info("msg->status_code %i", msg->status_code);
+    free_memory_safely(&login_data->reply_msg);
+
+    // extract reply
+    JsonParser *parser = json_parser_new();
+
+    ServerReplyType server_reply_type;
+    JsonObject *reply_json_object = json_get_data_or_errors_object(parser, msg->response_body->data,
+                                                                   &server_reply_type);
+
+    switch (server_reply_type) {
+        case SERVER_REPLY_TYPE_DATA: {
+            const gchar *domain = json_object_get_string_member_safely(reply_json_object, "domain");
+            login_data->domain = g_strdup(domain);
+
+            const gchar *jwt_str = json_object_get_string_member_safely(reply_json_object, "access_token");
+            atomic_string_set(&vdi_session_static->jwt, jwt_str);
+            // В основном потоке вызывается на смену токена
+            g_timeout_add(500, (GSourceFunc)vdi_api_session_restart_vdi_ws_client, NULL);
+            break;
+        }
+        case SERVER_REPLY_TYPE_ERROR:
+        case SERVER_REPLY_TYPE_UNKNOWN:
+        default: {
+            const gchar *message = json_object_get_string_member_safely(reply_json_object, "message");
+            g_info("%s : Unable to get token. %s %s", (const char *)__func__, message, msg->reason_phrase);
+            if (strlen_safely(message) != 0)
+                login_data->reply_msg = g_strdup(message);
+            else if (msg->reason_phrase != NULL && strlen_safely(msg->reason_phrase) != 0)
+                login_data->reply_msg = g_strdup(msg->reason_phrase);
+            else // "Не удалось авторизоваться"
+                login_data->reply_msg = g_strdup(_("Failed to login"));
+
+            break;
+        }
+    }
+
+    g_object_unref(parser);
+}
+
 // Получаем токен
 static LoginData *vdi_session_auth_request()
 {
@@ -242,14 +305,15 @@ static LoginData *vdi_session_auth_request()
     // create request message
     SoupMessage *msg = soup_message_new("POST", vdi_session_static->auth_url);
     if(msg == NULL) { // "Не удалось сформировать SoupMessage. %s"
-        login_data->reply_msg = g_strdup_printf(_("Failed to form SoupMessage. %s"), vdi_session_static->auth_url);
+        login_data->reply_msg = g_strdup_printf(_("Failed to form SoupMessage. %s"),
+                                                vdi_session_static->auth_url);
         g_info("%s: %s", (const char*)__func__, login_data->reply_msg);
         return login_data;
     }
 
     // set header
     soup_message_headers_append(msg->request_headers, "Content-Type", "application/json");
-    soup_message_headers_append(msg->request_headers, "User-Agent", "thin-client");
+    soup_message_headers_append(msg->request_headers, "User-Agent", USER_AGENT);
 
     // set body
     // todo: use glib to create json msg
@@ -269,52 +333,18 @@ static LoginData *vdi_session_auth_request()
     // send message
     send_message(msg, vdi_session_static->auth_url);
 
-    // parse response
-    g_info("msg->status_code %i", msg->status_code);
-    // extract reply
-    JsonParser *parser = json_parser_new();
+    vdi_session_parse_login_response(msg, login_data);
+    g_object_unref(msg);
 
-    ServerReplyType server_reply_type;
-    JsonObject *reply_json_object = json_get_data_or_errors_object(parser, msg->response_body->data,
-            &server_reply_type);
-
-    switch (server_reply_type) {
-        case SERVER_REPLY_TYPE_DATA: {
-            const gchar *domain = json_object_get_string_member_safely(reply_json_object, "domain");
-            login_data->domain = g_strdup(domain);
-
-            const gchar *jwt_str = json_object_get_string_member_safely(reply_json_object, "access_token");
-            atomic_string_set(&vdi_session_static->jwt, jwt_str);
-            // В основном потоке вызывается на смену токена
-            g_timeout_add(500, (GSourceFunc)vdi_api_session_restart_vdi_ws_client, NULL);
-
-            g_object_unref(msg);
-            g_object_unref(parser);
-            return login_data;
-        }
-        case SERVER_REPLY_TYPE_ERROR:
-        case SERVER_REPLY_TYPE_UNKNOWN:
-        default: {
-
-            const gchar *message = json_object_get_string_member_safely(reply_json_object, "message");
-            g_info("%s : Unable to get token. %s %s", (const char *)__func__, message, msg->reason_phrase);
-            if (strlen_safely(message) != 0)
-                login_data->reply_msg = g_strdup(message);
-            else if (msg->reason_phrase != NULL && strlen_safely(msg->reason_phrase) != 0)
-                login_data->reply_msg = g_strdup(msg->reason_phrase);
-            else // "Не удалось авторизоваться"
-                login_data->reply_msg = g_strdup(_("Failed to login"));
-
-            g_object_unref(msg);
-            g_object_unref(parser);
-            return login_data;
-        }
-    }
+    return login_data;
 }
 
 // Get server version
 static void vdi_session_request_version()
 {
+    if (vdi_session_static->jwt.string == NULL)
+        return;
+
     gchar *url_str = g_strdup_printf("%s/version", vdi_session_static->api_url);
     g_autofree gchar *response_body_str = NULL;
     response_body_str = vdi_session_api_call("GET", url_str, NULL, NULL);
@@ -648,7 +678,7 @@ void vdi_session_log_in_task(GTask       *task,
     // Get VDI version
     vdi_session_request_version();
 
-    g_task_return_pointer(task, login_data, NULL); // reply_msg is freed in task callback
+    g_task_return_pointer(task, login_data, NULL); // login_data is freed in task callback
 }
 
 void vdi_session_get_vdi_pool_data_task(GTask   *task,
@@ -852,6 +882,161 @@ void vdi_session_do_action_on_vm_task(GTask      *task,
     // free ActionOnVmData
     vdi_api_session_free_action_on_vm_data(action_on_vm_data);
 }
+
+#if defined(_WIN32)
+void vdi_session_windows_sso_auth_task(GTask *task,
+                                       gpointer       source_object G_GNUC_UNUSED,
+                                       gpointer       task_data G_GNUC_UNUSED,
+                                       GCancellable  *cancellable G_GNUC_UNUSED)
+{
+    atomic_string_set(&vdi_session_static->jwt, NULL);
+    LoginData *login_data = calloc(1, sizeof(LoginData));
+    gboolean is_success = FALSE;
+
+    g_autofree gchar *service_name = NULL;
+    service_name = g_strdup_printf("http/%s", vdi_session_get_vdi_ip());
+    g_info("%s: service_name: %s", (const char *)__func__, service_name);
+    OM_uint32 gss_flags = (ISC_REQ_MUTUAL_AUTH | ISC_REQ_ALLOCATE_MEMORY |
+            ISC_REQ_CONFIDENTIALITY | ISC_REQ_REPLAY_DETECT);
+
+    g_autofree gchar *package = NULL;
+    package = g_strdup("Kerberos");
+
+    SecBuffer output_token = {.BufferType = SECBUFFER_TOKEN, .cbBuffer = 0, .pvBuffer = NULL};
+    SecBuffer input_token = {.BufferType = SECBUFFER_TOKEN, .cbBuffer = 0, .pvBuffer = NULL};
+
+    SecBufferDesc input_desc = {.cBuffers = 1, .pBuffers = &input_token, .ulVersion = SECBUFFER_VERSION};
+    SecBufferDesc output_desc = {.cBuffers = 1, .pBuffers = &output_token, .ulVersion = SECBUFFER_VERSION};
+
+    CredHandle cred_handle = {.dwLower = 0, .dwUpper = 0};
+
+    TimeStamp expiry;
+    PSEC_WINNT_AUTH_IDENTITY pAuthId = NULL;
+
+    /// AcquireCredentialsHandle
+    OM_uint32 maj_stat = AcquireCredentialsHandle(NULL,                       // no principal name
+                                                   package,                       // package name
+                                        SECPKG_CRED_OUTBOUND,
+                                        NULL,                       // no logon id
+                                        pAuthId,                    // no auth data
+                                        NULL,                       // no get key fn
+                                        NULL,                       // noget key arg
+                                        &cred_handle,
+                                        &expiry);
+    if (maj_stat != SEC_E_OK) {
+        login_data->reply_msg = g_strdup_printf(_("Acquiring credentials error : %lu"), maj_stat);
+        goto end;
+    }
+
+    /// InitializeSecurityContext in cycle
+    CtxtHandle gss_context = {.dwLower = 0, .dwUpper = 0};
+    PCtxtHandle context_handle = NULL;
+
+    const int iteration_number = 5;
+    OM_uint32 ret_flags;
+    for (int i = 0; i < iteration_number; i++) {
+        maj_stat = InitializeSecurityContext(&cred_handle,
+                                             context_handle,
+                                             service_name,
+                                             gss_flags,
+                                             0,          // reserved
+                                             SECURITY_NATIVE_DREP,
+                                             &input_desc,
+                                             0,          // reserved
+                                             &gss_context,
+                                             &output_desc,
+                                             &ret_flags,
+                                             &expiry);
+
+        g_info("%s: maj_stat = InitializeSecurityContext: %lu", (const char *)__func__, maj_stat);
+
+        context_handle = &gss_context;
+
+        g_free(input_token.pvBuffer);
+        input_token.pvBuffer = NULL;
+        input_token.cbBuffer = 0;
+
+        /// Encode data to 64 string
+        g_info("output_token.cbBuffer: %lu", output_token.cbBuffer);
+        g_autofree gchar *g_base64_string_token = NULL;
+        if (output_token.cbBuffer > 0)
+            g_base64_string_token = g_base64_encode((const guchar *) output_token.pvBuffer,
+                                                    (gsize) output_token.cbBuffer);
+
+        if (output_token.pvBuffer) {
+            FreeContextBuffer(output_token.pvBuffer);
+            output_token.pvBuffer = NULL;
+            output_token.cbBuffer = 0;
+        }
+
+        if (g_base64_string_token == NULL) {
+            g_free(login_data->reply_msg);
+            login_data->reply_msg = g_strdup_printf(
+                    _("Failed to fetch output token. Error code: %lu"), maj_stat);
+            goto end;
+        }
+
+        /// Send data to apache
+        g_autofree gchar *url_str = NULL;
+        url_str = g_strdup_printf("%s/sso/", vdi_session_static->api_url);
+
+        SoupMessage *msg = soup_message_new("GET", url_str);
+        // Set header
+        soup_message_headers_append(msg->request_headers, "User-Agent", USER_AGENT);
+        soup_message_headers_append(msg->request_headers, "Accept", "application/json, text/plain, */*");
+        soup_message_headers_append(msg->request_headers, "Accept-Encoding", "gzip, deflate, br");
+        soup_message_headers_append(msg->request_headers, "Connection", "keep-alive");
+        soup_message_headers_append(msg->request_headers, "Sec-Fetch-Dest", "empty");
+        soup_message_headers_append(msg->request_headers, "Sec-Fetch-Mode", "cors");
+        soup_message_headers_append(msg->request_headers, "Sec-Fetch-Site", "same-origin");
+
+        g_autofree gchar *neg_token_header = NULL;
+        neg_token_header = g_strdup_printf("Negotiate %s", g_base64_string_token);
+        //g_info("neg_token_header: %s", neg_token_header);
+        soup_message_headers_append(msg->request_headers, "Authorization", neg_token_header);
+
+        send_message(msg, url_str);
+        //g_info("%s: msg->status_code: %i  %s", (const char *)__func__, msg->status_code, msg->response_body->data);
+
+        if (msg->status_code == 200) {
+            is_success = TRUE;
+            vdi_session_parse_login_response(msg, login_data);
+            vdi_session_request_version();
+            g_object_unref(msg);
+            goto end;
+        }
+
+        /// Decode data which was received from apache and generate new gssapi_data
+        const char *resp = soup_message_headers_get_one(msg->response_headers, "WWW-Authenticate");
+        g_info("%s: resp: %s", (const char *)__func__, resp);
+        gchar **resp_gssapi_data_array = g_strsplit(resp, " ", 2);
+        g_object_unref(msg);
+
+        if (g_strv_length(resp_gssapi_data_array) > 1) {
+            const gchar *gssapi_data = resp_gssapi_data_array[1];
+            gsize binary_data_len;
+            guchar *binary_data = g_base64_decode(gssapi_data, &binary_data_len);
+            g_info("input_token  binary_data_len: %llu", binary_data_len);
+            input_token.cbBuffer = (unsigned __LONG32) binary_data_len;
+            input_token.pvBuffer = (void *) binary_data;
+
+            g_strfreev(resp_gssapi_data_array);
+        } else {
+            g_strfreev(resp_gssapi_data_array);
+            g_free(login_data->reply_msg);
+            login_data->reply_msg = g_strdup(_("Server didnt send gssapi-data"));
+            goto end;
+        }
+    }
+
+    end:
+    // free memory
+    g_free(input_token.pvBuffer);
+    if (!is_success && login_data->reply_msg == NULL)
+        login_data->reply_msg = g_strdup(_("SSO failed"));
+    g_task_return_pointer(task, login_data, NULL); // login_data is freed in task callback
+}
+#endif
 
 void vdi_session_send_text_msg_task(GTask *task G_GNUC_UNUSED,
                                     gpointer source_object G_GNUC_UNUSED,
