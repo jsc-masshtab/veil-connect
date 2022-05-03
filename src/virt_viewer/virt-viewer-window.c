@@ -1094,7 +1094,7 @@ virt_viewer_window_menu_dialog_with_admin(GtkWidget *menu G_GNUC_UNUSED, VirtVie
     g_info("%s", (const char *)__func__);
     if (REMOTE_VIEWER(self->priv->app->application_p)->conn_data.global_app_mode != GLOBAL_APP_MODE_VDI) {
         show_msg_box_dialog(GTK_WINDOW(self->priv->window),
-                            _("Messaging is supported only in VDI connection mode"));
+                            _("Messaging is supported in VDI connection mode only"));
         return;
     }
 

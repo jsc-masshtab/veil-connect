@@ -308,7 +308,7 @@ static void rdp_viewer_item_dialog_with_admin_activated(GtkWidget *menu G_GNUC_U
 {
     if (rdp_window->ex_rdp_context->p_conn_data->global_app_mode != GLOBAL_APP_MODE_VDI) {
         show_msg_box_dialog(GTK_WINDOW(rdp_window->rdp_viewer_window),
-                            _("Messaging is supported only in VDI connection mode"));
+                            _("Messaging is supported in VDI connection mode only"));
         return;
     }
 

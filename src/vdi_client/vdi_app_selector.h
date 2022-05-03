@@ -20,12 +20,15 @@ typedef enum{
 } AppSelectorResultType;
 
 typedef struct{
-    VeilRdpSettings rdp_settings;
+    gboolean is_remote_app;
+    gchar *remote_app_program;
+    gchar *remote_app_options;
     AppSelectorResultType result_type;
 
 } AppSelectorResult;
 
-AppSelectorResult vdi_app_selector_start(VeilVmData *p_vdi_vm_data, GtkWindow *parent);
+AppSelectorResult vdi_app_selector_start(VeilVmData *p_vdi_vm_data, GtkWindow *parent,
+                                         RemoteApplicationFormat remote_application_format);
 
 //void vdi_app_selector_free_selector_result(AppSelectorResult *selector_result);
 

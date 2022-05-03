@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-04-06 16:57+0300\n"
+"POT-Creation-Date: 2022-05-03 11:23+0300\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -124,12 +124,12 @@ msgid "Client monitors info:\n"
 msgstr "Информация о клиентских мониторах:\n"
 
 #: ../src/remote-viewer-connect.c:165
-#: ../resources/ui/start_settings_form.glade.h:222
+#: ../resources/ui/start_settings_form.glade.h:218
 msgid "VM connection mode"
 msgstr "Подключение к ВМ"
 
 #: ../src/remote-viewer-connect.c:181
-#: ../resources/ui/start_settings_form.glade.h:223
+#: ../resources/ui/start_settings_form.glade.h:219
 msgid "Controller connection mode"
 msgstr "Подключение к контроллеру"
 
@@ -137,16 +137,16 @@ msgstr "Подключение к контроллеру"
 msgid "SSO authorization..."
 msgstr ""
 
-#: ../src/remote-viewer-connect.c:273
+#: ../src/remote-viewer-connect.c:275
 msgid "Authorization..."
 msgstr "Авторизация..."
 
-#: ../src/remote-viewer-connect.c:300 ../src/remote-viewer-connect.c:314
-#: ../src/remote-viewer-connect.c:326
+#: ../src/remote-viewer-connect.c:302 ../src/remote-viewer-connect.c:316
+#: ../src/remote-viewer-connect.c:328
 msgid "Connection address is not specified"
 msgstr "Адрес подключения не указан"
 
-#: ../src/remote-viewer-connect.c:434
+#: ../src/remote-viewer-connect.c:436
 msgid "A new version available. Press Settings->Service->Get updates"
 msgstr ""
 "Доступна новая версия. Чтобы обновиться нажмите Настройки->Служебные-"
@@ -301,13 +301,13 @@ msgstr ""
 "Процесс установки версии %s\n"
 "завершился с ошибками."
 
-#: ../src/rdp_viewer/rdp_viewer.c:202
+#: ../src/rdp_viewer/rdp_viewer.c:209
 msgid "Unable to connect. Check if remote access allowed for this user."
 msgstr ""
 "Не удалось подключиться. Проверьте, разрешен ли удаленный доступ для этого "
 "пользователя."
 
-#: ../src/rdp_viewer/rdp_viewer.c:529
+#: ../src/rdp_viewer/rdp_viewer.c:536
 msgid "Folders redirection is not allowed"
 msgstr "Проброс папок запрещен администратором"
 
@@ -317,7 +317,7 @@ msgstr ""
 
 #: ../src/rdp_viewer/rdp_viewer_window.c:311
 #: ../src/virt_viewer/virt-viewer-window.c:1097
-msgid "Messaging is supported only in VDI connection mode"
+msgid "Messaging is supported in VDI connection mode only"
 msgstr ""
 
 #: ../src/rdp_viewer/rdp_viewer_window.c:342
@@ -554,48 +554,51 @@ msgid "VM received from pool"
 msgstr "Получена ВМ из пула"
 
 #. "Текущие запросы отменены"
-#: ../src/vdi_client/vdi_manager.c:442
+#: ../src/vdi_client/vdi_manager.c:450
 msgid "Current requests cancelled"
 msgstr "Текущие запросы отменены"
 
-#: ../src/vdi_client/vdi_manager.c:467
+#: ../src/vdi_client/vdi_manager.c:475
 msgid "401 Authorization required"
 msgstr "401 Требуется авторизация"
 
 #. show window
 #. %s  Время входа: %s  -  %s
-#: ../src/vdi_client/vdi_manager.c:631
+#: ../src/vdi_client/vdi_manager.c:639
 #: ../src/controller_client/controller_manager.c:412
 #, c-format
 msgid "%s  Login time: %s  -  %s"
 msgstr "%s  Время входа: %s  -  %s"
 
 #. "Не удалось авторизоваться"
-#: ../src/vdi_client/vdi_session.c:284
+#: ../src/vdi_client/vdi_session.c:287
 msgid "Failed to login"
 msgstr "Не удалось авторизоваться"
 
 #. "Не удалось сформировать SoupMessage. %s"
-#: ../src/vdi_client/vdi_session.c:306
+#: ../src/vdi_client/vdi_session.c:309
 #: ../src/controller_client/controller_session.c:300
 #, c-format
 msgid "Failed to form SoupMessage. %s"
 msgstr "Не удалось сформировать SoupMessage. %s"
 
-#: ../src/vdi_client/vdi_session.c:924
+#: ../src/vdi_client/vdi_session.c:928
 #, c-format
 msgid "Acquiring credentials error : %lu"
 msgstr ""
 
-#: ../src/vdi_client/vdi_session.c:972
+#: ../src/vdi_client/vdi_session.c:976
 #, c-format
 msgid "Failed to fetch output token. Error code: %lu"
 msgstr "Не удалось получить токен. Код ошибки: %lu"
 
-#: ../src/vdi_client/vdi_session.c:1023
-#, c-format
+#: ../src/vdi_client/vdi_session.c:1028
 msgid "Server didnt send gssapi-data"
 msgstr "Сервер не прислал gssapi-data"
+
+#: ../src/vdi_client/vdi_session.c:1037
+msgid "SSO failed"
+msgstr ""
 
 #: ../src/virt_viewer/virt-viewer-file.c:843
 #, c-format
@@ -1089,8 +1092,8 @@ msgid "Pass-through authentication"
 msgstr "Сквозная аутентификация"
 
 #: ../resources/ui/remote-viewer-connect_veil.glade.h:8
-msgid "SSO"
-msgstr "SSO"
+msgid "Pass-through authentication(Kerberos) at application startup"
+msgstr "Сквозная аутентификация доменного пользователя(Kerberos)"
 
 #. Одноразовый пароль
 #: ../resources/ui/remote-viewer-connect_veil.glade.h:10
@@ -1473,74 +1476,11 @@ msgstr ""
 "Открыть приложение на доступных мониторах (максимум 3). Мониторы должны "
 "образовывать прямоугольник (иметь одинаковую высоту изображения)"
 
-#. Указать сетевое подключение
-#: ../resources/ui/start_settings_form.glade.h:59
-msgid "Specify network connection"
-msgstr "Указать сетевое подключение"
-
-#. Сервер RDP будет адаптировать настройки и режимы работы  самостоятельно в зависимости от выбранного типа подключения
-#: ../resources/ui/start_settings_form.glade.h:61
-msgid ""
-"RDP server will adapt the settings according to the specified connection"
-msgstr ""
-"Сервер RDP будет адаптировать настройки и режимы работы самостоятельно в "
-"зависимости от выбранного типа подключения"
-
-#: ../resources/ui/start_settings_form.glade.h:62
-msgid "modem"
-msgstr ""
-
-#: ../resources/ui/start_settings_form.glade.h:63
-msgid "broadband"
-msgstr ""
-
-#: ../resources/ui/start_settings_form.glade.h:64
-msgid "broadband-low"
-msgstr ""
-
-#: ../resources/ui/start_settings_form.glade.h:65
-msgid "broadband-high"
-msgstr ""
-
-#: ../resources/ui/start_settings_form.glade.h:66
-msgid "wan"
-msgstr ""
-
-#: ../resources/ui/start_settings_form.glade.h:67
-msgid "lan"
-msgstr ""
-
-#: ../resources/ui/start_settings_form.glade.h:68
-msgid "Auto"
-msgstr ""
-
-#. Указать протокол безопасности
-#: ../resources/ui/start_settings_form.glade.h:70
-msgid "Specify security protocol"
-msgstr "Указать протокол безопасности"
-
-#. Если не указан, то будет выбран автоматически
-#: ../resources/ui/start_settings_form.glade.h:72
-msgid "Protocol will be selected automatically if not specified"
-msgstr "Если не указан, то будет выбран автоматически"
-
-#: ../resources/ui/start_settings_form.glade.h:73
-msgid "NLA"
-msgstr ""
-
-#: ../resources/ui/start_settings_form.glade.h:74
-msgid "TLS"
-msgstr ""
-
-#: ../resources/ui/start_settings_form.glade.h:75
-msgid "EXT"
-msgstr ""
-
-#: ../resources/ui/start_settings_form.glade.h:76
+#: ../resources/ui/start_settings_form.glade.h:58
 msgid "Selected monitors"
 msgstr "Выбранные мониторы"
 
-#: ../resources/ui/start_settings_form.glade.h:77
+#: ../resources/ui/start_settings_form.glade.h:59
 msgid ""
 "Specifies which local displays to use from the remote session. The selected "
 "displays must be contiguous. Comma separated list of machine-specific "
@@ -1551,13 +1491,13 @@ msgstr ""
 "задается как список id мониторов через запятую. Например: 0,1 - использовать "
 "мониторы с id 0 и 1."
 
-#: ../resources/ui/start_settings_form.glade.h:78
+#: ../resources/ui/start_settings_form.glade.h:60
 msgid "Log debug info"
 msgstr ""
 "Логировать отладочную\n"
 "информацию"
 
-#: ../resources/ui/start_settings_form.glade.h:79
+#: ../resources/ui/start_settings_form.glade.h:61
 msgid ""
 "Log debug information. Enabling this option may slow down the application. "
 "Application restart required to apply changes."
@@ -1565,53 +1505,53 @@ msgstr ""
 "Логировать отладочную информацию. Включение этой опции может замедлить "
 "приложение. Требуется перезапуск приложения."
 
-#: ../resources/ui/start_settings_form.glade.h:80
+#: ../resources/ui/start_settings_form.glade.h:62
 msgid "RD Gateway"
 msgstr ""
 
-#: ../resources/ui/start_settings_form.glade.h:81
+#: ../resources/ui/start_settings_form.glade.h:63
 msgid "Connect to Remote Desktop Gateway"
 msgstr "Подключение к Remote Desktop Gateway"
 
-#: ../resources/ui/start_settings_form.glade.h:82
+#: ../resources/ui/start_settings_form.glade.h:64
 msgid "Gateway address"
 msgstr "Адрес шлюза"
 
-#: ../resources/ui/start_settings_form.glade.h:83
+#: ../resources/ui/start_settings_form.glade.h:65
 msgid "File name"
 msgstr "Название файла"
 
 #. Добавить папку
-#: ../resources/ui/start_settings_form.glade.h:85
+#: ../resources/ui/start_settings_form.glade.h:67
 msgid "Add folder"
 msgstr "Добавить"
 
 #. Очистить
-#: ../resources/ui/start_settings_form.glade.h:87
+#: ../resources/ui/start_settings_form.glade.h:69
 msgid "Clear"
 msgstr "Очистить"
 
-#: ../resources/ui/start_settings_form.glade.h:88
+#: ../resources/ui/start_settings_form.glade.h:70
 msgid "Add folders to redirect"
 msgstr ""
 "Перечислите папки через точку с запятой, либо выберите их с помощью селектора"
 
 #. Перенаправляемые папки
 #. Общий доступ к папкам
-#: ../resources/ui/start_settings_form.glade.h:90
+#: ../resources/ui/start_settings_form.glade.h:72
 #: ../resources/ui/virt-viewer-preferences.glade.h:3
 msgid "Folders redirection"
 msgstr "Перенаправление папок"
 
 #. Выбрать USB для&#10;перенаправления
-#: ../resources/ui/start_settings_form.glade.h:92
+#: ../resources/ui/start_settings_form.glade.h:74
 msgid "Select RemoteFX USB for redirection"
 msgstr ""
 "Выбрать USB для\n"
 "перенаправления (RemoteFX)"
 
 #. Перенаправление USB устройств (веб камеры, микрофоны).&#10;Для работы необходимы поддержка RemoteFX на стороне удаленной машины и разрешение на открытие USB на текущем клиенте.&#10;Перенаправление flash накопителей не поддерживается: используйте перенаправление папок.
-#: ../resources/ui/start_settings_form.glade.h:94
+#: ../resources/ui/start_settings_form.glade.h:76
 msgid "USB devices redirection"
 msgstr ""
 "Перенаправление USB устройств (веб камеры, микрофоны)\n"
@@ -1621,442 +1561,501 @@ msgstr ""
 "перенаправление папок."
 
 #. Перенаправить принтеры
-#: ../resources/ui/start_settings_form.glade.h:96
+#: ../resources/ui/start_settings_form.glade.h:78
 msgid "Redirect printers"
 msgstr "Перенаправить принтеры"
 
-#: ../resources/ui/start_settings_form.glade.h:97
+#: ../resources/ui/start_settings_form.glade.h:79
 msgid "Network scanners and printers redirection"
 msgstr "Проброс сетевых сканеров и принтеров"
 
-#. Удаленное приложение
-#: ../resources/ui/start_settings_form.glade.h:99
-msgid "Remote application"
-msgstr "Удаленное приложение"
-
-#. Режим, в котором доступно только одно заданное приложение
-#: ../resources/ui/start_settings_form.glade.h:101
-msgid "Remote application mode"
-msgstr "Режим, в котором доступно только одно заданное приложение"
-
-#. название
-#: ../resources/ui/start_settings_form.glade.h:103
-msgid "name"
-msgstr "название"
-
-#. параметры
-#: ../resources/ui/start_settings_form.glade.h:105
-msgid "options"
-msgstr "параметры"
-
-#: ../resources/ui/start_settings_form.glade.h:106
+#: ../resources/ui/start_settings_form.glade.h:80
 msgid "RemoteFX"
 msgstr ""
 
-#: ../resources/ui/start_settings_form.glade.h:107
+#: ../resources/ui/start_settings_form.glade.h:81
 msgid "AVC420"
 msgstr ""
 
-#: ../resources/ui/start_settings_form.glade.h:108
+#: ../resources/ui/start_settings_form.glade.h:82
 msgid "AVC444"
 msgstr ""
 
 #. Сжатие видеопотока
-#: ../resources/ui/start_settings_form.glade.h:110
+#: ../resources/ui/start_settings_form.glade.h:84
 msgid "Video stream compression"
 msgstr "Сжатие видеопотока"
 
 #. Указать кодек сжатия видеопотока
-#: ../resources/ui/start_settings_form.glade.h:112
+#: ../resources/ui/start_settings_form.glade.h:86
 msgid "Specify compression codec"
 msgstr "Указать кодек сжатия видеопотока"
 
 #. Отключить декорации окон
-#: ../resources/ui/start_settings_form.glade.h:114
+#: ../resources/ui/start_settings_form.glade.h:88
 msgid "Disable window decorations"
 msgstr "Отключить декорации окон"
 
 #. Отключить гладкие шрифты
-#: ../resources/ui/start_settings_form.glade.h:116
+#: ../resources/ui/start_settings_form.glade.h:90
 msgid "Disable smooth fonts "
 msgstr "Отключить гладкие шрифты"
 
 #. Отключить Windows темы
-#: ../resources/ui/start_settings_form.glade.h:118
+#: ../resources/ui/start_settings_form.glade.h:92
 msgid "Disable Windows themes"
 msgstr "Отключить Windows темы"
 
-#: ../resources/ui/start_settings_form.glade.h:119
+#: ../resources/ui/start_settings_form.glade.h:93
 msgid "Redirect microphone"
 msgstr "Перенаправить микрофон"
 
 #. Домен
-#: ../resources/ui/start_settings_form.glade.h:121
+#: ../resources/ui/start_settings_form.glade.h:95
 msgid "Domain"
 msgstr "Домен"
 
+#. Указать сетевое подключение
+#: ../resources/ui/start_settings_form.glade.h:97
+msgid "Specify network connection"
+msgstr "Указать сетевое подключение"
+
+#. Сервер RDP будет адаптировать настройки и режимы работы  самостоятельно в зависимости от выбранного типа подключения
+#: ../resources/ui/start_settings_form.glade.h:99
+msgid ""
+"RDP server will adapt the settings according to the specified connection"
+msgstr ""
+"Сервер RDP будет адаптировать настройки и режимы работы самостоятельно в "
+"зависимости от выбранного типа подключения"
+
+#: ../resources/ui/start_settings_form.glade.h:100
+msgid "modem"
+msgstr ""
+
+#: ../resources/ui/start_settings_form.glade.h:101
+msgid "broadband"
+msgstr ""
+
+#: ../resources/ui/start_settings_form.glade.h:102
+msgid "broadband-low"
+msgstr ""
+
+#: ../resources/ui/start_settings_form.glade.h:103
+msgid "broadband-high"
+msgstr ""
+
+#: ../resources/ui/start_settings_form.glade.h:104
+msgid "wan"
+msgstr ""
+
+#: ../resources/ui/start_settings_form.glade.h:105
+msgid "lan"
+msgstr ""
+
+#: ../resources/ui/start_settings_form.glade.h:106
+msgid "Auto"
+msgstr ""
+
+#. Указать протокол безопасности
+#: ../resources/ui/start_settings_form.glade.h:108
+msgid "Specify security protocol"
+msgstr "Указать протокол безопасности"
+
+#. Если не указан, то будет выбран автоматически
+#: ../resources/ui/start_settings_form.glade.h:110
+msgid "Protocol will be selected automatically if not specified"
+msgstr "Если не указан, то будет выбран автоматически"
+
+#: ../resources/ui/start_settings_form.glade.h:111
+msgid "NLA"
+msgstr ""
+
+#: ../resources/ui/start_settings_form.glade.h:112
+msgid "TLS"
+msgstr ""
+
+#: ../resources/ui/start_settings_form.glade.h:113
+msgid "EXT"
+msgstr ""
+
+#: ../resources/ui/start_settings_form.glade.h:114
+msgid "Remote application format (RDS)"
+msgstr "Формат запуска приложения (RDS)"
+
+#: ../resources/ui/start_settings_form.glade.h:115
+msgid "Application alias"
+msgstr "Псевдоним"
+
+#: ../resources/ui/start_settings_form.glade.h:116
+msgid "|| + Application alias"
+msgstr "|| + Псевдоним"
+
+#: ../resources/ui/start_settings_form.glade.h:117
+msgid "Appliation name"
+msgstr "Имя приложения"
+
 #. X2Go приложение
-#: ../resources/ui/start_settings_form.glade.h:123
+#: ../resources/ui/start_settings_form.glade.h:119
 msgid "X2Go application"
 msgstr "X2Go приложение"
 
-#: ../resources/ui/start_settings_form.glade.h:124
+#: ../resources/ui/start_settings_form.glade.h:120
 msgid "x2goclient"
 msgstr ""
 
-#: ../resources/ui/start_settings_form.glade.h:125
+#: ../resources/ui/start_settings_form.glade.h:121
 msgid "pyhoca-cli"
 msgstr ""
 
 #. Метод сжатия
-#: ../resources/ui/start_settings_form.glade.h:127
+#: ../resources/ui/start_settings_form.glade.h:123
 msgid "Compression method"
 msgstr "Метод сжатия"
 
-#: ../resources/ui/start_settings_form.glade.h:128
+#: ../resources/ui/start_settings_form.glade.h:124
 msgid "nopack"
 msgstr ""
 
-#: ../resources/ui/start_settings_form.glade.h:129
+#: ../resources/ui/start_settings_form.glade.h:125
 msgid "adaptive"
 msgstr ""
 
-#: ../resources/ui/start_settings_form.glade.h:130
+#: ../resources/ui/start_settings_form.glade.h:126
 msgid "8"
 msgstr ""
 
-#: ../resources/ui/start_settings_form.glade.h:131
+#: ../resources/ui/start_settings_form.glade.h:127
 msgid "64"
 msgstr ""
 
-#: ../resources/ui/start_settings_form.glade.h:132
+#: ../resources/ui/start_settings_form.glade.h:128
 msgid "256"
 msgstr ""
 
-#: ../resources/ui/start_settings_form.glade.h:133
+#: ../resources/ui/start_settings_form.glade.h:129
 msgid "512"
 msgstr ""
 
-#: ../resources/ui/start_settings_form.glade.h:134
+#: ../resources/ui/start_settings_form.glade.h:130
 msgid "4k"
 msgstr ""
 
-#: ../resources/ui/start_settings_form.glade.h:135
+#: ../resources/ui/start_settings_form.glade.h:131
 msgid "32k"
 msgstr ""
 
-#: ../resources/ui/start_settings_form.glade.h:136
+#: ../resources/ui/start_settings_form.glade.h:132
 msgid "64k"
 msgstr ""
 
-#: ../resources/ui/start_settings_form.glade.h:137
+#: ../resources/ui/start_settings_form.glade.h:133
 msgid "256k"
 msgstr ""
 
-#: ../resources/ui/start_settings_form.glade.h:138
+#: ../resources/ui/start_settings_form.glade.h:134
 msgid "2m"
 msgstr ""
 
-#: ../resources/ui/start_settings_form.glade.h:139
+#: ../resources/ui/start_settings_form.glade.h:135
 msgid "16m"
 msgstr ""
 
-#: ../resources/ui/start_settings_form.glade.h:140
+#: ../resources/ui/start_settings_form.glade.h:136
 msgid "256-rdp"
 msgstr ""
 
-#: ../resources/ui/start_settings_form.glade.h:141
+#: ../resources/ui/start_settings_form.glade.h:137
 msgid "256-rdp-compressed"
 msgstr ""
 
-#: ../resources/ui/start_settings_form.glade.h:142
+#: ../resources/ui/start_settings_form.glade.h:138
 msgid "32k-rdp"
 msgstr ""
 
-#: ../resources/ui/start_settings_form.glade.h:143
+#: ../resources/ui/start_settings_form.glade.h:139
 msgid "32k-rdp-compressed"
 msgstr ""
 
-#: ../resources/ui/start_settings_form.glade.h:144
+#: ../resources/ui/start_settings_form.glade.h:140
 msgid "64k-rdp"
 msgstr ""
 
-#: ../resources/ui/start_settings_form.glade.h:145
+#: ../resources/ui/start_settings_form.glade.h:141
 msgid "64k-rdp-compressed"
 msgstr ""
 
-#: ../resources/ui/start_settings_form.glade.h:146
+#: ../resources/ui/start_settings_form.glade.h:142
 msgid "16m-rdp"
 msgstr ""
 
-#: ../resources/ui/start_settings_form.glade.h:147
+#: ../resources/ui/start_settings_form.glade.h:143
 msgid "16m-rdp-compressed"
 msgstr ""
 
-#: ../resources/ui/start_settings_form.glade.h:148
+#: ../resources/ui/start_settings_form.glade.h:144
 msgid "rfb-hextile"
 msgstr ""
 
-#: ../resources/ui/start_settings_form.glade.h:149
+#: ../resources/ui/start_settings_form.glade.h:145
 msgid "rfb-tight"
 msgstr ""
 
-#: ../resources/ui/start_settings_form.glade.h:150
+#: ../resources/ui/start_settings_form.glade.h:146
 msgid "rfb-tight-compressed"
 msgstr ""
 
-#: ../resources/ui/start_settings_form.glade.h:151
+#: ../resources/ui/start_settings_form.glade.h:147
 msgid "8-tight"
 msgstr ""
 
-#: ../resources/ui/start_settings_form.glade.h:152
+#: ../resources/ui/start_settings_form.glade.h:148
 msgid "64-tight"
 msgstr ""
 
-#: ../resources/ui/start_settings_form.glade.h:153
+#: ../resources/ui/start_settings_form.glade.h:149
 msgid "256-tight"
 msgstr ""
 
-#: ../resources/ui/start_settings_form.glade.h:154
+#: ../resources/ui/start_settings_form.glade.h:150
 msgid "512-tight"
 msgstr ""
 
-#: ../resources/ui/start_settings_form.glade.h:155
+#: ../resources/ui/start_settings_form.glade.h:151
 msgid "4k-tight"
 msgstr ""
 
-#: ../resources/ui/start_settings_form.glade.h:156
+#: ../resources/ui/start_settings_form.glade.h:152
 msgid "32k-tight"
 msgstr ""
 
-#: ../resources/ui/start_settings_form.glade.h:157
+#: ../resources/ui/start_settings_form.glade.h:153
 msgid "64k-tight"
 msgstr ""
 
-#: ../resources/ui/start_settings_form.glade.h:158
+#: ../resources/ui/start_settings_form.glade.h:154
 msgid "256k-tight"
 msgstr ""
 
-#: ../resources/ui/start_settings_form.glade.h:159
+#: ../resources/ui/start_settings_form.glade.h:155
 msgid "2m-tight"
 msgstr ""
 
-#: ../resources/ui/start_settings_form.glade.h:160
+#: ../resources/ui/start_settings_form.glade.h:156
 msgid "16m-tight"
 msgstr ""
 
-#: ../resources/ui/start_settings_form.glade.h:161
+#: ../resources/ui/start_settings_form.glade.h:157
 msgid "8-jpeg"
 msgstr ""
 
-#: ../resources/ui/start_settings_form.glade.h:162
+#: ../resources/ui/start_settings_form.glade.h:158
 msgid "64-jpeg"
 msgstr ""
 
-#: ../resources/ui/start_settings_form.glade.h:163
+#: ../resources/ui/start_settings_form.glade.h:159
 msgid "256-jpeg"
 msgstr ""
 
-#: ../resources/ui/start_settings_form.glade.h:164
+#: ../resources/ui/start_settings_form.glade.h:160
 msgid "512-jpeg"
 msgstr ""
 
-#: ../resources/ui/start_settings_form.glade.h:165
+#: ../resources/ui/start_settings_form.glade.h:161
 msgid "4k-jpeg"
 msgstr ""
 
-#: ../resources/ui/start_settings_form.glade.h:166
+#: ../resources/ui/start_settings_form.glade.h:162
 msgid "32k-jpeg"
 msgstr ""
 
-#: ../resources/ui/start_settings_form.glade.h:167
+#: ../resources/ui/start_settings_form.glade.h:163
 msgid "64k-jpeg"
 msgstr ""
 
-#: ../resources/ui/start_settings_form.glade.h:168
+#: ../resources/ui/start_settings_form.glade.h:164
 msgid "256k-jpeg"
 msgstr ""
 
-#: ../resources/ui/start_settings_form.glade.h:169
+#: ../resources/ui/start_settings_form.glade.h:165
 msgid "2m-jpeg"
 msgstr ""
 
-#: ../resources/ui/start_settings_form.glade.h:170
+#: ../resources/ui/start_settings_form.glade.h:166
 msgid "16m-jpeg"
 msgstr ""
 
-#: ../resources/ui/start_settings_form.glade.h:171
+#: ../resources/ui/start_settings_form.glade.h:167
 msgid "8-png-jpeg"
 msgstr ""
 
-#: ../resources/ui/start_settings_form.glade.h:172
+#: ../resources/ui/start_settings_form.glade.h:168
 msgid "64-png-jpeg"
 msgstr ""
 
-#: ../resources/ui/start_settings_form.glade.h:173
+#: ../resources/ui/start_settings_form.glade.h:169
 msgid "256-png-jpeg"
 msgstr ""
 
-#: ../resources/ui/start_settings_form.glade.h:174
+#: ../resources/ui/start_settings_form.glade.h:170
 msgid "512-png-jpeg"
 msgstr ""
 
-#: ../resources/ui/start_settings_form.glade.h:175
+#: ../resources/ui/start_settings_form.glade.h:171
 msgid "4k-png-jpeg"
 msgstr ""
 
-#: ../resources/ui/start_settings_form.glade.h:176
+#: ../resources/ui/start_settings_form.glade.h:172
 msgid "32k-png-jpeg"
 msgstr ""
 
-#: ../resources/ui/start_settings_form.glade.h:177
+#: ../resources/ui/start_settings_form.glade.h:173
 msgid "64k-png-jpeg"
 msgstr ""
 
-#: ../resources/ui/start_settings_form.glade.h:178
+#: ../resources/ui/start_settings_form.glade.h:174
 msgid "256k-png-jpeg"
 msgstr ""
 
-#: ../resources/ui/start_settings_form.glade.h:179
+#: ../resources/ui/start_settings_form.glade.h:175
 msgid "2m-png-jpeg"
 msgstr ""
 
-#: ../resources/ui/start_settings_form.glade.h:180
+#: ../resources/ui/start_settings_form.glade.h:176
 msgid "16m-png-jpeg"
 msgstr ""
 
-#: ../resources/ui/start_settings_form.glade.h:181
+#: ../resources/ui/start_settings_form.glade.h:177
 msgid "8-png"
 msgstr ""
 
-#: ../resources/ui/start_settings_form.glade.h:182
+#: ../resources/ui/start_settings_form.glade.h:178
 msgid "64-png"
 msgstr ""
 
-#: ../resources/ui/start_settings_form.glade.h:183
+#: ../resources/ui/start_settings_form.glade.h:179
 msgid "256-png"
 msgstr ""
 
-#: ../resources/ui/start_settings_form.glade.h:184
+#: ../resources/ui/start_settings_form.glade.h:180
 msgid "512-png"
 msgstr ""
 
-#: ../resources/ui/start_settings_form.glade.h:185
+#: ../resources/ui/start_settings_form.glade.h:181
 msgid "4k-png"
 msgstr ""
 
-#: ../resources/ui/start_settings_form.glade.h:186
+#: ../resources/ui/start_settings_form.glade.h:182
 msgid "32k-png"
 msgstr ""
 
-#: ../resources/ui/start_settings_form.glade.h:187
+#: ../resources/ui/start_settings_form.glade.h:183
 msgid "64k-png"
 msgstr ""
 
-#: ../resources/ui/start_settings_form.glade.h:188
+#: ../resources/ui/start_settings_form.glade.h:184
 msgid "256k-png"
 msgstr ""
 
-#: ../resources/ui/start_settings_form.glade.h:189
+#: ../resources/ui/start_settings_form.glade.h:185
 msgid "2m-png"
 msgstr ""
 
-#: ../resources/ui/start_settings_form.glade.h:190
+#: ../resources/ui/start_settings_form.glade.h:186
 msgid "16m-png"
 msgstr ""
 
-#: ../resources/ui/start_settings_form.glade.h:191
+#: ../resources/ui/start_settings_form.glade.h:187
 msgid "16m-rgb"
 msgstr ""
 
-#: ../resources/ui/start_settings_form.glade.h:192
+#: ../resources/ui/start_settings_form.glade.h:188
 msgid "16m-rle"
 msgstr ""
 
 #. Тип сессии
-#: ../resources/ui/start_settings_form.glade.h:194
+#: ../resources/ui/start_settings_form.glade.h:190
 msgid "Session type (desktop)"
 msgstr "Тип сессии"
 
-#: ../resources/ui/start_settings_form.glade.h:195
+#: ../resources/ui/start_settings_form.glade.h:191
 msgid "KDE"
 msgstr ""
 
-#: ../resources/ui/start_settings_form.glade.h:196
+#: ../resources/ui/start_settings_form.glade.h:192
 msgid "GNOME"
 msgstr ""
 
-#: ../resources/ui/start_settings_form.glade.h:197
+#: ../resources/ui/start_settings_form.glade.h:193
 msgid "LXDE"
 msgstr ""
 
-#: ../resources/ui/start_settings_form.glade.h:198
+#: ../resources/ui/start_settings_form.glade.h:194
 msgid "XFCE"
 msgstr ""
 
-#: ../resources/ui/start_settings_form.glade.h:199
+#: ../resources/ui/start_settings_form.glade.h:195
 msgid "MATE"
 msgstr ""
 
-#: ../resources/ui/start_settings_form.glade.h:200
+#: ../resources/ui/start_settings_form.glade.h:196
 msgid "UNITY"
 msgstr ""
 
-#: ../resources/ui/start_settings_form.glade.h:201
+#: ../resources/ui/start_settings_form.glade.h:197
 msgid "CINNAMON"
 msgstr ""
 
-#: ../resources/ui/start_settings_form.glade.h:202
+#: ../resources/ui/start_settings_form.glade.h:198
 msgid "TRINITY"
 msgstr ""
 
-#: ../resources/ui/start_settings_form.glade.h:203
+#: ../resources/ui/start_settings_form.glade.h:199
 msgid "OPENBOX"
 msgstr ""
 
-#: ../resources/ui/start_settings_form.glade.h:204
+#: ../resources/ui/start_settings_form.glade.h:200
 msgid "ICEWM"
 msgstr ""
 
-#: ../resources/ui/start_settings_form.glade.h:205
+#: ../resources/ui/start_settings_form.glade.h:201
 msgid "isdn"
 msgstr ""
 
-#: ../resources/ui/start_settings_form.glade.h:206
+#: ../resources/ui/start_settings_form.glade.h:202
 msgid "adsl"
 msgstr ""
 
 #. Архивировать логи
-#: ../resources/ui/start_settings_form.glade.h:208
+#: ../resources/ui/start_settings_form.glade.h:204
 msgid "Archive logs"
 msgstr "Архивировать логи"
 
 #. Создать архив папки с логами
-#: ../resources/ui/start_settings_form.glade.h:210
+#: ../resources/ui/start_settings_form.glade.h:206
 msgid "Create log archive"
 msgstr "Создать архив папки с логами"
 
 #. Получить обновления
-#: ../resources/ui/start_settings_form.glade.h:212
+#: ../resources/ui/start_settings_form.glade.h:208
 msgid "Get updates"
 msgstr "Получить обновления"
 
 #. Путь к Windows хранилищу обновлений
-#: ../resources/ui/start_settings_form.glade.h:214
+#: ../resources/ui/start_settings_form.glade.h:210
 msgid "Windows updates URL"
 msgstr "Путь к Windows хранилищу обновлений"
 
 #. Открыть документацию
-#: ../resources/ui/start_settings_form.glade.h:216
+#: ../resources/ui/start_settings_form.glade.h:212
 msgid "Open documentation (in browser)"
 msgstr "Открыть документацию (в браузере)"
 
 #. Время ожидания ВМ из пула, сек
-#: ../resources/ui/start_settings_form.glade.h:218
+#: ../resources/ui/start_settings_form.glade.h:214
 msgid "VM waiting time, sec"
 msgstr "Время ожидания ВМ из пула, сек"
 
-#: ../resources/ui/start_settings_form.glade.h:219
+#: ../resources/ui/start_settings_form.glade.h:215
 msgid ""
 "Global application mode. It determines  which server the applications "
 "connects to"
@@ -2064,24 +2063,24 @@ msgstr ""
 "Глобальный режим работы приложения. Определяет к какому серверу будет "
 "производиться подключение"
 
-#: ../resources/ui/start_settings_form.glade.h:220
+#: ../resources/ui/start_settings_form.glade.h:216
 msgid "Application mode"
 msgstr "Режим приложения"
 
-#: ../resources/ui/start_settings_form.glade.h:221
+#: ../resources/ui/start_settings_form.glade.h:217
 msgid "VDI connection mode"
 msgstr "Подключение к VDI"
 
-#: ../resources/ui/start_settings_form.glade.h:224
+#: ../resources/ui/start_settings_form.glade.h:220
 msgid "Single-instance application"
 msgstr "Single-instance application"
 
-#: ../resources/ui/start_settings_form.glade.h:225
+#: ../resources/ui/start_settings_form.glade.h:221
 msgid "Determines if only one instance of the application can be launched"
 msgstr ""
 
 #. Служебные
-#: ../resources/ui/start_settings_form.glade.h:227
+#: ../resources/ui/start_settings_form.glade.h:223
 msgid "Service"
 msgstr "Служебные"
 
@@ -2150,11 +2149,20 @@ msgstr ""
 msgid "SPICE DIRECT"
 msgstr ""
 
+#~ msgid "SSO"
+#~ msgstr "SSO"
+
+#~ msgid "Remote application"
+#~ msgstr "Удаленное приложение"
+
+#~ msgid "name"
+#~ msgstr "название"
+
+#~ msgid "options"
+#~ msgstr "параметры"
+
 #~ msgid "Failed to fetch system credentials"
 #~ msgstr "Не удалось получить системные учетные данные"
-
-#~ msgid "Pass-through authentication(Kerberos) at application startup"
-#~ msgstr "Сквозная аутентификация доменного пользователя(Kerberos)"
 
 #~ msgid "Connect to a remote machine directly"
 #~ msgstr "Подключение к удаленной машине напрямую"

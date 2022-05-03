@@ -130,15 +130,15 @@ on_rdp_network_check_btn_toggled(GtkToggleButton *rdp_network_check_btn, gpointe
     gtk_widget_set_sensitive(dialog_data->rdp_network_type_combobox, is_rdp_network_check_btn_toggled);
 }
 
-static void
-on_remote_app_check_btn_toggled(GtkToggleButton *remote_app_check_btn, gpointer user_data)
-{
-    ConnectSettingsDialog *dialog_data = (ConnectSettingsDialog *)user_data;
-
-    gboolean is_remote_app_check_btn_toggled = gtk_toggle_button_get_active(remote_app_check_btn);
-    gtk_widget_set_sensitive(dialog_data->remote_app_name_entry, is_remote_app_check_btn_toggled);
-    gtk_widget_set_sensitive(dialog_data->remote_app_options_entry, is_remote_app_check_btn_toggled);
-}
+//static void
+//on_remote_app_check_btn_toggled(GtkToggleButton *remote_app_check_btn, gpointer user_data)
+//{
+//    ConnectSettingsDialog *dialog_data = (ConnectSettingsDialog *)user_data;
+//
+//    gboolean is_remote_app_check_btn_toggled = gtk_toggle_button_get_active(remote_app_check_btn);
+//    gtk_widget_set_sensitive(dialog_data->remote_app_name_entry, is_remote_app_check_btn_toggled);
+//    gtk_widget_set_sensitive(dialog_data->remote_app_options_entry, is_remote_app_check_btn_toggled);
+//}
 
 /*
 static void
@@ -588,15 +588,17 @@ fill_gui(ConnectSettingsDialog *dialog_data)
     gtk_toggle_button_set_active((GtkToggleButton *)dialog_data->rdp_redirect_microphone_check_btn,
                                  p_conn_data->rdp_settings.redirect_microphone);
 
-    gtk_toggle_button_set_active((GtkToggleButton *)dialog_data->remote_app_check_btn,
-            p_conn_data->rdp_settings.is_remote_app);
-    if (p_conn_data->rdp_settings.remote_app_program)
-        gtk_entry_set_text(GTK_ENTRY(dialog_data->remote_app_name_entry), p_conn_data->rdp_settings.remote_app_program);
-
-    if (p_conn_data->rdp_settings.remote_app_options) {
-        gtk_entry_set_text(GTK_ENTRY(dialog_data->remote_app_options_entry),
-                p_conn_data->rdp_settings.remote_app_options);
-    }
+    //gtk_toggle_button_set_active((GtkToggleButton *)dialog_data->remote_app_check_btn,
+    //        p_conn_data->rdp_settings.is_remote_app);
+    //if (p_conn_data->rdp_settings.remote_app_program)
+    //    gtk_entry_set_text(GTK_ENTRY(dialog_data->remote_app_name_entry),
+    //            p_conn_data->rdp_settings.remote_app_program);
+    //if (p_conn_data->rdp_settings.remote_app_options) {
+    //    gtk_entry_set_text(GTK_ENTRY(dialog_data->remote_app_options_entry),
+    //            p_conn_data->rdp_settings.remote_app_options);
+    //}
+    gtk_combo_box_set_active(GTK_COMBO_BOX(dialog_data->remote_app_format_combobox),
+                             (gint)p_conn_data->rdp_settings.remote_application_format);
 
     gtk_toggle_button_set_active((GtkToggleButton *)dialog_data->rdp_sec_protocol_check_btn,
             p_conn_data->rdp_settings.is_sec_protocol_assigned);
@@ -752,13 +754,16 @@ take_from_gui(ConnectSettingsDialog *dialog_data)
     conn_data->rdp_settings.redirect_microphone = gtk_toggle_button_get_active(
             (GtkToggleButton *)dialog_data->rdp_redirect_microphone_check_btn);
 
-    conn_data->rdp_settings.is_remote_app =
-            gtk_toggle_button_get_active((GtkToggleButton *)dialog_data->remote_app_check_btn);
-    update_string_safely(&conn_data->rdp_settings.remote_app_program,
-                          gtk_entry_get_text(GTK_ENTRY(dialog_data->remote_app_name_entry)));
-    update_string_safely(&conn_data->rdp_settings.remote_app_options,
-                          gtk_entry_get_text(GTK_ENTRY(dialog_data->remote_app_options_entry)));
+    //conn_data->rdp_settings.is_remote_app =
+    //        gtk_toggle_button_get_active((GtkToggleButton *)dialog_data->remote_app_check_btn);
+    //update_string_safely(&conn_data->rdp_settings.remote_app_program,
+    //                      gtk_entry_get_text(GTK_ENTRY(dialog_data->remote_app_name_entry)));
+    //update_string_safely(&conn_data->rdp_settings.remote_app_options,
+    //                      gtk_entry_get_text(GTK_ENTRY(dialog_data->remote_app_options_entry)));
     //
+    conn_data->rdp_settings.remote_application_format = (RemoteApplicationFormat)gtk_combo_box_get_active(
+            GTK_COMBO_BOX(dialog_data->remote_app_format_combobox));
+
     conn_data->rdp_settings.is_sec_protocol_assigned = gtk_toggle_button_get_active((GtkToggleButton *)
                                                                             dialog_data->rdp_sec_protocol_check_btn);
     const gchar *sec_protocol_type =
@@ -909,9 +914,10 @@ GtkResponseType remote_viewer_start_settings_dialog(ConnectSettingsDialog *self,
     self->rdp_redirect_microphone_check_btn =
             get_widget_from_builder(self->builder, "rdp_redirect_microphone_check_btn");
 
-    self->remote_app_check_btn = get_widget_from_builder(self->builder, "remote_app_check_btn");
-    self->remote_app_name_entry = get_widget_from_builder(self->builder, "remote_app_name_entry");
-    self->remote_app_options_entry = get_widget_from_builder(self->builder, "remote_app_options_entry");
+    //self->remote_app_check_btn = get_widget_from_builder(self->builder, "remote_app_check_btn");
+    //self->remote_app_name_entry = get_widget_from_builder(self->builder, "remote_app_name_entry");
+    //self->remote_app_options_entry = get_widget_from_builder(self->builder, "remote_app_options_entry");
+    self->remote_app_format_combobox = get_widget_from_builder(self->builder, "remote_app_format_combobox");
 
     self->rdp_sec_protocol_check_btn =
             get_widget_from_builder(self->builder, "rdp_sec_protocol_check_btn");
@@ -1009,8 +1015,7 @@ GtkResponseType remote_viewer_start_settings_dialog(ConnectSettingsDialog *self,
 
     g_signal_connect(self->btn_archive_logs, "clicked",
                      G_CALLBACK(btn_archive_logs_clicked_cb), self);
-    g_signal_connect(self->remote_app_check_btn, "toggled", G_CALLBACK(on_remote_app_check_btn_toggled),
-                     self);
+    //g_signal_connect(self->remote_app_check_btn, "toggled", G_CALLBACK(on_remote_app_check_btn_toggled), self);
     g_signal_connect(self->btn_get_app_updates, "clicked", G_CALLBACK(btn_get_app_updates_clicked_cb),
                      self);
     g_signal_connect(self->btn_open_doc, "clicked", G_CALLBACK(btn_open_doc_clicked_cb),

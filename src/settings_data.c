@@ -80,7 +80,7 @@ void settings_data_read_all(ConnectSettingsData *data)
     // SPICE
     spice_settings_read(&data->spice_settings);
     // RDP
-    rdp_settings_read_ini_file(&data->rdp_settings, TRUE);
+    rdp_settings_read_ini_file(&data->rdp_settings);
     // X2Go
     x2go_settings_read(&data->x2Go_settings);
     // Service
@@ -257,7 +257,7 @@ void rdp_settings_set_connect_data(VeilRdpSettings *rdp_settings, const gchar *u
 /*
  * Чтение из ini
  */
-void rdp_settings_read_ini_file(VeilRdpSettings *rdp_settings, gboolean rewrite_remote_app_settings)
+void rdp_settings_read_ini_file(VeilRdpSettings *rdp_settings)
 {
     const gchar *rdp_group = "RDPSettings";
     g_autofree gchar *rdp_pixel_format = NULL;
@@ -275,15 +275,15 @@ void rdp_settings_read_ini_file(VeilRdpSettings *rdp_settings, gboolean rewrite_
     rdp_shared_folders = read_str_from_ini_file(rdp_group, "rdp_shared_folders");
     update_string_safely(&rdp_settings->shared_folders_str, rdp_shared_folders);
 
-    if (rewrite_remote_app_settings) {
-        rdp_settings->is_remote_app = read_int_from_ini_file(rdp_group, "is_remote_app", 0);
-        g_autofree gchar *remote_app_program = NULL;
-        remote_app_program = read_str_from_ini_file(rdp_group, "remote_app_program");
-        update_string_safely(&rdp_settings->remote_app_program, remote_app_program);
-        g_autofree gchar *remote_app_options = NULL;
-        remote_app_options = read_str_from_ini_file(rdp_group, "remote_app_options");
-        update_string_safely(&rdp_settings->remote_app_options, remote_app_options);
-    }
+    //rdp_settings->is_remote_app = read_int_from_ini_file(rdp_group, "is_remote_app", 0);
+    //g_autofree gchar *remote_app_program = NULL;
+    //remote_app_program = read_str_from_ini_file(rdp_group, "remote_app_program");
+    //update_string_safely(&rdp_settings->remote_app_program, remote_app_program);
+    //g_autofree gchar *remote_app_options = NULL;
+    //remote_app_options = read_str_from_ini_file(rdp_group, "remote_app_options");
+    //update_string_safely(&rdp_settings->remote_app_options, remote_app_options);
+    rdp_settings->remote_application_format = (RemoteApplicationFormat)read_int_from_ini_file(
+            rdp_group, "remote_application_format", REMOTE_APPLICATION_FORMAT_ALIAS);
 
     rdp_settings->is_multimon = read_int_from_ini_file(rdp_group, "is_multimon", 0);
     rdp_settings->full_screen = read_int_from_ini_file(rdp_group, "full_screen", 1);
@@ -438,9 +438,10 @@ void rdp_settings_write(VeilRdpSettings *rdp_settings)
     write_int_to_ini_file(rdp_group, "redirect_printers", rdp_settings->redirectprinters);
     write_int_to_ini_file(rdp_group, "redirect_microphone", rdp_settings->redirect_microphone);
 
-    write_int_to_ini_file(rdp_group, "is_remote_app", rdp_settings->is_remote_app);
-    write_str_to_ini_file(rdp_group, "remote_app_program", rdp_settings->remote_app_program);
-    write_str_to_ini_file(rdp_group, "remote_app_options", rdp_settings->remote_app_options);
+    //write_int_to_ini_file(rdp_group, "is_remote_app", rdp_settings->is_remote_app);
+    //write_str_to_ini_file(rdp_group, "remote_app_program", rdp_settings->remote_app_program);
+    //write_str_to_ini_file(rdp_group, "remote_app_options", rdp_settings->remote_app_options);
+    write_int_to_ini_file(rdp_group, "remote_application_format", rdp_settings->remote_application_format);
     //
     write_int_to_ini_file(rdp_group, "is_sec_protocol_assigned", rdp_settings->is_sec_protocol_assigned);
     write_str_to_ini_file(rdp_group, "sec_protocol_type", rdp_settings->sec_protocol_type);

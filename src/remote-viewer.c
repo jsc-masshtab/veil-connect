@@ -316,10 +316,6 @@ connect_to_vm(gpointer data G_GNUC_UNUSED, RemoteViewer *self)
         if (self->conn_data.global_app_mode == GLOBAL_APP_MODE_DIRECT && self->conn_data.rdp_settings.use_rdp_file) {
             rdp_settings_read_standard_file(&self->conn_data.rdp_settings, NULL);
         } else {
-            // Читаем из ini настройки remote_app только если они еще не установлены ранее (они могут быть
-            // получены от RDS пула)
-            rdp_settings_read_ini_file(&self->conn_data.rdp_settings,
-                                       !self->conn_data.rdp_settings.is_remote_app);
             rdp_settings_set_connect_data(&self->conn_data.rdp_settings, self->conn_data.user,
                                           self->conn_data.password, self->conn_data.domain,
                                           self->conn_data.ip, 0);
@@ -327,7 +323,6 @@ connect_to_vm(gpointer data G_GNUC_UNUSED, RemoteViewer *self)
         rdp_viewer_start(self->rdp_viewer, &self->conn_data, self->veil_messenger, &self->conn_data.rdp_settings);
 #if  defined(_WIN32) || defined(__MACH__)
         } else if (protocol == RDP_NATIVE_PROTOCOL) {
-                rdp_settings_read_ini_file(&self->conn_data.rdp_settings, !self->conn_data.rdp_settings.is_remote_app);
                 rdp_settings_set_connect_data(&self->conn_data.rdp_settings, self->conn_data.user,
                                               self->conn_data.password, self->conn_data.domain,
                                               self->conn_data.ip, 0);

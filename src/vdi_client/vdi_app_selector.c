@@ -23,15 +23,11 @@ typedef struct{
 
     GMainLoop *loop;
 
+    RemoteApplicationFormat remote_application_format;
     AppSelectorResult selector_result;
 
 } VdiAppSelector;
 
-typedef struct{
-    GtkWidget *app_btn;
-    GdkPixbuf *pix_buff;
-
-} VdiGuiApp;
 
 static gboolean window_deleted_cb(VdiAppSelector *self)
 {
@@ -51,27 +47,41 @@ static void vdi_app_selector_on_icon_btn_clicked(GtkButton *btn, VdiAppSelector 
     const gchar *app_alias = g_object_get_data(G_OBJECT(btn), "app_alias");
     if (strlen_safely(app_alias) != 0) { // пользователь выбрал приложение
         self->selector_result.result_type = APP_SELECTOR_RESULT_APP;
-        self->selector_result.rdp_settings.is_remote_app = TRUE;
-        self->selector_result.rdp_settings.remote_app_program = g_strdup_printf("||%s", app_alias);
+        self->selector_result.is_remote_app = TRUE;
+
+        switch (self->remote_application_format) {
+            case REMOTE_APPLICATION_FORMAT_ALIAS: {
+                self->selector_result.remote_app_program = g_strdup(app_alias);
+                break;
+            }
+            case REMOTE_APPLICATION_FORMAT_ALIAS_2: {
+                self->selector_result.remote_app_program = g_strdup_printf("||%s", app_alias);
+                break;
+            }
+            case REMOTE_APPLICATION_FORMAT_NAME:
+            default: {
+                const gchar *app_name = g_object_get_data(G_OBJECT(btn), "app_name");
+                self->selector_result.remote_app_program = g_strdup(app_name);
+                break;
+            }
+        }
     } else { // пользователь выбрал обычное подключение к рабочему столу
         self->selector_result.result_type = APP_SELECTOR_RESULT_DESKTOP;
-        self->selector_result.rdp_settings.is_remote_app = FALSE;
-        self->selector_result.rdp_settings.remote_app_program = NULL;
+        self->selector_result.is_remote_app = FALSE;
+        self->selector_result.remote_app_program = NULL;
     }
 
     shutdown_loop(self->loop);
 }
 
-static void vdi_app_selector_setup_icon_btn(VdiAppSelector *self, GtkWidget *btn, const gchar *app_alias)
+static void vdi_app_selector_setup_icon_btn(VdiAppSelector *self, GtkWidget *btn, VeilAppData app_data)
 {
     gtk_widget_set_name(btn, "app_select_btn");
     gtk_widget_set_size_request(btn, 100, 120);
     gtk_flow_box_insert(GTK_FLOW_BOX(self->gtk_flow_box), btn, 0);
 
-    g_object_set_data_full(G_OBJECT(btn),
-                           "app_alias", // an app or desktop
-                           g_strdup(app_alias),
-                           (GDestroyNotify) g_free);
+    g_object_set_data_full(G_OBJECT(btn),"app_name", g_strdup(app_data.app_name), (GDestroyNotify) g_free);
+    g_object_set_data_full(G_OBJECT(btn),"app_alias", g_strdup(app_data.app_alias), (GDestroyNotify) g_free);
 
     g_signal_connect(btn, "clicked",
             G_CALLBACK(vdi_app_selector_on_icon_btn_clicked), self);
@@ -79,11 +89,9 @@ static void vdi_app_selector_setup_icon_btn(VdiAppSelector *self, GtkWidget *btn
 
 static void vdi_app_selector_add_app(VdiAppSelector *self, VeilAppData app_data)
 {
-    VdiGuiApp gui_app_data = {};
-
     // Создается кнопка иконка для выбора приложения пользователем
-    gui_app_data.app_btn = gtk_button_new_with_label(app_data.app_name);
-    vdi_app_selector_setup_icon_btn(self, gui_app_data.app_btn, app_data.app_alias);
+    GtkWidget *app_btn = gtk_button_new_with_label(app_data.app_name);
+    vdi_app_selector_setup_icon_btn(self, app_btn, app_data);
 
     // decode base64 string to bytes array
     size_t icon_base64_len = strlen_safely(app_data.icon_base64);
@@ -103,10 +111,10 @@ static void vdi_app_selector_add_app(VdiAppSelector *self, VeilAppData app_data)
         gdk_pixbuf_loader_close(loader, NULL);
 
         if (res) {
-            gui_app_data.pix_buff = gdk_pixbuf_loader_get_pixbuf(loader);
+            GdkPixbuf *pix_buff = gdk_pixbuf_loader_get_pixbuf(loader);
 
-            GtkWidget *image_widget = gtk_image_new_from_pixbuf(gui_app_data.pix_buff);
-            vdi_app_selector_set_image_on_btn(gui_app_data.app_btn, image_widget);
+            GtkWidget *image_widget = gtk_image_new_from_pixbuf(pix_buff);
+            vdi_app_selector_set_image_on_btn(app_btn, image_widget);
         }
 
         g_free(icon_binary_data);
@@ -116,9 +124,11 @@ static void vdi_app_selector_add_app(VdiAppSelector *self, VeilAppData app_data)
     }
 }
 
-AppSelectorResult vdi_app_selector_start(VeilVmData *p_vdi_vm_data, GtkWindow *parent)
+AppSelectorResult vdi_app_selector_start(VeilVmData *p_vdi_vm_data, GtkWindow *parent,
+        RemoteApplicationFormat remote_application_format)
 {
     VdiAppSelector *self = calloc(1, sizeof(VdiAppSelector));
+    self->remote_application_format = remote_application_format;
     self->selector_result.result_type = APP_SELECTOR_RESULT_NONE;
     GArray *farm_array = p_vdi_vm_data->farm_array;
 
@@ -154,7 +164,8 @@ AppSelectorResult vdi_app_selector_start(VeilVmData *p_vdi_vm_data, GtkWindow *p
     }
     // add desktop icon
     GtkWidget *desktop_btn = gtk_button_new_with_label("Рабочий стол");
-    vdi_app_selector_setup_icon_btn(self, desktop_btn,  "");
+    VeilAppData app_data = {};
+    vdi_app_selector_setup_icon_btn(self, desktop_btn, app_data);
 
     GtkWidget *image_widget = gtk_image_new_from_resource(
             VIRT_VIEWER_RESOURCE_PREFIX"/icons/content/img/windows_icon.png");

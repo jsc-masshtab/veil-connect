@@ -221,11 +221,12 @@ static void setup_header_for_vdi_session_api_call(SoupMessage *msg)
     g_autofree gchar *jwt_str = NULL;
     jwt_str = atomic_string_get(&vdi_session_static->jwt);
     gchar *auth_header = g_strdup_printf("jwt %s", jwt_str);
-    //g_info("%s %s\n", (const char *)__func__, authHeader);
+    //g_info("%s %s\n", (const char *)__func__, auth_header);
     soup_message_headers_append(msg->request_headers, "Authorization", auth_header);
     g_free(auth_header);
     soup_message_headers_append(msg->request_headers, "Content-Type", "application/json");
     soup_message_headers_append(msg->request_headers, "User-Agent", USER_AGENT);
+    //soup_message_headers_append(msg->request_headers, "Get-Favorite-Only", "Tru");
 }
 
 static guint send_message(SoupMessage *msg, const char *uri_string)

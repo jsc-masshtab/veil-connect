@@ -78,9 +78,10 @@ typedef struct {
     GtkWidget *redirect_printers_check_btn;
     GtkWidget *rdp_redirect_microphone_check_btn;
 
-    GtkWidget *remote_app_check_btn;
-    GtkWidget *remote_app_name_entry;
-    GtkWidget *remote_app_options_entry;
+    //GtkWidget *remote_app_check_btn;
+    //GtkWidget *remote_app_name_entry;
+    //GtkWidget *remote_app_options_entry;
+    GtkWidget *remote_app_format_combobox;
 
     GtkWidget *rdp_sec_protocol_check_btn;
     GtkWidget *sec_type_combobox;

@@ -303,9 +303,9 @@ static void on_vdi_session_get_vdi_pool_data_finished(GObject *source_object G_G
 
 static void go_to_vm(VdiManager *self)
 {
-#if !defined(__MACH__)
+//#if !defined(__MACH__)
     vdi_manager_finish_job(self);
-#endif
+//#endif
     g_signal_emit_by_name(self, "connect-to-vm-requested");
 }
 
@@ -360,18 +360,26 @@ static void on_vdi_session_get_vm_from_pool_finished(GObject *source_object G_GN
         // "Получена вм из пула"
         set_vdi_client_state(self, VDI_RECEIVED_RESPONSE, _("VM received from pool"), FALSE);
 
+        //clear app data
+        self->p_conn_data->rdp_settings.is_remote_app = FALSE;
+        free_memory_safely(&self->p_conn_data->rdp_settings.remote_app_program);
+        free_memory_safely(&self->p_conn_data->rdp_settings.remote_app_options);
+
         // Если существует список приложений и если протокол RDP, то показываем окно выбора приложений
-        rdp_settings_clear(&self->p_conn_data->rdp_settings);
         if (vdi_vm_data->farm_array && vdi_vm_data->farm_array->len > 0 &&
                 (protocol == RDP_PROTOCOL || protocol == RDP_NATIVE_PROTOCOL)) {
 
-            AppSelectorResult selector_res = vdi_app_selector_start(vdi_vm_data, GTK_WINDOW(self->window));
-            self->p_conn_data->rdp_settings = selector_res.rdp_settings;
+            // fill data
+            AppSelectorResult selector_res = vdi_app_selector_start(vdi_vm_data, GTK_WINDOW(self->window),
+                    self->p_conn_data->rdp_settings.remote_application_format);
+            self->p_conn_data->rdp_settings.is_remote_app = selector_res.is_remote_app;
+            self->p_conn_data->rdp_settings.remote_app_program = selector_res.remote_app_program; // take ownership
 
             if (selector_res.result_type != APP_SELECTOR_RESULT_NONE) {
                 go_to_vm(self);
             }
         } else {
+
             go_to_vm(self);
         }
 

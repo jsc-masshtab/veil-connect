@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- Generated with glade 3.22.1 -->
+<!-- Generated with glade 3.22.2 -->
 <interface>
   <requires lib="gtk+" version="3.20"/>
   <object class="GtkAdjustment" id="adjustment1">
@@ -46,7 +46,7 @@
     <property name="modal">True</property>
     <property name="destroy_with_parent">True</property>
     <property name="type_hint">dialog</property>
-    <child>
+    <child type="titlebar">
       <placeholder/>
     </child>
     <child internal-child="vbox">
@@ -727,77 +727,6 @@ GUI data will be ignored</property>
                               </packing>
                             </child>
                             <child>
-                              <object class="GtkCheckButton" id="rdp_network_check_btn">
-                                <property name="label" translatable="yes" comments="Указать сетевое подключение">Specify network connection</property>
-                                <property name="visible">True</property>
-                                <property name="can_focus">True</property>
-                                <property name="receives_default">False</property>
-                                <property name="tooltip_text" translatable="yes" comments="Сервер RDP будет адаптировать настройки и режимы работы  самостоятельно в зависимости от выбранного типа подключения">RDP server will adapt the settings according to the specified connection</property>
-                                <property name="halign">start</property>
-                                <property name="hexpand">True</property>
-                                <property name="draw_indicator">True</property>
-                              </object>
-                              <packing>
-                                <property name="left_attach">0</property>
-                                <property name="top_attach">6</property>
-                              </packing>
-                            </child>
-                            <child>
-                              <object class="GtkComboBoxText" id="rdp_network_type_combobox">
-                                <property name="visible">True</property>
-                                <property name="sensitive">False</property>
-                                <property name="can_focus">False</property>
-                                <property name="active">6</property>
-                                <items>
-                                  <item id="modem" translatable="yes">modem</item>
-                                  <item id="broadband" translatable="yes">broadband</item>
-                                  <item id="broadband-low" translatable="yes">broadband-low</item>
-                                  <item id="broadband-high" translatable="yes">broadband-high</item>
-                                  <item id="wan" translatable="yes">wan</item>
-                                  <item id="lan" translatable="yes">lan</item>
-                                  <item id="auto" translatable="yes">Auto</item>
-                                </items>
-                              </object>
-                              <packing>
-                                <property name="left_attach">1</property>
-                                <property name="top_attach">6</property>
-                              </packing>
-                            </child>
-                            <child>
-                              <object class="GtkCheckButton" id="rdp_sec_protocol_check_btn">
-                                <property name="label" translatable="yes" comments="Указать протокол безопасности">Specify security protocol</property>
-                                <property name="visible">True</property>
-                                <property name="can_focus">True</property>
-                                <property name="receives_default">False</property>
-                                <property name="tooltip_text" translatable="yes" comments="Если не указан, то будет выбран автоматически">Protocol will be selected automatically if not specified</property>
-                                <property name="halign">start</property>
-                                <property name="hexpand">True</property>
-                                <property name="draw_indicator">True</property>
-                              </object>
-                              <packing>
-                                <property name="left_attach">0</property>
-                                <property name="top_attach">5</property>
-                              </packing>
-                            </child>
-                            <child>
-                              <object class="GtkComboBoxText" id="sec_type_combobox">
-                                <property name="visible">True</property>
-                                <property name="sensitive">False</property>
-                                <property name="can_focus">False</property>
-                                <property name="active">0</property>
-                                <items>
-                                  <item id="nla" translatable="yes">NLA</item>
-                                  <item id="rdp" translatable="yes">RDP</item>
-                                  <item id="tls" translatable="yes">TLS</item>
-                                  <item id="ext" translatable="yes">EXT</item>
-                                </items>
-                              </object>
-                              <packing>
-                                <property name="left_attach">1</property>
-                                <property name="top_attach">5</property>
-                              </packing>
-                            </child>
-                            <child>
                               <object class="GtkLabel">
                                 <property name="visible">True</property>
                                 <property name="can_focus">False</property>
@@ -998,48 +927,6 @@ GUI data will be ignored</property>
                               </packing>
                             </child>
                             <child>
-                              <object class="GtkCheckButton" id="remote_app_check_btn">
-                                <property name="label" translatable="yes" comments="Удаленное приложение">Remote application</property>
-                                <property name="name">remote_app_check_btn</property>
-                                <property name="visible">True</property>
-                                <property name="can_focus">True</property>
-                                <property name="receives_default">False</property>
-                                <property name="tooltip_text" translatable="yes" comments="Режим, в котором доступно только одно заданное приложение">Remote application mode</property>
-                                <property name="halign">start</property>
-                                <property name="hexpand">False</property>
-                                <property name="draw_indicator">True</property>
-                              </object>
-                              <packing>
-                                <property name="left_attach">0</property>
-                                <property name="top_attach">7</property>
-                              </packing>
-                            </child>
-                            <child>
-                              <object class="GtkEntry" id="remote_app_name_entry">
-                                <property name="name">remote_app_name_entry</property>
-                                <property name="visible">True</property>
-                                <property name="sensitive">False</property>
-                                <property name="can_focus">True</property>
-                                <property name="placeholder_text" translatable="yes" comments="название">name</property>
-                              </object>
-                              <packing>
-                                <property name="left_attach">1</property>
-                                <property name="top_attach">7</property>
-                              </packing>
-                            </child>
-                            <child>
-                              <object class="GtkEntry" id="remote_app_options_entry">
-                                <property name="visible">True</property>
-                                <property name="sensitive">False</property>
-                                <property name="can_focus">True</property>
-                                <property name="placeholder_text" translatable="yes" comments="параметры">options</property>
-                              </object>
-                              <packing>
-                                <property name="left_attach">1</property>
-                                <property name="top_attach">8</property>
-                              </packing>
-                            </child>
-                            <child>
                               <object class="GtkComboBoxText" id="rdp_codec_combobox">
                                 <property name="visible">True</property>
                                 <property name="sensitive">False</property>
@@ -1151,6 +1038,109 @@ GUI data will be ignored</property>
                                 <property name="left_attach">1</property>
                                 <property name="top_attach">21</property>
                               </packing>
+                            </child>
+                            <child>
+                              <object class="GtkCheckButton" id="rdp_network_check_btn">
+                                <property name="label" translatable="yes" comments="Указать сетевое подключение">Specify network connection</property>
+                                <property name="visible">True</property>
+                                <property name="can_focus">True</property>
+                                <property name="receives_default">False</property>
+                                <property name="tooltip_text" translatable="yes" comments="Сервер RDP будет адаптировать настройки и режимы работы  самостоятельно в зависимости от выбранного типа подключения">RDP server will adapt the settings according to the specified connection</property>
+                                <property name="halign">start</property>
+                                <property name="hexpand">True</property>
+                                <property name="draw_indicator">True</property>
+                              </object>
+                              <packing>
+                                <property name="left_attach">0</property>
+                                <property name="top_attach">7</property>
+                              </packing>
+                            </child>
+                            <child>
+                              <object class="GtkComboBoxText" id="rdp_network_type_combobox">
+                                <property name="visible">True</property>
+                                <property name="sensitive">False</property>
+                                <property name="can_focus">False</property>
+                                <property name="active">6</property>
+                                <items>
+                                  <item id="modem" translatable="yes">modem</item>
+                                  <item id="broadband" translatable="yes">broadband</item>
+                                  <item id="broadband-low" translatable="yes">broadband-low</item>
+                                  <item id="broadband-high" translatable="yes">broadband-high</item>
+                                  <item id="wan" translatable="yes">wan</item>
+                                  <item id="lan" translatable="yes">lan</item>
+                                  <item id="auto" translatable="yes">Auto</item>
+                                </items>
+                              </object>
+                              <packing>
+                                <property name="left_attach">1</property>
+                                <property name="top_attach">7</property>
+                              </packing>
+                            </child>
+                            <child>
+                              <object class="GtkCheckButton" id="rdp_sec_protocol_check_btn">
+                                <property name="label" translatable="yes" comments="Указать протокол безопасности">Specify security protocol</property>
+                                <property name="visible">True</property>
+                                <property name="can_focus">True</property>
+                                <property name="receives_default">False</property>
+                                <property name="tooltip_text" translatable="yes" comments="Если не указан, то будет выбран автоматически">Protocol will be selected automatically if not specified</property>
+                                <property name="halign">start</property>
+                                <property name="hexpand">True</property>
+                                <property name="draw_indicator">True</property>
+                              </object>
+                              <packing>
+                                <property name="left_attach">0</property>
+                                <property name="top_attach">6</property>
+                              </packing>
+                            </child>
+                            <child>
+                              <object class="GtkComboBoxText" id="sec_type_combobox">
+                                <property name="visible">True</property>
+                                <property name="sensitive">False</property>
+                                <property name="can_focus">False</property>
+                                <property name="active">0</property>
+                                <items>
+                                  <item id="nla" translatable="yes">NLA</item>
+                                  <item id="rdp" translatable="yes">RDP</item>
+                                  <item id="tls" translatable="yes">TLS</item>
+                                  <item id="ext" translatable="yes">EXT</item>
+                                </items>
+                              </object>
+                              <packing>
+                                <property name="left_attach">1</property>
+                                <property name="top_attach">6</property>
+                              </packing>
+                            </child>
+                            <child>
+                              <object class="GtkLabel">
+                                <property name="visible">True</property>
+                                <property name="can_focus">False</property>
+                                <property name="halign">end</property>
+                                <property name="margin_right">10</property>
+                                <property name="label" translatable="yes">Remote application format (RDS)</property>
+                              </object>
+                              <packing>
+                                <property name="left_attach">0</property>
+                                <property name="top_attach">5</property>
+                              </packing>
+                            </child>
+                            <child>
+                              <object class="GtkComboBoxText" id="remote_app_format_combobox">
+                                <property name="visible">True</property>
+                                <property name="can_focus">False</property>
+                                <property name="active">0</property>
+                                <items>
+                                  <item id="0" translatable="yes">Application alias</item>
+                                  <item id="1" translatable="yes">|| + Application alias</item>
+                                  <item id="2" translatable="yes">Appliation name</item>
+                                </items>
+                              </object>
+                              <packing>
+                                <property name="left_attach">1</property>
+                                <property name="top_attach">5</property>
+                              </packing>
+                            </child>
+                            <child>
+                              <placeholder/>
                             </child>
                             <child>
                               <placeholder/>

@@ -21,6 +21,12 @@ typedef enum{
 } GlobalAppMode; // Режим работы приложения
 
 typedef enum{
+    REMOTE_APPLICATION_FORMAT_ALIAS,
+    REMOTE_APPLICATION_FORMAT_ALIAS_2,
+    REMOTE_APPLICATION_FORMAT_NAME
+} RemoteApplicationFormat;
+
+typedef enum{
     X2GO_APP_QT_CLIENT,
     X2GO_APP_PYHOCA_CLI
 } X2goApplication;
@@ -61,6 +67,7 @@ typedef struct{
     gboolean is_remote_app;
     gchar *remote_app_program;
     gchar *remote_app_options;
+    RemoteApplicationFormat remote_application_format;
 
     gboolean is_multimon;
     gboolean full_screen;
@@ -168,7 +175,7 @@ void spice_settings_clear(VeilSpiceSettings *spice_settings);
 void rdp_settings_set_connect_data(VeilRdpSettings *rdp_settings, const gchar *user_name, const gchar *password,
                                    const gchar *domain, const gchar *ip, int port);
 
-void rdp_settings_read_ini_file(VeilRdpSettings *rdp_settings, gboolean rewrite_remote_app_settings);
+void rdp_settings_read_ini_file(VeilRdpSettings *rdp_settings);
 void rdp_settings_read_standard_file(VeilRdpSettings *rdp_settings, const gchar *file_name);
 void rdp_settings_write(VeilRdpSettings *rdp_settings);
 
