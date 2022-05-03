@@ -109,14 +109,13 @@ static void set_vdi_client_state(VdiManager *self, VdiClientState vdi_client_sta
         g_autofree gchar *trimmed_msg = NULL;
         trimmed_msg = g_strndup(message, MSG_TRIM_LENGTH);
 
-        if (is_error_message) {
-            gchar *final_message = g_strdup_printf("<span color=\"red\">%s</span>", trimmed_msg);
-            gtk_label_set_markup(GTK_LABEL (self->status_label), final_message);
-            g_free(final_message);
+        if (is_error_message)
+            gtk_widget_set_name(self->status_label, "widget_with_red_text");
+        else
+            gtk_widget_set_name(self->status_label, "status_label");
 
-        } else {
-            gtk_label_set_text(GTK_LABEL(self->status_label), trimmed_msg);
-        }
+        gtk_label_set_text(GTK_LABEL(self->status_label), trimmed_msg);
+
         // tooltip
         gtk_widget_set_tooltip_text(self->status_label, message);
     }

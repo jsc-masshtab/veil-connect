@@ -106,6 +106,10 @@
    background-color: #ffcccc;
 }
 
+#widget_with_red_text {
+   color: red;
+}
+
 #start-setting-buttons {
      border-top: 1px solid #c1bfbf;
      padding-top: 10px;
