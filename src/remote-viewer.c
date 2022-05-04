@@ -318,7 +318,7 @@ connect_to_vm(gpointer data G_GNUC_UNUSED, RemoteViewer *self)
         } else {
             rdp_settings_set_connect_data(&self->conn_data.rdp_settings, self->conn_data.user,
                                           self->conn_data.password, self->conn_data.domain,
-                                          self->conn_data.ip, 0);
+                                          self->conn_data.ip, self->conn_data.port);
         }
         rdp_viewer_start(self->rdp_viewer, &self->conn_data, self->veil_messenger, &self->conn_data.rdp_settings);
 #if  defined(_WIN32) || defined(__MACH__)
