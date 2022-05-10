@@ -112,6 +112,8 @@ list(APPEND SRC_CODE
         src/utility/veil_time.c
         src/utility/veil_network.h
         src/utility/veil_network.c
+        src/utility/gobject_gui.h
+        src/utility/gobject_gui.c
 
 # vdi client
         src/vdi_client/vdi_manager.h
@@ -159,6 +161,12 @@ list(APPEND SRC_CODE
         src/controller_client/controller_session.c
         src/controller_client/controller_manager.h
         src/controller_client/controller_manager.c
+
+#loadplay
+        src/loadplay/loadplay_config.h
+        src/loadplay/loadplay_config.c
+        src/loadplay/loadplay_launcher.h
+        src/loadplay/loadplay_launcher.c
 )
 
 # usb_redirection

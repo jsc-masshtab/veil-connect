@@ -264,6 +264,7 @@ the previous pool</property>
                           <item id="SPICE" translatable="yes">SPICE</item>
                           <item id="RDP" translatable="yes">RDP</item>
                           <item id="X2GO" translatable="yes">X2GO</item>
+                          <item id="LOADPLAY" translatable="yes">LOADPLAY</item>
                         </items>
                       </object>
                       <packing>
@@ -612,6 +613,7 @@ Application restart required to apply changes.</property>
                                 <property name="name">rdp_fps_spin_btn</property>
                                 <property name="visible">True</property>
                                 <property name="can_focus">True</property>
+                                <property name="tooltip_text" translatable="yes">Image update frequency (1-60).</property>
                                 <property name="max_length">2</property>
                                 <property name="width_chars">2</property>
                                 <property name="text" translatable="yes">30</property>
@@ -1507,6 +1509,83 @@ GUI data will be ignored</property>
                   </packing>
                 </child>
                 <child>
+                  <object class="GtkScrolledWindow">
+                    <property name="visible">True</property>
+                    <property name="can_focus">True</property>
+                    <property name="hscrollbar_policy">never</property>
+                    <property name="shadow_type">in</property>
+                    <property name="overlay_scrolling">False</property>
+                    <child>
+                      <object class="GtkViewport" id="loadplay_viewport">
+                        <property name="visible">True</property>
+                        <property name="can_focus">False</property>
+                        <property name="margin_top">3</property>
+                        <child>
+                          <object class="GtkBox" id="loadplay_box">
+                            <property name="visible">True</property>
+                            <property name="can_focus">False</property>
+                            <property name="orientation">vertical</property>
+                            <child>
+                              <object class="GtkBox">
+                                <property name="visible">True</property>
+                                <property name="can_focus">False</property>
+                                <property name="spacing">6</property>
+                                <property name="homogeneous">True</property>
+                                <child>
+                                  <object class="GtkLabel">
+                                    <property name="visible">True</property>
+                                    <property name="can_focus">False</property>
+                                    <property name="halign">end</property>
+                                    <property name="label" translatable="yes">Path to loadplay client</property>
+                                  </object>
+                                  <packing>
+                                    <property name="expand">False</property>
+                                    <property name="fill">True</property>
+                                    <property name="position">0</property>
+                                  </packing>
+                                </child>
+                                <child>
+                                  <object class="GtkEntry" id="loadplay_client_path_entry">
+                                    <property name="visible">True</property>
+                                    <property name="can_focus">True</property>
+                                  </object>
+                                  <packing>
+                                    <property name="expand">False</property>
+                                    <property name="fill">True</property>
+                                    <property name="position">1</property>
+                                  </packing>
+                                </child>
+                              </object>
+                              <packing>
+                                <property name="expand">False</property>
+                                <property name="fill">True</property>
+                                <property name="position">0</property>
+                              </packing>
+                            </child>
+                            <child>
+                              <placeholder/>
+                            </child>
+                          </object>
+                        </child>
+                      </object>
+                    </child>
+                  </object>
+                  <packing>
+                    <property name="position">4</property>
+                  </packing>
+                </child>
+                <child type="tab">
+                  <object class="GtkLabel">
+                    <property name="visible">True</property>
+                    <property name="can_focus">False</property>
+                    <property name="label" translatable="yes">LOADPLAY</property>
+                  </object>
+                  <packing>
+                    <property name="position">4</property>
+                    <property name="tab_fill">False</property>
+                  </packing>
+                </child>
+                <child>
                   <object class="GtkGrid">
                     <property name="visible">True</property>
                     <property name="can_focus">False</property>
@@ -1707,7 +1786,7 @@ GUI data will be ignored</property>
                     </child>
                   </object>
                   <packing>
-                    <property name="position">4</property>
+                    <property name="position">5</property>
                   </packing>
                 </child>
                 <child type="tab">
@@ -1717,7 +1796,7 @@ GUI data will be ignored</property>
                     <property name="label" translatable="yes" comments="Служебные">Service</property>
                   </object>
                   <packing>
-                    <property name="position">4</property>
+                    <property name="position">5</property>
                     <property name="tab_fill">False</property>
                   </packing>
                 </child>

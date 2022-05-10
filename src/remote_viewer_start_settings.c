@@ -658,6 +658,16 @@ fill_gui(ConnectSettingsDialog *dialog_data)
 
     gtk_combo_box_set_active_id(GTK_COMBO_BOX(dialog_data->x2go_compress_method_combobox),
                                 p_conn_data->x2Go_settings.compress_method);
+
+    // Loadplay
+    gtk_entry_set_text(GTK_ENTRY(dialog_data->loadplay_client_path_entry),
+                       p_conn_data->loadplay_config->loadplay_client_path);
+
+    if (dialog_data->loadplay_config_gui)
+        gtk_widget_destroy(dialog_data->loadplay_config_gui);
+    dialog_data->loadplay_config_gui = gobject_gui_generate_gui(G_OBJECT(p_conn_data->loadplay_config));
+    gtk_box_pack_end(GTK_BOX(dialog_data->loadplay_box), dialog_data->loadplay_config_gui, TRUE, TRUE, 6);
+    gtk_widget_show_all(dialog_data->loadplay_config_gui);
 }
 
 static void
@@ -825,6 +835,12 @@ take_from_gui(ConnectSettingsDialog *dialog_data)
     const gchar *x2go_compress_method = gtk_combo_box_get_active_id(
             GTK_COMBO_BOX(dialog_data->x2go_compress_method_combobox));
     update_string_safely(&conn_data->x2Go_settings.compress_method, x2go_compress_method);
+
+    // Loadplay
+    gobject_gui_fill_gobject_from_gui(G_OBJECT(conn_data->loadplay_config), dialog_data->loadplay_config_gui);
+    const gchar *loadplay_client_path = gtk_entry_get_text(
+            GTK_ENTRY(dialog_data->loadplay_client_path_entry));
+    update_string_safely(&conn_data->loadplay_config->loadplay_client_path, loadplay_client_path);
 }
 
 static void
@@ -964,6 +980,10 @@ GtkResponseType remote_viewer_start_settings_dialog(ConnectSettingsDialog *self,
     //GtkTreeModel *list_store = gtk_combo_box_get_model(GTK_COMBO_BOX(self->x2go_compress_method_combobox));
     //gboolean valid = gtk_tree_model_get_iter_first (list_store, &iter);
 
+    // Loadplay
+    self->loadplay_client_path_entry = get_widget_from_builder(self->builder, "loadplay_client_path_entry");
+    self->loadplay_box = get_widget_from_builder(self->builder, "loadplay_box");
+
     // Service functions
     self->btn_archive_logs = get_widget_from_builder(self->builder, "btn_archive_logs");
     self->log_location_label = get_widget_from_builder(self->builder, "log_location_label");
@@ -1063,6 +1083,7 @@ GtkResponseType remote_viewer_start_settings_dialog(ConnectSettingsDialog *self,
     usb_selector_widget_free(self->usb_selector_widget);
     g_object_unref(self->builder);
     gtk_widget_destroy(self->window);
+    self->loadplay_config_gui = NULL;
 
     return self->dialog_window_response;
 }

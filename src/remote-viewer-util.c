@@ -1289,6 +1289,8 @@ VmRemoteProtocol util_str_to_remote_protocol(const gchar *protocol_str)
         protocol = RDP_NATIVE_PROTOCOL;
     else if (g_strcmp0("X2GO", protocol_str) == 0)
         protocol = X2GO_PROTOCOL;
+    else if (g_strcmp0("LOADPLAY", protocol_str) == 0)
+        protocol = LOADPLAY_PROTOCOL;
 
     return protocol;
 }
@@ -1306,6 +1308,8 @@ const gchar *util_remote_protocol_to_str(VmRemoteProtocol protocol)
             return "NATIVE_RDP";
         case X2GO_PROTOCOL:
             return "X2GO";
+        case LOADPLAY_PROTOCOL:
+            return "LOADPLAY";
         case ANOTHER_REMOTE_PROTOCOL:
         default:
             return "UNKNOWN_PROTOCOL";
@@ -1314,7 +1318,7 @@ const gchar *util_remote_protocol_to_str(VmRemoteProtocol protocol)
 
 gchar *util_get_hostname()
 {
-    size_t buffer_size = 128;
+    const size_t buffer_size = 128;
     gchar *hostname = g_strnfill(buffer_size, '\0');
     gethostname(hostname, (int)buffer_size - 1);
 
@@ -1323,6 +1327,82 @@ gchar *util_get_hostname()
     hostname = utf8;
 
     return hostname;
+}
+
+void util_install_int_property(GObjectClass *oclass, guint property_id, const char *name,
+                               gint	minimum, gint maximum, gint	default_value)
+{
+    g_object_class_install_property(oclass, property_id,
+                                    g_param_spec_int(name,
+                                                     name,
+                                                     name,
+                                                     minimum,
+                                                     maximum,
+                                                     default_value,
+                                                     G_PARAM_STATIC_STRINGS |
+                                                     G_PARAM_READWRITE |
+                                                     G_PARAM_CONSTRUCT));
+}
+
+void util_install_bool_property(GObjectClass *oclass, guint property_id, const char *name,
+                                gboolean default_value)
+{
+    g_object_class_install_property(oclass,
+                                    property_id,
+                                    g_param_spec_boolean(name,
+                                                         name,
+                                                         name,
+                                                         default_value,
+                                                         G_PARAM_STATIC_STRINGS |
+                                                         G_PARAM_READWRITE |
+                                                         G_PARAM_CONSTRUCT));
+}
+
+void util_install_string_property(GObjectClass *oclass, guint property_id, const char *name,
+                                  const gchar *default_value)
+{
+    g_object_class_install_property(G_OBJECT_CLASS(oclass), property_id,
+                                    g_param_spec_string(name,
+                                                        name,
+                                                        name,
+                                                        default_value,
+                                                        G_PARAM_STATIC_STRINGS |
+                                                        G_PARAM_READWRITE |
+                                                        G_PARAM_CONSTRUCT));
+}
+
+GtkWidget *util_find_child(GtkWidget* widget, const gchar* name)
+{
+    if (!widget || !name)
+        return NULL;
+
+    const gchar *widget_name = gtk_widget_get_name(widget);
+    if (!widget_name)
+        return NULL;
+
+    if (g_strcasecmp(widget_name, name) == 0) {
+        return widget;
+    }
+
+    if (GTK_IS_BIN(widget)) {
+        GtkWidget *child = gtk_bin_get_child(GTK_BIN(widget));
+        return util_find_child(child, name);
+    }
+
+    if (GTK_IS_CONTAINER(widget)) {
+        GList *children = gtk_container_get_children(GTK_CONTAINER(widget));
+
+        while (children) {
+            GtkWidget* child_widget = util_find_child(children->data, name);
+            if (child_widget) {
+                return child_widget;
+            }
+
+            children = g_list_next(children);
+        }
+    }
+
+    return NULL;
 }
 
 void terminate_process(GPid pid)

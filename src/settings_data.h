@@ -13,6 +13,7 @@
 
 #include "vdi_session.h"
 #include "remote-viewer-util.h"
+#include "loadplay/loadplay_config.h"
 
 typedef enum{
     GLOBAL_APP_MODE_VDI, // Режим подключения к VDI
@@ -147,6 +148,9 @@ typedef struct{
     // X2Go
     VeilX2GoSettings x2Go_settings;
 
+    // Loadplay
+    LoadPlayConfig *loadplay_config;
+
     // Sevice settings
     GlobalAppMode global_app_mode;
     gchar *windows_updates_url;
@@ -178,12 +182,16 @@ void rdp_settings_set_connect_data(VeilRdpSettings *rdp_settings, const gchar *u
 void rdp_settings_read_ini_file(VeilRdpSettings *rdp_settings);
 void rdp_settings_read_standard_file(VeilRdpSettings *rdp_settings, const gchar *file_name);
 void rdp_settings_write(VeilRdpSettings *rdp_settings);
-
 void rdp_settings_clear(VeilRdpSettings *rdp_settings);
 
 // X2Go
 void x2go_settings_read(VeilX2GoSettings *x2go_settings);
 void x2go_settings_write(VeilX2GoSettings *x2go_settings);
 void x2go_settings_clear(VeilX2GoSettings *x2go_settings);
+
+// Loadplay
+void loadplay_settings_read(LoadPlayConfig **p_loadplay_config);
+void loadplay_settings_write(LoadPlayConfig *loadplay_config);
+void loadplay_settings_clear(LoadPlayConfig **p_loadplay_config);
 
 #endif //VEIL_CONNECT_SETTINGS_DATA_H

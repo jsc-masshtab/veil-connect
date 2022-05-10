@@ -414,8 +414,10 @@ app_updater_check_windows_updates_task(GTask    *task G_GNUC_UNUSED,
     g_info("%s", (const char *)__func__);
 
     AppUpdater *self = (AppUpdater *)task_data;
-    if (self->_is_checking_updates)
+    if (self->_is_checking_updates) {
+        g_task_return_boolean(task, FALSE);
         return;
+    }
     self->_is_checking_updates = TRUE;
 
     gchar *last_version = NULL;
