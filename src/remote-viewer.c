@@ -331,7 +331,7 @@ connect_to_vm(gpointer data G_GNUC_UNUSED, RemoteViewer *self)
         } else if (protocol == RDP_NATIVE_PROTOCOL) {
                 rdp_settings_set_connect_data(&self->conn_data.rdp_settings, self->conn_data.user,
                                               self->conn_data.password, self->conn_data.domain,
-                                              self->conn_data.ip, 0);
+                                              self->conn_data.ip, self->conn_data.port);
                 native_rdp_launcher_start(self->native_rdp_launcher, NULL, &self->conn_data.rdp_settings);
 #endif
     } else if (protocol == X2GO_PROTOCOL) {

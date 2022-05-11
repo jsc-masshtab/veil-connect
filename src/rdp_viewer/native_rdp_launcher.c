@@ -211,7 +211,9 @@ native_rdp_launcher_start(NativeRdpLauncher *self, GtkWindow *parent, const Veil
     copy_file_content(sourceFile, destFile);
 
     // append unique data
-    append_rdp_data(destFile, "full address:s", p_rdp_settings->ip);
+    g_autofree gchar *full_address = NULL;
+    full_address = g_strdup_printf("%s:%i", p_rdp_settings->ip, p_rdp_settings->port);
+    append_rdp_data(destFile, "full address:s", full_address);
     append_rdp_data(destFile, "username:s", p_rdp_settings->user_name);
     append_rdp_data(destFile, "domain:s", p_rdp_settings->domain);
 
