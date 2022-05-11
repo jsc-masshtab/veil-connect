@@ -14,9 +14,13 @@
 
 #include <spice-client-gtk.h>
 
-#include "jsonhandler.h"
-
 extern gboolean doDebug;
+
+typedef enum{
+    SERVER_REPLY_TYPE_DATA,
+    SERVER_REPLY_TYPE_ERROR,
+    SERVER_REPLY_TYPE_UNKNOWN
+} ServerReplyType;
 
 // remote protocol type
 typedef enum{
@@ -25,6 +29,7 @@ typedef enum{
     RDP_PROTOCOL,
     RDP_NATIVE_PROTOCOL,
     X2GO_PROTOCOL,
+    LOADPLAY_PROTOCOL,
     ANOTHER_REMOTE_PROTOCOL
 } VmRemoteProtocol;
 
@@ -241,6 +246,15 @@ VmRemoteProtocol util_str_to_remote_protocol(const gchar *protocol_str);
 const gchar *util_remote_protocol_to_str(VmRemoteProtocol protocol);
 
 gchar *util_get_hostname(void);
+
+void util_install_int_property(GObjectClass *oclass, guint property_id, const char *name,
+                               gint	minimum, gint	maximum, gint	default_value);
+void util_install_bool_property(GObjectClass *oclass, guint property_id, const char *name,
+                                gboolean default_value);
+void util_install_string_property(GObjectClass *oclass, guint property_id, const char *name,
+                                  const gchar *default_value);
+
+GtkWidget *util_find_child(GtkWidget* parent, const gchar* name);
 
 void terminate_process(GPid pid);
 #endif

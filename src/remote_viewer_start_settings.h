@@ -29,8 +29,8 @@
 #include "controller_client/controller_session.h"
 #include "settings_data.h"
 #include "app_updater.h"
+#include "utility/gobject_gui.h"
 
-//#include "remote-viewer.h"
 
 typedef struct {
 
@@ -117,6 +117,11 @@ typedef struct {
     GtkWidget *x2go_full_screen_check_btn;
 
     GtkWidget *x2go_compress_method_combobox;
+
+    // Loadplay
+    GtkWidget *loadplay_client_path_entry;
+    GtkWidget *loadplay_box;
+    GObjectGui *loadplay_config_gui;
 
     // Service
     GtkWidget *btn_archive_logs;

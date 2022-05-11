@@ -183,14 +183,15 @@ native_rdp_launcher_start(NativeRdpLauncher *self, GtkWindow *parent, const Veil
     }
 
     const gchar *app_data_dir = g_get_user_config_dir();
-    gchar *app_rdp_data_dir = g_build_filename(app_data_dir,
-                                               APP_FILES_DIRECTORY_NAME, "rdp_data", NULL);
+    g_autofree gchar *app_rdp_data_dir = NULL;
+    app_rdp_data_dir = g_build_filename(app_data_dir, APP_FILES_DIRECTORY_NAME, "rdp_data", NULL);
     g_mkdir_with_parents(app_rdp_data_dir, 0755);
 
     g_autofree gchar *rdp_data_file_name = NULL;
-    rdp_data_file_name = g_strdup_printf("%s/rdp_file.rdp", app_rdp_data_dir);
-    g_free(app_rdp_data_dir);
+    rdp_data_file_name = g_build_filename(app_rdp_data_dir, "rdp_file.rdp", NULL);
 
+    g_autofree gchar *rdp_data_file_name_utf8 = NULL;
+    rdp_data_file_name_utf8 = g_strdup(rdp_data_file_name);
     convert_string_from_utf8_to_locale(&rdp_data_file_name);
     destFile = fopen(rdp_data_file_name, "w");
 
@@ -210,7 +211,9 @@ native_rdp_launcher_start(NativeRdpLauncher *self, GtkWindow *parent, const Veil
     copy_file_content(sourceFile, destFile);
 
     // append unique data
-    append_rdp_data(destFile, "full address:s", p_rdp_settings->ip);
+    g_autofree gchar *full_address = NULL;
+    full_address = g_strdup_printf("%s:%i", p_rdp_settings->ip, p_rdp_settings->port);
+    append_rdp_data(destFile, "full address:s", full_address);
     append_rdp_data(destFile, "username:s", p_rdp_settings->user_name);
     append_rdp_data(destFile, "domain:s", p_rdp_settings->domain);
 
@@ -250,10 +253,10 @@ native_rdp_launcher_start(NativeRdpLauncher *self, GtkWindow *parent, const Veil
 
 #if  defined(_WIN32)
     argv[index] = g_strdup("mstsc");
-    argv[++index] = g_strdup(rdp_data_file_name);
+    argv[++index] = g_strdup(rdp_data_file_name_utf8);
 #elif defined(__MACH__)
     argv[index] = g_strdup("open");
-    argv[++index] = g_strdup(rdp_data_file_name);
+    argv[++index] = g_strdup(rdp_data_file_name_utf8);
     //argv[++index] = g_strdup("--wait-apps");
 #endif
 

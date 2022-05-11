@@ -11,11 +11,8 @@
 
 #include <json-glib/json-glib.h>
 
-typedef enum{
-    SERVER_REPLY_TYPE_DATA,
-    SERVER_REPLY_TYPE_ERROR,
-    SERVER_REPLY_TYPE_UNKNOWN
-} ServerReplyType;
+#include "remote-viewer-util.h"
+
 
 JsonObject *get_root_json_object(JsonParser *parser, const gchar *data);
 //JsonArray *get_json_array(JsonParser *parser, const gchar *data);
@@ -37,5 +34,12 @@ JsonObject *json_get_data_or_errors_object_ecp(JsonParser *parser, const gchar *
 //gchar *string_to_json_value(const gchar *string);
 
 gchar *json_generate_from_builder(JsonBuilder *builder);
+
+JsonObject *json_handler_gobject_dump(GObject *gobject);
+JsonNode *json_handler_gobject_serialize(GObject *gobject);
+gchar *json_handler_gobject_to_data(GObject *gobject, gsize *length);
+
+GObject *json_handler_gobject_from_file(const gchar *file_name, GType gtype);
+void json_handler_gobject_to_file(const gchar *file_name, GObject *g_object);
 
 #endif //THIN_CLIENT_VEIL_JSONHANDLER_H

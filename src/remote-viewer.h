@@ -22,6 +22,7 @@
 #if defined(_WIN32) || defined(__MACH__)
 #include "native_rdp_launcher.h"
 #endif
+#include "loadplay/loadplay_launcher.h"
 
 G_BEGIN_DECLS
 
@@ -49,6 +50,8 @@ typedef struct {
 #if defined(_WIN32) || defined(__MACH__)
     NativeRdpLauncher *native_rdp_launcher;
 #endif
+    LoadplayLauncher *loadplay_launcher;
+
     AppUpdater *app_updater;
     VeilMessenger *veil_messenger;
 
