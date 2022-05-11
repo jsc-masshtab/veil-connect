@@ -7,6 +7,7 @@
  */
 
 #include "loadplay_launcher.h"
+#include "vdi_event.h"
 
 G_DEFINE_TYPE( LoadplayLauncher, loadplay_launcher, G_TYPE_OBJECT )
 
@@ -43,8 +44,9 @@ static void loadplay_launcher_cb_child_watch(GPid pid, gint status, LoadplayLaun
     g_info("FINISHED. %s Status: %i", __func__, status);
     g_spawn_close_pid(pid);
 
+    vdi_event_vm_changed_notify(vdi_session_get_current_vm_id(), VDI_EVENT_TYPE_VM_DISCONNECTED);
+
 #if defined(_WIN32)
-    //vdi_event_vm_changed_notify(vdi_session_get_current_vm_id(), VDI_EVENT_TYPE_VM_DISCONNECTED);
     self->pid = NULL;
 #else
     self->pid = 0;
@@ -67,6 +69,12 @@ void loadplay_launcher_start(LoadplayLauncher *self, GtkWindow *parent, ConnectS
         g_signal_emit_by_name(self, "job-finished");
         return;
     }
+
+    // write current url to config file
+    g_autofree gchar *url = NULL;
+    url = g_strdup_printf("rtsp://%s:%i/desktop", conn_data->ip, conn_data->port);
+    g_object_set(conn_data->loadplay_config, "server-url", url, NULL);
+    loadplay_settings_write(conn_data->loadplay_config);
 
     self->parent_widget = parent;
 
@@ -110,11 +118,10 @@ void loadplay_launcher_start(LoadplayLauncher *self, GtkWindow *parent, ConnectS
         return;
     }
 
-    //vdi_event_vm_changed_notify(vdi_session_get_current_vm_id(), VDI_EVENT_TYPE_VM_CONNECTED);
-
-
     // stop process callback
     g_child_watch_add(self->pid, (GChildWatchFunc)loadplay_launcher_cb_child_watch, self);
+
+    vdi_event_vm_changed_notify(vdi_session_get_current_vm_id(), VDI_EVENT_TYPE_VM_CONNECTED);
 }
 
 void loadplay_launcher_stop(LoadplayLauncher *self)

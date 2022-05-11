@@ -382,7 +382,9 @@ static void* rdp_viewer_job_routine(RdpViewer *self)
         }
 
         g_info("Before freerdp_disconnect");
+        ex_contect->is_disconnecting = TRUE;
         BOOL diss_res = freerdp_disconnect(instance);
+        ex_contect->is_disconnecting = FALSE;
         g_info("After freerdp_disconnect res: %i", diss_res);
     }
     end:
@@ -564,8 +566,9 @@ void rdp_viewer_stop(RdpViewer *rdp_viewer, const gchar *signal_upon_job_finish,
         rdp_viewer_window_send_key_shortcut(context, 14); // 14 - index in keyCombos
     }
 
-    // Условие  из-за проблемы невозможности отмены стадии коннекта во freerdp (функция freerdp_connect)
-    if (!ex_rdp_context->is_connecting) {
+    // Условие из-за проблемы невозможности отмены стадий коннекта и дисконнекта во freerdp
+    // (функции freerdp_connect и freerdp_disconnect могут виснуть на неопределенное время)
+    if (!ex_rdp_context->is_connecting && !ex_rdp_context->is_disconnecting) {
         rdp_client_abort_connection(ex_rdp_context->context.instance);
     } else if (exit_if_cant_abort) { // Завершаем приложения форсировано
         g_warning("%s: Forced exit", (const char *)__func__);
