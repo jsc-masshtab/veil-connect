@@ -29,28 +29,33 @@ typedef struct{
     GtkWidget *vm_spinner;
 
     GtkWidget *image_widget;
+    GtkWidget* favorite_mark_image;
 
     GtkWidget *combobox_remote_protocol;
     GtkWidget *vm_start_button;
-    //GtkWidget *vm_progress_bar;
 
     gulong btn_click_sig_hadle;
     gboolean is_valid;
 
+    gchar *pool_id;
+    gboolean is_favorite;
+
+    void *vdi_manager;
+
 } VdiPoolWidget;
 
 // build vm widget and insert it in gtk_flow_box
-VdiPoolWidget build_pool_widget(const gchar *pool_id, const gchar *pool_name,
+VdiPoolWidget* build_pool_widget(const gchar *pool_id, const gchar *pool_name,
         const gchar *os_type, const gchar *status, JsonArray *conn_types_json_array, GtkWidget *gtk_flow_box);
 
 // get current remote protocol
 VmRemoteProtocol vdi_pool_widget_get_current_protocol(VdiPoolWidget *vdi_pool_widget);
 
 // start / stop spinner
-void vdi_pool_widget_enable_spinner(VdiPoolWidget *vdi_pool_widget, gboolean enable);
+void vdi_pool_widget_enable_spinner(VdiPoolWidget *vdi_pool_widget, gboolean enabled);
 
-// Vm preparation progress
-//void vdi_pool_widget_set_progress(VdiPoolWidget *vdi_pool_widget, gdouble fraction);
+// Set favorite
+void vdi_pool_widget_set_favorite(VdiPoolWidget *vdi_pool_widget, gboolean favorite);
 
 // destroy widget
 void destroy_vdi_pool_widget(VdiPoolWidget *vdi_pool_widget);

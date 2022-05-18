@@ -215,7 +215,7 @@ static void free_session_memory()
     vdi_session_reset_current_data();
 }
 
-static void setup_header_for_vdi_session_api_call(SoupMessage *msg)
+static void setup_header_for_vdi_session_api_call(SoupMessage *msg, GHashTable *request_headers)
 {
     soup_message_headers_clear(msg->request_headers);
     g_autofree gchar *jwt_str = NULL;
@@ -226,7 +226,17 @@ static void setup_header_for_vdi_session_api_call(SoupMessage *msg)
     g_free(auth_header);
     soup_message_headers_append(msg->request_headers, "Content-Type", "application/json");
     soup_message_headers_append(msg->request_headers, "User-Agent", USER_AGENT);
-    //soup_message_headers_append(msg->request_headers, "Get-Favorite-Only", "Tru");
+
+    // Additional headers
+    if (request_headers) {
+        GHashTableIter iter;
+        gpointer key, value;
+
+        g_hash_table_iter_init(&iter, request_headers);
+        while (g_hash_table_iter_next(&iter, &key, &value)) {
+            soup_message_headers_append(msg->request_headers, (const char *)key, (const char *)value);
+        }
+    }
 }
 
 static guint send_message(SoupMessage *msg, const char *uri_string)
@@ -348,7 +358,7 @@ static void vdi_session_request_version()
 
     gchar *url_str = g_strdup_printf("%s/version", vdi_session_static->api_url);
     g_autofree gchar *response_body_str = NULL;
-    response_body_str = vdi_session_api_call("GET", url_str, NULL, NULL);
+    response_body_str = vdi_session_api_call("GET", url_str, NULL, NULL, NULL);
     g_free(url_str);
 
     // Parse
@@ -620,7 +630,8 @@ const gchar *vdi_session_get_login_time(void)
     return get_vdi_session_static()->login_time;
 }
 
-gchar *vdi_session_api_call(const char *method, const char *uri_string, const gchar *body_str, int *resp_code)
+gchar *vdi_session_api_call(const char *method, const char *uri_string, const gchar *body_str,
+        GHashTable *request_headers, int *resp_code)
 {
     gchar *response_body_str = NULL;
 
@@ -642,7 +653,7 @@ gchar *vdi_session_api_call(const char *method, const char *uri_string, const gc
     if (msg == NULL) // this may happen according to doc
         return response_body_str;
     // set header
-    setup_header_for_vdi_session_api_call(msg);
+    setup_header_for_vdi_session_api_call(msg, request_headers);
     // set body
     if(body_str)
         soup_message_set_request(msg, "application/json", SOUP_MEMORY_COPY, body_str, strlen_safely(body_str));
@@ -684,13 +695,21 @@ void vdi_session_log_in_task(GTask       *task,
 
 void vdi_session_get_vdi_pool_data_task(GTask   *task,
                  gpointer       source_object G_GNUC_UNUSED,
-                 gpointer       task_data G_GNUC_UNUSED,
+                 gpointer       task_data,
                  GCancellable  *cancellable G_GNUC_UNUSED)
 {
     //g_info("In %s :thread id = %lu\n", (const char *)__func__, pthread_self());
     gchar *url_str = g_strdup_printf("%s/client/pools", vdi_session_static->api_url);
-    gchar *response_body_str = vdi_session_api_call("GET", url_str, NULL, NULL);
+
+    PoolsRequestTaskData *pools_request_task_data = (PoolsRequestTaskData *)task_data;
+
+    GHashTable *request_headers = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, g_free);
+    g_hash_table_insert(request_headers, g_strdup("Get-Favorite-Only"),
+                        g_strdup(pools_request_task_data->get_favorite_only ? "true" : "false"));
+
+    gchar *response_body_str = vdi_session_api_call("GET", url_str, NULL, request_headers, NULL);
     g_free(url_str);
+    g_hash_table_destroy(request_headers);
 
     g_task_return_pointer(task, response_body_str, NULL); // return pointer must be freed
 }
@@ -747,7 +766,7 @@ void vdi_session_get_vm_from_pool_task(GTask       *task,
     int vm_await_timeout = read_int_from_ini_file("ServiceSettings", "vm_await_timeout", 65);
     g_object_set(vdi_session_static->soup_session, "timeout", CLAMP(vm_await_timeout, 1, 300), NULL);
     // Запрос
-    gchar *response_body_str = vdi_session_api_call("POST", url_str, body_str, NULL);
+    gchar *response_body_str = vdi_session_api_call("POST", url_str, body_str, NULL, NULL);
     g_object_set(vdi_session_static->soup_session, "timeout", HTTP_RESPONSE_TIOMEOUT, NULL);
 
     g_free(url_str);
@@ -874,7 +893,7 @@ void vdi_session_do_action_on_vm_task(GTask      *task,
     else
         bodyStr = g_strdup_printf("{\"force\":false}");
 
-    gchar *response_body_str = vdi_session_api_call("POST", url_str, bodyStr, NULL);
+    gchar *response_body_str = vdi_session_api_call("POST", url_str, bodyStr, NULL, NULL);
 
     // free url and body
     free_memory_safely(&url_str);
@@ -1069,7 +1088,7 @@ void vdi_session_send_text_msg_task(GTask *task G_GNUC_UNUSED,
     g_info("%s: body_str: %s", (const char *)__func__, body_str);
 
     // Send
-    gchar *response_body_str = vdi_session_api_call("POST", url_str, body_str, NULL);
+    gchar *response_body_str = vdi_session_api_call("POST", url_str, body_str, NULL, NULL);
 
     // Parse reply
     text_message_data->is_successfully_sent = FALSE;
@@ -1103,7 +1122,7 @@ void vdi_session_get_user_data_task(GTask *task,
     g_autofree gchar *url_str = NULL;
     url_str = g_strdup_printf("%s/client/get_user_data", vdi_session_static->api_url);
     g_autofree gchar *response_body_str = NULL;
-    response_body_str = vdi_session_api_call("GET", url_str, NULL, NULL);
+    response_body_str = vdi_session_api_call("GET", url_str, NULL, NULL, NULL);
 
     // parse response
     JsonParser *parser = json_parser_new();
@@ -1145,7 +1164,7 @@ void vdi_session_update_user_data_task(GTask *task,
     g_autofree gchar *url_str = NULL;
     url_str = g_strdup_printf("%s/client/update_user_data", vdi_session_static->api_url);
     g_autofree gchar *response_body_str = NULL;
-    response_body_str = vdi_session_api_call("POST", url_str, request_body_str, NULL);
+    response_body_str = vdi_session_api_call("POST", url_str, request_body_str, NULL, NULL);
 
     // Parse response
     JsonParser *parser = json_parser_new();
@@ -1174,7 +1193,7 @@ void vdi_session_generate_qr_code_task(GTask *task,
     g_autofree gchar *url_str = NULL;
     url_str = g_strdup_printf("%s/client/generate_user_qr_code", vdi_session_static->api_url);
     g_autofree gchar *response_body_str;
-    response_body_str = vdi_session_api_call("POST", url_str, NULL, NULL);
+    response_body_str = vdi_session_api_call("POST", url_str, NULL, NULL, NULL);
 
     // parse response
     JsonParser *parser = json_parser_new();
@@ -1207,7 +1226,7 @@ void vdi_session_get_vm_data_task(GTask *task,
 
     // Request
     g_autofree gchar *response_body_str = NULL;
-    response_body_str = vdi_session_api_call("GET", url_str, NULL, NULL);
+    response_body_str = vdi_session_api_call("GET", url_str, NULL, NULL, NULL);
 
     // Parse response (На данный момент нужны только данные для подключения по спайс)
     JsonParser *parser = json_parser_new();
@@ -1234,6 +1253,30 @@ void vdi_session_get_vm_data_task(GTask *task,
     g_task_return_pointer(task, vdi_vm_data, NULL);
 }
 
+void vdi_session_set_pool_favorite_task(GTask *task G_GNUC_UNUSED,
+                                   gpointer source_object G_GNUC_UNUSED,
+                                   gpointer task_data,
+                                   GCancellable *cancellable G_GNUC_UNUSED)
+{
+    FavoritePoolTaskData *favorite_pool_task_data = (FavoritePoolTaskData *)task_data;
+    g_info("TEST: %s", favorite_pool_task_data->pool_id);
+
+    // url
+    g_autofree gchar *url_str = NULL;
+    if (favorite_pool_task_data->is_favorite)
+        url_str = g_strdup_printf("%s/client/pools/%s/add-pool-to-favorite",
+                vdi_session_static->api_url, favorite_pool_task_data->pool_id);
+    else
+        url_str = g_strdup_printf("%s/client/pools/%s/remove-pool-from-favorite",
+                vdi_session_static->api_url, favorite_pool_task_data->pool_id);
+
+    gchar *response_body_str = vdi_session_api_call("POST", url_str, NULL, NULL, NULL);
+    g_free(response_body_str);
+
+    vdi_api_session_free_favorite_pool_task_data(favorite_pool_task_data);
+}
+
+
 gboolean vdi_session_logout(void)
 {
     // stop websocket connection
@@ -1256,7 +1299,7 @@ gboolean vdi_session_logout(void)
 
         } else {
             // set header
-            setup_header_for_vdi_session_api_call(msg);
+            setup_header_for_vdi_session_api_call(msg, NULL);
             // send
             g_object_set(vdi_session_static->soup_session, "timeout", 1, NULL);
             send_message(msg, url_str);
@@ -1369,7 +1412,7 @@ gchar *vdi_session_attach_usb(AttachUsbData *attach_usb_data)
     g_info("%s send body_str: %s", (const char *)__func__, body_str);
 
     // request
-    gchar *response_body_str = vdi_session_api_call("POST", url_str, body_str, NULL);
+    gchar *response_body_str = vdi_session_api_call("POST", url_str, body_str, NULL, NULL);
     g_info("%s response_body_str: %s", (const char *)__func__, response_body_str);
 
     // parse
@@ -1438,7 +1481,7 @@ gboolean vdi_session_detach_usb(DetachUsbData *detach_usb_data)
 
     // request
     int resp_code;
-    gchar *response_body_str = vdi_session_api_call("POST", url_str, body_str, &resp_code);
+    gchar *response_body_str = vdi_session_api_call("POST", url_str, body_str, NULL, &resp_code);
     g_info("%s: response_body_str: %s", (const char*)__func__, response_body_str);
     if (resp_code == OK_RESPONSE || resp_code == ACCEPT_RESPONSE)
         status = TRUE;
@@ -1515,4 +1558,10 @@ void vdi_api_session_free_login_data(LoginData *login_data)
     free_memory_safely(&login_data->reply_msg);
     free_memory_safely(&login_data->domain);
     free(login_data);
+}
+
+void vdi_api_session_free_favorite_pool_task_data(FavoritePoolTaskData *data)
+{
+    g_free(data->pool_id);
+    free(data);
 }

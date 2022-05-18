@@ -128,7 +128,7 @@
      transition: all 500ms;
 }
 
-#main-window-box, main_box{
+#main-window-box{
      background: white;
      font-family: Arial, Helvetica, sans-serif;
 }
@@ -137,6 +137,7 @@
      background-color: white;
 }
 
+#btn_show_only_favorites,
 #btn_open_user_settings,
 #button-renew,
 #button-quit,
@@ -178,6 +179,7 @@
 
 }
 
+#btn_show_only_favorites:focus,
 #connect-button:focus,
 #btn_cancel:focus, 
 #btn_ok:focus,
@@ -200,6 +202,7 @@
      border: 1px solid white;
 }
 
+#btn_show_only_favorites:hover,
 #btn_open_user_settings:hover,
 #button-renew:hover,
 #button-quit:hover,
@@ -210,8 +213,14 @@
      border: 1px solid #3f606b;
 }
 
-#vdi_pool_widget_box {
-     margin: 3px 0px;
+#btn_show_only_favorites:checked {
+     background: lightblue;
+}
+
+#vdi_pool_widget {
+     background: white;
+     border-radius: 10px;
+     border: 3px solid lightsteelblue;
 }
 
 #vdi_pool_widget_button {
@@ -222,8 +231,9 @@
 
 #vdi_pool_widget_image {
      background: white;
-     border: 0px;
-     padding: 20px 10px;
+     border: 1px;
+     padding: 10px 10px;
+     margin: 10px;
 }
 
 #app_selector_header_label {

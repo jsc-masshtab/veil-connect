@@ -47,8 +47,8 @@ static void set_vdi_client_state(VdiManager *self, VdiClientState vdi_client_sta
 static void refresh_vdi_pool_data_async(VdiManager *self);
 static void unregister_all_pools(VdiManager *self);
 static void register_pool(VdiManager *self, const gchar *pool_id, const gchar *pool_name, const gchar *os_type,
-        const gchar *status, JsonArray *conn_types_json_array);
-static VdiPoolWidget get_vdi_pool_widget_by_id(VdiManager *self, const gchar *searched_id);
+        const gchar *status, JsonArray *conn_types_json_array, gboolean favorite);
+static VdiPoolWidget *get_vdi_pool_widget_by_id(VdiManager *self, const gchar *searched_id);
 
 static void on_vdi_session_get_vdi_pool_data_finished(GObject *source_object, GAsyncResult *res, VdiManager *self);
 static void on_vdi_session_get_vm_from_pool_finished(GObject *source_object, GAsyncResult *res, VdiManager *self);
@@ -57,11 +57,31 @@ static void set_ws_conn_state(VdiManager *self, gboolean is_vdi_online);
 static gboolean on_window_deleted_cb(VdiManager *self);
 static void on_button_renew_clicked(GtkButton *button, VdiManager *self);
 static void on_button_quit_clicked(GtkButton *button, VdiManager *self);
-static void on_vm_start_button_clicked(GtkButton *button, VdiManager *self);
+static gboolean on_vm_start_button_released(GtkButton *button, GdkEventButton *event, VdiPoolWidget *vdi_pool_widget);
 
 static void vdi_manager_finalize(GObject *object);
 
 /////////////////////////////////// work functions//////////////////////////////////////
+
+static void vdi_manager_set_msg(VdiManager *self, const gchar *message, gboolean is_error_message)
+{
+    if (!self->status_label)
+        return;
+
+    // message
+    g_autofree gchar *trimmed_msg = NULL;
+    trimmed_msg = g_strndup(message, MSG_TRIM_LENGTH);
+
+    if (is_error_message)
+        gtk_widget_set_name(self->status_label, "widget_with_red_text");
+    else
+        gtk_widget_set_name(self->status_label, "status_label");
+
+    gtk_label_set_text(GTK_LABEL(self->status_label), trimmed_msg);
+
+    // tooltip
+    gtk_widget_set_tooltip_text(self->status_label, message);
+}
 
 // Set GUI state
 static void set_vdi_client_state(VdiManager *self, VdiClientState vdi_client_state,
@@ -104,21 +124,7 @@ static void set_vdi_client_state(VdiManager *self, VdiClientState vdi_client_sta
         gtk_widget_set_sensitive(self->button_quit, controls_blocked);
     gtk_widget_set_sensitive(self->btn_cancel_requests, btn_cancel_sensitive);
 
-    if (self->status_label) {
-        // message
-        g_autofree gchar *trimmed_msg = NULL;
-        trimmed_msg = g_strndup(message, MSG_TRIM_LENGTH);
-
-        if (is_error_message)
-            gtk_widget_set_name(self->status_label, "widget_with_red_text");
-        else
-            gtk_widget_set_name(self->status_label, "status_label");
-
-        gtk_label_set_text(GTK_LABEL(self->status_label), trimmed_msg);
-
-        // tooltip
-        gtk_widget_set_tooltip_text(self->status_label, message);
-    }
+    vdi_manager_set_msg(self, message, is_error_message);
 }
 
 static void enable_vm_prep_progress_messages(VdiManager *self, gboolean enabled)
@@ -143,12 +149,12 @@ static void refresh_vdi_get_vm_from_pool_async(VdiManager *self, const gchar *po
     // gui message  "Отправлен запрос на получение вм из пула"
     set_vdi_client_state(self, VDI_WAITING_FOR_VM_FROM_POOL, _("VM request sent"), FALSE);
     // start spinner on vm widget
-    VdiPoolWidget vdi_pool_widget = get_vdi_pool_widget_by_id(self, pool_id);
-    vdi_pool_widget_enable_spinner(&vdi_pool_widget, TRUE);
+    VdiPoolWidget *vdi_pool_widget = get_vdi_pool_widget_by_id(self, pool_id);
+    vdi_pool_widget_enable_spinner(vdi_pool_widget, TRUE);
 
     // take from gui correct remote protocol
-    if (vdi_pool_widget.is_valid) {
-        VmRemoteProtocol remote_protocol = vdi_pool_widget_get_current_protocol(&vdi_pool_widget);
+    if (vdi_pool_widget && vdi_pool_widget->is_valid) {
+        VmRemoteProtocol remote_protocol = vdi_pool_widget_get_current_protocol(vdi_pool_widget);
         g_info("%s remote_protocol %s", (const char *) __func__, util_remote_protocol_to_str(remote_protocol));
         vdi_session_set_current_remote_protocol(remote_protocol);
     }
@@ -175,18 +181,32 @@ static void refresh_vdi_pool_data_async(VdiManager *self)
     unregister_all_pools(self);
     // "Отправлен запрос на список пулов"
     set_vdi_client_state(self, VDI_WAITING_FOR_POOL_DATA, _("Pool data request sent"), FALSE);
+
+    PoolsRequestTaskData *task_data = calloc(1, sizeof(PoolsRequestTaskData));
+    task_data->get_favorite_only = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(self->btn_show_only_favorites));
+
+    //task_data->get_favorite_only = TRUE;
     execute_async_task(vdi_session_get_vdi_pool_data_task,
-            (GAsyncReadyCallback)on_vdi_session_get_vdi_pool_data_finished,
-            NULL, self);
+            (GAsyncReadyCallback)on_vdi_session_get_vdi_pool_data_finished, task_data, self);
 }
+
 // clear array of virtual machine widgets
 static void unregister_all_pools(VdiManager *self)
 {
+    // disconnect handler for pool options if it exists
+    if (self->favorite_pool_menu_item_toggled_handle) {
+        g_signal_handler_disconnect(G_OBJECT(self->favorite_pool_menu_item),
+                                    self->favorite_pool_menu_item_toggled_handle);
+        self->favorite_pool_menu_item_toggled_handle = 0;
+    }
+    // hide pool options popup if shown
+    gtk_widget_hide(self->pool_options_menu);
+
     if (self->pool_widgets_array) {
         guint i;
         for (i = 0; i < self->pool_widgets_array->len; ++i) {
-            VdiPoolWidget vdi_pool_widget = g_array_index(self->pool_widgets_array, VdiPoolWidget, i);
-            destroy_vdi_pool_widget(&vdi_pool_widget);
+            VdiPoolWidget *vdi_pool_widget = g_array_index(self->pool_widgets_array, VdiPoolWidget*, i);
+            destroy_vdi_pool_widget(vdi_pool_widget);
         }
 
         g_array_free(self->pool_widgets_array, TRUE);
@@ -195,36 +215,38 @@ static void unregister_all_pools(VdiManager *self)
 }
 // create virtual machine widget and add to GUI
 static void register_pool(VdiManager *self, const gchar *pool_id, const gchar *pool_name, const gchar *os_type,
-        const gchar *status, JsonArray *conn_types_json_array)
+        const gchar *status, JsonArray *conn_types_json_array, gboolean favorite)
 {
     // create array if required
     if (self->pool_widgets_array == NULL)
-        self->pool_widgets_array = g_array_new (FALSE, FALSE, sizeof (VdiPoolWidget));
+        self->pool_widgets_array = g_array_new (FALSE, FALSE, sizeof(VdiPoolWidget*));
 
     // add element
-    VdiPoolWidget vdi_pool_widget = build_pool_widget(pool_id, pool_name, os_type, status,
+    VdiPoolWidget *vdi_pool_widget = build_pool_widget(pool_id, pool_name, os_type, status,
                                                       conn_types_json_array, self->gtk_flow_box);
+    vdi_pool_widget->vdi_manager = (void*)self;
+    // mark favorite pool
+    vdi_pool_widget_set_favorite(vdi_pool_widget, favorite);
+
     g_array_append_val(self->pool_widgets_array, vdi_pool_widget);
     // connect start button to callback
-    vdi_pool_widget.btn_click_sig_hadle = g_signal_connect(vdi_pool_widget.vm_start_button,
-            "clicked", G_CALLBACK(on_vm_start_button_clicked), self);
+    vdi_pool_widget->btn_click_sig_hadle = g_signal_connect(vdi_pool_widget->vm_start_button,
+            "button-release-event", G_CALLBACK(on_vm_start_button_released), vdi_pool_widget);
 }
 
 // find a virtual machine widget by id
-static VdiPoolWidget get_vdi_pool_widget_by_id(VdiManager *self, const gchar *searched_id)
+static VdiPoolWidget *get_vdi_pool_widget_by_id(VdiManager *self, const gchar *searched_id)
 {
-    VdiPoolWidget searched_vdi_pool_widget;
-    memset(&searched_vdi_pool_widget, 0, sizeof(VdiPoolWidget));
+    VdiPoolWidget *searched_vdi_pool_widget = NULL;
     guint i;
 
     if (self->pool_widgets_array == NULL)
         return searched_vdi_pool_widget;
 
     for (i = 0; i < self->pool_widgets_array->len; ++i) {
-        VdiPoolWidget vdi_pool_widget = g_array_index(self->pool_widgets_array, VdiPoolWidget, i);
+        VdiPoolWidget *vdi_pool_widget = g_array_index(self->pool_widgets_array, VdiPoolWidget*, i);
 
-        const gchar *pool_id = g_object_get_data(G_OBJECT(vdi_pool_widget.vm_start_button), "pool_id");
-        if (g_strcmp0(searched_id, pool_id) == 0) {
+        if (g_strcmp0(searched_id, vdi_pool_widget->pool_id) == 0) {
             searched_vdi_pool_widget = vdi_pool_widget;
             break;
         }
@@ -289,7 +311,8 @@ static void on_vdi_session_get_vdi_pool_data_finished(GObject *source_object G_G
         //g_info("pool_name %s\n", pool_name);
         JsonArray *conn_types_json_array =
                 json_object_get_array_member_safely(object, "connection_types");
-        register_pool(self, pool_id, pool_name, os_type, status, conn_types_json_array);
+        gint64 favorite = json_object_get_int_member_safely(object, "favorite");
+        register_pool(self, pool_id, pool_name, os_type, status, conn_types_json_array, (gboolean)favorite);
     }
 
     // "Получен список пулов"
@@ -315,8 +338,8 @@ static void on_vdi_session_get_vm_from_pool_finished(GObject *source_object G_GN
     g_info("%s", (const char *)__func__);
     enable_vm_prep_progress_messages(self, FALSE);
 
-    VdiPoolWidget vdi_pool_widget = get_vdi_pool_widget_by_id(self, vdi_session_get_current_pool_id());
-    vdi_pool_widget_enable_spinner(&vdi_pool_widget, FALSE);
+    VdiPoolWidget *vdi_pool_widget = get_vdi_pool_widget_by_id(self, vdi_session_get_current_pool_id());
+    vdi_pool_widget_enable_spinner(vdi_pool_widget, FALSE);
 
     gtk_progress_bar_set_fraction(GTK_PROGRESS_BAR(self->vm_prep_progress_bar), 1);
 
@@ -446,7 +469,7 @@ static void on_button_renew_clicked(GtkButton *button G_GNUC_UNUSED, VdiManager 
 static void on_btn_cancel_requests_clicked(GtkButton *button G_GNUC_UNUSED, VdiManager *self G_GNUC_UNUSED) {
 
     g_info("%s", (const char *)__func__); // "Текущие запросы отменены"
-    gtk_label_set_text(GTK_LABEL(self->status_label), _("Current requests cancelled"));
+    vdi_manager_set_msg(self, _("Current requests cancelled"), FALSE);
     vdi_session_cancel_pending_requests();
 }
 // quit button pressed callback
@@ -495,23 +518,69 @@ on_vm_prep_progress_received(gpointer data G_GNUC_UNUSED, int request_id, int pr
     gtk_progress_bar_set_fraction(GTK_PROGRESS_BAR(self->vm_prep_progress_bar), (gdouble)progress / 100.0);
 
     //msg
-    g_autofree gchar *trimmed_msg = NULL;
-    trimmed_msg = g_strndup(text, MSG_TRIM_LENGTH);
-    gtk_label_set_text(GTK_LABEL(self->status_label), trimmed_msg);
+    vdi_manager_set_msg(self, text, FALSE);
+}
+
+static void favorite_pool_menu_item_toggled(GtkCheckMenuItem* check_menu_item, VdiPoolWidget *vdi_pool_widget)
+{
+    VdiManager *self = (VdiManager *)vdi_pool_widget->vdi_manager;
+
+    if (!self->is_favorites_supported_by_server) {
+        vdi_manager_set_msg(self, _("VeiL Broker version > 4.0.0 is required"), TRUE);
+        return;
+    }
+
+    gboolean is_active = gtk_check_menu_item_get_active(check_menu_item);
+    vdi_pool_widget_set_favorite(vdi_pool_widget, is_active);
+
+    // http request to server
+    FavoritePoolTaskData *task_data = calloc(1, sizeof(FavoritePoolTaskData));
+    task_data->is_favorite = is_active;
+    task_data->pool_id = g_strdup(vdi_pool_widget->pool_id);
+
+    execute_async_task(vdi_session_set_pool_favorite_task, NULL, task_data, NULL);
+}
+
+static void on_btn_show_only_favorites_toggled(GtkToggleButton *toggle_btn G_GNUC_UNUSED, gpointer user_data)
+{
+    VdiManager *self = (VdiManager *)user_data;
+    vdi_ws_client_send_user_gui(vdi_session_get_ws_client()); // notify server
+    refresh_vdi_pool_data_async(self);
 }
 
 // vm start button pressed callback
-static void on_vm_start_button_clicked(GtkButton *button, VdiManager *self)
+static gboolean on_vm_start_button_released(GtkButton *button,
+        GdkEventButton *event, VdiPoolWidget *vdi_pool_widget)
 {
-    vdi_ws_client_send_user_gui(vdi_session_get_ws_client()); // notify server
+    VdiManager *self = (VdiManager *)vdi_pool_widget->vdi_manager;
 
-    // reset progress bar
-    gtk_progress_bar_set_fraction(GTK_PROGRESS_BAR(self->vm_prep_progress_bar), 0);
+    if (event->type == GDK_BUTTON_RELEASE) {
+        vdi_ws_client_send_user_gui(vdi_session_get_ws_client()); // notify server
 
-    const gchar *pool_id = g_object_get_data(G_OBJECT(button), "pool_id");
-    g_info("%s  %s", (const char *)__func__, pool_id);
+        if (event->button == 1) { // left mouse btn
+            // reset progress bar
+            gtk_progress_bar_set_fraction(GTK_PROGRESS_BAR(self->vm_prep_progress_bar), 0);
 
-    refresh_vdi_get_vm_from_pool_async(self, pool_id);
+            g_info("%s  %s", (const char *) __func__, vdi_pool_widget->pool_id);
+            refresh_vdi_get_vm_from_pool_async(self, vdi_pool_widget->pool_id);
+
+        } else if (event->button == 3) { // right mouse btn
+            // Show pool options
+            if (self->favorite_pool_menu_item_toggled_handle) {
+                g_signal_handler_disconnect(G_OBJECT(self->favorite_pool_menu_item),
+                                            self->favorite_pool_menu_item_toggled_handle);
+            }
+            self->favorite_pool_menu_item_toggled_handle = g_signal_connect(
+                    self->favorite_pool_menu_item, "toggled",
+                             G_CALLBACK(favorite_pool_menu_item_toggled), vdi_pool_widget);
+            gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(
+                    self->favorite_pool_menu_item), vdi_pool_widget->is_favorite);
+            gtk_widget_show_all(self->pool_options_menu);
+            gtk_menu_popup_at_widget(GTK_MENU(self->pool_options_menu), GTK_WIDGET(button),
+                                     GDK_GRAVITY_EAST, GDK_GRAVITY_EAST, NULL);
+        }
+    }
+    return TRUE;
 }
 
 static void
@@ -529,6 +598,7 @@ static void vdi_manager_finalize(GObject *object)
     g_signal_handler_disconnect(get_vdi_session_static(), self->pool_entitlement_changed_handle);
     enable_vm_prep_progress_messages(self, FALSE);
 
+    gtk_widget_destroy(self->pool_options_menu);
     unregister_all_pools(self);
     g_object_unref(self->builder);
     gtk_widget_destroy(self->window);
@@ -578,6 +648,8 @@ static void vdi_manager_init(VdiManager *self)
     self->window = GTK_WIDGET(gtk_builder_get_object(self->builder, "vdi-main-window"));
     self->btn_open_user_settings = GTK_WIDGET(gtk_builder_get_object(self->builder, "btn_open_user_settings"));
     self->btn_cancel_requests = GTK_WIDGET(gtk_builder_get_object(self->builder, "btn_cancel_requests"));
+    self->btn_show_only_favorites = GTK_WIDGET(gtk_builder_get_object(
+            self->builder, "btn_show_only_favorites"));
     self->button_renew = GTK_WIDGET(gtk_builder_get_object(self->builder, "button-renew"));
     self->button_quit = GTK_WIDGET(gtk_builder_get_object(self->builder, "button-quit"));
     self->vm_main_box = GTK_WIDGET(gtk_builder_get_object(self->builder, "vm_main_box"));
@@ -593,8 +665,14 @@ static void vdi_manager_init(VdiManager *self)
     self->main_vm_spinner = GTK_WIDGET(gtk_builder_get_object(self->builder, "main_vm_spinner"));
     self->label_is_vdi_online = GTK_WIDGET(gtk_builder_get_object(self->builder, "label-is-vdi-online"));
 
+    // Pool options menu
+    self->pool_options_menu = gtk_menu_new();
+    self->favorite_pool_menu_item = gtk_check_menu_item_new_with_label(_("Add to favorite"));
+    gtk_container_add(GTK_CONTAINER(self->pool_options_menu), self->favorite_pool_menu_item);
+
     // connects
-    //g_signal_connect_swapped(vdi_manager.window, "map-event", G_CALLBACK(mapped_user_function), &vdi_manager.ci);
+    g_signal_connect(self->btn_show_only_favorites, "toggled",
+            G_CALLBACK(on_btn_show_only_favorites_toggled), self);
     g_signal_connect_swapped(self->window, "delete-event", G_CALLBACK(on_window_deleted_cb), self);
     g_signal_connect(self->btn_open_user_settings, "clicked", G_CALLBACK(btn_open_user_settings_clicked), self);
     g_signal_connect(self->button_renew, "clicked", G_CALLBACK(on_button_renew_clicked), self);
@@ -633,6 +711,17 @@ void vdi_manager_show(VdiManager *self, ConnectSettingsData *conn_data)
 
     self->p_conn_data = conn_data;
 
+    // favorite pools
+    self->is_favorites_supported_by_server =
+            virt_viewer_compare_version(get_vdi_session_static()->vdi_version.string, "4.0.0") > 0;
+    gtk_widget_set_sensitive(self->btn_show_only_favorites, self->is_favorites_supported_by_server);
+    if (self->is_favorites_supported_by_server) {
+        gtk_widget_set_tooltip_text(self->btn_show_only_favorites, "");
+    } else {
+        gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(self->btn_show_only_favorites), FALSE);
+        gtk_widget_set_tooltip_text(self->btn_show_only_favorites, _("VeiL Broker version > 4.0.0 is required"));
+    }
+
     // show window
     g_autofree gchar *title = NULL; // %s  Время входа: %s  -  %s
     title = g_strdup_printf(_("%s  Login time: %s  -  %s"),
@@ -641,7 +730,7 @@ void vdi_manager_show(VdiManager *self, ConnectSettingsData *conn_data)
             APPLICATION_NAME);
     gtk_window_set_title(GTK_WINDOW(self->window), title);
     gtk_window_set_position(GTK_WINDOW(self->window), GTK_WIN_POS_CENTER);
-    gtk_window_set_default_size(GTK_WINDOW(self->window), 650, 500);
+    gtk_window_set_default_size(GTK_WINDOW(self->window), 900, 600);
     gtk_widget_show_all(self->window);
 
     SoupWebsocketState state = vdi_ws_client_get_conn_state(vdi_session_get_ws_client());

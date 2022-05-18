@@ -40,6 +40,7 @@ struct _VdiManager
     GtkWidget *button_renew;
     GtkWidget *btn_open_user_settings;
     GtkWidget *btn_cancel_requests;
+    GtkWidget *btn_show_only_favorites;
 
     GtkWidget *vm_main_box;
     GtkWidget *gtk_flow_box;
@@ -48,9 +49,11 @@ struct _VdiManager
     GtkWidget *main_vm_spinner;
     GtkWidget *label_is_vdi_online;
 
-    GArray *pool_widgets_array;
+    GtkWidget *pool_options_menu;
+    GtkWidget *favorite_pool_menu_item;
+    gulong favorite_pool_menu_item_toggled_handle;
 
-    ConnectionInfo ci;
+    GArray *pool_widgets_array;
 
     gulong ws_conn_changed_handle;
     gulong auth_fail_detected_handle;
@@ -58,6 +61,8 @@ struct _VdiManager
     gulong vm_prep_progress_handle;
 
     int current_vm_request_id;
+
+    gboolean is_favorites_supported_by_server;
 
     ConnectSettingsData *p_conn_data;
 };

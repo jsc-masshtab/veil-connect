@@ -28,5 +28,7 @@
     <file alias="icons/content/img/red_circle.png">icons/content/img/red_circle.png</file> 
     <file alias="icons/content/img/green_circle.png">icons/content/img/green_circle.png</file>
     <file alias="icons/content/img/x2go-logo-with-text.png">icons/content/img/x2go-logo-with-text.png</file>
+    <file alias="icons/16x16/empty_star.png">icons/16x16/empty_star.png</file>
+    <file alias="icons/16x16/favorite_star.png">icons/16x16/favorite_star.png</file>
   </gresource>
 </gresources>

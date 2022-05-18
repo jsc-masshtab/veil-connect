@@ -460,7 +460,7 @@ static gboolean str_is_empty(const gchar *str)
   return ((str == NULL) || (str[0] == '\0'));
 }
 
-// Вернет больше нуля, если первая больша. Меньше нуля, если первая меньше. 0 - если равны
+// Вернет больше нуля, если первая больше. Меньше нуля, если первая меньше. 0 - если равны
 gint
 virt_viewer_compare_version(const gchar *s1, const gchar *s2)
 {

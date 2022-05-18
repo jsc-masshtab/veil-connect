@@ -38,6 +38,12 @@ typedef enum{
     VDI_POOL_TYPE_RDS
 } VdiPoolType;
 
+// Pools request data
+typedef struct{
+    gboolean get_favorite_only;
+
+} PoolsRequestTaskData;
+
 // Data which passed to vdi_session_api_call
 typedef struct{
     gchar *action_on_vm_str;
@@ -87,6 +93,11 @@ typedef struct {
     int request_id;
     gboolean redirect_time_zone;
 } RequestVmFromPoolData;
+
+typedef struct {
+    gboolean is_favorite;
+    gchar *pool_id;
+} FavoritePoolTaskData;
 
 //VdiSession class
 
@@ -221,7 +232,8 @@ const gchar *vdi_session_get_login_time(void);
 
 //void gInputStreamToBuffer(GInputStream *inputStream, gchar *responseBuffer);
 // Do api call. Return response body
-gchar *vdi_session_api_call(const char *method, const char *uri_string, const gchar *body_str, int *resp_code);
+gchar *vdi_session_api_call(const char *method, const char *uri_string, const gchar *body_str,
+        GHashTable *request_headers, int *resp_code);
 
 /// Functions for GTasks
 // Fetch token
@@ -284,6 +296,12 @@ void vdi_session_get_vm_data_task(GTask *task,
                                   gpointer       task_data,
                                   GCancellable  *cancellable);
 
+// Add pool to favorite/Remove pool from favorite
+void vdi_session_set_pool_favorite_task(GTask *task,
+                                   gpointer       source_object,
+                                   gpointer       task_data,
+                                   GCancellable  *cancellable);
+
 // Log out sync
 gboolean vdi_session_logout(void);
 
@@ -307,5 +325,6 @@ void vdi_api_session_free_detach_usb_data(DetachUsbData *detach_usb_data);
 void vdi_api_session_free_text_message_data(TextMessageData *text_message_data);
 void vdi_api_session_free_tk_user_data(UserData *tk_user_data);
 void vdi_api_session_free_login_data(LoginData *login_data);
+void vdi_api_session_free_favorite_pool_task_data(FavoritePoolTaskData *data);
 
 #endif //VIRT_VIEWER_VEIL_VDI_API_SESSION_H

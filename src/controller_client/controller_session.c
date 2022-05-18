@@ -83,7 +83,7 @@ static gchar *controller_session_api_call(const char *method,
 
     // send request.
     util_send_message(controller_session_static->soup_session, msg, uri_string);
-    g_info("vdi_session_api_call: msg->status_code: %i", msg->status_code);
+    g_info("msg->status_code: %i", msg->status_code);
     //g_info("msg->response_body: %s", msg->response_body->data);
     // Повторяем логику как в браузере - завершаем соединение и выбрасываем пользователя к форме авторизации
     //if (msg->status_code == AUTH_FAIL_RESPONSE) {
