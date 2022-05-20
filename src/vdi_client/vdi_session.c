@@ -368,6 +368,7 @@ static void vdi_session_request_version()
     if (server_reply_type == SERVER_REPLY_TYPE_DATA) {
         const gchar *vdi_version = json_object_get_string_member_safely(reply_json_object, "version");
         atomic_string_set(&vdi_session_static->vdi_version, vdi_version);
+        g_info("vdi_version: %s", vdi_version);
 
         if (vdi_version) {
             vdi_session_static->version_older_than_320 = (virt_viewer_compare_version(vdi_version, "3.2.0") < 0);
