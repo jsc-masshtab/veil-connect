@@ -363,7 +363,7 @@ static void controller_manager_init(ControllerManager *self)
     gtk_tree_view_set_model(GTK_TREE_VIEW(self->vm_list_tree_view), GTK_TREE_MODEL(self->vm_list_store));
 
     self->vm_verbose_name_entry = GTK_WIDGET(gtk_builder_get_object(self->builder, "vm_verbose_name_entry"));
-    self->btn_update = GTK_WIDGET(gtk_builder_get_object(self->builder, "button-renew"));
+    self->btn_update = GTK_WIDGET(gtk_builder_get_object(self->builder, "btn_update"));
     self->btn_logout = GTK_WIDGET(gtk_builder_get_object(self->builder, "btn_logout"));
     self->btn_cancel_requests = GTK_WIDGET(gtk_builder_get_object(self->builder, "btn_cancel_requests"));
 

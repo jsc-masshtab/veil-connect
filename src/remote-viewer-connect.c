@@ -373,7 +373,8 @@ settings_button_clicked_cb(GtkButton *button G_GNUC_UNUSED, gpointer data)
     GtkResponseType res = remote_viewer_start_settings_dialog(&self->connect_settings_dialog,
                                                               self->p_conn_data,
                                                               self->p_app_updater,
-                                                              GTK_WINDOW(self->window));
+                                                              GTK_WINDOW(self->window),
+                                                              FALSE);
     // update gui state
     if (res == GTK_RESPONSE_OK)
         fill_gui(self);

@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-05-18 13:24+0300\n"
+"POT-Creation-Date: 2022-05-20 09:54+0300\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -52,7 +52,7 @@ msgstr "Открыть файл"
 #: ../src/remote_viewer_start_settings.c:172
 #: ../src/remote_viewer_start_settings.c:239
 #: ../src/remote_viewer_start_settings.c:380
-#: ../resources/ui/vdi_manager_form.glade.h:6
+#: ../resources/ui/vdi_manager_form.glade.h:3
 #: ../resources/ui/remote-viewer-connect_veil.glade.h:11
 #: ../resources/ui/start_settings_form.glade.h:4
 #: ../resources/ui/controller_manager_form.glade.h:4
@@ -151,7 +151,7 @@ msgstr "Авторизация..."
 msgid "Connection address is not specified"
 msgstr "Адрес подключения не указан"
 
-#: ../src/remote-viewer-connect.c:436
+#: ../src/remote-viewer-connect.c:437
 msgid "A new version available. Press Settings->Service->Get updates"
 msgstr ""
 "Доступна новая версия. Чтобы обновиться нажмите Настройки->Служебные-"
@@ -529,51 +529,71 @@ msgid "Press Apply to disable 2fa."
 msgstr "Для отключения двухфакторной аутентификации нажмите Применить."
 
 #. gui message  "Отправлен запрос на получение вм из пула"
-#: ../src/vdi_client/vdi_manager.c:144
+#: ../src/vdi_client/vdi_manager.c:161
 msgid "VM request sent"
 msgstr "Отправлен запрос на получение ВМ из пула"
 
 #. "Отправлен запрос на список пулов"
 #. Отправлен запрос на список пулов
-#: ../src/vdi_client/vdi_manager.c:177
-#: ../resources/ui/vdi_manager_form.glade.h:11
+#: ../src/vdi_client/vdi_manager.c:194
+#: ../resources/ui/vdi_manager_form.glade.h:9
 msgid "Pool data request sent"
 msgstr "Отправлен запрос на список пулов"
 
-#: ../src/vdi_client/vdi_manager.c:260
+#: ../src/vdi_client/vdi_manager.c:272
 msgid "Failed to fetch pool data"
 msgstr "Не удалось получить список пулов"
 
 #. "Получен список пулов"
-#: ../src/vdi_client/vdi_manager.c:313
+#: ../src/vdi_client/vdi_manager.c:325
 msgid "Pool data received"
 msgstr "Получен список пулов"
 
-#: ../src/vdi_client/vdi_manager.c:342
+#: ../src/vdi_client/vdi_manager.c:354
 msgid "Failed to get VM fom pool"
 msgstr "Не удалось получить ВМ из пула"
 
 #. "Получена вм из пула"
-#: ../src/vdi_client/vdi_manager.c:377
+#: ../src/vdi_client/vdi_manager.c:389
 msgid "VM received from pool"
 msgstr "Получена ВМ из пула"
 
 #. "Текущие запросы отменены"
-#: ../src/vdi_client/vdi_manager.c:466
+#: ../src/vdi_client/vdi_manager.c:486
 msgid "Current requests cancelled"
 msgstr "Текущие запросы отменены"
 
-#: ../src/vdi_client/vdi_manager.c:491
+#: ../src/vdi_client/vdi_manager.c:511
 msgid "401 Authorization required"
 msgstr "401 Требуется авторизация"
 
-#: ../src/vdi_client/vdi_manager.c:659
-msgid "Add to favorite"
-msgstr "Добавить в избранное"
+#: ../src/vdi_client/vdi_manager.c:543 ../src/vdi_client/vdi_manager.c:757
+msgid "VeiL Broker version => 4.1.0 is required"
+msgstr "Требуется брокер версии 4.1.0 и выше"
+
+#: ../src/vdi_client/vdi_manager.c:692
+msgid "To favorites"
+msgstr "В избранное"
+
+#. Настройки
+#: ../src/vdi_client/vdi_manager.c:697
+#: ../resources/ui/remote-viewer-connect_veil.glade.h:15
+#: ../resources/ui/virt-viewer_veil.glade.h:2
+#: ../resources/ui/start_settings_form.glade.h:2
+msgid "Settings"
+msgstr "Настройки"
+
+#: ../src/vdi_client/vdi_manager.c:699
+msgid "User settings"
+msgstr "Настройки профиля"
+
+#: ../src/vdi_client/vdi_manager.c:700
+msgid "VM connection settings"
+msgstr "Настройки подключения к ВМ"
 
 #. show window
 #. %s  Время входа: %s  -  %s
-#: ../src/vdi_client/vdi_manager.c:706
+#: ../src/vdi_client/vdi_manager.c:762
 #: ../src/controller_client/controller_manager.c:412
 #, c-format
 msgid "%s  Login time: %s  -  %s"
@@ -982,9 +1002,7 @@ msgstr "Адрес клиента(IP)"
 msgid "192.168.6.250"
 msgstr ""
 
-#. Profile settings
 #: ../resources/ui/vdi_user_settings_form.glade.h:1
-#: ../resources/ui/vdi_manager_form.glade.h:2
 msgid "Profile settings"
 msgstr "Настройки профиля"
 
@@ -1003,23 +1021,23 @@ msgstr "Сгенерировать новый QR код"
 msgid "Apply"
 msgstr "Применить"
 
+#: ../resources/ui/vdi_manager_form.glade.h:1
+msgid "Show only favorites"
+msgstr "Показывать избранное"
+
 #. Обновить
-#: ../resources/ui/vdi_manager_form.glade.h:4
+#: ../resources/ui/vdi_manager_form.glade.h:5
 #: ../resources/ui/controller_manager_form.glade.h:2
 msgid "Update"
 msgstr "Обновить"
 
-#: ../resources/ui/vdi_manager_form.glade.h:7
-msgid "Show only favorites"
-msgstr "Показывать избранное"
-
 #. Sign out
-#: ../resources/ui/vdi_manager_form.glade.h:9
+#: ../resources/ui/vdi_manager_form.glade.h:7
 #: ../resources/ui/controller_manager_form.glade.h:6
 msgid "Sign out"
 msgstr "Выйти"
 
-#: ../resources/ui/vdi_manager_form.glade.h:12
+#: ../resources/ui/vdi_manager_form.glade.h:10
 msgid "VDI server availability indicator"
 msgstr "Индикатор доступности VDI сервера"
 
@@ -1117,13 +1135,6 @@ msgstr "Одноразовый пароль"
 #: ../resources/ui/remote-viewer-connect_veil.glade.h:13
 msgid "Sign in"
 msgstr "Войти"
-
-#. Настройки
-#: ../resources/ui/remote-viewer-connect_veil.glade.h:15
-#: ../resources/ui/virt-viewer_veil.glade.h:2
-#: ../resources/ui/start_settings_form.glade.h:2
-msgid "Settings"
-msgstr "Настройки"
 
 #. Вставить смарткарту
 #: ../resources/ui/virt-viewer_veil.glade.h:4

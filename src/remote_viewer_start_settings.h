@@ -153,7 +153,8 @@ typedef struct {
 GtkResponseType remote_viewer_start_settings_dialog(ConnectSettingsDialog *self,
                                                     ConnectSettingsData *conn_data,
                                                     AppUpdater *app_updater,
-                                                    GtkWindow *parent);
+                                                    GtkWindow *parent,
+                                                    gboolean show_only_vm_conn_settings);
 
 
 #endif // REMOTE_VIEWER_START_SETTINGS_H

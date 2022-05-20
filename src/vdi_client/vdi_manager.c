@@ -24,6 +24,8 @@
 #include "settingsfile.h"
 #include "vdi_user_settings_widget.h"
 #include "native_rdp_launcher.h"
+#include "multi_button.h"
+
 
 #define MAX_POOL_NUMBER 150
 #define MSG_TRIM_LENGTH 140
@@ -55,13 +57,22 @@ static void on_vdi_session_get_vm_from_pool_finished(GObject *source_object, GAs
 static void set_ws_conn_state(VdiManager *self, gboolean is_vdi_online);
 
 static gboolean on_window_deleted_cb(VdiManager *self);
-static void on_button_renew_clicked(GtkButton *button, VdiManager *self);
+static void on_btn_update_clicked(GtkButton *button, VdiManager *self);
 static void on_button_quit_clicked(GtkButton *button, VdiManager *self);
 static gboolean on_vm_start_button_released(GtkButton *button, GdkEventButton *event, VdiPoolWidget *vdi_pool_widget);
 
 static void vdi_manager_finalize(GObject *object);
 
 /////////////////////////////////// work functions//////////////////////////////////////
+
+static void vdi_manager_disconnect_favorite_pool_menu_item_toggled_handle(VdiManager *self)
+{
+    if (self->favorite_pool_menu_item_toggled_handle) {
+        g_signal_handler_disconnect(G_OBJECT(self->favorite_pool_menu_item),
+                                    self->favorite_pool_menu_item_toggled_handle);
+        self->favorite_pool_menu_item_toggled_handle = 0;
+    }
+}
 
 static void vdi_manager_set_msg(VdiManager *self, const gchar *message, gboolean is_error_message)
 {
@@ -118,8 +129,8 @@ static void set_vdi_client_state(VdiManager *self, VdiClientState vdi_client_sta
     // control widgets state
     if (self->gtk_flow_box)
         gtk_widget_set_sensitive(self->gtk_flow_box, controls_blocked);
-    if (self->button_renew)
-        gtk_widget_set_sensitive(self->button_renew, controls_blocked);
+    if (self->btn_update)
+        gtk_widget_set_sensitive(self->btn_update, controls_blocked);
     if (self->button_quit)
         gtk_widget_set_sensitive(self->button_quit, controls_blocked);
     gtk_widget_set_sensitive(self->btn_cancel_requests, btn_cancel_sensitive);
@@ -185,7 +196,6 @@ static void refresh_vdi_pool_data_async(VdiManager *self)
     PoolsRequestTaskData *task_data = calloc(1, sizeof(PoolsRequestTaskData));
     task_data->get_favorite_only = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(self->btn_show_only_favorites));
 
-    //task_data->get_favorite_only = TRUE;
     execute_async_task(vdi_session_get_vdi_pool_data_task,
             (GAsyncReadyCallback)on_vdi_session_get_vdi_pool_data_finished, task_data, self);
 }
@@ -194,22 +204,18 @@ static void refresh_vdi_pool_data_async(VdiManager *self)
 static void unregister_all_pools(VdiManager *self)
 {
     // disconnect handler for pool options if it exists
-    if (self->favorite_pool_menu_item_toggled_handle) {
-        g_signal_handler_disconnect(G_OBJECT(self->favorite_pool_menu_item),
-                                    self->favorite_pool_menu_item_toggled_handle);
-        self->favorite_pool_menu_item_toggled_handle = 0;
-    }
+    vdi_manager_disconnect_favorite_pool_menu_item_toggled_handle(self);
     // hide pool options popup if shown
     gtk_widget_hide(self->pool_options_menu);
 
     if (self->pool_widgets_array) {
         guint i;
         for (i = 0; i < self->pool_widgets_array->len; ++i) {
-            VdiPoolWidget *vdi_pool_widget = g_array_index(self->pool_widgets_array, VdiPoolWidget*, i);
+            VdiPoolWidget *vdi_pool_widget = g_ptr_array_index(self->pool_widgets_array, i);
             destroy_vdi_pool_widget(vdi_pool_widget);
         }
 
-        g_array_free(self->pool_widgets_array, TRUE);
+        g_ptr_array_free(self->pool_widgets_array, TRUE);
         self->pool_widgets_array = NULL;
     }
 }
@@ -219,7 +225,7 @@ static void register_pool(VdiManager *self, const gchar *pool_id, const gchar *p
 {
     // create array if required
     if (self->pool_widgets_array == NULL)
-        self->pool_widgets_array = g_array_new (FALSE, FALSE, sizeof(VdiPoolWidget*));
+        self->pool_widgets_array = g_ptr_array_new();
 
     // add element
     VdiPoolWidget *vdi_pool_widget = build_pool_widget(pool_id, pool_name, os_type, status,
@@ -228,7 +234,7 @@ static void register_pool(VdiManager *self, const gchar *pool_id, const gchar *p
     // mark favorite pool
     vdi_pool_widget_set_favorite(vdi_pool_widget, favorite);
 
-    g_array_append_val(self->pool_widgets_array, vdi_pool_widget);
+    g_ptr_array_add(self->pool_widgets_array, vdi_pool_widget);
     // connect start button to callback
     vdi_pool_widget->btn_click_sig_hadle = g_signal_connect(vdi_pool_widget->vm_start_button,
             "button-release-event", G_CALLBACK(on_vm_start_button_released), vdi_pool_widget);
@@ -244,7 +250,7 @@ static VdiPoolWidget *get_vdi_pool_widget_by_id(VdiManager *self, const gchar *s
         return searched_vdi_pool_widget;
 
     for (i = 0; i < self->pool_widgets_array->len; ++i) {
-        VdiPoolWidget *vdi_pool_widget = g_array_index(self->pool_widgets_array, VdiPoolWidget*, i);
+        VdiPoolWidget *vdi_pool_widget = g_ptr_array_index(self->pool_widgets_array, i);
 
         if (g_strcmp0(searched_id, vdi_pool_widget->pool_id) == 0) {
             searched_vdi_pool_widget = vdi_pool_widget;
@@ -452,13 +458,21 @@ static gboolean on_window_deleted_cb(VdiManager *self)
     return TRUE;
 }
 // open user settings
-static void btn_open_user_settings_clicked(GtkButton *button G_GNUC_UNUSED, VdiManager *self) {
+static void btn_open_vdi_settings_clicked(GtkButton *button G_GNUC_UNUSED, VdiManager *self) {
 
     g_info("%s", (const char *)__func__);
     vdi_user_settings_widget_show(GTK_WINDOW(self->window));
 }
+static void btn_open_vm_conn_settings_clicked(GtkButton *button G_GNUC_UNUSED, VdiManager *self) {
+    GtkResponseType res = remote_viewer_start_settings_dialog(&self->connect_settings_dialog,
+                                                              self->p_conn_data,
+                                                              NULL,
+                                                              GTK_WINDOW(self->window),
+                                                              TRUE);
+    (void)res;
+}
 // refresh button pressed callback
-static void on_button_renew_clicked(GtkButton *button G_GNUC_UNUSED, VdiManager *self) {
+static void on_btn_update_clicked(GtkButton *button G_GNUC_UNUSED, VdiManager *self) {
 
     g_info("%s", (const char *)__func__);
     vdi_ws_client_send_user_gui(vdi_session_get_ws_client()); // notify server
@@ -526,7 +540,7 @@ static void favorite_pool_menu_item_toggled(GtkCheckMenuItem* check_menu_item, V
     VdiManager *self = (VdiManager *)vdi_pool_widget->vdi_manager;
 
     if (!self->is_favorites_supported_by_server) {
-        vdi_manager_set_msg(self, _("VeiL Broker version > 4.0.0 is required"), TRUE);
+        vdi_manager_set_msg(self, _("VeiL Broker version => 4.1.0 is required"), TRUE);
         return;
     }
 
@@ -539,6 +553,16 @@ static void favorite_pool_menu_item_toggled(GtkCheckMenuItem* check_menu_item, V
     task_data->pool_id = g_strdup(vdi_pool_widget->pool_id);
 
     execute_async_task(vdi_session_set_pool_favorite_task, NULL, task_data, NULL);
+
+    // remove pool widget when t's removed from favorites and only favorites must be shown
+    gboolean show_only_favorites = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(self->btn_show_only_favorites));
+    if (!is_active && show_only_favorites) {
+        vdi_manager_disconnect_favorite_pool_menu_item_toggled_handle(self);
+        gboolean removed = g_ptr_array_remove(self->pool_widgets_array, vdi_pool_widget);
+        if (removed) {
+            destroy_vdi_pool_widget(vdi_pool_widget);
+        }
+    }
 }
 
 static void on_btn_show_only_favorites_toggled(GtkToggleButton *toggle_btn G_GNUC_UNUSED, gpointer user_data)
@@ -566,15 +590,13 @@ static gboolean on_vm_start_button_released(GtkButton *button,
 
         } else if (event->button == 3) { // right mouse btn
             // Show pool options
-            if (self->favorite_pool_menu_item_toggled_handle) {
-                g_signal_handler_disconnect(G_OBJECT(self->favorite_pool_menu_item),
-                                            self->favorite_pool_menu_item_toggled_handle);
-            }
-            self->favorite_pool_menu_item_toggled_handle = g_signal_connect(
-                    self->favorite_pool_menu_item, "toggled",
-                             G_CALLBACK(favorite_pool_menu_item_toggled), vdi_pool_widget);
+            vdi_manager_disconnect_favorite_pool_menu_item_toggled_handle(self);
             gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(
                     self->favorite_pool_menu_item), vdi_pool_widget->is_favorite);
+            self->favorite_pool_menu_item_toggled_handle = g_signal_connect(
+                    self->favorite_pool_menu_item, "toggled",
+                    G_CALLBACK(favorite_pool_menu_item_toggled), vdi_pool_widget);
+
             gtk_widget_show_all(self->pool_options_menu);
             gtk_menu_popup_at_widget(GTK_MENU(self->pool_options_menu), GTK_WIDGET(button),
                                      GDK_GRAVITY_EAST, GDK_GRAVITY_EAST, NULL);
@@ -646,20 +668,21 @@ static void vdi_manager_init(VdiManager *self)
     /* Create the widgets */
     self->builder = remote_viewer_util_load_ui("vdi_manager_form.glade");
     self->window = GTK_WIDGET(gtk_builder_get_object(self->builder, "vdi-main-window"));
-    self->btn_open_user_settings = GTK_WIDGET(gtk_builder_get_object(self->builder, "btn_open_user_settings"));
     self->btn_cancel_requests = GTK_WIDGET(gtk_builder_get_object(self->builder, "btn_cancel_requests"));
     self->btn_show_only_favorites = GTK_WIDGET(gtk_builder_get_object(
             self->builder, "btn_show_only_favorites"));
-    self->button_renew = GTK_WIDGET(gtk_builder_get_object(self->builder, "button-renew"));
+    self->btn_update = GTK_WIDGET(gtk_builder_get_object(self->builder, "btn_update"));
     self->button_quit = GTK_WIDGET(gtk_builder_get_object(self->builder, "button-quit"));
     self->vm_main_box = GTK_WIDGET(gtk_builder_get_object(self->builder, "vm_main_box"));
     self->status_label = GTK_WIDGET(gtk_builder_get_object(self->builder, "status_label"));
     self->vm_prep_progress_bar = GTK_WIDGET(gtk_builder_get_object(self->builder, "vm_prep_progress_bar"));
 
     self->gtk_flow_box = gtk_flow_box_new();
+    gtk_flow_box_set_homogeneous(GTK_FLOW_BOX(self->gtk_flow_box), TRUE);
     gtk_flow_box_set_max_children_per_line(GTK_FLOW_BOX(self->gtk_flow_box), 10);
     gtk_flow_box_set_selection_mode (GTK_FLOW_BOX(self->gtk_flow_box), GTK_SELECTION_NONE);
-    gtk_flow_box_set_column_spacing (GTK_FLOW_BOX(self->gtk_flow_box), 6);
+    gtk_flow_box_set_column_spacing (GTK_FLOW_BOX(self->gtk_flow_box), 10);
+    gtk_flow_box_set_row_spacing (GTK_FLOW_BOX(self->gtk_flow_box), 10);
     gtk_box_pack_start(GTK_BOX(self->vm_main_box), self->gtk_flow_box, FALSE, TRUE, 0);
 
     self->main_vm_spinner = GTK_WIDGET(gtk_builder_get_object(self->builder, "main_vm_spinner"));
@@ -667,15 +690,27 @@ static void vdi_manager_init(VdiManager *self)
 
     // Pool options menu
     self->pool_options_menu = gtk_menu_new();
-    self->favorite_pool_menu_item = gtk_check_menu_item_new_with_label(_("Add to favorite"));
+    self->favorite_pool_menu_item = gtk_check_menu_item_new_with_label(_("To favorites"));
     gtk_container_add(GTK_CONTAINER(self->pool_options_menu), self->favorite_pool_menu_item);
+
+    // VDI options
+    GtkWidget *settings_box = GTK_WIDGET(gtk_builder_get_object(self->builder, "settings_box"));
+    MultiButton *multi_button = multi_button_new(_("Settings"));
+    gtk_widget_set_name(GTK_WIDGET(multi_button), "vdi_setting_multi_btn");
+    GHashTable *buttons_data = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, NULL);
+    g_hash_table_insert(buttons_data, g_strdup(_("User settings")), btn_open_vdi_settings_clicked);
+    g_hash_table_insert(buttons_data, g_strdup(_("VM connection settings")),
+            btn_open_vm_conn_settings_clicked);
+
+    multi_button_add_buttons(multi_button, buttons_data, self);
+    g_hash_table_destroy(buttons_data);
+    gtk_container_add(GTK_CONTAINER(settings_box), GTK_WIDGET(multi_button));
 
     // connects
     g_signal_connect(self->btn_show_only_favorites, "toggled",
             G_CALLBACK(on_btn_show_only_favorites_toggled), self);
     g_signal_connect_swapped(self->window, "delete-event", G_CALLBACK(on_window_deleted_cb), self);
-    g_signal_connect(self->btn_open_user_settings, "clicked", G_CALLBACK(btn_open_user_settings_clicked), self);
-    g_signal_connect(self->button_renew, "clicked", G_CALLBACK(on_button_renew_clicked), self);
+    g_signal_connect(self->btn_update, "clicked", G_CALLBACK(on_btn_update_clicked), self);
     g_signal_connect(self->btn_cancel_requests, "clicked", G_CALLBACK(on_btn_cancel_requests_clicked), self);
     g_signal_connect(self->button_quit, "clicked", G_CALLBACK(on_button_quit_clicked), self);
     self->ws_conn_changed_handle = g_signal_connect(get_vdi_session_static(),
@@ -690,6 +725,8 @@ void vdi_manager_finish_job(VdiManager *self)
 {
     if (!self->is_active)
         return;
+
+    shutdown_loop(self->connect_settings_dialog.loop);
 
     // clear
     vdi_session_cancel_pending_requests();
@@ -719,7 +756,7 @@ void vdi_manager_show(VdiManager *self, ConnectSettingsData *conn_data)
         gtk_widget_set_tooltip_text(self->btn_show_only_favorites, "");
     } else {
         gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(self->btn_show_only_favorites), FALSE);
-        gtk_widget_set_tooltip_text(self->btn_show_only_favorites, _("VeiL Broker version > 4.0.0 is required"));
+        gtk_widget_set_tooltip_text(self->btn_show_only_favorites, _("VeiL Broker version => 4.1.0 is required"));
     }
 
     // show window

@@ -1,7 +1,76 @@
 
-n.n.n / 2022-01-20
+n.n.n / 2022-05-20
 ==================
 
+  * FEATURE TG-16761 CSS and translation
+  * FEATURE TG-16761 VM connection settings after login
+  * FEATURE TG-16761 Buttons names refactor
+  * FEATURE TG-16761 Fav pools fix
+  * FEATURE TG-16761 Settings after login. Draft
+  * FEATURE TG-16626 Merge feature_tg_16626 into dev
+
+1.12.0 / 2022-05-11
+===================
+
+  * Merge branch 'dev'
+  * FEATURE TG-16657 port for native rdp
+  * FEATURE TG-16657 Msg about loadplay connect/disconnect to server
+  * Merge feature_tg_16657 into dev
+  * FEATURE TG-16543 rdp port fix
+
+1.11.3 / 2022-05-03
+===================
+
+  * FEATURE TG-16540 Gui fix
+  * Merge fix_tg_16540 into dev
+  * FEATURE TG-16290 Merge feature_tg_16290 into dev
+
+1.11.2 / 2022-03-29
+===================
+
+  * FEATURE TG-16165 Added version data to login request
+  * FEATURE TG-16265 Compilation fix on Mac
+
+1.11.1 / 2022-03-25
+===================
+
+  * FIX TG-16239 App didnt work on windows if user had russian login name
+  * Merge branch 'feature_tg_16221' into 'master'
+  * FIX TG-16221 Fix rpm builds
+
+1.11.0 / 2022-03-24
+===================
+
+  * FEATURE TG-16024 Merge dev into master
+  * FEATURE TG-16024 RDP display fix
+  * FEATURE TG-16024 Fix on Windows
+  * FEATURE TG-16024 Gui fix
+  * FEATURE TG-16024 Auto domain update
+  * Merge feature_tg_16024 into dev
+  * Merge branch 'feature_tg_15994' into 'master'
+  * FEATURE TG-15994 Separate linux and win builds
+  * Merge branch 'feature_tg_15967' into 'master'
+  * FEATURE TG-15967 Fix alt9 build
+  * Merge branch 'feature_tg_15749' into 'master'
+  * FEATURE TG-15749 Add ansible roles for win builder
+  * FEATURE TG-15870 rdp window signal fix
+  * FEATURE TG-15870 Merge fix
+  * Merge feature_tg_15870 into dev
+  * Merge feature_tg_15870 into dev
+  * Merge feature_tg_15834 into dev
+  * Merge fix_tg_15829 into dev
+  * Merge feature_tg_15776 into dev
+  * FIX TG-15756 Tooltip displaying fix (Veil_connect/VeiL Connect)
+  * Merge branch 'fix_tg_15746' into 'master'
+  * FIX TG-15746 replase link to docs in installscript
+
+1.10.1 / 2022-02-02
+===================
+
+  * Merge dev into master
+  * Merge feature_tg_15675 into dev
+  * Merge branch 'feature_tg_15668' into 'master'
+  * FEATURE TG-15668 Move linux builds to openstack
   * Fix for building
 
 1.10.0 / 2022-01-20

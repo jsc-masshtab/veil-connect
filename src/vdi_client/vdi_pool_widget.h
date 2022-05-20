@@ -21,7 +21,7 @@
 
 typedef struct{
 
-    GtkWidget *main_widget;
+    GtkWidget *flow_box_child;
 
     GtkWidget *gtk_box;
     GtkWidget *gtk_overlay;

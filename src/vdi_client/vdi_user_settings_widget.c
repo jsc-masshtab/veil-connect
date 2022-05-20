@@ -224,6 +224,12 @@ static void on_check_btn_2fa_toggled(GtkToggleButton *button, VdiUserSettingsWid
     }
 }
 
+static void on_parent_hidden(GtkWidget *widget G_GNUC_UNUSED, gpointer user_data)
+{
+    VdiUserSettingsWidget *self = (VdiUserSettingsWidget *)user_data;
+    shutdown_loop(self->loop);
+}
+
 void vdi_user_settings_widget_show(GtkWindow *parent)
 {
     VdiUserSettingsWidget self = {};
@@ -253,8 +259,10 @@ void vdi_user_settings_widget_show(GtkWindow *parent)
     g_signal_connect(self.btn_generate_qr_code, "clicked", G_CALLBACK(on_btn_generate_qr_code_clicked), &self);
     g_signal_connect(self.btn_apply, "clicked", G_CALLBACK(on_btn_apply_clicked), &self);
     g_signal_connect(self.check_btn_2fa, "toggled", G_CALLBACK(on_check_btn_2fa_toggled), &self);
+    gulong parent_hide_sig_handler = g_signal_connect(parent, "hide",
+                                          G_CALLBACK(on_parent_hidden), &self);
 
-    // show
+    // Show
     gtk_window_set_transient_for(GTK_WINDOW(self.main_window), parent);
     gtk_window_set_position(GTK_WINDOW(self.main_window), GTK_WIN_POS_CENTER);
     gtk_widget_show_all(self.main_window);
@@ -266,6 +274,7 @@ void vdi_user_settings_widget_show(GtkWindow *parent)
     create_loop_and_launch(&self.loop);
 
     // clear
+    g_signal_handler_disconnect(G_OBJECT(parent), parent_hide_sig_handler);
     is_widget_active = FALSE;
     g_object_unref(self.builder);
     gtk_widget_destroy(self.main_window);

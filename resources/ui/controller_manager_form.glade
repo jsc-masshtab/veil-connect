@@ -53,9 +53,9 @@
               </packing>
             </child>
             <child>
-              <object class="GtkButton" id="button-renew">
+              <object class="GtkButton" id="btn_update">
                 <property name="label" translatable="yes" comments="Обновить">Update</property>
-                <property name="name">button-renew</property>
+                <property name="name">btn_update</property>
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
                 <property name="receives_default">True</property>

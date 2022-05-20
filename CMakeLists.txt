@@ -40,6 +40,8 @@ list(APPEND SRC_CODE
         src/about_dialog.c
         src/conn_info_dialog.h
         src/conn_info_dialog.c
+        src/multi_button.h
+        src/multi_button.c
 
 # virt_viewer
         src/virt_viewer/virt-viewer-resources.h

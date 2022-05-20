@@ -13,6 +13,7 @@
 
 #include "settings_data.h"
 #include "vdi_session.h"
+#include "remote-viewer-connect.h"
 
 
 #define TYPE_VDI_MANAGER         ( vdi_manager_get_type( ) )
@@ -37,8 +38,7 @@ struct _VdiManager
     GtkWidget *window;
 
     GtkWidget *button_quit;
-    GtkWidget *button_renew;
-    GtkWidget *btn_open_user_settings;
+    GtkWidget *btn_update;
     GtkWidget *btn_cancel_requests;
     GtkWidget *btn_show_only_favorites;
 
@@ -53,7 +53,7 @@ struct _VdiManager
     GtkWidget *favorite_pool_menu_item;
     gulong favorite_pool_menu_item_toggled_handle;
 
-    GArray *pool_widgets_array;
+    GPtrArray *pool_widgets_array;
 
     gulong ws_conn_changed_handle;
     gulong auth_fail_detected_handle;
@@ -65,6 +65,7 @@ struct _VdiManager
     gboolean is_favorites_supported_by_server;
 
     ConnectSettingsData *p_conn_data;
+    ConnectSettingsDialog connect_settings_dialog;
 };
 
 struct _VdiManagerClass

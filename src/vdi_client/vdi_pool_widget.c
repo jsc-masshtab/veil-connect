@@ -20,10 +20,6 @@ VdiPoolWidget* build_pool_widget(const gchar *pool_id, const gchar *pool_name,
     if (gtk_flow_box == NULL)
         return vdi_pool_widget;
 
-    //GtkFrame
-    vdi_pool_widget->main_widget = gtk_frame_new(NULL); // status
-    gtk_widget_set_name(vdi_pool_widget->main_widget, "vdi_pool_widget");
-
     vdi_pool_widget->gtk_box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
     gtk_widget_set_name(vdi_pool_widget->gtk_box, "vdi_pool_widget_box");
     
@@ -36,8 +32,6 @@ VdiPoolWidget* build_pool_widget(const gchar *pool_id, const gchar *pool_name,
     vdi_pool_widget->vm_spinner = gtk_spinner_new();
     gtk_overlay_add_overlay((GtkOverlay *)vdi_pool_widget->gtk_overlay, vdi_pool_widget->vm_spinner);
     gtk_overlay_set_overlay_pass_through((GtkOverlay *)vdi_pool_widget->gtk_overlay, vdi_pool_widget->vm_spinner, TRUE);
-
-    gtk_container_add((GtkContainer *)vdi_pool_widget->main_widget, vdi_pool_widget->gtk_overlay);
 
     // os image
     gchar *os_icon_path = NULL;
@@ -97,16 +91,21 @@ VdiPoolWidget* build_pool_widget(const gchar *pool_id, const gchar *pool_name,
     gtk_box_pack_start((GtkBox *)vdi_pool_widget->gtk_box,
             vdi_pool_widget->favorite_mark_image, TRUE, TRUE, 0);
 
-    // main_widget setup
-    gtk_flow_box_insert((GtkFlowBox *)gtk_flow_box, vdi_pool_widget->main_widget, 0);
+    // flow_box_child
+    vdi_pool_widget->flow_box_child = gtk_flow_box_child_new();
+    gtk_widget_set_name(vdi_pool_widget->flow_box_child, "vdi_pool_flow_box_child");
+    gtk_container_add(GTK_CONTAINER(vdi_pool_widget->flow_box_child), vdi_pool_widget->gtk_overlay);
+
+    // insert to gtk_flow_box
+    gtk_flow_box_insert(GTK_FLOW_BOX(gtk_flow_box), vdi_pool_widget->flow_box_child, 0);
 
     // if pool status is not ACTIVE them we disable the widget
     if (g_strcmp0(status, "ACTIVE") != 0) {
-        gtk_widget_set_sensitive(vdi_pool_widget->main_widget, FALSE);
-        gtk_frame_set_label(GTK_FRAME(vdi_pool_widget->main_widget), status);
+        gtk_widget_set_sensitive(vdi_pool_widget->gtk_box, FALSE);
+        gtk_widget_set_tooltip_text(vdi_pool_widget->gtk_overlay, status);
     }
 
-    gtk_widget_show_all(vdi_pool_widget->main_widget);
+    gtk_widget_show_all(vdi_pool_widget->flow_box_child);
 
     vdi_pool_widget->is_valid = TRUE;
     return vdi_pool_widget;
@@ -158,7 +157,7 @@ void destroy_vdi_pool_widget(VdiPoolWidget *vdi_pool_widget)
     gtk_widget_destroy(vdi_pool_widget->combobox_remote_protocol);
     gtk_widget_destroy(vdi_pool_widget->gtk_box);
     gtk_widget_destroy(vdi_pool_widget->gtk_overlay);
-    gtk_widget_destroy(vdi_pool_widget->main_widget);
+    gtk_widget_destroy(vdi_pool_widget->flow_box_child);
 
     free_memory_safely(&vdi_pool_widget->pool_id);
     free(vdi_pool_widget);

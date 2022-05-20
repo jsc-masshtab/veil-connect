@@ -369,7 +369,7 @@ btn_get_app_updates_clicked_cb(GtkButton *button G_GNUC_UNUSED, ConnectSettingsD
 {
     g_info("%s", (const char *)__func__);
     AppUpdater *app_updater = dialog_data->p_app_updater;
-    if (app_updater_is_getting_updates(app_updater))
+    if (app_updater == NULL || app_updater_is_getting_updates(app_updater))
         return;
 
 #ifdef __linux__
@@ -860,7 +860,8 @@ ok_button_clicked_cb(GtkButton *button G_GNUC_UNUSED, ConnectSettingsDialog *dia
 GtkResponseType remote_viewer_start_settings_dialog(ConnectSettingsDialog *self,
                                                     ConnectSettingsData *conn_data,
                                                     AppUpdater *app_updater,
-                                                    GtkWindow *parent)
+                                                    GtkWindow *parent,
+                                                    gboolean show_only_vm_conn_settings)
 {
     self->p_conn_data = conn_data;
     self->p_app_updater = app_updater;
@@ -868,6 +869,16 @@ GtkResponseType remote_viewer_start_settings_dialog(ConnectSettingsDialog *self,
 
     // gui widgets
     self->builder = remote_viewer_util_load_ui("start_settings_form.glade");
+
+    // hide general and service settings if required
+    if (show_only_vm_conn_settings) {
+        GtkWidget *general_settings_page = get_widget_from_builder(self->builder, "general_settings_page");
+        gtk_widget_set_visible(general_settings_page, FALSE);
+        gtk_widget_set_no_show_all(general_settings_page, TRUE);
+        GtkWidget *service_page = get_widget_from_builder(self->builder, "service_page");
+        gtk_widget_set_visible(service_page, FALSE);
+        gtk_widget_set_no_show_all(service_page, TRUE);
+    }
 
     self->window = get_widget_from_builder(self->builder, "start-settings-window");
     // main buttons
@@ -996,7 +1007,7 @@ GtkResponseType remote_viewer_start_settings_dialog(ConnectSettingsDialog *self,
     self->btn_open_doc = get_widget_from_builder(self->builder, "btn_open_doc");
 
     // В этот момент может происходить процесс обновления софта.  Setup gui
-    if (app_updater_is_getting_updates(self->p_app_updater)) {
+    if (self->p_app_updater && app_updater_is_getting_updates(self->p_app_updater)) {
 
         gchar *app_updater_cur_status_msg = app_updater_get_cur_status_msg(self->p_app_updater);
         gtk_label_set_text(GTK_LABEL(self->check_updates_label), app_updater_cur_status_msg);
@@ -1055,10 +1066,13 @@ GtkResponseType remote_viewer_start_settings_dialog(ConnectSettingsDialog *self,
             g_signal_connect(self->app_mode_combobox, "changed",
                              G_CALLBACK(on_app_mode_combobox_changed), self);
 
-    gulong st_msg_hdle = g_signal_connect(self->p_app_updater, "status-msg-changed",
-                                          G_CALLBACK(on_app_updater_status_msg_changed), self);
-    gulong state_hdle = g_signal_connect(self->p_app_updater, "state-changed",
-                                         G_CALLBACK(on_app_updater_status_changed), self);
+    gulong st_msg_hdle = 0, state_hdle = 0;
+    if (self->p_app_updater) {
+        st_msg_hdle = g_signal_connect(self->p_app_updater, "status-msg-changed",
+                                              G_CALLBACK(on_app_updater_status_msg_changed), self);
+        state_hdle = g_signal_connect(self->p_app_updater, "state-changed",
+                                             G_CALLBACK(on_app_updater_status_changed), self);
+    }
 
     // show window
     gtk_window_set_transient_for(GTK_WINDOW(self->window), parent);
@@ -1076,8 +1090,10 @@ GtkResponseType remote_viewer_start_settings_dialog(ConnectSettingsDialog *self,
     settings_data_save_all(self->p_conn_data);
 
     // disconnect signals from external sources
-    g_signal_handler_disconnect(self->p_app_updater, st_msg_hdle);
-    g_signal_handler_disconnect(self->p_app_updater, state_hdle);
+    if (st_msg_hdle)
+        g_signal_handler_disconnect(self->p_app_updater, st_msg_hdle);
+    if (state_hdle)
+        g_signal_handler_disconnect(self->p_app_updater, state_hdle);
 
     // clear
     usb_selector_widget_free(self->usb_selector_widget);
