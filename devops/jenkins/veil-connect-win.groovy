@@ -274,9 +274,12 @@ pipeline {
                     steps {
                         withCredentials([sshUserPrivateKey(credentialsId: 'uploader_ssh_key.id_rsa', keyFileVariable: 'SSH_KEY')]) {
                             bat script: '''
-                                ssh -o StrictHostKeyChecking=no -i %SSH_KEY% uploader@mothership.bazalt.team mkdir -p /local_storage/veil-connect/windows/%VERSION%
+                                icacls %SSH_KEY% /inheritance:r
+                                icacls %SSH_KEY% /grant:r "%username%":"(R)"
+
+                                ssh -o StrictHostKeyChecking=no -i %SSH_KEY% uploader@mothership.bazalt.team "mkdir -p /local_storage/veil-connect/windows/%VERSION%"
                                 scp -o StrictHostKeyChecking=no -i %SSH_KEY% veil-connect-installer.exe uploader@mothership.bazalt.team:/local_storage/veil-connect/windows/%VERSION%/veil-connect_%VERSION%-x64-installer.exe
-                                ssh -o StrictHostKeyChecking=no -i %SSH_KEY% uploader@192.168.10.144 "cd /local_storage/veil-connect/windows/; ln -sfT %VERSION% latest"
+                                ssh -o StrictHostKeyChecking=no -i %SSH_KEY% uploader@mothership.bazalt.team "cd /local_storage/veil-connect/windows/; ln -sfT %VERSION% latest"
                             '''
                         }
                     }
