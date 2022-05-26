@@ -207,6 +207,13 @@ void usb_selector_widget_enable_auto_toggle(UsbSelectorWidget *self)
                      G_CALLBACK(usb_selector_widget_on_usb_device_toggled), self);
 }
 
+static void
+usb_selector_widget_parent_hidden(GtkWidget *widget G_GNUC_UNUSED, gpointer user_data)
+{
+    UsbSelectorWidget *self = (UsbSelectorWidget *)user_data;
+    gtk_widget_hide(self->main_window);
+}
+
 void usb_selector_widget_show_and_start_loop(UsbSelectorWidget *self, GtkWindow *parent)
 {
     gtk_window_set_transient_for(GTK_WINDOW(self->main_window), parent);
@@ -214,10 +221,19 @@ void usb_selector_widget_show_and_start_loop(UsbSelectorWidget *self, GtkWindow 
     gtk_window_set_destroy_with_parent(GTK_WINDOW(self->main_window), TRUE);
     gtk_window_set_position(GTK_WINDOW(self->main_window), GTK_WIN_POS_CENTER);
     gtk_window_set_default_size (GTK_WINDOW(self->main_window),  1100, 50);
+
+    gulong sig_handler = 0;
+    if (parent)
+        sig_handler = g_signal_connect(parent, "hide",
+                G_CALLBACK(usb_selector_widget_parent_hidden), self);
+
+
     gtk_widget_show_all(self->main_window);
 
     create_loop_and_launch(&self->loop);
 
+    if (sig_handler)
+        g_signal_handler_disconnect(G_OBJECT(parent), sig_handler);
     gtk_widget_hide(self->main_window);
 }
 

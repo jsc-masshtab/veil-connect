@@ -726,7 +726,7 @@ void vdi_manager_finish_job(VdiManager *self)
     if (!self->is_active)
         return;
 
-    shutdown_loop(self->connect_settings_dialog.loop);
+    remote_viewer_start_settings_finish_job(&self->connect_settings_dialog);
 
     // clear
     vdi_session_cancel_pending_requests();

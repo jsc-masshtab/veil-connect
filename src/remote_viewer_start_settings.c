@@ -1099,7 +1099,15 @@ GtkResponseType remote_viewer_start_settings_dialog(ConnectSettingsDialog *self,
     usb_selector_widget_free(self->usb_selector_widget);
     g_object_unref(self->builder);
     gtk_widget_destroy(self->window);
+    self->window = NULL;
     self->loadplay_config_gui = NULL;
 
     return self->dialog_window_response;
+}
+
+void remote_viewer_start_settings_finish_job(ConnectSettingsDialog *self)
+{
+    if (self->window)
+        gtk_widget_hide(self->window);
+    shutdown_loop(self->loop);
 }

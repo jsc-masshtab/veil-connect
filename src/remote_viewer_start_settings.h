@@ -156,5 +156,6 @@ GtkResponseType remote_viewer_start_settings_dialog(ConnectSettingsDialog *self,
                                                     GtkWindow *parent,
                                                     gboolean show_only_vm_conn_settings);
 
+void remote_viewer_start_settings_finish_job(ConnectSettingsDialog *self);
 
 #endif // REMOTE_VIEWER_START_SETTINGS_H
