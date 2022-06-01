@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- Generated with glade 3.22.2 -->
+<!-- Generated with glade 3.22.1 -->
 <interface>
   <requires lib="gtk+" version="3.0"/>
   <object class="GtkImage" id="image_cancel">
@@ -78,23 +78,6 @@
               </packing>
             </child>
             <child>
-              <object class="GtkButton" id="btn_cancel_requests">
-                <property name="label" translatable="yes" comments="Отменить">Cancel</property>
-                <property name="name">btn_cancel_requests</property>
-                <property name="visible">True</property>
-                <property name="sensitive">False</property>
-                <property name="can_focus">True</property>
-                <property name="receives_default">True</property>
-                <property name="image">image_cancel</property>
-                <property name="always_show_image">True</property>
-              </object>
-              <packing>
-                <property name="expand">False</property>
-                <property name="fill">True</property>
-                <property name="position">2</property>
-              </packing>
-            </child>
-            <child>
               <object class="GtkButton" id="btn_update">
                 <property name="label" translatable="yes" comments="Обновить">Update</property>
                 <property name="name">btn_update</property>
@@ -104,6 +87,23 @@
                 <property name="halign">baseline</property>
                 <property name="valign">baseline</property>
                 <property name="image">image_update</property>
+                <property name="always_show_image">True</property>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="fill">True</property>
+                <property name="position">2</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkButton" id="btn_cancel_requests">
+                <property name="label" translatable="yes" comments="Отменить">Cancel</property>
+                <property name="name">btn_cancel_requests</property>
+                <property name="visible">True</property>
+                <property name="sensitive">False</property>
+                <property name="can_focus">True</property>
+                <property name="receives_default">True</property>
+                <property name="image">image_cancel</property>
                 <property name="always_show_image">True</property>
               </object>
               <packing>

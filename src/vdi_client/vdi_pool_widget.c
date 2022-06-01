@@ -6,6 +6,8 @@
  * Author: http://mashtab.org/
  */
 
+#include <stdlib.h>
+
 #include "vdi_pool_widget.h"
 
 
