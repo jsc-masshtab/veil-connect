@@ -20,7 +20,6 @@
 #include "jsonhandler.h"
 #include "atomic_string.h"
 
-#define HTTP_RESPONSE_TIOMEOUT 20
 
 typedef enum{
     USER_PERMISSION_NO_PERMISSIONS                   = 0,

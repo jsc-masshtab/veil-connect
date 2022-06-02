@@ -98,27 +98,27 @@ static void vdi_manager_set_msg(VdiManager *self, const gchar *message, gboolean
 static void set_vdi_client_state(VdiManager *self, VdiClientState vdi_client_state,
         const gchar *message, gboolean is_error_message)
 {
-    gboolean controls_blocked = FALSE;
+    gboolean controls_sensitive = FALSE;
     gboolean btn_cancel_sensitive = FALSE;
 
     switch (vdi_client_state) {
         case VDI_RECEIVED_RESPONSE: {
             if (self->main_vm_spinner)
                 gtk_widget_hide (GTK_WIDGET(self->main_vm_spinner));
-            controls_blocked = TRUE;
+            controls_sensitive = TRUE;
             break;
         }
 
         case VDI_WAITING_FOR_POOL_DATA: {
             if (self->main_vm_spinner)
                 gtk_widget_show (GTK_WIDGET(self->main_vm_spinner));
-            controls_blocked = FALSE;
+            controls_sensitive = FALSE;
             btn_cancel_sensitive = TRUE;
             break;
         }
 
         case VDI_WAITING_FOR_VM_FROM_POOL: {
-            controls_blocked = FALSE;
+            controls_sensitive = FALSE;
             btn_cancel_sensitive = TRUE;
             break;
         }
@@ -128,11 +128,14 @@ static void set_vdi_client_state(VdiManager *self, VdiClientState vdi_client_sta
 
     // control widgets state
     if (self->gtk_flow_box)
-        gtk_widget_set_sensitive(self->gtk_flow_box, controls_blocked);
+        gtk_widget_set_sensitive(self->gtk_flow_box, controls_sensitive);
     if (self->btn_update)
-        gtk_widget_set_sensitive(self->btn_update, controls_blocked);
+        gtk_widget_set_sensitive(self->btn_update, controls_sensitive);
     if (self->button_quit)
-        gtk_widget_set_sensitive(self->button_quit, controls_blocked);
+        gtk_widget_set_sensitive(self->button_quit, controls_sensitive);
+    if (self->btn_show_only_favorites)
+        gtk_widget_set_sensitive(self->btn_show_only_favorites, controls_sensitive);
+    
     gtk_widget_set_sensitive(self->btn_cancel_requests, btn_cancel_sensitive);
 
     vdi_manager_set_msg(self, message, is_error_message);
@@ -569,6 +572,12 @@ static void on_btn_show_only_favorites_toggled(GtkToggleButton *toggle_btn G_GNU
 {
     VdiManager *self = (VdiManager *)user_data;
     vdi_ws_client_send_user_gui(vdi_session_get_ws_client()); // notify server
+
+    if (!self->is_favorites_supported_by_server) {
+        vdi_manager_set_msg(self, _("VeiL Broker version => 4.1.0 is required"), TRUE);
+        return;
+    }
+
     refresh_vdi_pool_data_async(self);
 }
 
@@ -751,13 +760,6 @@ void vdi_manager_show(VdiManager *self, ConnectSettingsData *conn_data)
     // favorite pools
     self->is_favorites_supported_by_server =
             virt_viewer_compare_version(get_vdi_session_static()->vdi_version.string, "4.0.0") > 0;
-    gtk_widget_set_sensitive(self->btn_show_only_favorites, self->is_favorites_supported_by_server);
-    if (self->is_favorites_supported_by_server) {
-        gtk_widget_set_tooltip_text(self->btn_show_only_favorites, "");
-    } else {
-        gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(self->btn_show_only_favorites), FALSE);
-        gtk_widget_set_tooltip_text(self->btn_show_only_favorites, _("VeiL Broker version => 4.1.0 is required"));
-    }
 
     // show window
     g_autofree gchar *title = NULL; // %s  Время входа: %s  -  %s
