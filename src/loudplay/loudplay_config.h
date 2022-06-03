@@ -6,17 +6,17 @@
  * Author: http://mashtab.org/
  */
 
-#ifndef VEIL_CONNECT_LOADPLAY_CONFIG_H
-#define VEIL_CONNECT_LOADPLAY_CONFIG_H
+#ifndef VEIL_CONNECT_LOUDPLAY_CONFIG_H
+#define VEIL_CONNECT_LOUDPLAY_CONFIG_H
 
 
-#define TYPE_LOADPLAY_CONFIG (loadplay_config_get_type ())
-#define LOADPLAY_CONFIG(obj) (G_TYPE_CHECK_INSTANCE_CAST ((obj), TYPE_LOADPLAY_CONFIG, LoadPlayConfig))
+#define TYPE_LOUDPLAY_CONFIG (loudplay_config_get_type ())
+#define LOUDPLAY_CONFIG(obj) (G_TYPE_CHECK_INSTANCE_CAST ((obj), TYPE_LOUDPLAY_CONFIG, LoudPlayConfig))
 
-typedef struct _LoadPlayConfig        LoadPlayConfig;
-typedef struct _LoadPlayConfigClass   LoadPlayConfigClass;
+typedef struct _LoudPlayConfig        LoudPlayConfig;
+typedef struct _LoudPlayConfigClass   LoudPlayConfigClass;
 
-struct _LoadPlayConfig
+struct _LoudPlayConfig
 {
     GObject parent_instance;
 
@@ -48,21 +48,21 @@ struct _LoadPlayConfig
     gboolean rtp_retransmission;
 
     /* instance members */
-    gchar *loadplay_client_path;
+    gchar *loudplay_client_path;
 };
 
-struct _LoadPlayConfigClass
+struct _LoudPlayConfigClass
 {
     GObjectClass parent_class;
 
     /* class members */
 };
 
-/* used by TYPE_LOADPLAY_CONFIG */
+/* used by TYPE_LOUDPLAY_CONFIG */
 
 
-GType loadplay_config_get_type (void);
+GType loudplay_config_get_type (void);
 
-gchar *loadplay_config_get_file_name(void);
+gchar *loudplay_config_get_file_name(void);
 
-#endif //VEIL_CONNECT_LOADPLAY_CONFIG_H
+#endif //VEIL_CONNECT_LOUDPLAY_CONFIG_H

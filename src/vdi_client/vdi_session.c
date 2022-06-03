@@ -729,8 +729,17 @@ void vdi_session_get_vm_from_pool_task(GTask       *task,
     json_builder_begin_object(builder);
     // remote_protocol
     json_builder_set_member_name(builder, "remote_protocol");
-    json_builder_add_string_value(builder, util_remote_protocol_to_str(
-            vdi_session_static->current_remote_protocol));
+
+    // Для поддержки старых версий с неверным написанием протокола (<= 4.1.0)
+    g_autofree gchar *vdi_version = NULL;
+    vdi_version = atomic_string_get(&vdi_session_static->vdi_version);
+    if (vdi_session_static->current_remote_protocol== LOUDPLAY_PROTOCOL &&
+    virt_viewer_compare_version(vdi_version, "4.1.0") <= 0) {
+            json_builder_add_string_value(builder, "LOADPLAY");
+    } else {
+        const gchar *protocol = util_remote_protocol_to_str(vdi_session_static->current_remote_protocol);
+        json_builder_add_string_value(builder, protocol);
+    }
 
     if (task_data) {
         RequestVmFromPoolData *vm_request_data = (RequestVmFromPoolData *)task_data;

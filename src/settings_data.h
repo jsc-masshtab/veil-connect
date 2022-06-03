@@ -13,7 +13,7 @@
 
 #include "vdi_session.h"
 #include "remote-viewer-util.h"
-#include "loadplay/loadplay_config.h"
+#include "loudplay/loudplay_config.h"
 
 typedef enum{
     GLOBAL_APP_MODE_VDI, // Режим подключения к VDI
@@ -148,8 +148,8 @@ typedef struct{
     // X2Go
     VeilX2GoSettings x2Go_settings;
 
-    // Loadplay
-    LoadPlayConfig *loadplay_config;
+    // Loudplay
+    LoudPlayConfig *loudplay_config;
 
     // Sevice settings
     GlobalAppMode global_app_mode;
@@ -189,9 +189,9 @@ void x2go_settings_read(VeilX2GoSettings *x2go_settings);
 void x2go_settings_write(VeilX2GoSettings *x2go_settings);
 void x2go_settings_clear(VeilX2GoSettings *x2go_settings);
 
-// Loadplay
-void loadplay_settings_read(LoadPlayConfig **p_loadplay_config);
-void loadplay_settings_write(LoadPlayConfig *loadplay_config);
-void loadplay_settings_clear(LoadPlayConfig **p_loadplay_config);
+// Loudplay
+void loudplay_settings_read(LoudPlayConfig **p_loudplay_config);
+void loudplay_settings_write(LoudPlayConfig *loudplay_config);
+void loudplay_settings_clear(LoudPlayConfig **p_loudplay_config);
 
 #endif //VEIL_CONNECT_SETTINGS_DATA_H

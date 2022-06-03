@@ -84,7 +84,7 @@ remote_viewer_startup(GApplication *app)
     g_signal_connect(self->virt_viewer_obj, "job-finished", G_CALLBACK(on_vm_connection_finished), self);
     g_signal_connect(self->virt_viewer_obj, "quit-requested", G_CALLBACK(on_quit_requested), self);
 
-    g_signal_connect(self->loadplay_launcher, "job-finished", G_CALLBACK(on_vm_connection_finished), self);
+    g_signal_connect(self->loudplay_launcher, "job-finished", G_CALLBACK(on_vm_connection_finished), self);
 
     self->remote_viewer_connect = remote_viewer_connect_new();
     g_signal_connect(self->remote_viewer_connect, "show-vm-selector-requested",
@@ -217,7 +217,7 @@ remote_viewer_init(RemoteViewer *self)
 #if defined(_WIN32) || defined(__MACH__)
     self->native_rdp_launcher = native_rdp_launcher_new();
 #endif
-    self->loadplay_launcher = loadplay_launcher_new();
+    self->loudplay_launcher = loudplay_launcher_new();
 
     // app updater entity
     self->app_updater = app_updater_new();
@@ -251,7 +251,7 @@ remote_viewer_new(gboolean unique_app)
 void remote_viewer_free_resources(RemoteViewer *self)
 {
     settings_data_save_all(&self->conn_data);
-    g_object_unref(self->loadplay_launcher);
+    g_object_unref(self->loudplay_launcher);
 #if defined(_WIN32) || defined(__MACH__)
     g_object_unref(self->native_rdp_launcher);
 #endif
@@ -281,7 +281,7 @@ void remote_viewer_free_resources(RemoteViewer *self)
 static void
 on_logged_out(gpointer data G_GNUC_UNUSED, const gchar *reason_phrase, RemoteViewer *self)
 {
-    loadplay_launcher_stop(self->loadplay_launcher);
+    loudplay_launcher_stop(self->loudplay_launcher);
 #if  defined(_WIN32) || defined(__MACH__)
     native_rdp_launcher_stop(self->native_rdp_launcher);
 #endif
@@ -338,8 +338,8 @@ connect_to_vm(gpointer data G_GNUC_UNUSED, RemoteViewer *self)
         x2go_launcher_start(self->x2go_launcher, self->conn_data.user, self->conn_data.password, &self->conn_data);
     } else if (protocol == SPICE_PROTOCOL || protocol == SPICE_DIRECT_PROTOCOL) {
         virt_viewer_app_instant_start(self->virt_viewer_obj, &self->conn_data);
-    } else if (protocol == LOADPLAY_PROTOCOL) {
-        loadplay_launcher_start(self->loadplay_launcher, NULL, &self->conn_data);
+    } else if (protocol == LOUDPLAY_PROTOCOL) {
+        loudplay_launcher_start(self->loudplay_launcher, NULL, &self->conn_data);
     } else {
         g_autofree gchar *msg = NULL;
         msg = g_strdup_printf(_("Protocol is not supported: %s"), util_remote_protocol_to_str(protocol));

@@ -14,7 +14,7 @@ n.n.n / 2022-05-20
 
   * Merge branch 'dev'
   * FEATURE TG-16657 port for native rdp
-  * FEATURE TG-16657 Msg about loadplay connect/disconnect to server
+  * FEATURE TG-16657 Msg about loudplay connect/disconnect to server
   * Merge feature_tg_16657 into dev
   * FEATURE TG-16543 rdp port fix
 

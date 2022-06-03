@@ -164,11 +164,11 @@ list(APPEND SRC_CODE
         src/controller_client/controller_manager.h
         src/controller_client/controller_manager.c
 
-#loadplay
-        src/loadplay/loadplay_config.h
-        src/loadplay/loadplay_config.c
-        src/loadplay/loadplay_launcher.h
-        src/loadplay/loadplay_launcher.c
+#loudplay
+        src/loudplay/loudplay_config.h
+        src/loudplay/loudplay_config.c
+        src/loudplay/loudplay_launcher.c
+        src/loudplay/loudplay_launcher.h
 )
 
 # usb_redirection
