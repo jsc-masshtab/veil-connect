@@ -1379,7 +1379,7 @@ msgid "X2GO"
 msgstr ""
 
 #: ../resources/ui/start_settings_form.glade.h:25
-msgid "LOADPLAY"
+msgid "LOUDPLAY"
 msgstr ""
 
 #. Основные
@@ -2054,8 +2054,8 @@ msgid "adsl"
 msgstr ""
 
 #: ../resources/ui/start_settings_form.glade.h:204
-msgid "Path to loadplay client"
-msgstr "Путь к клиенту loadplay"
+msgid "Path to loudplay client"
+msgstr "Путь к клиенту loudplay"
 
 #. Архивировать логи
 #: ../resources/ui/start_settings_form.glade.h:206

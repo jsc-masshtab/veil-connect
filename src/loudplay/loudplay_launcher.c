@@ -6,40 +6,40 @@
  * Author: http://mashtab.org/
  */
 
-#include "loadplay_launcher.h"
+#include "loudplay_launcher.h"
 #include "vdi_event.h"
 
-G_DEFINE_TYPE( LoadplayLauncher, loadplay_launcher, G_TYPE_OBJECT )
+G_DEFINE_TYPE( LoudplayLauncher, loudplay_launcher, G_TYPE_OBJECT )
 
 
-static void loadplay_launcher_finalize(GObject *object)
+static void loudplay_launcher_finalize(GObject *object)
 {
-    GObjectClass *parent_class = G_OBJECT_CLASS( loadplay_launcher_parent_class );
+    GObjectClass *parent_class = G_OBJECT_CLASS( loudplay_launcher_parent_class );
     ( *parent_class->finalize )( object );
 }
 
-static void loadplay_launcher_class_init(LoadplayLauncherClass *klass )
+static void loudplay_launcher_class_init(LoudplayLauncherClass *klass )
 {
     GObjectClass *gobject_class = G_OBJECT_CLASS(klass);
-    gobject_class->finalize = loadplay_launcher_finalize;
+    gobject_class->finalize = loudplay_launcher_finalize;
 
     // signals
     g_signal_new("job-finished",
                  G_OBJECT_CLASS_TYPE(gobject_class),
                  G_SIGNAL_RUN_FIRST,
-                 G_STRUCT_OFFSET(LoadplayLauncherClass, job_finished),
+                 G_STRUCT_OFFSET(LoudplayLauncherClass, job_finished),
                  NULL, NULL,
                  g_cclosure_marshal_VOID__VOID,
                  G_TYPE_NONE,
                  0);
 }
 
-static void loadplay_launcher_init(LoadplayLauncher *self G_GNUC_UNUSED)
+static void loudplay_launcher_init(LoudplayLauncher *self G_GNUC_UNUSED)
 {
     g_info("%s", (const char *) __func__);
 }
 
-static void loadplay_launcher_cb_child_watch(GPid pid, gint status, LoadplayLauncher *self)
+static void loudplay_launcher_cb_child_watch(GPid pid, gint status, LoudplayLauncher *self)
 {
     g_info("FINISHED. %s Status: %i", __func__, status);
     g_spawn_close_pid(pid);
@@ -56,16 +56,16 @@ static void loadplay_launcher_cb_child_watch(GPid pid, gint status, LoadplayLaun
     g_signal_emit_by_name(self, "job-finished");
 }
 
-LoadplayLauncher *loadplay_launcher_new()
+LoudplayLauncher *loudplay_launcher_new()
 {
-    return LOADPLAY_LAUNCHER( g_object_new( TYPE_LOADPLAY_LAUNCHER, NULL ) );
+    return LOUDPLAY_LAUNCHER( g_object_new( TYPE_LOUDPLAY_LAUNCHER, NULL ) );
 }
 
-void loadplay_launcher_start(LoadplayLauncher *self, GtkWindow *parent, ConnectSettingsData *conn_data)
+void loudplay_launcher_start(LoudplayLauncher *self, GtkWindow *parent, ConnectSettingsData *conn_data)
 {
     g_info("%s", (const char *) __func__);
 
-    if (conn_data == NULL || conn_data->loadplay_config == NULL) {
+    if (conn_data == NULL || conn_data->loudplay_config == NULL) {
         g_signal_emit_by_name(self, "job-finished");
         return;
     }
@@ -73,29 +73,29 @@ void loadplay_launcher_start(LoadplayLauncher *self, GtkWindow *parent, ConnectS
     // write current url to config file
     g_autofree gchar *url = NULL;
     url = g_strdup_printf("rtsp://%s:%i/desktop", conn_data->ip, conn_data->port);
-    g_object_set(conn_data->loadplay_config, "server-url", url, NULL);
-    loadplay_settings_write(conn_data->loadplay_config);
+    g_object_set(conn_data->loudplay_config, "server-url", url, NULL);
+    loudplay_settings_write(conn_data->loudplay_config);
 
     self->parent_widget = parent;
 
     // launch process
     gchar *argv[3] = {};
 
-    const gchar *loadplay_dir = conn_data->loadplay_config->loadplay_client_path;
+    const gchar *loudplay_dir = conn_data->loudplay_config->loudplay_client_path;
 #ifdef G_OS_WIN32
-    argv[0] = g_build_filename(loadplay_dir, "bin", "streaming.exe", NULL);
+    argv[0] = g_build_filename(loudplay_dir, "bin", "streaming.exe", NULL);
 #else
-    argv[0] = g_build_filename(loadplay_dir, "bin", "streaming", NULL);
+    argv[0] = g_build_filename(loudplay_dir, "bin", "streaming", NULL);
 #endif
     g_info("app path: %s", argv[0]);
 
-    g_autofree gchar *loadplay_config_file_name = NULL;
-    loadplay_config_file_name = loadplay_config_get_file_name();
-    argv[1] = g_locale_to_utf8(loadplay_config_file_name, -1, NULL, NULL, NULL);
+    g_autofree gchar *loudplay_config_file_name = NULL;
+    loudplay_config_file_name = loudplay_config_get_file_name();
+    argv[1] = g_locale_to_utf8(loudplay_config_file_name, -1, NULL, NULL, NULL);
     g_info("app config path: %s", argv[1]);
 
     GError *error = NULL;
-    self->is_launched = g_spawn_async(loadplay_dir, argv, NULL,
+    self->is_launched = g_spawn_async(loudplay_dir, argv, NULL,
                                       G_SPAWN_DO_NOT_REAP_CHILD | G_SPAWN_SEARCH_PATH, NULL,
                                       NULL, &self->pid, &error);
 
@@ -109,7 +109,7 @@ void loadplay_launcher_start(LoadplayLauncher *self, GtkWindow *parent, ConnectS
             err_msg = error->message;
 
         g_autofree gchar *full_err_msg = NULL;
-        full_err_msg = g_strdup_printf("LOADPLAY CLIENT SPAWN FAILED. %s", err_msg);
+        full_err_msg = g_strdup_printf("LOUDPLAY CLIENT SPAWN FAILED. %s", err_msg);
         g_warning("%s", full_err_msg);
         show_msg_box_dialog(NULL, full_err_msg);
 
@@ -119,12 +119,12 @@ void loadplay_launcher_start(LoadplayLauncher *self, GtkWindow *parent, ConnectS
     }
 
     // stop process callback
-    g_child_watch_add(self->pid, (GChildWatchFunc)loadplay_launcher_cb_child_watch, self);
+    g_child_watch_add(self->pid, (GChildWatchFunc)loudplay_launcher_cb_child_watch, self);
 
     vdi_event_vm_changed_notify(vdi_session_get_current_vm_id(), VDI_EVENT_TYPE_VM_CONNECTED);
 }
 
-void loadplay_launcher_stop(LoadplayLauncher *self)
+void loudplay_launcher_stop(LoudplayLauncher *self)
 {
     if (self->pid) {
         terminate_process(self->pid);

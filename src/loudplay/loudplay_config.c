@@ -12,17 +12,17 @@
 #include <gio/gio.h>
 #include <gtk/gtk.h>
 
-#include "loadplay_config.h"
+#include "loudplay_config.h"
 #include "remote-viewer-util.h"
 
 
-G_DEFINE_TYPE( LoadPlayConfig, loadplay_config, G_TYPE_OBJECT )
+G_DEFINE_TYPE( LoudPlayConfig, loudplay_config, G_TYPE_OBJECT )
 
-gchar *loadplay_config_get_file_name(void)
+gchar *loudplay_config_get_file_name(void)
 {
     g_autofree gchar *file_name_dir = NULL;
     file_name_dir = g_build_filename(g_get_user_config_dir(), APP_FILES_DIRECTORY_NAME,
-                                     "loadplay_data", NULL);
+                                     "loudplay_data", NULL);
     g_mkdir_with_parents(file_name_dir, 0755);
 
     gchar *file_name = g_build_filename(file_name_dir, "client.cfg", NULL);
@@ -34,7 +34,7 @@ static void
 set_property (GObject *object, guint property_id G_GNUC_UNUSED,
               const GValue *value G_GNUC_UNUSED, GParamSpec *pspec) {
 
-    LoadPlayConfig *self = LOADPLAY_CONFIG(object);
+    LoudPlayConfig *self = LOUDPLAY_CONFIG(object);
 
     if (g_strcmp0(pspec->name, "log-level") == 0)
         update_string_safely(&self->log_level, g_value_get_string(value));
@@ -91,7 +91,7 @@ static void
 get_property (GObject *object, guint property_id G_GNUC_UNUSED,
               GValue *value, GParamSpec *pspec)
 {
-    LoadPlayConfig *self = LOADPLAY_CONFIG(object);
+    LoudPlayConfig *self = LOUDPLAY_CONFIG(object);
 
     if (g_strcmp0(pspec->name, "log-level") == 0)
         g_value_set_static_string(value, self->log_level);
@@ -146,7 +146,7 @@ get_property (GObject *object, guint property_id G_GNUC_UNUSED,
 
 static void finalize(GObject *object)
 {
-    LoadPlayConfig *self = LOADPLAY_CONFIG(object);
+    LoudPlayConfig *self = LOUDPLAY_CONFIG(object);
 
     free_memory_safely(&self->log_level);
     free_memory_safely(&self->log_path);
@@ -155,14 +155,14 @@ static void finalize(GObject *object)
     free_memory_safely(&self->control_proto);
     free_memory_safely(&self->capture);
 
-    free_memory_safely(&self->loadplay_client_path);
+    free_memory_safely(&self->loudplay_client_path);
 
-    GObjectClass *parent_class = G_OBJECT_CLASS( loadplay_config_parent_class );
+    GObjectClass *parent_class = G_OBJECT_CLASS( loudplay_config_parent_class );
     ( *parent_class->finalize )( object );
 }
 
 static void
-loadplay_config_class_init (LoadPlayConfigClass *klass)
+loudplay_config_class_init (LoudPlayConfigClass *klass)
 {
     GObjectClass *object_class = G_OBJECT_CLASS (klass);
 
@@ -199,7 +199,7 @@ loadplay_config_class_init (LoadPlayConfigClass *klass)
 }
 
 static void
-loadplay_config_init (LoadPlayConfig *self)
+loudplay_config_init (LoudPlayConfig *self)
 {
     (void)self;
 }

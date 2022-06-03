@@ -83,8 +83,8 @@ void settings_data_read_all(ConnectSettingsData *data)
     rdp_settings_read_ini_file(&data->rdp_settings);
     // X2Go
     x2go_settings_read(&data->x2Go_settings);
-    // Loadplay
-    loadplay_settings_read(&data->loadplay_config);
+    // Loudplay
+    loudplay_settings_read(&data->loudplay_config);
 
     // Service
     data->global_app_mode = (GlobalAppMode)read_int_from_ini_file(
@@ -179,8 +179,8 @@ void settings_data_save_all(ConnectSettingsData *data)
     rdp_settings_write(&data->rdp_settings);
     // X2Go
     x2go_settings_write(&data->x2Go_settings);
-    // Loadplay
-    loadplay_settings_write(data->loadplay_config);
+    // Loudplay
+    loudplay_settings_write(data->loudplay_config);
 
     // Service
     write_int_to_ini_file("ServiceSettings", "global_app_mode", data->global_app_mode);
@@ -202,7 +202,7 @@ void settings_data_clear(ConnectSettingsData *data)
     spice_settings_clear(&data->spice_settings);
     rdp_settings_clear(&data->rdp_settings);
     x2go_settings_clear(&data->x2Go_settings);
-    loadplay_settings_clear(&data->loadplay_config);
+    loudplay_settings_clear(&data->loudplay_config);
 
     free_memory_safely(&data->windows_updates_url);
 }
@@ -543,43 +543,43 @@ void x2go_settings_clear(VeilX2GoSettings *x2go_settings)
     free_memory_safely(&x2go_settings->x2go_conn_type);
 }
 
-void loadplay_settings_read(LoadPlayConfig **p_loadplay_config)
+void loudplay_settings_read(LoudPlayConfig **p_loudplay_config)
 {
-    if (*p_loadplay_config)
-        loadplay_settings_clear(p_loadplay_config);
+    if (*p_loudplay_config)
+        loudplay_settings_clear(p_loudplay_config);
 
     // Open file
     g_autofree gchar *file_name = NULL;
-    file_name = loadplay_config_get_file_name();
-    *p_loadplay_config = LOADPLAY_CONFIG(json_handler_gobject_from_file(file_name, TYPE_LOADPLAY_CONFIG));
+    file_name = loudplay_config_get_file_name();
+    *p_loudplay_config = LOUDPLAY_CONFIG(json_handler_gobject_from_file(file_name, TYPE_LOUDPLAY_CONFIG));
 
-    if (*p_loadplay_config == NULL) // Неудача в случае ошибки парсинга файла. Создаем дефолтный
-        *p_loadplay_config = LOADPLAY_CONFIG( g_object_new( TYPE_LOADPLAY_CONFIG, NULL ) );
+    if (*p_loudplay_config == NULL) // Неудача в случае ошибки парсинга файла. Создаем дефолтный
+        *p_loudplay_config = LOUDPLAY_CONFIG( g_object_new( TYPE_LOUDPLAY_CONFIG, NULL ) );
 
     // client path
-    (*p_loadplay_config)->loadplay_client_path = read_str_from_ini_file_with_def(
-            "LoadplaySettings", "loadplay_client_path",
+    (*p_loudplay_config)->loudplay_client_path = read_str_from_ini_file_with_def(
+            "LoudplaySettings", "loudplay_client_path",
             "C:\\job\\loudplay\\1.0.3\\1.0.3");
 }
 
-void loadplay_settings_write(LoadPlayConfig *loadplay_config)
+void loudplay_settings_write(LoudPlayConfig *loudplay_config)
 {
-    if (!loadplay_config)
+    if (!loudplay_config)
         return;
 
     g_autofree gchar *file_name = NULL;
-    file_name = loadplay_config_get_file_name();
-    json_handler_gobject_to_file(file_name, (GObject *)loadplay_config);
+    file_name = loudplay_config_get_file_name();
+    json_handler_gobject_to_file(file_name, (GObject *)loudplay_config);
 
-    write_str_to_ini_file("LoadplaySettings", "loadplay_client_path",
-                          loadplay_config->loadplay_client_path);
+    write_str_to_ini_file("LoudplaySettings", "loudplay_client_path",
+                          loudplay_config->loudplay_client_path);
 }
 
-void loadplay_settings_clear(LoadPlayConfig **p_loadplay_config)
+void loudplay_settings_clear(LoudPlayConfig **p_loudplay_config)
 {
-    if (!(*p_loadplay_config))
+    if (!(*p_loudplay_config))
         return;
 
-    g_object_unref(*p_loadplay_config);
-    *p_loadplay_config = NULL;
+    g_object_unref(*p_loudplay_config);
+    *p_loudplay_config = NULL;
 }

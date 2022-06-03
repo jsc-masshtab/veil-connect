@@ -1289,8 +1289,9 @@ VmRemoteProtocol util_str_to_remote_protocol(const gchar *protocol_str)
         protocol = RDP_NATIVE_PROTOCOL;
     else if (g_strcmp0("X2GO", protocol_str) == 0)
         protocol = X2GO_PROTOCOL;
-    else if (g_strcmp0("LOADPLAY", protocol_str) == 0)
-        protocol = LOADPLAY_PROTOCOL;
+    // для поддержки старой версии с неверным написанием протокола (правильно LOUDPLAY)
+    else if (g_strcmp0("LOUDPLAY", protocol_str) == 0)
+        protocol = LOUDPLAY_PROTOCOL;
 
     return protocol;
 }
@@ -1308,8 +1309,8 @@ const gchar *util_remote_protocol_to_str(VmRemoteProtocol protocol)
             return "NATIVE_RDP";
         case X2GO_PROTOCOL:
             return "X2GO";
-        case LOADPLAY_PROTOCOL:
-            return "LOADPLAY";
+        case LOUDPLAY_PROTOCOL:
+            return "LOUDPLAY";
         case ANOTHER_REMOTE_PROTOCOL:
         default:
             return "UNKNOWN_PROTOCOL";

@@ -118,10 +118,10 @@ typedef struct {
 
     GtkWidget *x2go_compress_method_combobox;
 
-    // Loadplay
-    GtkWidget *loadplay_client_path_entry;
-    GtkWidget *loadplay_box;
-    GObjectGui *loadplay_config_gui;
+    // Loudplay
+    GtkWidget *loudplay_client_path_entry;
+    GtkWidget *loudplay_box;
+    GObjectGui *loudplay_config_gui;
 
     // Service
     GtkWidget *btn_archive_logs;
