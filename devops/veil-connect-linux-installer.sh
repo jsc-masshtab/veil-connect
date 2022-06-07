@@ -33,7 +33,7 @@ if [ -n "$WINDOW" ]; then
     "6" "Centos 7" \
     "7" "Centos 8" \
     "8" "Astra Linux Orel 2.12" \
-    "9" "Astra Linux Smolensk 1.6" \
+    "9" "Astra Linux Smolensk (SE)" \
     "10" "Alt Linux 9" \
     "11" "RedOS 7.2" \
     "12" "RedOS 7.3" 3>&1 1>&2 2>&3)
@@ -57,7 +57,7 @@ else
         6.  Centos 7
         7.  Centos 8
         8.  Astra Linux Orel 2.12
-        9.  Astra Linux Smolensk 1.6
+        9.  Astra Linux Smolensk (SE)
         10. Alt Linux 9
         11. RedOS 7.2 
         12. RedOS 7.3
@@ -107,9 +107,9 @@ EOF
         ;;
     9)
         if [ -n "$WINDOW" ]; then
-            $WINDOW --title  "$TITLE" --msgbox "Please visit https://veil.mashtab.org/vdi-docs/connect/operator_guide/install/cd/linux/ for the more info" $HEIGHT $WIDTH  2>/dev/null
+            $WINDOW --title  "$TITLE" --msgbox "Please visit https://veil.mashtab.org/vdi-docs/connect/operator_guide/install/net/linux/smolensk/ for info" $HEIGHT $WIDTH  2>/dev/null
         else
-            echo "Please visit https://veil.mashtab.org/vdi-docs/connect/operator_guide/install/cd/linux/ for info" 
+            echo "Please visit https://veil.mashtab.org/vdi-docs/connect/operator_guide/install/net/linux/smolensk/ for info" 
         fi
         exit 1
         ;;
