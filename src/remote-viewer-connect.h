@@ -67,6 +67,8 @@ typedef struct
 
     ConnectSettingsDialog connect_settings_dialog;
 
+    GCancellable *login_cancellable;
+
 } RemoteViewerConnect;
 
 typedef struct

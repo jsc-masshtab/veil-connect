@@ -7,6 +7,7 @@
  */
 
 #include "remote_viewer_start_settings.h"
+#include "additional_addresses_widget.h"
 
 
 // D режиме по умолчанию подключение к VDI серверу. В ручном режиме прямое подключение к ВМ
@@ -16,6 +17,7 @@ static void update_gui_according_to_app_mode(ConnectSettingsDialog *dialog_data,
 {
     switch (global_app_mode) {
         case GLOBAL_APP_MODE_VDI: {
+            gtk_widget_set_sensitive(dialog_data->btn_add_addresses, TRUE);
             gtk_widget_set_sensitive(dialog_data->conn_to_prev_pool_checkbutton, TRUE);
             gtk_widget_set_sensitive(dialog_data->redirect_time_zone_check_btn, TRUE);
             gtk_widget_set_visible(dialog_data->remote_protocol_combobox, FALSE);
@@ -25,6 +27,7 @@ static void update_gui_according_to_app_mode(ConnectSettingsDialog *dialog_data,
             break;
         }
         case GLOBAL_APP_MODE_DIRECT: {
+            gtk_widget_set_sensitive(dialog_data->btn_add_addresses, FALSE);
             gtk_widget_set_sensitive(dialog_data->conn_to_prev_pool_checkbutton, FALSE);
             gtk_widget_set_sensitive(dialog_data->redirect_time_zone_check_btn, FALSE);
             gtk_widget_set_visible(dialog_data->remote_protocol_combobox, TRUE);
@@ -34,6 +37,7 @@ static void update_gui_according_to_app_mode(ConnectSettingsDialog *dialog_data,
             break;
         }
         case GLOBAL_APP_MODE_CONTROLLER: {
+            gtk_widget_set_sensitive(dialog_data->btn_add_addresses, FALSE);
             gtk_widget_set_sensitive(dialog_data->conn_to_prev_pool_checkbutton, FALSE);
             gtk_widget_set_sensitive(dialog_data->redirect_time_zone_check_btn, FALSE);
             gtk_widget_set_visible(dialog_data->remote_protocol_combobox, FALSE);
@@ -455,6 +459,14 @@ btn_show_usb_filter_tooltip_spice_clicked(GtkButton *button G_GNUC_UNUSED, Conne
                         "Filter strings in this format can be easily created with the RHEV-M USB filter editor tool.\n"
                         "\n"
                         "Default value: \"0x03,-1,-1,-1,0|-1,-1,-1,-1,1\""));
+}
+
+static void
+btn_add_addresses_clicked(GtkButton *button G_GNUC_UNUSED, ConnectSettingsDialog *dialog_data)
+{
+    additional_addresses_widget_show(&get_vdi_session_static()->additional_addresses_list,
+                                     &get_vdi_session_static()->multi_address_mode,
+            dialog_data->p_conn_data, GTK_WINDOW(dialog_data->window));
 }
 
 static void
@@ -972,6 +984,7 @@ GtkResponseType remote_viewer_start_settings_dialog(ConnectSettingsDialog *self,
 
     self->use_rd_gateway_check_btn = get_widget_from_builder(self->builder, "use_rd_gateway_check_btn");
     self->gateway_address_entry = get_widget_from_builder(self->builder, "gateway_address_entry");
+    self->btn_add_addresses = get_widget_from_builder(self->builder, "btn_add_addresses");
     self->rdp_log_debug_info_check_btn = get_widget_from_builder(self->builder, "rdp_log_debug_info_check_btn");
 
     // X2Go settings
@@ -1061,6 +1074,8 @@ GtkResponseType remote_viewer_start_settings_dialog(ConnectSettingsDialog *self,
                      G_CALLBACK(btn_show_usb_filter_tooltip_spice_clicked), self);
     g_signal_connect(self->btn_show_usb_filter_tooltip_spice_1, "clicked",
                      G_CALLBACK(btn_show_usb_filter_tooltip_spice_clicked), self);
+    g_signal_connect(self->btn_add_addresses, "clicked",
+                     G_CALLBACK(btn_add_addresses_clicked), self);
 
     self->on_app_mode_combobox_changed_id =
             g_signal_connect(self->app_mode_combobox, "changed",
@@ -1097,10 +1112,10 @@ GtkResponseType remote_viewer_start_settings_dialog(ConnectSettingsDialog *self,
 
     // clear
     usb_selector_widget_free(self->usb_selector_widget);
-    g_object_unref(self->builder);
     gtk_widget_destroy(self->window);
-
     self->window = NULL;
+    g_object_unref(self->builder);
+
     self->loudplay_config_gui = NULL;
 
     return self->dialog_window_response;

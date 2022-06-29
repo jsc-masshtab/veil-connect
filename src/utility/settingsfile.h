@@ -26,4 +26,8 @@ void write_str_to_ini_file(const gchar *group_name,  const gchar *key, const gch
 gint read_int_from_ini_file(const gchar *group_name,  const gchar *key, gint def_value);
 void write_int_to_ini_file(const gchar *group_name,  const gchar *key, gint value);
 
+GList *read_string_list_from_ini_file(const gchar *group_name,  const gchar *key);
+void write_string_list_to_ini_file(const gchar *group_name, const gchar *key, const gchar * const list[], gsize length);
+void write_string_list_to_ini_file_v2(const gchar *group_name, const gchar *key, GList *strings);
+
 #endif //THIN_CLIENT_VEIL_SETTINGSFILE_H

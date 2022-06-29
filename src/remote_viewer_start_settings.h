@@ -42,6 +42,7 @@ typedef struct {
 
     GtkWidget *domain_entry;
     GtkWidget *address_entry;
+    GtkWidget *btn_add_addresses;
     GtkWidget *port_spinbox;
     GtkWidget *conn_to_prev_pool_checkbutton;
     GtkWidget *save_password_checkbtn;

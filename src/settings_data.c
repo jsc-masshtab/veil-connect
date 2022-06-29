@@ -43,6 +43,13 @@ void settings_data_read_all(ConnectSettingsData *data)
         username = read_str_from_ini_file(param_group_vdi, "username");
         password = read_str_from_ini_file(param_group_vdi, "password");
         ip = read_str_from_ini_file(param_group_vdi, "ip");
+
+        GList *add_addresses = read_string_list_from_ini_file(param_group_vdi, "additional_addresses_list");
+        vdi_session_set_additional_addresses(add_addresses);
+        MultiAddressMode multi_address_mode = (MultiAddressMode)read_int_from_ini_file(
+                param_group_vdi, "multi_address_mode", 0);
+        vdi_session_set_multi_address_mode(multi_address_mode);
+
         int port = read_int_from_ini_file(param_group_vdi, "port", 443);
         gboolean is_ldap = read_int_from_ini_file(param_group_vdi, "is_ldap", 0);
 
@@ -132,6 +139,11 @@ void settings_data_save_all(ConnectSettingsData *data)
     else
         write_str_to_ini_file(param_group_vdi, "password", "");
     write_str_to_ini_file(param_group_vdi, "ip", vdi_session_get_vdi_ip());
+    // save additional addresses
+    GList *addresses = get_vdi_session_static()->additional_addresses_list;
+    write_string_list_to_ini_file_v2(param_group_vdi, "additional_addresses_list", addresses);
+    write_int_to_ini_file(param_group_vdi, "multi_address_mode", get_vdi_session_static()->multi_address_mode);
+
     write_int_to_ini_file(param_group_vdi, "port", vdi_session_get_vdi_port());
     write_int_to_ini_file(param_group_vdi, "is_ldap", vdi_session_is_ldap());
 

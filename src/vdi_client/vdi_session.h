@@ -37,6 +37,11 @@ typedef enum{
     VDI_POOL_TYPE_RDS
 } VdiPoolType;
 
+typedef enum{
+    MULTI_ADDRESS_MODE_MAIN_FIRST,
+    MULTI_ADDRESS_MODE_RANDOM_FIRST
+} MultiAddressMode;
+
 // Pools request data
 typedef struct{
     gboolean get_favorite_only;
@@ -119,11 +124,15 @@ struct _VdiSession
     gchar *vdi_username;
     gchar *vdi_password;
     gchar *disposable_password; // 2fa
-    gchar *vdi_ip;
+
+    gchar *vdi_ip; // Основной адрес для потдключения
+    GList *additional_addresses_list; // Дополнительные адреса для потдключения
+    gchar *current_logged_address; // Адрес по которому фактически произошло успешное подключение
+
+    MultiAddressMode multi_address_mode;
     int vdi_port;
 
     gchar *api_url;
-    gchar *auth_url;
     gboolean is_ldap;
     AtomicString jwt;
     AtomicString vdi_version;
@@ -156,6 +165,7 @@ struct _VdiSessionClass
     void (*auth_fail_detected)(VdiSession *self);
     void (*vm_prep_progress_received)(VdiSession *self, int request_id, int progress, const gchar *text);
     void (*pool_entitlement_changed)(VdiSession *self);
+    void (*login_state_changed)(VdiSession *self, int success, const gchar *msg);
 };
 
 GType vdi_session_get_type( void ) G_GNUC_CONST;
@@ -196,6 +206,9 @@ void vdi_session_cancel_pending_requests(void);
 void vdi_session_set_credentials(const gchar *username, const gchar *password,
                                  const gchar *disposable_password);
 void vdi_session_set_conn_data(const gchar *ip, int port);
+void vdi_session_set_additional_addresses(GList *add_addresses);
+void vdi_session_set_multi_address_mode(MultiAddressMode multi_address_mode);
+
 void vdi_session_set_ldap(gboolean is_ldap);
 // set current pool id
 void vdi_session_set_current_pool_id(const gchar *current_pool_id);
@@ -323,6 +336,7 @@ void vdi_api_session_free_attach_usb_data(AttachUsbData *attach_usb_data);
 void vdi_api_session_free_detach_usb_data(DetachUsbData *detach_usb_data);
 void vdi_api_session_free_text_message_data(TextMessageData *text_message_data);
 void vdi_api_session_free_tk_user_data(UserData *tk_user_data);
+void vdi_api_session_clear_login_data(LoginData *login_data);
 void vdi_api_session_free_login_data(LoginData *login_data);
 void vdi_api_session_free_favorite_pool_task_data(FavoritePoolTaskData *data);
 

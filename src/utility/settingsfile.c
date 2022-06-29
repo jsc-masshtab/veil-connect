@@ -144,3 +144,55 @@ write_int_to_ini_file(const gchar *group_name,  const gchar *key, gint value)
         g_key_file_set_integer(keyfile, group_name, key, value);
     }
 }
+
+GList *read_string_list_from_ini_file(const gchar *group_name,  const gchar *key)
+{
+    GList *list = NULL;
+
+    open_ini_file();
+    if (keyfile) {
+        gsize length;
+        gchar **string_list = g_key_file_get_string_list(keyfile, group_name, key, &length, NULL);
+
+        if (string_list) {
+            gchar **string;
+            for (string = string_list; *string; string++) {
+                list = g_list_append(list, g_strdup(*string));
+            }
+
+            g_strfreev(string_list);
+        }
+    }
+
+    return list;
+}
+
+void
+write_string_list_to_ini_file(const gchar *group_name, const gchar *key, const gchar * const list[], gsize length)
+{
+    open_ini_file();
+    if (keyfile) {
+        g_key_file_set_string_list(keyfile, group_name, key, list, length);
+    }
+}
+
+void
+write_string_list_to_ini_file_v2(const gchar *group_name, const gchar *key, GList *strings)
+{
+    open_ini_file();
+    if (keyfile) {
+
+        guint length = g_list_length(strings);
+        const gchar **str_p_list = malloc(sizeof(gchar*) * (length + 1));
+
+        int i = 0;
+        for (GList *l = strings; l != NULL; l = l->next) {
+            str_p_list[i++] = l->data;
+        }
+        str_p_list[length] = NULL;
+
+        g_key_file_set_string_list(keyfile, group_name, key, str_p_list, length);
+
+        free(str_p_list);
+    }
+}

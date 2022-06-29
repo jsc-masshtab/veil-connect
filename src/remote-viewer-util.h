@@ -257,6 +257,7 @@ void util_install_string_property(GObjectClass *oclass, guint property_id, const
 GtkWidget *util_find_child(GtkWidget* parent, const gchar* name);
 
 void terminate_process(GPid pid);
+
 #endif
 
 /*

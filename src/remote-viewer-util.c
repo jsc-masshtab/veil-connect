@@ -1415,6 +1415,7 @@ void terminate_process(GPid pid)
 #endif
 }
 
+
 /*
  * Local variables:
  *  c-indent-level: 4

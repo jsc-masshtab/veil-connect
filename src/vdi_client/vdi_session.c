@@ -133,6 +133,16 @@ static void vdi_session_class_init( VdiSessionClass *klass )
                  NULL,
                  G_TYPE_NONE,
                  0);
+
+    g_signal_new("login-state-changed",
+                 G_OBJECT_CLASS_TYPE(gobject_class),
+                 G_SIGNAL_RUN_FIRST,
+                 G_STRUCT_OFFSET(VdiSessionClass, login_state_changed),
+                 NULL, NULL,
+                 NULL,
+                 G_TYPE_NONE,
+                 2,
+                 G_TYPE_INT, G_TYPE_STRING);
 }
 
 static void vdi_session_init( VdiSession *self G_GNUC_UNUSED)
@@ -165,9 +175,9 @@ VdiSession *vdi_session_new()
     vdi_session->vdi_password = NULL;
     vdi_session->disposable_password = NULL;
     vdi_session->vdi_ip = NULL;
+    vdi_session->multi_address_mode = MULTI_ADDRESS_MODE_MAIN_FIRST;
 
     vdi_session->api_url = NULL;
-    vdi_session->auth_url = NULL;
 
     atomic_string_init(&vdi_session->jwt);
     atomic_string_init(&vdi_session->vdi_version);
@@ -205,9 +215,11 @@ static void free_session_memory()
     free_memory_safely(&vdi_session_static->vdi_password);
     free_memory_safely(&vdi_session_static->disposable_password);
     free_memory_safely(&vdi_session_static->vdi_ip);
+    if (vdi_session_static->additional_addresses_list)
+        g_list_free_full(vdi_session_static->additional_addresses_list, g_free);
+    free_memory_safely(&vdi_session_static->current_logged_address);
 
     free_memory_safely(&vdi_session_static->api_url);
-    free_memory_safely(&vdi_session_static->auth_url);
 
     atomic_string_set(&vdi_session_static->jwt, NULL);
     atomic_string_set(&vdi_session_static->vdi_version, NULL);
@@ -255,7 +267,10 @@ static gboolean vdi_api_session_restart_vdi_ws_client(gpointer data G_GNUC_UNUSE
 {
     g_info("%s", (const char *)__func__);
     vdi_ws_client_stop(&vdi_session_static->vdi_ws_client);
-    vdi_ws_client_start(&vdi_session_static->vdi_ws_client, vdi_session_get_vdi_ip(), vdi_session_get_vdi_port());
+    vdi_ws_client_start(&vdi_session_static->vdi_ws_client,
+            vdi_session_static->current_logged_address,
+            vdi_session_get_vdi_port());
+
     return G_SOURCE_REMOVE;
 }
 
@@ -280,15 +295,13 @@ static void vdi_session_parse_login_response(SoupMessage *msg, LoginData *login_
 
             const gchar *jwt_str = json_object_get_string_member_safely(reply_json_object, "access_token");
             atomic_string_set(&vdi_session_static->jwt, jwt_str);
-            // В основном потоке вызывается на смену токена
-            g_timeout_add(500, (GSourceFunc)vdi_api_session_restart_vdi_ws_client, NULL);
             break;
         }
         case SERVER_REPLY_TYPE_ERROR:
         case SERVER_REPLY_TYPE_UNKNOWN:
         default: {
             const gchar *message = json_object_get_string_member_safely(reply_json_object, "message");
-            g_info("%s : Unable to get token. %s %s", (const char *)__func__, message, msg->reason_phrase);
+            //g_info("%s : Unable to get token. %s %s", (const char *)__func__, message, msg->reason_phrase);
             if (strlen_safely(message) != 0)
                 login_data->reply_msg = g_strdup(message);
             else if (msg->reason_phrase != NULL && strlen_safely(msg->reason_phrase) != 0)
@@ -303,23 +316,47 @@ static void vdi_session_parse_login_response(SoupMessage *msg, LoginData *login_
     g_object_unref(parser);
 }
 
-// Получаем токен
-static LoginData *vdi_session_auth_request()
+// allocate memory
+static gchar *vdi_session_form_api_url(const gchar *address, int vdi_port)
 {
+    const gchar *http_protocol = determine_http_protocol_by_port(vdi_port);
+
+    gboolean is_proxy_not_used = read_int_from_ini_file("General", "is_proxy_not_used", FALSE);
+    // В штатном режиме подключаемся к прокси серверу
+
+    gchar *api_url;
+    if (is_proxy_not_used)
+        api_url = g_strdup_printf("%s://%s:%i", http_protocol, address, vdi_port);
+    else
+        api_url = g_strdup_printf("%s://%s:%i/api", http_protocol, address, vdi_port);
+
+    return api_url;
+}
+
+// Получаем токен
+static gboolean vdi_session_auth_request(const gchar *address, LoginData *login_data)
+{
+    atomic_string_set(&vdi_session_static->jwt, NULL);
+
+    g_autofree gchar *api_url = NULL;
+    api_url = vdi_session_form_api_url(address, vdi_session_static->vdi_port);
+    update_string_safely(&vdi_session_static->api_url, api_url);
+
+    vdi_api_session_clear_login_data(login_data);
     g_info("%s", (const char *)__func__);
 
-    LoginData *login_data = calloc(1, sizeof(LoginData)); // free in callback!
+    if(vdi_session_static->api_url == NULL)
+        return FALSE;
 
-    if(vdi_session_static->auth_url == NULL)
-        return login_data;
+    g_autofree gchar *auth_url = NULL;
+    auth_url = g_strdup_printf("%s/auth/", vdi_session_static->api_url);
 
     // create request message
-    SoupMessage *msg = soup_message_new("POST", vdi_session_static->auth_url);
+    SoupMessage *msg = soup_message_new("POST", auth_url);
     if(msg == NULL) { // "Не удалось сформировать SoupMessage. %s"
-        login_data->reply_msg = g_strdup_printf(_("Failed to form SoupMessage. %s"),
-                                                vdi_session_static->auth_url);
+        login_data->reply_msg = g_strdup_printf(_("Failed to form SoupMessage. %s"), auth_url);
         g_info("%s: %s", (const char*)__func__, login_data->reply_msg);
-        return login_data;
+        return FALSE;
     }
 
     // set header
@@ -342,12 +379,20 @@ static LoginData *vdi_session_auth_request()
     g_free(message_body_str);
 
     // send message
-    send_message(msg, vdi_session_static->auth_url);
+    send_message(msg, auth_url);
 
     vdi_session_parse_login_response(msg, login_data);
     g_object_unref(msg);
 
-    return login_data;
+    //
+    if (vdi_session_static->jwt.string) {
+        update_string_safely(&vdi_session_static->current_logged_address, address);
+        return TRUE;
+    } else {
+        g_info("Failed to login at address %s. %s", address, login_data->reply_msg);
+    }
+
+    return FALSE;
 }
 
 // Get server version
@@ -498,24 +543,24 @@ void vdi_session_set_conn_data(const gchar *ip, int port)
 {
     free_memory_safely(&vdi_session_static->vdi_ip);
     free_memory_safely(&vdi_session_static->api_url);
-    free_memory_safely(&vdi_session_static->auth_url);
 
     vdi_session_static->vdi_ip = strstrip_safely(g_strdup(ip));
     vdi_session_static->vdi_port = port;
 
-    const gchar *http_protocol = determine_http_protocol_by_port(port);
+    vdi_session_static->api_url = vdi_session_form_api_url(vdi_session_static->vdi_ip, vdi_session_static->vdi_port);
+}
 
-    gboolean is_proxy_not_used = read_int_from_ini_file("General", "is_proxy_not_used", FALSE);
-    // В штатном режиме подключаемся к прокси серверу
-    if (is_proxy_not_used)
-        vdi_session_static->api_url = g_strdup_printf("%s://%s:%i", http_protocol,
-                                                      vdi_session_static->vdi_ip, vdi_session_static->vdi_port);
-    else
-        vdi_session_static->api_url = g_strdup_printf("%s://%s:%i/api", http_protocol,
-                                                      vdi_session_static->vdi_ip, vdi_session_static->vdi_port);
+void vdi_session_set_additional_addresses(GList *add_addresses)
+{
+    if (vdi_session_static->additional_addresses_list)
+        g_list_free_full(vdi_session_static->additional_addresses_list, g_free);
 
-    vdi_session_static->auth_url = g_strdup_printf("%s/auth/", vdi_session_static->api_url);
+    vdi_session_static->additional_addresses_list = add_addresses;
+}
 
+void vdi_session_set_multi_address_mode(MultiAddressMode multi_address_mode)
+{
+    vdi_session_static->multi_address_mode = multi_address_mode;
 }
 
 void vdi_session_set_ldap(gboolean is_ldap)
@@ -679,14 +724,95 @@ gchar *vdi_session_api_call(const char *method, const char *uri_string, const gc
     return response_body_str;
 }
 
+static gpointer vdi_session_g_list_get_item_by_index(GList *list, guint index)
+{
+    guint count = 0;
+    for (GList *l = list; l != NULL; l = l->next) {
+
+        if (count == index) {
+            return l->data;
+        }
+        count++;
+    }
+
+    return NULL;
+}
+
 void vdi_session_log_in_task(GTask       *task,
                    gpointer       source_object G_GNUC_UNUSED,
                    gpointer       task_data G_GNUC_UNUSED,
-                   GCancellable  *cancellable G_GNUC_UNUSED)
+                   GCancellable  *cancellable)
 {
     // get token
-    atomic_string_set(&vdi_session_static->jwt, NULL);
-    LoginData *login_data = vdi_session_auth_request();
+    LoginData *login_data = calloc(1, sizeof(LoginData)); // free in callback!
+    free_memory_safely(&vdi_session_static->current_logged_address);
+
+    switch (vdi_session_static->multi_address_mode) {
+        case MULTI_ADDRESS_MODE_MAIN_FIRST: {
+            // Connect to main address
+            g_info("Trying to login at main address %s", vdi_session_static->vdi_ip);
+            if (vdi_session_auth_request(vdi_session_static->vdi_ip, login_data))
+                break;
+
+            // Connect to additional addresses
+            guint addresses_amount = g_list_length(vdi_session_static->additional_addresses_list);
+            guint count = 0;
+            for (GList *l = vdi_session_static->additional_addresses_list; l != NULL; l = l->next) {
+
+                if (g_cancellable_is_cancelled(cancellable)) {
+                    g_info("%s  Cancelled", (const char *)__func__);
+                    break;
+                }
+
+                count++;
+                const gchar *address = (const gchar *)l->data;
+                if(strlen_safely(address) > 0) {
+                    g_info("Trying to login at additional address %s. %i from %i", address, count, addresses_amount);
+                    if (vdi_session_auth_request(address, login_data))
+                        break;
+                }
+            }
+
+            break;
+        }
+        case MULTI_ADDRESS_MODE_RANDOM_FIRST: {
+            // Connect to random address from available ones
+            GList *all_addresses_list = g_list_copy(vdi_session_static->additional_addresses_list); // shadow copy
+            all_addresses_list = g_list_append(all_addresses_list, vdi_session_static->vdi_ip);
+
+            guint addresses_amount = g_list_length(all_addresses_list);
+            //g_info("!!! addresses_amount %i", addresses_amount);
+            while(addresses_amount > 0) {
+
+                if (g_cancellable_is_cancelled(cancellable)) {
+                    g_info("%s  Cancelled", (const char *)__func__);
+                    break;
+                }
+
+                guint rand_index = rand() % addresses_amount;
+                const gchar *address = (const gchar *)vdi_session_g_list_get_item_by_index(
+                        all_addresses_list, rand_index);
+                g_info("Trying to login at address %s. ", address);
+                if (vdi_session_auth_request(address, login_data))
+                    break;
+
+                all_addresses_list = g_list_remove(all_addresses_list, address);
+                addresses_amount = g_list_length(all_addresses_list);
+                //g_info("!!! rand_index %i", rand_index);
+            }
+
+            g_list_free(all_addresses_list);
+            break;
+        }
+        default: {
+
+            break;
+        }
+    }
+
+    // Connect to ws if token received В основном потоке вызывается на смену токена
+    if (vdi_session_static->jwt.string && vdi_session_static->current_logged_address)
+        g_timeout_add(500, (GSourceFunc)vdi_api_session_restart_vdi_ws_client, NULL);
 
     // Get VDI version
     vdi_session_request_version();
@@ -1294,6 +1420,8 @@ gboolean vdi_session_logout(void)
 
     vdi_session_cancel_pending_requests();
 
+    free_memory_safely(&vdi_session_static->current_logged_address);
+
     g_info("%s", (const char *)__func__);
     g_autofree gchar *jwt_str = NULL;
     jwt_str = atomic_string_get(&vdi_session_static->jwt);
@@ -1563,10 +1691,15 @@ void vdi_api_session_free_tk_user_data(UserData *tk_user_data)
     free(tk_user_data);
 }
 
-void vdi_api_session_free_login_data(LoginData *login_data)
+void vdi_api_session_clear_login_data(LoginData *login_data)
 {
     free_memory_safely(&login_data->reply_msg);
     free_memory_safely(&login_data->domain);
+}
+
+void vdi_api_session_free_login_data(LoginData *login_data)
+{
+    vdi_api_session_clear_login_data(login_data);
     free(login_data);
 }
 

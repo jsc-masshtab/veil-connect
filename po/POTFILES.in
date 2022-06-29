@@ -9,6 +9,7 @@
 #     path_in_str = str(path)
 #     print(path_in_str)
 
+src/additional_addresses_widget.c
 src/conn_info_dialog.c
 src/main.c
 src/remote-viewer-timed-revealer.c
@@ -92,3 +93,4 @@ resources/ui/virt-viewer-preferences.glade
 resources/ui/virt-viewer-auth.glade
 resources/ui/virt-viewer-file-transfer-dialog.glade
 resources/ui/controller_manager_form.glade
+resources/ui/additional_addresses_form.glade

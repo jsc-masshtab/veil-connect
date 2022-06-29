@@ -72,7 +72,7 @@ static void remote_viewer_connect_finish_job(RemoteViewerConnect *self)
         return;
 
     // interrupt settings dialog loop
-    shutdown_loop(self->connect_settings_dialog.loop);
+    remote_viewer_start_settings_finish_job(&self->connect_settings_dialog);
 
     // forget password if required
     if (!self->p_conn_data->to_save_pswd)
@@ -94,6 +94,9 @@ static void remote_viewer_connect_finish_job(RemoteViewerConnect *self)
 static void
 take_from_gui(RemoteViewerConnect *self)
 {
+    if (!self->is_active)
+        return;
+
     const gchar *login = gtk_entry_get_text(GTK_ENTRY(self->login_entry));
     const gchar *password = gtk_entry_get_text(GTK_ENTRY(self->password_entry));
     const gchar *disposable_password = gtk_entry_get_text(GTK_ENTRY(self->disposable_password_entry));
@@ -125,6 +128,9 @@ take_from_gui(RemoteViewerConnect *self)
 static void
 fill_gui(RemoteViewerConnect *self)
 {
+    if (!self->is_active)
+        return;
+
     switch (self->p_conn_data->global_app_mode) {
         case GLOBAL_APP_MODE_VDI: {
             if (vdi_session_get_vdi_username())
@@ -215,7 +221,12 @@ on_vdi_session_log_in_finished(GObject *source_object G_GNUC_UNUSED,
         util_set_message_to_info_label(GTK_LABEL(self->message_display_label), login_data->reply_msg);
     }
 
+    // clear
     vdi_api_session_free_login_data(login_data);
+    if (self->login_cancellable) {
+        g_object_unref(self->login_cancellable);
+        self->login_cancellable = NULL;
+    }
 }
 
 // token fetch callback (controller)
@@ -274,7 +285,9 @@ static void connect_to_vdi_server(RemoteViewerConnect *self)
         util_set_message_to_info_label(GTK_LABEL(self->message_display_label),
                                        _("Authorization..."));
         //start token fetching task
-        execute_async_task(vdi_session_log_in_task, on_vdi_session_log_in_finished, NULL, self);
+        self->login_cancellable = g_cancellable_new();
+        execute_async_task_cancellable(vdi_session_log_in_task, on_vdi_session_log_in_finished, NULL,
+                self, self->login_cancellable);
     }
 }
 
@@ -412,6 +425,7 @@ btn_cancel_auth_clicked_cb(GtkButton *button G_GNUC_UNUSED, gpointer data)
 
     switch (self->p_conn_data->global_app_mode) {
         case GLOBAL_APP_MODE_VDI: {
+            g_cancellable_cancel(self->login_cancellable);
             vdi_session_cancel_pending_requests();
             break;
         }
@@ -479,6 +493,8 @@ static void remote_viewer_connect_class_init(RemoteViewerConnectClass *klass )
 static void remote_viewer_connect_init(RemoteViewerConnect *self G_GNUC_UNUSED)
 {
     g_info("%s", (const char *) __func__);
+
+    //self.s
 }
 
 RemoteViewerConnect *remote_viewer_connect_new()
