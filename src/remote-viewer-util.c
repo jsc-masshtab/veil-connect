@@ -1331,7 +1331,7 @@ gchar *util_get_hostname()
 }
 
 void util_install_int_property(GObjectClass *oclass, guint property_id, const char *name,
-                               gint	minimum, gint maximum, gint	default_value)
+                               gint	minimum, gint maximum, gint	default_value, GParamFlags add_flags)
 {
     g_object_class_install_property(oclass, property_id,
                                     g_param_spec_int(name,
@@ -1340,13 +1340,12 @@ void util_install_int_property(GObjectClass *oclass, guint property_id, const ch
                                                      minimum,
                                                      maximum,
                                                      default_value,
-                                                     G_PARAM_STATIC_STRINGS |
-                                                     G_PARAM_READWRITE |
-                                                     G_PARAM_CONSTRUCT));
+                                                     G_PARAM_STATIC_STRINGS | G_PARAM_CONSTRUCT |
+                                                     G_PARAM_READWRITE | add_flags));
 }
 
 void util_install_bool_property(GObjectClass *oclass, guint property_id, const char *name,
-                                gboolean default_value)
+                                gboolean default_value, GParamFlags add_flags)
 {
     g_object_class_install_property(oclass,
                                     property_id,
@@ -1354,22 +1353,20 @@ void util_install_bool_property(GObjectClass *oclass, guint property_id, const c
                                                          name,
                                                          name,
                                                          default_value,
-                                                         G_PARAM_STATIC_STRINGS |
-                                                         G_PARAM_READWRITE |
-                                                         G_PARAM_CONSTRUCT));
+                                                         G_PARAM_STATIC_STRINGS | G_PARAM_CONSTRUCT |
+                                                         G_PARAM_READWRITE | add_flags));
 }
 
 void util_install_string_property(GObjectClass *oclass, guint property_id, const char *name,
-                                  const gchar *default_value)
+                                  const gchar *default_value, GParamFlags add_flags)
 {
     g_object_class_install_property(G_OBJECT_CLASS(oclass), property_id,
                                     g_param_spec_string(name,
                                                         name,
                                                         name,
                                                         default_value,
-                                                        G_PARAM_STATIC_STRINGS |
-                                                        G_PARAM_READWRITE |
-                                                        G_PARAM_CONSTRUCT));
+                                                        G_PARAM_STATIC_STRINGS | G_PARAM_CONSTRUCT |
+                                                        G_PARAM_READWRITE | add_flags));
 }
 
 GtkWidget *util_find_child(GtkWidget* widget, const gchar* name)

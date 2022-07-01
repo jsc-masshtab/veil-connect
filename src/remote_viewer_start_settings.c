@@ -677,10 +677,12 @@ fill_gui(ConnectSettingsDialog *dialog_data)
     gtk_entry_set_text(GTK_ENTRY(dialog_data->loudplay_client_path_entry),
                        p_conn_data->loudplay_config->loudplay_client_path);
 
-    if (dialog_data->loudplay_config_gui)
+    if (dialog_data->loudplay_config_gui) {
         gtk_widget_destroy(dialog_data->loudplay_config_gui);
+        dialog_data->loudplay_config_gui = NULL;
+    }
     dialog_data->loudplay_config_gui = gobject_gui_generate_gui(G_OBJECT(p_conn_data->loudplay_config));
-    gtk_box_pack_end(GTK_BOX(dialog_data->loudplay_box), dialog_data->loudplay_config_gui, TRUE, TRUE, 6);
+    gtk_box_pack_start(GTK_BOX(dialog_data->loudplay_box), dialog_data->loudplay_config_gui, FALSE, TRUE, 6);
     gtk_widget_show_all(dialog_data->loudplay_config_gui);
 }
 

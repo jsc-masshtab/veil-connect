@@ -44,6 +44,7 @@ list(APPEND SRC_CODE
         src/multi_button.c
         src/additional_addresses_widget.h
         src/additional_addresses_widget.c
+        src/custom_property_data.h
 
 # virt_viewer
         src/virt_viewer/virt-viewer-resources.h

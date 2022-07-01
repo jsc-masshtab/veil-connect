@@ -248,11 +248,11 @@ const gchar *util_remote_protocol_to_str(VmRemoteProtocol protocol);
 gchar *util_get_hostname(void);
 
 void util_install_int_property(GObjectClass *oclass, guint property_id, const char *name,
-                               gint	minimum, gint	maximum, gint	default_value);
+                               gint	minimum, gint	maximum, gint	default_value, GParamFlags add_flags);
 void util_install_bool_property(GObjectClass *oclass, guint property_id, const char *name,
-                                gboolean default_value);
+                                gboolean default_value, GParamFlags add_flags);
 void util_install_string_property(GObjectClass *oclass, guint property_id, const char *name,
-                                  const gchar *default_value);
+                                  const gchar *default_value, GParamFlags add_flags);
 
 GtkWidget *util_find_child(GtkWidget* parent, const gchar* name);
 

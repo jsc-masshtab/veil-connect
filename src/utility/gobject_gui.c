@@ -8,6 +8,7 @@
 
 #include "gobject_gui.h"
 #include "remote-viewer-util.h"
+#include "custom_property_data.h"
 
 GObjectGui *gobject_gui_generate_gui(GObject *gobject)
 {
@@ -21,12 +22,12 @@ GObjectGui *gobject_gui_generate_gui(GObject *gobject)
 
     for (guint i = 0; i < n_pspecs; i++) {
         GParamSpec *pspec = pspecs[i];
-        GValue value = { 0, };
 
-        /* read only what we can */
-        if (!(pspec->flags & G_PARAM_READABLE))
+        /* show only what we can */
+        if (!(pspec->flags & G_PARAM_SHOW_ON_GUI))
             continue;
 
+        GValue value = { 0, };
         g_value_init(&value, G_PARAM_SPEC_VALUE_TYPE (pspec));
         g_object_get_property(gobject, pspec->name, &value);
 

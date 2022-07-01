@@ -14,6 +14,7 @@
 
 #include "loudplay_config.h"
 #include "remote-viewer-util.h"
+#include "custom_property_data.h"
 
 
 G_DEFINE_TYPE( LoudPlayConfig, loudplay_config, G_TYPE_OBJECT )
@@ -31,9 +32,8 @@ gchar *loudplay_config_get_file_name(void)
 }
 
 static void
-set_property (GObject *object, guint property_id G_GNUC_UNUSED,
-              const GValue *value G_GNUC_UNUSED, GParamSpec *pspec) {
-
+set_property (GObject *object, guint property_id G_GNUC_UNUSED, const GValue *value G_GNUC_UNUSED, GParamSpec *pspec)
+{
     LoudPlayConfig *self = LOUDPLAY_CONFIG(object);
 
     if (g_strcmp0(pspec->name, "log-level") == 0)
@@ -161,7 +161,7 @@ static void finalize(GObject *object)
     ( *parent_class->finalize )( object );
 }
 
-static void
+static void // G_PARAM_READWRITE
 loudplay_config_class_init (LoudPlayConfigClass *klass)
 {
     GObjectClass *object_class = G_OBJECT_CLASS (klass);
@@ -171,31 +171,31 @@ loudplay_config_class_init (LoudPlayConfigClass *klass)
     object_class->finalize = finalize;
 
     // Properties
-    util_install_string_property(object_class, 1, "log-level", "info");
-    util_install_string_property(object_class, 1, "log-path", "logs/client.log");
-    util_install_string_property(object_class, 1, "server-url", "");
+    util_install_string_property(object_class, 1, "log-level", "info", G_PARAM_SHOW_ON_GUI);
+    util_install_string_property(object_class, 1, "log-path", "logs/client.log", G_PARAM_SHOW_ON_GUI);
+    util_install_string_property(object_class, 1, "server-url", "", 0);
     
-    util_install_string_property(object_class, 1, "proto", "udp");
-    util_install_int_property(object_class, 1, "auto-fps", 1, 150, 30);
-    util_install_int_property(object_class, 1, "auto-bitrate", INT_MIN, INT_MAX, 10000);
-    util_install_bool_property(object_class, 1, "bitrate-adaptation", FALSE);
-    util_install_int_property(object_class, 1, "bbr-port", INT_MIN, INT_MAX, 8556);
-    util_install_bool_property(object_class, 1, "hw-decoder", FALSE);
+    util_install_string_property(object_class, 1, "proto", "udp", G_PARAM_SHOW_ON_GUI);
+    util_install_int_property(object_class, 1, "auto-fps", 1, 150, 30, G_PARAM_SHOW_ON_GUI);
+    util_install_int_property(object_class, 1, "auto-bitrate", INT_MIN, INT_MAX, 10000, G_PARAM_SHOW_ON_GUI);
+    util_install_bool_property(object_class, 1, "bitrate-adaptation", FALSE, G_PARAM_SHOW_ON_GUI);
+    util_install_int_property(object_class, 1, "bbr-port", INT_MIN, INT_MAX, 8556, 0);
+    util_install_bool_property(object_class, 1, "hw-decoder", FALSE, 0);
     
-    util_install_bool_property(object_class, 1, "control-enabled", TRUE);
-    util_install_bool_property(object_class, 1, "control-send-mouse-motion", TRUE);
-    util_install_int_property(object_class, 1, "control-port", 1, INT_MAX, 8555);
-    util_install_string_property(object_class, 1, "control-proto", "udp");
+    util_install_bool_property(object_class, 1, "control-enabled", TRUE, 0);
+    util_install_bool_property(object_class, 1, "control-send-mouse-motion", TRUE, G_PARAM_SHOW_ON_GUI);
+    util_install_int_property(object_class, 1, "control-port", 1, INT_MAX, 8555, 0);
+    util_install_string_property(object_class, 1, "control-proto", "udp", 0);
     
-    util_install_int_property(object_class, 1, "rtp-video-port", 1, INT_MAX, 6970);
-    util_install_int_property(object_class, 1, "rtp-audio-port", 1, INT_MAX, 6972);
-    util_install_int_property(object_class, 1, "type", INT_MIN, INT_MAX, 13);
+    util_install_int_property(object_class, 1, "rtp-video-port", 1, INT_MAX, 6970, 0);
+    util_install_int_property(object_class, 1, "rtp-audio-port", 1, INT_MAX, 6972, 0);
+    util_install_int_property(object_class, 1, "type", INT_MIN, INT_MAX, 13, 0);
     
-    util_install_int_property(object_class, 1, "x1", INT_MIN, INT_MAX, 600);
-    util_install_int_property(object_class, 1, "x2", INT_MIN, INT_MAX, 300);
-    util_install_string_property(object_class, 1, "capture", "dda");
-    util_install_int_property(object_class, 1, "fec-redundancy", INT_MIN, INT_MAX, 50);
-    util_install_bool_property(object_class, 1, "rtp-retransmission", TRUE);
+    util_install_int_property(object_class, 1, "x1", INT_MIN, INT_MAX, 600, 0);
+    util_install_int_property(object_class, 1, "x2", INT_MIN, INT_MAX, 300, 0);
+    util_install_string_property(object_class, 1, "capture", "dda", G_PARAM_SHOW_ON_GUI);
+    util_install_int_property(object_class, 1, "fec-redundancy", INT_MIN, INT_MAX, 50, G_PARAM_SHOW_ON_GUI);
+    util_install_bool_property(object_class, 1, "rtp-retransmission", TRUE, G_PARAM_SHOW_ON_GUI);
 }
 
 static void

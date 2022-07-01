@@ -12,6 +12,7 @@
 #include <gtk/gtk.h>
 #include <gio/gio.h>
 
+
 typedef GtkWidget GObjectGui;
 
 GObjectGui *gobject_gui_generate_gui(GObject *gobject);
