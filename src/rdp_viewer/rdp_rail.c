@@ -229,16 +229,16 @@ static void rdp_rail_register_update_callbacks(rdpUpdate* update)
     window->NonMonitoredDesktop = (pNonMonitoredDesktop)rdp_rail_non_monitored_desktop;
 }
 
-int rdp_rail_init(ExtendedRdpContext* ex_rdp_context, RailClientContext* rail)
+int rdp_rail_init(ExtendedRdpContext* ex_context, RailClientContext* rail)
 {
-    rdpContext* context = (rdpContext*)ex_rdp_context;
+    rdpContext* context = (rdpContext*)ex_context;
 
-    if (!ex_rdp_context || !rail)
+    if (!ex_context || !rail)
         return 0;
 
-    ex_rdp_context->rail = rail;
+    ex_context->rail = rail;
     rdp_rail_register_update_callbacks(context->update);
-    rail->custom = (void*)ex_rdp_context;
+    rail->custom = (void*)ex_context;
 
     rail->ServerExecuteResult = rdp_rail_server_execute_result;
     rail->ServerSystemParam = rdp_rail_server_system_param;
@@ -250,23 +250,23 @@ int rdp_rail_init(ExtendedRdpContext* ex_rdp_context, RailClientContext* rail)
     rail->ServerLanguageBarInfo = rdp_rail_server_language_bar_info;
     rail->ServerGetAppIdResponse = rdp_rail_server_get_appid_response;
 
-    //ex_rdp_context->app_windows_array = g_array_new(FALSE, FALSE, sizeof(UINT32));
+    //ex_context->app_windows_array = g_array_new(FALSE, FALSE, sizeof(UINT32));
 
     return 1;
 }
 
-int rdp_rail_uninit(ExtendedRdpContext* ex_rdp_context, RailClientContext* rail G_GNUC_UNUSED)
+int rdp_rail_uninit(ExtendedRdpContext* ex_context, RailClientContext* rail G_GNUC_UNUSED)
 {
     g_info("%s", (const char *)__func__);
 
-    if (ex_rdp_context->rail) {
-        ex_rdp_context->rail->custom = NULL;
-        ex_rdp_context->rail = NULL;
+    if (ex_context->rail) {
+        ex_context->rail->custom = NULL;
+        ex_context->rail = NULL;
     }
 
-    //if (ex_rdp_context->app_windows_array) {
-    //    g_array_free (ex_rdp_context->app_windows_array, TRUE);
-    //    ex_rdp_context->app_windows_array = NULL;
+    //if (ex_context->app_windows_array) {
+    //    g_array_free (ex_context->app_windows_array, TRUE);
+    //    ex_context->app_windows_array = NULL;
     //}
 
     return 1;

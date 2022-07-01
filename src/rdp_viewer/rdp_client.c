@@ -126,10 +126,9 @@ GArray *rdp_client_create_params_array(ExtendedRdpContext* ex)
     add_rdp_param(rdp_params_dyn_array, g_strdup("/cert-ignore"));
     add_rdp_param(rdp_params_dyn_array, g_strdup("/sound:rate:44100,channel:2"));
     add_rdp_param(rdp_params_dyn_array, g_strdup("/relax-order-checks"));
-#ifdef __linux__
-#elif _WIN32
-    //add_rdp_param(rdp_params_dyn_array, g_strdup("+glyph-cache"));
-#endif
+    if (ex->p_rdp_settings->dynamic_resolution_enabled && !ex->p_rdp_settings->is_multimon)
+        add_rdp_param(rdp_params_dyn_array, g_strdup("/dynamic-resolution"));
+
     if (ex->p_rdp_settings->redirectsmartcards)
         add_rdp_param(rdp_params_dyn_array, g_strdup("/smartcard"));
     if (ex->p_rdp_settings->redirectprinters)
@@ -247,53 +246,52 @@ ExtendedRdpContext* create_rdp_context(VeilRdpSettings *p_rdp_settings, UpdateCu
     rdp_client_entry(&clientEntryPoints);
     rdpContext* context = freerdp_client_context_new(&clientEntryPoints);
 
-    ExtendedRdpContext* ex_rdp_context = (ExtendedRdpContext*)context;
-    ex_rdp_context->p_rdp_settings = p_rdp_settings;
-    ex_rdp_context->is_running = FALSE;
-    ex_rdp_context->update_cursor_callback = update_cursor_callback;
-    ex_rdp_context->test_int = 777; // temp
-    g_mutex_init(&ex_rdp_context->cursor_mutex);
+    ExtendedRdpContext* ex_context = (ExtendedRdpContext*)context;
+    ex_context->p_rdp_settings = p_rdp_settings;
+    ex_context->is_running = FALSE;
+    ex_context->update_cursor_callback = update_cursor_callback;
+    g_mutex_init(&ex_context->cursor_mutex);
 
     // setup display updating queue. В очередь из потока поступают сообщения о необходимости
     // обновить изображение
-    //ex_rdp_context->display_update_queue = g_async_queue_new();
-    g_mutex_init(&ex_rdp_context->invalid_region_mutex);
+    //ex_context->display_update_queue = g_async_queue_new();
+    g_mutex_init(&ex_context->invalid_region_mutex);
     // get desired fps from ini file
-    UINT32 rdp_fps = CLAMP(ex_rdp_context->p_rdp_settings->rdp_fps, 1, 60);
+    UINT32 rdp_fps = CLAMP(ex_context->p_rdp_settings->rdp_fps, 1, 60);
     guint redraw_timeout = 1000 / rdp_fps;
-    ex_rdp_context->display_update_timeout_id = g_timeout_add(redraw_timeout, update_images_func, ex_rdp_context);
+    ex_context->display_update_timeout_id = g_timeout_add(redraw_timeout, update_images_func, ex_context);
 
-    ex_rdp_context->signal_upon_job_finish = g_strdup("job-finished"); // default
+    ex_context->signal_upon_job_finish = g_strdup("job-finished"); // default
 
-    return ex_rdp_context;
+    return ex_context;
 }
 
-void destroy_rdp_context(ExtendedRdpContext* ex_rdp_context)
+void destroy_rdp_context(ExtendedRdpContext* ex_context)
 {
-    if (ex_rdp_context) {
-        free_memory_safely(&ex_rdp_context->signal_upon_job_finish);
+    if (ex_context) {
+        free_memory_safely(&ex_context->signal_upon_job_finish);
         // stop image updating
-        g_source_remove_safely(&ex_rdp_context->display_update_timeout_id);
+        g_source_remove_safely(&ex_context->display_update_timeout_id);
 
         // stop cursor updating
-        g_source_remove_safely(&ex_rdp_context->cursor_update_timeout_id);
+        g_source_remove_safely(&ex_context->cursor_update_timeout_id);
 
         g_info("%s: wai for mutex (invalid_region_mutex)", (const char *)__func__);
-        wait_for_mutex_and_clear(&ex_rdp_context->invalid_region_mutex);
+        wait_for_mutex_and_clear(&ex_context->invalid_region_mutex);
         g_info("%s: wai for mutex (cursor_mutex)", (const char *)__func__);
-        wait_for_mutex_and_clear(&ex_rdp_context->cursor_mutex);
+        wait_for_mutex_and_clear(&ex_context->cursor_mutex);
 
         g_info("%s: context free no ", (const char *)__func__);
-        freerdp_client_context_free((rdpContext*)ex_rdp_context);
+        freerdp_client_context_free((rdpContext*)ex_context);
         g_info("%s: context freed", (const char *)__func__);
     }
 }
 
-void rdp_client_set_rdp_image_size(ExtendedRdpContext *ex_rdp_context,
+void rdp_client_set_rdp_image_size(ExtendedRdpContext *ex_context,
                                          int whole_image_width, int whole_image_height)
 {
-    ex_rdp_context->whole_image_width = whole_image_width;
-    ex_rdp_context->whole_image_height = whole_image_height;
+    ex_context->whole_image_width = whole_image_width;
+    ex_context->whole_image_height = whole_image_height;
 }
 
 BOOL rdp_client_abort_connection(freerdp* instance)
@@ -338,6 +336,26 @@ static BOOL rdp_end_paint(rdpContext* context)
 
     gdi->primary->hdc->hwnd->invalid->null = TRUE;
     gdi->primary->hdc->hwnd->ninvalid = 0;
+
+    return TRUE;
+}
+
+static BOOL rdp_desktop_resize(rdpContext* context)
+{
+    g_info("%s", (const char *)__func__);
+    ExtendedRdpContext *ex_context = (ExtendedRdpContext *)context;
+
+    // Recreate surface on desktop resize
+    g_mutex_lock(&ex_context->primary_buffer_mutex);
+    cairo_surface_destroy(ex_context->surface);
+
+    rdpGdi* gdi = ex_context->context.gdi;
+    int stride = cairo_format_stride_for_width(ex_context->cairo_format, gdi->width);
+    ex_context->surface = cairo_image_surface_create_for_data((unsigned char*)gdi->primary_buffer,
+                                                              ex_context->cairo_format,
+                                                              gdi->width, gdi->height, stride);
+
+    g_mutex_unlock(&ex_context->primary_buffer_mutex);
 
     return TRUE;
 }
@@ -425,7 +443,7 @@ static BOOL rdp_post_connect(freerdp* instance)
     ExtendedRdpContext* ex = (ExtendedRdpContext*)instance->context;
 
     UINT32 freerdp_pix_format = PIXEL_FORMAT_RGB16; // default
-    cairo_format_t cairo_format = CAIRO_FORMAT_RGB16_565; // default
+    ex->cairo_format = CAIRO_FORMAT_RGB16_565; // default
 #ifdef __APPLE__ // support only BGRA32
     gchar *rdp_pixel_format_str = g_strdup("BGRA32");
 #else
@@ -434,7 +452,7 @@ static BOOL rdp_post_connect(freerdp* instance)
 #endif
     if (g_strcmp0(rdp_pixel_format_str, "BGRA32") == 0) {
         freerdp_pix_format = PIXEL_FORMAT_BGRA32;
-        cairo_format = CAIRO_FORMAT_ARGB32;
+        ex->cairo_format = CAIRO_FORMAT_ARGB32;
     }
 
     // init
@@ -443,32 +461,24 @@ static BOOL rdp_post_connect(freerdp* instance)
 
     if (!rdp_register_pointer(instance->context->graphics))
         return FALSE;
-    /*
-    if (!instance->settings->SoftwareGdi)
-    {
-        brush_cache_register_callbacks(instance->update);
-        glyph_cache_register_callbacks(instance->update);
-        bitmap_cache_register_callbacks(instance->update);
-        offscreen_cache_register_callbacks(instance->update);
-        palette_cache_register_callbacks(instance->update);
-    }*/
 
     instance->update->BeginPaint = rdp_begin_paint;
     instance->update->EndPaint = rdp_end_paint;
+    instance->update->DesktopResize = rdp_desktop_resize;
     instance->update->PlaySound = rdp_play_sound;
     instance->update->SetKeyboardIndicators = rdp_keyboard_set_indicators;
     instance->update->SetKeyboardImeStatus = rdp_keyboard_set_ime_status;
     //instance->update->Synchronize = update_send_synchronize;
 
-    // create image surface. Must be recreated on resize (but its not required to this date 22.10.2020)
+    // create image surface
     rdpGdi* gdi = ex->context.gdi;
 
     g_mutex_lock(&ex->primary_buffer_mutex);
 
     //g_info("%s W: %i H: %i", (const char *)__func__, gdi->width, gdi->height);
-    int stride = cairo_format_stride_for_width(cairo_format, gdi->width);
+    int stride = cairo_format_stride_for_width(ex->cairo_format, gdi->width);
     ex->surface = cairo_image_surface_create_for_data((unsigned char*)gdi->primary_buffer,
-                                                      cairo_format, gdi->width, gdi->height, stride);
+                                                      ex->cairo_format, gdi->width, gdi->height, stride);
 
     g_mutex_unlock(&ex->primary_buffer_mutex);
 
@@ -488,19 +498,19 @@ static void rdp_post_disconnect(freerdp* instance)
     if (!instance->context)
         return;
 
-    ExtendedRdpContext* ex_rdp_context = (ExtendedRdpContext*)instance->context;
+    ExtendedRdpContext* ex_context = (ExtendedRdpContext*)instance->context;
     PubSub_UnsubscribeChannelConnected(instance->context->pubSub,
                                        rdp_OnChannelConnectedEventHandler);
     PubSub_UnsubscribeChannelDisconnected(instance->context->pubSub,
                                           rdp_OnChannelDisconnectedEventHandler);
 
-    g_mutex_lock(&ex_rdp_context->primary_buffer_mutex);
-    cairo_surface_destroy(ex_rdp_context->surface);
-    ex_rdp_context->surface = NULL;
-    g_mutex_unlock(&ex_rdp_context->primary_buffer_mutex);
+    g_mutex_lock(&ex_context->primary_buffer_mutex);
+    cairo_surface_destroy(ex_context->surface);
+    ex_context->surface = NULL;
+    g_mutex_unlock(&ex_context->primary_buffer_mutex);
 
     UINT32 last_error = freerdp_get_last_error(instance->context);
-    ex_rdp_context->last_rdp_error = last_error;
+    ex_context->last_rdp_error = last_error;
     g_info("%s last_error_code: %u", (const char *)__func__, last_error);
 
     gdi_free(instance);
@@ -533,7 +543,7 @@ static int rdp_logon_error_info(freerdp* instance, UINT32 data, UINT32 type)
 static BOOL rdp_client_new(freerdp* instance, rdpContext* context)
 {
     ExtendedRdpContext* ex = (ExtendedRdpContext*)context;
-    g_info("%s: ex->test_int: %i", (const char *)__func__, ex->test_int);
+    g_info("%s", (const char *)__func__);
 
     if (!instance || !context)
         return FALSE;
@@ -562,15 +572,15 @@ static void rdp_client_free(freerdp* instance G_GNUC_UNUSED, rdpContext* context
         return;
 
     // some clean.
-    ExtendedRdpContext* ex_rdp_context = (ExtendedRdpContext*)context;
+    ExtendedRdpContext* ex_context = (ExtendedRdpContext*)context;
 
-    wait_for_mutex_and_clear(&ex_rdp_context->primary_buffer_mutex);
+    wait_for_mutex_and_clear(&ex_context->primary_buffer_mutex);
 }
 
 static int rdp_client_start(rdpContext* context)
 {
     ExtendedRdpContext* ex = (ExtendedRdpContext*)context;
-    g_info("%s: %i", (const char *)__func__, ex->test_int);
+    g_info("%s", (const char *)__func__);
 
     return 0;
 }
@@ -578,7 +588,7 @@ static int rdp_client_start(rdpContext* context)
 static int rdp_client_stop(rdpContext* context)
 {
     ExtendedRdpContext* ex = (ExtendedRdpContext*)context;
-    g_info("%s: %i", (const char *)__func__, ex->test_int);
+    g_info("%s", (const char *)__func__);
 
     return 0;
 }

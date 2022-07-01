@@ -18,11 +18,13 @@
 #include <freerdp/client/cliprdr.h>
 #include <freerdp/client/rdpgfx.h>
 #include <freerdp/client/encomsp.h>
+#include <freerdp/channels/disp.h>
 
 #include "rdp_channels.h"
 #include "rdp_client.h"
 #include "rdp_rail.h"
 #include "rdp_clipboard.h"
+#include "rdp_disp.h"
 #include "vdi_session.h"
 
 #include "remote-viewer-util.h"
@@ -89,6 +91,12 @@ void rdp_OnChannelConnectedEventHandler(void* context, ChannelConnectedEventArgs
 	{
         rdp_encomsp_init(ex_context, (EncomspClientContext*)e->pInterface);
 	}
+	else if (strcmp(e->name, DISP_DVC_CHANNEL_NAME) == 0)
+    {
+        g_info("(strcmp(e->name, DISP_DVC_CHANNEL_NAME) == 0)");
+        disp_init((DispClientContext*)e->pInterface, ex_context);
+        int u = 9;
+    }
 }
 
 void rdp_OnChannelDisconnectedEventHandler(void* context, ChannelDisconnectedEventArgs* e)
@@ -118,4 +126,9 @@ void rdp_OnChannelDisconnectedEventHandler(void* context, ChannelDisconnectedEve
 	{
         rdp_encomsp_uninit(ex_context, (EncomspClientContext*)e->pInterface);
 	}
+	else if (strcmp(e->name, DISP_DVC_CHANNEL_NAME) == 0)
+    {
+        g_info("(strcmp(e->name, DISP_DVC_CHANNEL_NAME) == 0)");
+        disp_uninit(ex_context->rdp_disp, (DispClientContext*)e->pInterface);
+    }
 }

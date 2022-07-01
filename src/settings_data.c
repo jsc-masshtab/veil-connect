@@ -308,6 +308,7 @@ void rdp_settings_read_ini_file(VeilRdpSettings *rdp_settings)
     g_autofree gchar *selectedmonitors = NULL;
     selectedmonitors = read_str_from_ini_file(rdp_group, "selectedmonitors");
     update_string_safely(&rdp_settings->selectedmonitors, selectedmonitors);
+    rdp_settings->dynamic_resolution_enabled = read_int_from_ini_file(rdp_group, "dynamic_resolution_enabled", 0);
 
     rdp_settings->redirectsmartcards = read_int_from_ini_file(rdp_group, "redirectsmartcards", 1);
     rdp_settings->redirectprinters = read_int_from_ini_file(rdp_group, "redirect_printers", 1);
@@ -451,6 +452,7 @@ void rdp_settings_write(VeilRdpSettings *rdp_settings)
     write_int_to_ini_file(rdp_group, "is_multimon", rdp_settings->is_multimon);
     write_int_to_ini_file(rdp_group, "full_screen", rdp_settings->full_screen);
     write_str_to_ini_file(rdp_group, "selectedmonitors", rdp_settings->selectedmonitors);
+    write_int_to_ini_file(rdp_group, "dynamic_resolution_enabled", rdp_settings->dynamic_resolution_enabled);
 
     write_int_to_ini_file(rdp_group, "redirectsmartcards", rdp_settings->redirectsmartcards);
     write_int_to_ini_file(rdp_group, "redirect_printers", rdp_settings->redirectprinters);

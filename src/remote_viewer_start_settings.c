@@ -589,6 +589,8 @@ fill_gui(ConnectSettingsDialog *dialog_data)
 
     gtk_toggle_button_set_active((GtkToggleButton *)dialog_data->is_multimon_check_btn,
             p_conn_data->rdp_settings.is_multimon);
+    gtk_toggle_button_set_active((GtkToggleButton *)dialog_data->dynamic_resolution_check_btn,
+                                 p_conn_data->rdp_settings.dynamic_resolution_enabled);
     gtk_toggle_button_set_active((GtkToggleButton *)dialog_data->rdp_full_screen_check_btn,
                                  p_conn_data->rdp_settings.full_screen);
     if (p_conn_data->rdp_settings.selectedmonitors)
@@ -766,6 +768,8 @@ take_from_gui(ConnectSettingsDialog *dialog_data)
 
     conn_data->rdp_settings.is_multimon = gtk_toggle_button_get_active(
             (GtkToggleButton *)dialog_data->is_multimon_check_btn);
+    conn_data->rdp_settings.dynamic_resolution_enabled = gtk_toggle_button_get_active(
+            (GtkToggleButton *)dialog_data->dynamic_resolution_check_btn);
     conn_data->rdp_settings.full_screen = gtk_toggle_button_get_active(
             (GtkToggleButton *)dialog_data->rdp_full_screen_check_btn);
     update_string_safely(&conn_data->rdp_settings.selectedmonitors,
@@ -942,6 +946,7 @@ GtkResponseType remote_viewer_start_settings_dialog(ConnectSettingsDialog *self,
     self->btn_remove_remote_folder = get_widget_from_builder(self->builder, "btn_remove_remote_folder");
 
     self->is_multimon_check_btn = get_widget_from_builder(self->builder, "is_multimon_check_btn");
+    self->dynamic_resolution_check_btn = get_widget_from_builder(self->builder, "dynamic_resolution_check_btn");
     self->rdp_full_screen_check_btn =
             get_widget_from_builder(self->builder, "rdp_full_screen_check_btn");
     self->rdp_selected_monitors_entry =

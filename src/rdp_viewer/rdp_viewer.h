@@ -24,7 +24,7 @@
 typedef struct {
     GObject parent;
 
-    ExtendedRdpContext *ex_rdp_context;
+    ExtendedRdpContext *ex_context;
     NetSpeedometer *net_speedometer;
 
     GThread *job_thread;

@@ -40,7 +40,7 @@ typedef struct{
     int monitor_index; // порядковый номер монитора
     int monitor_number; // номер монитора в gdk glib
 
-    ExtendedRdpContext *ex_rdp_context;
+    ExtendedRdpContext *ex_context;
 
     GdkSeat *seat;
     guint grab_try_event_source_id;
@@ -63,7 +63,7 @@ typedef struct{
     void (*stop_requested)(RdpViewerWindow *self, gchar *signal_upon_job_finish, gboolean exit_if_cant_abort);
 } RdpViewerWindowClass;
 
-RdpViewerWindow *rdp_viewer_window_create(ExtendedRdpContext *ex_rdp_context,
+RdpViewerWindow *rdp_viewer_window_create(ExtendedRdpContext *ex_context,
         int index,  int monitor_num, GdkRectangle geometry);
 void rdp_viewer_window_destroy(RdpViewerWindow *rdp_window_data);
 

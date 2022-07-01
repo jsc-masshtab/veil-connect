@@ -74,6 +74,7 @@ typedef struct{
     gboolean full_screen;
     gchar *selectedmonitors; // список через запятую номеров используемых мониторов.
     // В случает is_multimon == false берется первый указаннй номер (если он валиден)
+    gboolean dynamic_resolution_enabled;
 
     gboolean redirectsmartcards;
     gboolean redirectprinters;

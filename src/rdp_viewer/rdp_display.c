@@ -13,6 +13,7 @@
 #include <glib/garray.h>
 #include <glib/gi18n.h>
 
+#include <freerdp/channels/disp.h>
 #include <freerdp/locale/keyboard.h>
 #include <freerdp/scancode.h>
 
@@ -27,20 +28,20 @@ G_DEFINE_TYPE( RdpDisplay, rdp_display, GTK_TYPE_DRAWING_AREA )
 
 static void rdp_display_translate_mouse_pos(RdpDisplay *self, UINT16 *rdp_x_p, UINT16 *rdp_y_p,
                                             gdouble gtk_x, gdouble gtk_y) {
-    ExtendedRdpContext *ex_rdp_context = self->ex_context;
-    *rdp_x_p = (UINT16) (gtk_x - ex_rdp_context->im_origin_x + self->geometry.x); // * scale_f
-    *rdp_y_p = (UINT16) (gtk_y - ex_rdp_context->im_origin_y + self->geometry.y); // * scale_f
+    ExtendedRdpContext *ex_context = self->ex_context;
+    *rdp_x_p = (UINT16) (gtk_x - ex_context->im_origin_x + self->geometry.x);
+    *rdp_y_p = (UINT16) (gtk_y - ex_context->im_origin_y + self->geometry.y);
 }
 
 static gboolean rdp_display_mouse_moved(GtkWidget *widget G_GNUC_UNUSED, GdkEventMotion *event,
         gpointer user_data)
 {
     RdpDisplay *rdp_display = (RdpDisplay *)user_data;
-    ExtendedRdpContext* ex_rdp_context = rdp_display->ex_context;
-    if (!ex_rdp_context || !ex_rdp_context->is_running)
+    ExtendedRdpContext* ex_context = rdp_display->ex_context;
+    if (!ex_context || !ex_context->is_running)
         return TRUE;
 
-    rdpContext* rdp_context = (rdpContext*)ex_rdp_context;
+    rdpContext* rdp_context = (rdpContext*)ex_context;
     rdpInput *input = rdp_context->input;
 
     UINT16 x, y;
@@ -57,11 +58,11 @@ static void rdp_viewer_handle_mouse_btn_event(GtkWidget *widget G_GNUC_UNUSED, G
 {
     RdpDisplay *rdp_display = (RdpDisplay*)user_data;
 
-    ExtendedRdpContext *ex_rdp_context = rdp_display->ex_context;
-    if (!ex_rdp_context || !ex_rdp_context->is_running)
+    ExtendedRdpContext *ex_context = rdp_display->ex_context;
+    if (!ex_context || !ex_context->is_running)
         return;
 
-    rdpContext* context = (rdpContext*)ex_rdp_context;
+    rdpContext* context = (rdpContext*)ex_context;
     rdpInput *input = context->input;
 
     UINT16 button = 0;
@@ -111,11 +112,11 @@ static gboolean rdp_display_mouse_btn_released(GtkWidget *widget, GdkEventButton
 static gboolean rdp_display_wheel_scrolled(GtkWidget *widget G_GNUC_UNUSED, GdkEventScroll *event, gpointer user_data)
 {
     RdpDisplay *rdp_display = (RdpDisplay *)user_data;
-    ExtendedRdpContext* ex_rdp_context = rdp_display->ex_context;
-    if (!ex_rdp_context || !ex_rdp_context->is_running)
+    ExtendedRdpContext* ex_context = rdp_display->ex_context;
+    if (!ex_context || !ex_context->is_running)
         return TRUE;
 
-    rdpContext* context = (rdpContext*)ex_rdp_context;
+    rdpContext* context = (rdpContext*)ex_context;
     rdpInput *input = context->input;
     //g_info("%s event->delta_y %f event->delta_x %f\n", (const char *)__func__, event->delta_y, event->delta_x);
 
@@ -145,17 +146,17 @@ static gboolean rdp_display_event_on_draw(GtkWidget* widget G_GNUC_UNUSED, cairo
     //g_info("%s START\n", (const char *)__func__);
     RdpDisplay *rdp_display = (RdpDisplay *)user_data;
 
-    ExtendedRdpContext *ex_rdp_context = rdp_display->ex_context;
+    ExtendedRdpContext *ex_context = rdp_display->ex_context;
 
-    if (ex_rdp_context) {
+    if (ex_context) {
 
-        if (ex_rdp_context->is_running) {
-            g_mutex_lock(&ex_rdp_context->primary_buffer_mutex);
+        if (ex_context->is_running) {
+            g_mutex_lock(&ex_context->primary_buffer_mutex);
 
-            if (ex_rdp_context->surface) {
+            if (ex_context->surface) {
                 //gint64 start = g_get_monotonic_time();
                 //cairo_push_group(context);
-                cairo_set_source_surface(context, ex_rdp_context->surface, -rdp_display->geometry.x,
+                cairo_set_source_surface(context, ex_context->surface, -rdp_display->geometry.x,
                                          -rdp_display->geometry.y);
 
                 cairo_set_operator(context, CAIRO_OPERATOR_OVER);     // Ignore alpha channel from FreeRDP
@@ -169,22 +170,59 @@ static gboolean rdp_display_event_on_draw(GtkWidget* widget G_GNUC_UNUSED, cairo
                 rdp_display_draw_text_message(context, _("Waiting for connection"), 50);
             }
 
-            g_mutex_unlock(&ex_rdp_context->primary_buffer_mutex);
+            g_mutex_unlock(&ex_context->primary_buffer_mutex);
         } else {
             /* Draw text */
-            gchar *msg = rdp_util_get_full_error_msg(ex_rdp_context->last_rdp_error, ex_rdp_context->rail_rdp_error);
+            gchar *msg = rdp_util_get_full_error_msg(ex_context->last_rdp_error, ex_context->rail_rdp_error);
             rdp_display_draw_text_message(context, msg, 50);
             g_free(msg);
-
         }
     }
 
     return TRUE;
 }
 
+static gboolean rdp_display_size_changed(RdpDisplay *self)
+{
+    g_info("%s", (const char *)__func__);
+
+    ExtendedRdpContext *ex_context = self->ex_context;
+
+    GtkAllocation allocation;
+    int baseline;
+    gtk_widget_get_allocated_size(GTK_WIDGET(self), &allocation, &baseline);
+    UINT32 targetWidth = allocation.width;
+    UINT32 targetHeight = allocation.height;
+
+    // Send resize request
+    disp_update_layout(ex_context, targetWidth, targetHeight);
+
+    self->resize_event_source_id = 0;
+    return G_SOURCE_REMOVE;
+}
+
+static void rdp_display_on_size_allocated(GtkWidget *self, GtkAllocation *allocation G_GNUC_UNUSED,
+        gpointer user_data G_GNUC_UNUSED)
+{
+    RdpDisplay *rdp_display = (RdpDisplay *)self;
+
+    // Отложенный сигнал, чтобы не спамить сервер запросами на изменение расширения
+    g_source_remove_safely(&rdp_display->resize_event_source_id);
+    rdp_display->resize_event_source_id =
+            g_timeout_add(300, (GSourceFunc) rdp_display_size_changed, rdp_display);
+}
+
+static void rdp_display_finalize(GObject *object)
+{
+    g_info("%s", (const char *)__func__);
+    RdpDisplay *self = RDP_DISPLAY(object);
+    g_source_remove_safely(&self->resize_event_source_id);
+}
+
 static void rdp_display_class_init(RdpDisplayClass *klass G_GNUC_UNUSED)
 {
-
+    GObjectClass *gobject_class = G_OBJECT_CLASS( klass );
+    gobject_class->finalize = rdp_display_finalize;
 }
 
 static void rdp_display_init(RdpDisplay *self G_GNUC_UNUSED)
@@ -206,6 +244,8 @@ RdpDisplay *rdp_display_new(ExtendedRdpContext *ex_context, GdkRectangle geometr
     g_signal_connect(rdp_display, "button-release-event",G_CALLBACK (rdp_display_mouse_btn_released), rdp_display);
     g_signal_connect(rdp_display, "scroll-event",G_CALLBACK (rdp_display_wheel_scrolled), rdp_display);
     g_signal_connect(rdp_display, "draw", G_CALLBACK(rdp_display_event_on_draw), rdp_display);
+    g_signal_connect(rdp_display, "size-allocate", G_CALLBACK(rdp_display_on_size_allocated), rdp_display);
+
 
     return rdp_display;
 }

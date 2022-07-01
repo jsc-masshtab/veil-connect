@@ -75,6 +75,7 @@ typedef struct {
     GtkWidget *rdp_full_screen_check_btn;
     GtkWidget *rdp_selected_monitors_entry;
     GtkWidget *btn_show_monitor_config_rdp;
+    GtkWidget *dynamic_resolution_check_btn;
 
     GtkWidget *redirect_printers_check_btn;
     GtkWidget *rdp_redirect_microphone_check_btn;

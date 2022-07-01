@@ -261,7 +261,7 @@ static gboolean rdp_viewer_window_event_on_mapped(GtkWidget *widget G_GNUC_UNUSE
 
     RdpViewerWindow *rdp_window = (RdpViewerWindow *)user_data;
     if (!rdp_window->window_was_mapped) {
-        gboolean full_screen = rdp_window->ex_rdp_context->p_rdp_settings->full_screen;
+        gboolean full_screen = rdp_window->ex_context->p_rdp_settings->full_screen;
         rdp_viewer_window_toggle_fullscreen(rdp_window, full_screen);
 
         rdp_window->window_was_mapped = TRUE;
@@ -306,13 +306,13 @@ static void rdp_viewer_item_tk_doc_activated(GtkWidget *menu G_GNUC_UNUSED, gpoi
 static void rdp_viewer_item_dialog_with_admin_activated(GtkWidget *menu G_GNUC_UNUSED,
                                                         RdpViewerWindow *rdp_window)
 {
-    if (rdp_window->ex_rdp_context->p_conn_data->global_app_mode != GLOBAL_APP_MODE_VDI) {
+    if (rdp_window->ex_context->p_conn_data->global_app_mode != GLOBAL_APP_MODE_VDI) {
         show_msg_box_dialog(GTK_WINDOW(rdp_window->rdp_viewer_window),
                             _("Messaging is supported in VDI connection mode only"));
         return;
     }
 
-    VeilMessenger *veil_messenger = rdp_window->ex_rdp_context->p_veil_messenger;
+    VeilMessenger *veil_messenger = rdp_window->ex_context->p_veil_messenger;
     veil_messenger_show_on_top(veil_messenger);
 }
 
@@ -337,7 +337,7 @@ static void rdp_viewer_item_about_activated(GtkWidget *menu G_GNUC_UNUSED, gpoin
 
 static gboolean rdp_viewer_window_is_usbredir_possible(RdpViewerWindow *rdp_window)
 {
-    if (rdp_window->ex_rdp_context->p_conn_data->global_app_mode != GLOBAL_APP_MODE_VDI) {
+    if (rdp_window->ex_context->p_conn_data->global_app_mode != GLOBAL_APP_MODE_VDI) {
         show_msg_box_dialog(GTK_WINDOW(rdp_window->rdp_viewer_window),
                 _("USBREDIR is supported only in VDI connection mode"));
         return FALSE;
@@ -396,11 +396,11 @@ static void rdp_viewer_item_menu_usb_spice_activated(GtkWidget *menu G_GNUC_UNUS
 
 static void rdp_viewer_window_menu_send(GtkWidget *menu, gpointer userdata)
 {
-    ExtendedRdpContext* ex_rdp_context = (ExtendedRdpContext*)userdata;
-    if (!ex_rdp_context || !ex_rdp_context->is_running)
+    ExtendedRdpContext* ex_context = (ExtendedRdpContext*)userdata;
+    if (!ex_context || !ex_context->is_running)
         return;
 
-    rdpContext context = ex_rdp_context->context;
+    rdpContext context = ex_context->context;
 
     int *key_shortcut_index = (g_object_get_data(G_OBJECT(menu), "key_shortcut_index"));
     g_info("%s %i %i %i", (const char *)__func__,
@@ -519,7 +519,7 @@ static void
 rdp_viewer_window_toolbar_leave_fullscreen_for_all_windows(GtkWidget *button G_GNUC_UNUSED, gpointer userdata)
 {
     RdpViewerWindow *rdp_window = (RdpViewerWindow *)userdata;
-    GArray *rdp_windows_array = rdp_window->ex_rdp_context->rdp_windows_array;
+    GArray *rdp_windows_array = rdp_window->ex_context->rdp_windows_array;
 
     // leave fullscreen on all windows
     for (guint i = 0; i < rdp_windows_array->len; ++i) {
@@ -542,7 +542,7 @@ create_new_button_for_overlay_toolbar(RdpViewerWindow *rdp_window, const gchar *
     return button;
 }
 
-static void fill_shortcuts_menu(GtkMenu *sub_menu_send, ExtendedRdpContext* ex_rdp_context)
+static void fill_shortcuts_menu(GtkMenu *sub_menu_send, ExtendedRdpContext* ex_context)
 {
     int num_of_shortcuts = G_N_ELEMENTS(keyCombos);
     for (int i = 0; i < num_of_shortcuts; ++i) {
@@ -552,7 +552,7 @@ static void fill_shortcuts_menu(GtkMenu *sub_menu_send, ExtendedRdpContext* ex_r
         int *key_shortcut_index = malloc(sizeof(int));
         *key_shortcut_index = i;
         g_object_set_data_full(G_OBJECT(menu_item), "key_shortcut_index", key_shortcut_index, g_free);
-        g_signal_connect(menu_item, "activate", G_CALLBACK(rdp_viewer_window_menu_send), ex_rdp_context);
+        g_signal_connect(menu_item, "activate", G_CALLBACK(rdp_viewer_window_menu_send), ex_context);
     }
 }
 
@@ -571,7 +571,7 @@ static void rdp_viewer_toolbar_setup(GtkBuilder *builder, RdpViewerWindow *rdp_w
     g_signal_connect(button, "clicked", G_CALLBACK(rdp_viewer_window_toolbar_leave_fullscreen), rdp_window);
 
     // Leave fullscreen for all windows at once
-    if (rdp_window->ex_rdp_context->context.settings->MonitorCount > 1) {
+    if (rdp_window->ex_context->context.settings->MonitorCount > 1) {
         button = create_new_button_for_overlay_toolbar(rdp_window, "view-restore",
                 "Покинуть полный экран на всех окнах");
         g_signal_connect(button, "clicked",
@@ -583,7 +583,7 @@ static void rdp_viewer_toolbar_setup(GtkBuilder *builder, RdpViewerWindow *rdp_w
     button = create_new_button_for_overlay_toolbar(rdp_window, "preferences-desktop-keyboard-shortcuts",
                                                    _("Send key combination"));
     rdp_window->menu_send_shortcut = gtk_menu_new();
-    fill_shortcuts_menu(GTK_MENU(rdp_window->menu_send_shortcut), rdp_window->ex_rdp_context);
+    fill_shortcuts_menu(GTK_MENU(rdp_window->menu_send_shortcut), rdp_window->ex_context);
     g_signal_connect(button, "clicked", G_CALLBACK(rdp_viewer_window_menu_show_shortcuts),
                      rdp_window);
 
@@ -719,12 +719,12 @@ static void rdp_viewer_window_show(RdpViewerWindow *rdp_window, GdkRectangle geo
     gtk_widget_show_all(rdp_window->rdp_viewer_window);
 }
 
-RdpViewerWindow *rdp_viewer_window_create(ExtendedRdpContext *ex_rdp_context,
+RdpViewerWindow *rdp_viewer_window_create(ExtendedRdpContext *ex_context,
         int index, int monitor_num, GdkRectangle geometry)
 {
     RdpViewerWindow *rdp_window = RDP_VIEWER_WINDOW( g_object_new( TYPE_RDP_VIEWER_WINDOW, NULL ) );
 
-    rdp_window->ex_rdp_context = ex_rdp_context;
+    rdp_window->ex_context = ex_context;
     rdp_window->monitor_index = index;
     rdp_window->monitor_number = monitor_num;
 
@@ -735,8 +735,8 @@ RdpViewerWindow *rdp_viewer_window_create(ExtendedRdpContext *ex_rdp_context,
             GTK_WIDGET(gtk_builder_get_object(builder, "viewer"));
     // ВМ: %s     Пользователь: %s  -  %s
     gchar *title = g_strdup_printf(_("VM: %s     User: %s     Monitor number: %i  -  %s"),
-                                   ex_rdp_context->p_conn_data->vm_verbose_name,
-                                   ex_rdp_context->p_rdp_settings->user_name,
+                                   ex_context->p_conn_data->vm_verbose_name,
+                                   ex_context->p_rdp_settings->user_name,
                                    rdp_window->monitor_number, APPLICATION_NAME);
     gtk_window_set_title(GTK_WINDOW(rdp_viewer_window), title);
     free_memory_safely(&title);
@@ -783,7 +783,7 @@ RdpViewerWindow *rdp_viewer_window_create(ExtendedRdpContext *ex_rdp_context,
 
     rdp_viewer_control_menu_setup(builder, rdp_window);
     // control menu. Управление ВМ реализовано только для VDI режима
-    gboolean is_vdi_mode = ex_rdp_context->p_conn_data->global_app_mode == GLOBAL_APP_MODE_VDI;
+    gboolean is_vdi_mode = ex_context->p_conn_data->global_app_mode == GLOBAL_APP_MODE_VDI;
     GtkWidget *menu_control = GTK_WIDGET(gtk_builder_get_object(builder, "menu-control"));
     gtk_widget_set_sensitive(menu_control, is_vdi_mode);
 
@@ -800,7 +800,7 @@ RdpViewerWindow *rdp_viewer_window_create(ExtendedRdpContext *ex_rdp_context,
     GtkWidget *menu_send_shortcut = GTK_WIDGET(gtk_builder_get_object(builder, "menu-send"));
     GtkMenu *sub_menu_send = GTK_MENU(gtk_menu_new());
     gtk_menu_item_set_submenu(GTK_MENU_ITEM(menu_send_shortcut), (GtkWidget*)sub_menu_send);
-    fill_shortcuts_menu(sub_menu_send, ex_rdp_context);
+    fill_shortcuts_menu(sub_menu_send, ex_context);
 
     // help menu
     GtkWidget *item_product_site = GTK_WIDGET(gtk_builder_get_object(builder, "menu-help-guest-details"));
@@ -821,9 +821,9 @@ RdpViewerWindow *rdp_viewer_window_create(ExtendedRdpContext *ex_rdp_context,
             G_CALLBACK(rdp_viewer_item_dialog_with_admin_activated), rdp_window);
     g_signal_connect(item_menu_connection_info, "activate",
             G_CALLBACK(rdp_viewer_item_menu_connection_info_activated), rdp_window);
-    g_signal_connect(rdp_viewer_window, "key-press-event", G_CALLBACK(rdp_viewer_window_key_pressed), ex_rdp_context);
+    g_signal_connect(rdp_viewer_window, "key-press-event", G_CALLBACK(rdp_viewer_window_key_pressed), ex_context);
     g_signal_connect(rdp_viewer_window, "key-release-event",
-            G_CALLBACK(rdp_viewer_window_key_released), ex_rdp_context);
+            G_CALLBACK(rdp_viewer_window_key_released), ex_context);
 
     // other signals
     rdp_window->vm_changed_handle = g_signal_connect(get_vdi_session_static(), "vm-changed",
@@ -835,14 +835,18 @@ RdpViewerWindow *rdp_viewer_window_create(ExtendedRdpContext *ex_rdp_context,
     }
 
     // create RDP display and add to scrolled window
-    rdp_window->rdp_display = rdp_display_new(ex_rdp_context, geometry);
-    gtk_widget_set_size_request(GTK_WIDGET(rdp_window->rdp_display), geometry.width, geometry.height);
+    rdp_window->rdp_display = rdp_display_new(ex_context, geometry);
 
-    GtkWidget *scrolled_window = gtk_scrolled_window_new(NULL, NULL);
-    gtk_container_add(GTK_CONTAINER(scrolled_window), GTK_WIDGET(rdp_window->rdp_display));
-
+    // Если активирована динамическая адаптация расширения, то скролы не требуются.
     GtkWidget *vbox = GTK_WIDGET(gtk_builder_get_object(builder, "viewer-box"));
-    gtk_box_pack_end(GTK_BOX(vbox), scrolled_window, TRUE, TRUE, 0);
+    if (ex_context->p_rdp_settings->dynamic_resolution_enabled && !ex_context->p_rdp_settings->is_multimon) {
+        gtk_box_pack_end(GTK_BOX(vbox), GTK_WIDGET(rdp_window->rdp_display), TRUE, TRUE, 0);
+    } else {
+        gtk_widget_set_size_request(GTK_WIDGET(rdp_window->rdp_display), geometry.width, geometry.height);
+        GtkWidget *scrolled_window = gtk_scrolled_window_new(NULL, NULL);
+        gtk_container_add(GTK_CONTAINER(scrolled_window), GTK_WIDGET(rdp_window->rdp_display));
+        gtk_box_pack_end(GTK_BOX(vbox), GTK_WIDGET(scrolled_window), TRUE, TRUE, 0);
+    }
 
     // position the window and show
     rdp_viewer_window_show(rdp_window, geometry);
@@ -852,7 +856,7 @@ RdpViewerWindow *rdp_viewer_window_create(ExtendedRdpContext *ex_rdp_context,
 
 void rdp_viewer_window_destroy(RdpViewerWindow *rdp_window)
 {
-    // ungrab keybaord if its grabbed
+    // ungrab keyboard if its grabbed
     rdp_viewer_window_toggle_keyboard_grab(rdp_window, FALSE);
 
     if (rdp_window->vm_changed_handle)

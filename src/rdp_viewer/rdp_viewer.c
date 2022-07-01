@@ -78,50 +78,50 @@ static void rdp_viewer_init(RdpViewer *self G_GNUC_UNUSED)
 
 static gboolean rdp_viewer_update_cursor(rdpContext* context)
 {
-    ExtendedRdpContext* ex_rdp_context = (ExtendedRdpContext*)context;
-    if (!ex_rdp_context || !ex_rdp_context->is_running)
+    ExtendedRdpContext* ex_context = (ExtendedRdpContext*)context;
+    if (!ex_context || !ex_context->is_running)
         return TRUE;
 
-    g_mutex_lock(&ex_rdp_context->cursor_mutex);
+    g_mutex_lock(&ex_context->cursor_mutex);
 
-    for (guint i = 0; i < ex_rdp_context->rdp_windows_array->len; ++i) {
-        RdpViewerWindow *rdp_window_data = g_array_index(ex_rdp_context->rdp_windows_array, RdpViewerWindow *, i);
+    for (guint i = 0; i < ex_context->rdp_windows_array->len; ++i) {
+        RdpViewerWindow *rdp_window_data = g_array_index(ex_context->rdp_windows_array, RdpViewerWindow *, i);
         GdkWindow *parent_window = gtk_widget_get_parent_window(GTK_WIDGET(rdp_window_data->rdp_display));
-        gdk_window_set_cursor(parent_window,  ex_rdp_context->gdk_cursor);
+        gdk_window_set_cursor(parent_window,  ex_context->gdk_cursor);
     }
 
     //g_info("%s ex_pointer->test_int: ", (const char *)__func__);
-    g_mutex_unlock(&ex_rdp_context->cursor_mutex);
+    g_mutex_unlock(&ex_context->cursor_mutex);
 
-    ex_rdp_context->cursor_update_timeout_id = 0;
+    ex_context->cursor_update_timeout_id = 0;
     return G_SOURCE_REMOVE;
 }
 
 static gboolean rdp_viewer_update_images(gpointer user_data)
 {
-    ExtendedRdpContext* ex_rdp_context = (ExtendedRdpContext *)user_data;
+    ExtendedRdpContext* ex_context = (ExtendedRdpContext *)user_data;
 
     // invalidate regions
-    g_mutex_lock(&ex_rdp_context->invalid_region_mutex);
+    g_mutex_lock(&ex_context->invalid_region_mutex);
 
-    if (ex_rdp_context->invalid_region_has_data) {
-        //g_info("UDATE: %i %i %i %i  ", ex_rdp_context->invalid_region.x, ex_rdp_context->invalid_region.y,
-        //       ex_rdp_context->invalid_region.width, ex_rdp_context->invalid_region.height);
-        for (guint i = 0; i < ex_rdp_context->rdp_windows_array->len; ++i) {
-            RdpViewerWindow *rdp_window_data = g_array_index(ex_rdp_context->rdp_windows_array, RdpViewerWindow *, i);
+    if (ex_context->invalid_region_has_data) {
+        //g_info("UDATE: %i %i %i %i  ", ex_context->invalid_region.x, ex_context->invalid_region.y,
+        //       ex_context->invalid_region.width, ex_context->invalid_region.height);
+        for (guint i = 0; i < ex_context->rdp_windows_array->len; ++i) {
+            RdpViewerWindow *rdp_window_data = g_array_index(ex_context->rdp_windows_array, RdpViewerWindow *, i);
             RdpDisplay *rdp_display = rdp_window_data->rdp_display;
             if (rdp_display && gtk_widget_is_drawable(GTK_WIDGET(rdp_display))) {
                 gtk_widget_queue_draw_area(GTK_WIDGET(rdp_display),
-                                           ex_rdp_context->invalid_region.x - rdp_display->geometry.x,
-                                           ex_rdp_context->invalid_region.y - rdp_display->geometry.y,
-                                           ex_rdp_context->invalid_region.width,
-                                           ex_rdp_context->invalid_region.height);
+                                           ex_context->invalid_region.x - rdp_display->geometry.x,
+                                           ex_context->invalid_region.y - rdp_display->geometry.y,
+                                           ex_context->invalid_region.width,
+                                           ex_context->invalid_region.height);
             }
         }
 
-        ex_rdp_context->invalid_region_has_data = FALSE;
+        ex_context->invalid_region_has_data = FALSE;
     }
-    g_mutex_unlock(&ex_rdp_context->invalid_region_mutex);
+    g_mutex_unlock(&ex_context->invalid_region_mutex);
 
     return G_SOURCE_CONTINUE;
 }
@@ -138,14 +138,14 @@ rdp_viewer_on_stop_requested(gpointer data G_GNUC_UNUSED,
 // Returns monitor geometry
 static RdpViewerWindow * set_monitor_data_and_create_rdp_viewer_window(RdpViewer *self,
         GdkRectangle *geometry, int index, int monitor_num,
-        ExtendedRdpContext *ex_rdp_context)
+        ExtendedRdpContext *ex_context)
 {
     GdkDisplay *display = gdk_display_get_default();
     // get monitor geometry
     util_get_monitor_geometry(display, monitor_num, geometry);
 
     // set monitor data for rdp client
-    rdpSettings* settings = ex_rdp_context->context.settings;
+    rdpSettings* settings = ex_context->context.settings;
 
     settings->MonitorDefArray[index].x = geometry->x;
     settings->MonitorDefArray[index].y = geometry->y;
@@ -154,10 +154,10 @@ static RdpViewerWindow * set_monitor_data_and_create_rdp_viewer_window(RdpViewer
     settings->MonitorDefArray[index].is_primary = util_check_if_monitor_primary(display, monitor_num);
 
     // create rdp viewer window
-    RdpViewerWindow *rdp_window = rdp_viewer_window_create(ex_rdp_context, index, monitor_num, *geometry);
+    RdpViewerWindow *rdp_window = rdp_viewer_window_create(ex_context, index, monitor_num, *geometry);
     g_signal_connect(rdp_window, "stop-requested",
                      G_CALLBACK(rdp_viewer_on_stop_requested), self);
-    g_array_append_val(ex_rdp_context->rdp_windows_array, rdp_window);
+    g_array_append_val(ex_context->rdp_windows_array, rdp_window);
 
     return rdp_window;
 }
@@ -180,9 +180,9 @@ static gboolean rdp_viewer_ask_for_credentials_if_required(
 }
 
 static void rdp_viewer_stats_data_updated(gpointer data G_GNUC_UNUSED, VmRemoteProtocol protocol,
-                                          NetworkStatsData *nw_data, ExtendedRdpContext *ex_rdp_context)
+                                          NetworkStatsData *nw_data, ExtendedRdpContext *ex_context)
 {
-    GArray *rdp_windows_array = ex_rdp_context->rdp_windows_array;
+    GArray *rdp_windows_array = ex_context->rdp_windows_array;
     for (guint i = 0; i < rdp_windows_array->len; ++i) {
         RdpViewerWindow *rdp_window_data = g_array_index(rdp_windows_array, RdpViewerWindow *, i);
         conn_info_dialog_update(rdp_window_data->conn_info_dialog, protocol, nw_data);
@@ -191,19 +191,19 @@ static void rdp_viewer_stats_data_updated(gpointer data G_GNUC_UNUSED, VmRemoteP
 
 static void rdp_viewer_show_error_msg_if_required(RdpViewer *self)
 {
-    UINT32 last_error = self->ex_rdp_context->last_rdp_error;
+    UINT32 last_error = self->ex_context->last_rdp_error;
     gboolean is_stop_intentional = is_disconnect_intentional(last_error);
 
     if (!is_stop_intentional) {
-        RdpViewerWindow *rdp_window_data = g_array_index(self->ex_rdp_context->rdp_windows_array,
+        RdpViewerWindow *rdp_window_data = g_array_index(self->ex_context->rdp_windows_array,
                                                        RdpViewerWindow *, 0);
 
-        if (last_error != 0 || self->ex_rdp_context->rail_rdp_error != 0) {
+        if (last_error != 0 || self->ex_context->rail_rdp_error != 0) {
             gchar *msg = rdp_util_get_full_error_msg(
-                    self->ex_rdp_context->last_rdp_error, self->ex_rdp_context->rail_rdp_error);
+                    self->ex_context->last_rdp_error, self->ex_context->rail_rdp_error);
             show_msg_box_dialog(GTK_WINDOW(rdp_window_data->rdp_viewer_window), msg);
             g_free(msg);
-        } else if (!self->ex_rdp_context->is_connected_last_time) {
+        } else if (!self->ex_context->is_connected_last_time) {
             // Не удалось установить соединение. Проверьте разрешен ли удаленный доступ для текущего пользователя
             show_msg_box_dialog(GTK_WINDOW(rdp_window_data->rdp_viewer_window),
                                 _("Unable to connect. Check if remote access allowed for this user."));
@@ -245,7 +245,7 @@ static gboolean rdp_viewer_work_thread_finished(RdpViewer *self)
     rdp_viewer_show_error_msg_if_required(self);
 
     // destroy rdp windows
-    GArray *rdp_windows_array = self->ex_rdp_context->rdp_windows_array;
+    GArray *rdp_windows_array = self->ex_context->rdp_windows_array;
     for (guint i = 0; i < rdp_windows_array->len; ++i) {
         RdpViewerWindow *rdp_window_data = g_array_index(rdp_windows_array, RdpViewerWindow *, i);
         rdp_viewer_window_destroy(rdp_window_data);
@@ -253,14 +253,14 @@ static gboolean rdp_viewer_work_thread_finished(RdpViewer *self)
     g_array_free(rdp_windows_array, TRUE);
 
     // Send signal
-    if (self->ex_rdp_context->signal_upon_job_finish) {
-        g_signal_emit_by_name(self, self->ex_rdp_context->signal_upon_job_finish);
+    if (self->ex_context->signal_upon_job_finish) {
+        g_signal_emit_by_name(self, self->ex_context->signal_upon_job_finish);
     }
 
     // deinit all
     g_object_unref(self->net_speedometer);
-    destroy_rdp_context(self->ex_rdp_context);
-    self->ex_rdp_context = NULL;
+    destroy_rdp_context(self->ex_context);
+    self->ex_context = NULL;
 
     return FALSE;
 }
@@ -268,7 +268,7 @@ static gboolean rdp_viewer_work_thread_finished(RdpViewer *self)
 //===============================Thread client routine==================================
 static void* rdp_viewer_job_routine(RdpViewer *self)
 {
-    ExtendedRdpContext *ex_contect = self->ex_rdp_context;
+    ExtendedRdpContext *ex_contect = self->ex_context;
 
     if (ex_contect->is_abort_demanded)
         return NULL;
@@ -402,7 +402,7 @@ static void* rdp_viewer_job_routine(RdpViewer *self)
 
 void rdp_viewer_start_routine_thread(RdpViewer *self)
 {
-    self->ex_rdp_context->is_abort_demanded = FALSE; // reset abort demand before start
+    self->ex_context->is_abort_demanded = FALSE; // reset abort demand before start
     self->job_thread = g_thread_new(NULL, (GThreadFunc)rdp_viewer_job_routine, self);
 }
 
@@ -424,25 +424,25 @@ void rdp_viewer_start(RdpViewer *self, ConnectSettingsData *conn_data, VeilMesse
     }
 
     // create RDP context
-    self->ex_rdp_context = create_rdp_context(p_rdp_settings,
+    self->ex_context = create_rdp_context(p_rdp_settings,
                                              (UpdateCursorCallback)rdp_viewer_update_cursor,
                                              (GSourceFunc)rdp_viewer_update_images);
-    self->ex_rdp_context->p_conn_data = conn_data;
-    self->ex_rdp_context->p_veil_messenger = veil_messenger;
+    self->ex_context->p_conn_data = conn_data;
+    self->ex_context->p_veil_messenger = veil_messenger;
 
     self->net_speedometer = net_speedometer_new();
     net_speedometer_update_vm_ip(self->net_speedometer, p_rdp_settings->ip);
     // set pointer for statistics accumulation
-    net_speedometer_set_pointer_rdp_context(self->net_speedometer, self->ex_rdp_context->context.rdp);
+    net_speedometer_set_pointer_rdp_context(self->net_speedometer, self->ex_context->context.rdp);
     g_signal_connect(self->net_speedometer, "stats-data-updated",
-                     G_CALLBACK(rdp_viewer_stats_data_updated), self->ex_rdp_context);
+                     G_CALLBACK(rdp_viewer_stats_data_updated), self->ex_context);
 
     // Set some presettings
     usbredir_controller_reset_tcp_usb_devices_on_next_gui_opening(TRUE);
 
     // determine monitor info
     GdkDisplay *display = gdk_display_get_default();
-    const gchar *monitor_config_str = self->ex_rdp_context->p_rdp_settings->selectedmonitors;
+    const gchar *monitor_config_str = self->ex_context->p_rdp_settings->selectedmonitors;
 
     // Получить массив int номеров
     gchar **monitor_configs = monitor_config_str ? g_strsplit(monitor_config_str, ",", MAX_MONITOR_AMOUNT) : NULL;
@@ -450,7 +450,7 @@ void rdp_viewer_start(RdpViewer *self, ConnectSettingsData *conn_data, VeilMesse
     GArray *monitor_num_array = g_array_new(FALSE, FALSE, sizeof(int));
 
     // array which will contain rdp windows
-    self->ex_rdp_context->rdp_windows_array = g_array_new(FALSE, FALSE, sizeof(RdpViewerWindow *));
+    self->ex_context->rdp_windows_array = g_array_new(FALSE, FALSE, sizeof(RdpViewerWindow *));
 
     // create rdp viewer windows
     int total_monitor_width = 0; // Во freerdp нет мультимониторности. Единственный способ ее эмулиовать -
@@ -492,7 +492,7 @@ void rdp_viewer_start(RdpViewer *self, ConnectSettingsData *conn_data, VeilMesse
             // get monitor data
             GdkRectangle geometry;
             RdpViewerWindow *rdp_window_data = set_monitor_data_and_create_rdp_viewer_window(
-                    self, &geometry, i, monitor_num, self->ex_rdp_context);
+                    self, &geometry, i, monitor_num, self->ex_context);
             total_monitor_width += geometry.width;
 
             // find the smallest height
@@ -515,7 +515,7 @@ void rdp_viewer_start(RdpViewer *self, ConnectSettingsData *conn_data, VeilMesse
         monitor_num = g_array_index(monitor_num_array, int, 0);
         GdkRectangle geometry;
         RdpViewerWindow *rdp_window_data = set_monitor_data_and_create_rdp_viewer_window(
-                self, &geometry, 0, monitor_num, self->ex_rdp_context);
+                self, &geometry, 0, monitor_num, self->ex_context);
         total_monitor_width = geometry.width;
         monitor_height = geometry.height;
         rdp_window_data->rdp_display->geometry.x = rdp_window_data->rdp_display->geometry.y = 0;
@@ -526,11 +526,11 @@ void rdp_viewer_start(RdpViewer *self, ConnectSettingsData *conn_data, VeilMesse
     monitor_height = monitor_height - MAC_PANEL_HEIGHT;
 #endif
     // Set image size which we will receive from Server
-    const int max_image_width = 5120;//2560; 5120
-    const int max_image_height = 2500; // 1440
+    const int max_image_width = 5120;
+    const int max_image_height = 2560;
     int image_width = MIN(max_image_width, total_monitor_width);
     int image_height = MIN(max_image_height, monitor_height);
-    rdp_client_set_rdp_image_size(self->ex_rdp_context, image_width, image_height);
+    rdp_client_set_rdp_image_size(self->ex_context, image_width, image_height);
 
     // Notify if folders redir is forbidden. Проброс папок запрещен администратором
     gchar *shared_folders_str = read_str_from_ini_file("RDPSettings", "rdp_shared_folders");
@@ -540,7 +540,7 @@ void rdp_viewer_start(RdpViewer *self, ConnectSettingsData *conn_data, VeilMesse
     free_memory_safely(&shared_folders_str);
 
     // set monitor data for rdp client
-    rdpSettings *settings = self->ex_rdp_context->context.settings;
+    rdpSettings *settings = self->ex_context->context.settings;
     settings->MonitorCount = monitor_num_array->len;
     settings->UseMultimon = settings->ForceMultimon = p_rdp_settings->is_multimon;
     g_array_free(monitor_num_array, TRUE);
@@ -551,25 +551,25 @@ void rdp_viewer_start(RdpViewer *self, ConnectSettingsData *conn_data, VeilMesse
 
 void rdp_viewer_stop(RdpViewer *rdp_viewer, const gchar *signal_upon_job_finish, gboolean exit_if_cant_abort)
 {
-    ExtendedRdpContext *ex_rdp_context = rdp_viewer->ex_rdp_context;
-    if (ex_rdp_context == NULL)
+    ExtendedRdpContext *ex_context = rdp_viewer->ex_context;
+    if (ex_context == NULL)
         return;
-    if (!ex_rdp_context->is_running)
+    if (!ex_context->is_running)
         return;
 
-    update_string_safely(&ex_rdp_context->signal_upon_job_finish, signal_upon_job_finish);
+    update_string_safely(&ex_context->signal_upon_job_finish, signal_upon_job_finish);
 
     // В режиме запуска удаленного приложения закрываем текущее окно послав alt f4, так как пользователь ожидает,
     // что приложение закроется
-    rdpContext *context = (rdpContext *)ex_rdp_context;
+    rdpContext *context = (rdpContext *)ex_context;
     if (context->settings->RemoteApplicationMode) {
         rdp_viewer_window_send_key_shortcut(context, 14); // 14 - index in keyCombos
     }
 
     // Условие из-за проблемы невозможности отмены стадий коннекта и дисконнекта во freerdp
     // (функции freerdp_connect и freerdp_disconnect могут виснуть на неопределенное время)
-    if (!ex_rdp_context->is_connecting && !ex_rdp_context->is_disconnecting) {
-        rdp_client_abort_connection(ex_rdp_context->context.instance);
+    if (!ex_context->is_connecting && !ex_context->is_disconnecting) {
+        rdp_client_abort_connection(ex_context->context.instance);
     } else if (exit_if_cant_abort) { // Завершаем приложения форсировано
         g_warning("%s: Forced exit", (const char *)__func__);
         g_signal_emit_by_name(rdp_viewer, "quit-requested");

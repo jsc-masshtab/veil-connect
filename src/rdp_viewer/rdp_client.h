@@ -21,6 +21,8 @@
 
 #include <gtk/gtk.h>
 
+#include "rdp_disp.h"
+#include "rdp_client.h"
 #include "rdp_cursor.h"
 #include "remote-viewer-util.h"
 #include "settings_data.h"
@@ -37,6 +39,7 @@ typedef struct {
     RdpeiClientContext *rdpei;
     RdpgfxClientContext *gfx;
     EncomspClientContext *encomsp;
+    RdpDispContext *rdp_disp;
 
     GArray *rdp_windows_array;
 
@@ -52,14 +55,14 @@ typedef struct {
     GdkCursor *gdk_cursor; // cursor
     GMutex cursor_mutex; // mutex for protecting gdk_cursor
 
-    int test_int;
-
     gboolean is_running; // is rdp routine running
     gboolean is_abort_demanded;
     gboolean is_connecting;
     gboolean is_disconnecting;
     gboolean is_connected_last_time; // флаг было ли успешное соединение на последней попытке
     gchar *signal_upon_job_finish;
+
+    cairo_format_t cairo_format;
 
     // RDP settings
     VeilRdpSettings *p_rdp_settings; // указатель на данные. Не владеет этими данными
@@ -89,9 +92,9 @@ void rdp_client_demand_image_update(ExtendedRdpContext* ex_context, int x, int y
 
 ExtendedRdpContext* create_rdp_context(VeilRdpSettings *p_rdp_settings,
         UpdateCursorCallback update_cursor_callback, GSourceFunc update_images_func);
-void destroy_rdp_context(ExtendedRdpContext* ex_rdp_context);
+void destroy_rdp_context(ExtendedRdpContext* ex_context);
 
-void rdp_client_set_rdp_image_size(ExtendedRdpContext *ex_rdp_context,
+void rdp_client_set_rdp_image_size(ExtendedRdpContext *ex_context,
                                          int whole_image_width, int whole_image_height);
 
 BOOL rdp_client_abort_connection(freerdp* instance);

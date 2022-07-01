@@ -30,6 +30,8 @@ typedef struct
     ExtendedRdpContext *ex_context; // weak ref (not owning)
     GdkRectangle geometry;
 
+    guint resize_event_source_id;
+
 } RdpDisplay;
 
 typedef struct
