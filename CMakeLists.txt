@@ -45,6 +45,8 @@ list(APPEND SRC_CODE
         src/additional_addresses_widget.h
         src/additional_addresses_widget.c
         src/custom_property_data.h
+        src/vm_control_menu.h
+        src/vm_control_menu.c
 
 # virt_viewer
         src/virt_viewer/virt-viewer-resources.h

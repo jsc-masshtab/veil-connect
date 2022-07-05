@@ -29,6 +29,7 @@
 #include "usbredir_controller.h"
 #include "usbredir_util.h"
 #include "messenger.h"
+#include "vm_control_menu.h"
 
 #define MAX_KEY_COMBO 4
 
@@ -316,6 +317,13 @@ static void rdp_viewer_item_dialog_with_admin_activated(GtkWidget *menu G_GNUC_U
     veil_messenger_show_on_top(veil_messenger);
 }
 
+static void rdp_viewer_window_on_vm_control_menu(GtkWidget *menu, gpointer userdata)
+{
+    RdpViewerWindow *rdp_window = (RdpViewerWindow *)userdata;
+    gtk_widget_show_all(rdp_window->menu_vm_control);
+    gtk_menu_popup_at_widget(GTK_MENU(rdp_window->menu_vm_control), menu, GDK_GRAVITY_SOUTH, GDK_GRAVITY_SOUTH, NULL);
+}
+
 static void rdp_viewer_item_menu_connection_info_activated(GtkWidget *menu G_GNUC_UNUSED,
                                                            RdpViewerWindow *rdp_window)
 {
@@ -418,6 +426,15 @@ rdp_viewer_window_menu_close_window(GtkWidget *menu G_GNUC_UNUSED, gpointer user
 }
 
 static void
+rdp_viewer_window_menu_show_usb(GtkWidget *menu, gpointer userdata)
+{
+    g_info("%s", (const char *)__func__);
+    RdpViewerWindow *rdp_window = (RdpViewerWindow *)userdata;
+    gtk_widget_show_all(rdp_window->menu_open_usb);
+    gtk_menu_popup_at_widget(GTK_MENU(rdp_window->menu_open_usb), menu, GDK_GRAVITY_SOUTH, GDK_GRAVITY_SOUTH, NULL);
+}
+
+static void
 rdp_viewer_window_menu_disconnect(GtkWidget *menu G_GNUC_UNUSED, gpointer userdata)
 {
     g_info("%s", (const char *)__func__);
@@ -480,24 +497,13 @@ rdp_viewer_window_menu_reboot_vm_force(GtkWidget *menu G_GNUC_UNUSED, gpointer u
 static void
 rdp_viewer_control_menu_setup(GtkBuilder *builder, RdpViewerWindow *rdp_window)
 {
+    rdp_window->menu_vm_control = vm_control_menu_create();
+
     GtkMenuItem *menu_switch_off = GTK_MENU_ITEM(gtk_builder_get_object(builder, "menu-switch-off"));
     GtkMenuItem *menu_reconnect = GTK_MENU_ITEM(gtk_builder_get_object(builder, "menu-reconnect"));
     gtk_widget_destroy(GTK_WIDGET(menu_reconnect));
-    GtkMenuItem *menu_start_vm = GTK_MENU_ITEM(gtk_builder_get_object(builder, "menu-start-vm"));
-    GtkMenuItem *menu_suspend_vm = GTK_MENU_ITEM(gtk_builder_get_object(builder, "menu-suspend-vm"));
-    GtkMenuItem *menu_shutdown_vm = GTK_MENU_ITEM(gtk_builder_get_object(builder, "menu-shutdown-vm"));
-    GtkMenuItem *menu_shutdown_vm_force = GTK_MENU_ITEM(gtk_builder_get_object(builder, "menu-shutdown-vm-force"));
-    GtkMenuItem *menu_reboot_vm = GTK_MENU_ITEM(gtk_builder_get_object(builder, "menu-reboot-vm"));
-    GtkMenuItem *menu_reboot_vm_force = GTK_MENU_ITEM(gtk_builder_get_object(builder, "menu-reboot-vm-force"));
 
     g_signal_connect(menu_switch_off, "activate", G_CALLBACK(rdp_viewer_window_menu_disconnect), rdp_window);
-
-    g_signal_connect(menu_start_vm, "activate", G_CALLBACK(rdp_viewer_window_menu_start_vm), NULL);
-    g_signal_connect(menu_suspend_vm, "activate", G_CALLBACK(rdp_viewer_window_menu_suspend_vm), NULL);
-    g_signal_connect(menu_shutdown_vm, "activate", G_CALLBACK(rdp_viewer_window_menu_shutdown_vm), NULL);
-    g_signal_connect(menu_shutdown_vm_force, "activate", G_CALLBACK(rdp_viewer_window_menu_shutdown_vm_force), NULL);
-    g_signal_connect(menu_reboot_vm, "activate", G_CALLBACK(rdp_viewer_window_menu_reboot_vm), NULL);
-    g_signal_connect(menu_reboot_vm_force, "activate", G_CALLBACK(rdp_viewer_window_menu_reboot_vm_force), NULL);
 }
 
 static void
@@ -529,11 +535,11 @@ rdp_viewer_window_toolbar_leave_fullscreen_for_all_windows(GtkWidget *button G_G
 }
 
 static GtkWidget *
-create_new_button_for_overlay_toolbar(RdpViewerWindow *rdp_window, const gchar *icon_name, const gchar *text)
+create_new_button_for_overlay_toolbar(RdpViewerWindow *rdp_window, GtkWidget *icon_widget, const gchar *icon_name,
+        const gchar *text)
 {
-    GtkWidget *button = GTK_WIDGET(gtk_tool_button_new(NULL, NULL));
+    GtkWidget *button = GTK_WIDGET(gtk_tool_button_new(icon_widget, NULL));
     gtk_tool_button_set_icon_name(GTK_TOOL_BUTTON(button), icon_name);
-    //gtk_tool_button_set_label(GTK_TOOL_BUTTON(button), text);
     gtk_tool_item_set_tooltip_text(GTK_TOOL_ITEM(button), text);
     gtk_tool_item_set_is_important(GTK_TOOL_ITEM(button), TRUE);
     gtk_widget_show(button);
@@ -567,12 +573,12 @@ static void rdp_viewer_toolbar_setup(GtkBuilder *builder, RdpViewerWindow *rdp_w
     gtk_toolbar_set_style(GTK_TOOLBAR(rdp_window->overlay_toolbar), GTK_TOOLBAR_BOTH_HORIZ);
 
     // Leave fullscreen
-    button = create_new_button_for_overlay_toolbar(rdp_window, "view-restore", _("Leave full screen"));
+    button = create_new_button_for_overlay_toolbar(rdp_window, NULL, "view-restore", _("Leave full screen"));
     g_signal_connect(button, "clicked", G_CALLBACK(rdp_viewer_window_toolbar_leave_fullscreen), rdp_window);
 
     // Leave fullscreen for all windows at once
     if (rdp_window->ex_context->context.settings->MonitorCount > 1) {
-        button = create_new_button_for_overlay_toolbar(rdp_window, "view-restore",
+        button = create_new_button_for_overlay_toolbar(rdp_window, NULL, "view-restore",
                 "Покинуть полный экран на всех окнах");
         g_signal_connect(button, "clicked",
                 G_CALLBACK(rdp_viewer_window_toolbar_leave_fullscreen_for_all_windows),
@@ -580,17 +586,34 @@ static void rdp_viewer_toolbar_setup(GtkBuilder *builder, RdpViewerWindow *rdp_w
     }
 
     // Send key combination
-    button = create_new_button_for_overlay_toolbar(rdp_window, "preferences-desktop-keyboard-shortcuts",
+    button = create_new_button_for_overlay_toolbar(rdp_window, NULL, "preferences-desktop-keyboard-shortcuts",
                                                    _("Send key combination"));
     rdp_window->menu_send_shortcut = gtk_menu_new();
     fill_shortcuts_menu(GTK_MENU(rdp_window->menu_send_shortcut), rdp_window->ex_context);
     g_signal_connect(button, "clicked", G_CALLBACK(rdp_viewer_window_menu_show_shortcuts),
                      rdp_window);
 
-    // Disconnect
-    button = create_new_button_for_overlay_toolbar(rdp_window, "window-close", _("Disconnect"));
-    g_signal_connect(button, "clicked", G_CALLBACK(rdp_viewer_window_menu_disconnect), rdp_window);
+    // USB
+    rdp_window->menu_open_usb = gtk_menu_new();
+    GtkWidget *menu_usbredir_tcp = gtk_menu_item_new_with_mnemonic("USBREDIR TCP");
+    gtk_container_add(GTK_CONTAINER(rdp_window->menu_open_usb), menu_usbredir_tcp);
+    g_signal_connect(menu_usbredir_tcp, "activate", G_CALLBACK(rdp_viewer_item_menu_usb_tcp_activated), rdp_window);
+    GtkWidget *menu_usbredir_spice = gtk_menu_item_new_with_mnemonic("USBREDIR SPICE");
+    gtk_container_add(GTK_CONTAINER(rdp_window->menu_open_usb), menu_usbredir_spice);
+    g_signal_connect(menu_usbredir_spice, "activate", G_CALLBACK(rdp_viewer_item_menu_usb_spice_activated), rdp_window);
 
+    GtkWidget *image_widget = gtk_image_new_from_resource(VIRT_VIEWER_RESOURCE_PREFIX"/icons/content/img/usb.png");
+    button = create_new_button_for_overlay_toolbar(rdp_window, image_widget, "?", _("USB"));
+    gtk_tool_button_set_label(GTK_TOOL_BUTTON(button), _("USB"));
+    g_signal_connect(button, "clicked", G_CALLBACK(rdp_viewer_window_menu_show_usb), rdp_window);
+
+    // Vm control
+    button = create_new_button_for_overlay_toolbar(rdp_window, NULL, "system-run", _("VM control"));
+    g_signal_connect(button, "clicked", G_CALLBACK(rdp_viewer_window_on_vm_control_menu), rdp_window);
+
+    // Disconnect
+    button = create_new_button_for_overlay_toolbar(rdp_window, NULL, "window-close", _("Disconnect"));
+    g_signal_connect(button, "clicked", G_CALLBACK(rdp_viewer_window_menu_disconnect), rdp_window);
 
     // add toolbar to overlay
     rdp_window->revealer = virt_viewer_timed_revealer_new(rdp_window->overlay_toolbar);
@@ -751,7 +774,7 @@ RdpViewerWindow *rdp_viewer_window_create(ExtendedRdpContext *ex_context,
 
     rdp_window->top_menu = GTK_WIDGET(gtk_builder_get_object(builder, "top-menu"));
 
-    // usb menu is not required for rdp
+    // usb menu
     GtkWidget *menu_usb = GTK_WIDGET(gtk_builder_get_object(builder, "menu-file-usb"));
     // Для RDS пула используется возможности freerdp для перенаправления USB (RemoteFX)
     if (vdi_session_get_current_pool_type() == VDI_POOL_TYPE_RDS) {
@@ -785,10 +808,8 @@ RdpViewerWindow *rdp_viewer_window_create(ExtendedRdpContext *ex_context,
     // control menu. Управление ВМ реализовано только для VDI режима
     gboolean is_vdi_mode = ex_context->p_conn_data->global_app_mode == GLOBAL_APP_MODE_VDI;
     GtkWidget *menu_control = GTK_WIDGET(gtk_builder_get_object(builder, "menu-control"));
+    gtk_menu_item_set_submenu(GTK_MENU_ITEM(menu_control), GTK_WIDGET(rdp_window->menu_vm_control));
     gtk_widget_set_sensitive(menu_control, is_vdi_mode);
-
-    // controll toolbar used in fullscreen
-    rdp_viewer_toolbar_setup(builder, rdp_window); // for overlay controll
 
     // view menu
     gtk_widget_destroy(GTK_WIDGET(gtk_builder_get_object(builder, "menu-view-zoom")));
@@ -810,6 +831,9 @@ RdpViewerWindow *rdp_viewer_window_create(ExtendedRdpContext *ex_context,
     GtkWidget *item_menu_connection_info = GTK_WIDGET(gtk_builder_get_object(builder, "menu_connection_info"));
 
     rdp_window->conn_info_dialog = conn_info_dialog_create();
+
+    // control toolbar used in fullscreen
+    rdp_viewer_toolbar_setup(builder, rdp_window); // for overlay control
 
     g_signal_connect(item_fullscreen, "activate", G_CALLBACK(rdp_viewer_item_fullscreen_activate_request),
                      rdp_window);
@@ -868,6 +892,7 @@ void rdp_viewer_window_destroy(RdpViewerWindow *rdp_window)
 
     g_object_unref(rdp_window->builder);
     gtk_widget_destroy(rdp_window->menu_send_shortcut);
+    gtk_widget_destroy(rdp_window->menu_open_usb);
     gtk_widget_destroy(rdp_window->overlay_toolbar);
     gtk_widget_destroy(rdp_window->rdp_viewer_window);
 

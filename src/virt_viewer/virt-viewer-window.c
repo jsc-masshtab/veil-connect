@@ -48,6 +48,7 @@
 #include "settingsfile.h"
 #include "about_dialog.h"
 #include "conn_info_dialog.h"
+#include "vm_control_menu.h"
 
 //#include "remote-viewer-iso-list-dialog.h"
 
@@ -120,6 +121,7 @@ struct _VirtViewerWindowPrivate {
     VirtViewerNotebook *notebook;
     VirtViewerDisplay *display;
     VirtViewerTimedRevealer *revealer;
+    GtkWidget *menu_vm_control;
 
     gboolean accel_enabled;
     GValue accel_setting;
@@ -357,6 +359,10 @@ virt_viewer_window_init (VirtViewerWindow *self)
     gtk_builder_connect_signals(priv->builder, self);
 
     priv->accel_group = GTK_ACCEL_GROUP(gtk_builder_get_object(priv->builder, "accelgroup"));
+
+    GtkWidget *menu_control = GTK_WIDGET(gtk_builder_get_object(priv->builder, "menu-control"));
+    priv->menu_vm_control = vm_control_menu_create();
+    gtk_menu_item_set_submenu(GTK_MENU_ITEM(menu_control), GTK_WIDGET(priv->menu_vm_control));
 
     /* make sure they can be activated even if the menu item is not visible */
     g_signal_connect(gtk_builder_get_object(priv->builder, "menu-view-fullscreen"),
@@ -1172,6 +1178,14 @@ virt_viewer_window_menu_disconnect(GtkWidget *menu G_GNUC_UNUSED, VirtViewerWind
     virt_viewer_app_stop(self->priv->app, "job-finished");
 }
 
+void
+virt_viewer_window_on_vm_control_menu(GtkWidget *menu, VirtViewerWindow *self)
+{
+    GtkWidget *menu_vm_control = self->priv->menu_vm_control;
+    gtk_widget_show_all(menu_vm_control);
+    gtk_menu_popup_at_widget(GTK_MENU(menu_vm_control), menu, GDK_GRAVITY_SOUTH, GDK_GRAVITY_SOUTH, NULL);
+}
+
 G_MODULE_EXPORT void
 virt_viewer_window_menu_reconnect(GtkWidget *menu G_GNUC_UNUSED, VirtViewerWindow *self)
 {
@@ -1182,50 +1196,6 @@ virt_viewer_window_menu_reconnect(GtkWidget *menu G_GNUC_UNUSED, VirtViewerWindo
     virt_viewer_app_deactivate(app, FALSE);
     virt_viewer_app_show_status(app, _("Reconnecting"));
     virt_viewer_connect_attempt(app);
-}
-
-G_MODULE_EXPORT void
-virt_viewer_window_menu_start_vm(GtkWidget *menu G_GNUC_UNUSED, VirtViewerWindow *self)
-{
-    g_info("%s\n", (const char *)__func__);
-    vdi_api_session_execute_task_do_action_on_vm("start", FALSE);
-    // start connect atempts
-    virt_viewer_connect_attempt(self->priv->app);
-}
-
-G_MODULE_EXPORT void
-virt_viewer_window_menu_suspend_vm(GtkWidget *menu G_GNUC_UNUSED, VirtViewerWindow *self G_GNUC_UNUSED)
-{
-    g_info("%s\n", (const char *)__func__);
-    vdi_api_session_execute_task_do_action_on_vm("suspend", FALSE);
-}
-
-G_MODULE_EXPORT void
-virt_viewer_window_menu_shutdown_vm(GtkWidget *menu G_GNUC_UNUSED, VirtViewerWindow *self G_GNUC_UNUSED)
-{
-    g_info("%s\n", (const char *)__func__);
-    vdi_api_session_execute_task_do_action_on_vm("shutdown", FALSE);
-}
-
-G_MODULE_EXPORT void
-virt_viewer_window_menu_shutdown_vm_force(GtkWidget *menu G_GNUC_UNUSED, VirtViewerWindow *self G_GNUC_UNUSED)
-{
-    g_info("%s\n", (const char *)__func__);
-    vdi_api_session_execute_task_do_action_on_vm("shutdown", TRUE);
-}
-
-G_MODULE_EXPORT void
-virt_viewer_window_menu_reboot_vm(GtkWidget *menu G_GNUC_UNUSED, VirtViewerWindow *self G_GNUC_UNUSED)
-{
-    g_info("%s\n", (const char *)__func__);
-    vdi_api_session_execute_task_do_action_on_vm("reboot", FALSE);
-}
-
-G_MODULE_EXPORT void
-virt_viewer_window_menu_reboot_vm_force(GtkWidget *menu G_GNUC_UNUSED, VirtViewerWindow *self G_GNUC_UNUSED)
-{
-    g_info("%s\n", (const char *)__func__);
-    vdi_api_session_execute_task_do_action_on_vm("reboot", TRUE);
 }
 
 static void
@@ -1248,12 +1218,20 @@ virt_viewer_window_toolbar_setup(VirtViewerWindow *self)
     gtk_toolbar_insert(GTK_TOOLBAR(priv->toolbar), GTK_TOOL_ITEM (button), 0);
     g_signal_connect(button, "clicked", G_CALLBACK(virt_viewer_window_menu_disconnect), self);
 
+    // Vm control
+    button = GTK_WIDGET(gtk_tool_button_new(NULL, NULL));
+    gtk_tool_button_set_icon_name(GTK_TOOL_BUTTON(button), "system-run");
+    gtk_tool_item_set_tooltip_text(GTK_TOOL_ITEM(button), _("VM control"));
+    gtk_widget_show(button);
+    gtk_toolbar_insert(GTK_TOOLBAR(priv->toolbar), GTK_TOOL_ITEM (button), 0);
+    g_signal_connect(button, "clicked", G_CALLBACK(virt_viewer_window_on_vm_control_menu), self);
+
     /* USB Device selection */
     //button = gtk_image_new_from_resource(VIRT_VIEWER_RESOURCE_PREFIX"/icons/24x24/virt-viewer-usb.png");
     button = GTK_WIDGET(gtk_tool_button_new(NULL, NULL));
 
-    gtk_tool_button_set_label(GTK_TOOL_BUTTON(button), _("USB device selection"));
-    gtk_tool_item_set_tooltip_text(GTK_TOOL_ITEM(button), _("USB device selection"));
+    gtk_tool_button_set_label(GTK_TOOL_BUTTON(button), _("USB"));
+    gtk_tool_item_set_tooltip_text(GTK_TOOL_ITEM(button), _("USB"));
     gtk_toolbar_insert(GTK_TOOLBAR(priv->toolbar), GTK_TOOL_ITEM(button), 0);
     g_signal_connect(button, "clicked", G_CALLBACK(virt_viewer_window_menu_file_usb_device_selection), self);
     priv->toolbar_usb_device_selection = button;
@@ -1543,8 +1521,8 @@ virt_viewer_window_show(VirtViewerWindow *self)
     gtk_widget_set_sensitive(GTK_WIDGET(gtk_builder_get_object(self->priv->builder, "menu-preferences")), FALSE);
     gboolean is_vdi_mode = REMOTE_VIEWER(self->priv->app->application_p)->conn_data.global_app_mode ==
             GLOBAL_APP_MODE_VDI;
-    GtkWidget *menu_control = GTK_WIDGET(gtk_builder_get_object(self->priv->builder, "menu-control"));
-    gtk_widget_set_sensitive(menu_control, is_vdi_mode);
+    gtk_widget_set_sensitive(self->priv->menu_vm_control, is_vdi_mode);
+    gtk_widget_show_all(self->priv->menu_vm_control);
     GtkLabel *vm_status_display = GTK_LABEL(gtk_builder_get_object(self->priv->builder, "vm_status_display"));
     gtk_label_set_text(vm_status_display, "");
 

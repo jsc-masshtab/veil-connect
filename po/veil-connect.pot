@@ -693,8 +693,8 @@ msgstr ""
 
 #: ../src/virt_viewer/virt-viewer-window.c:1255
 #: ../src/virt_viewer/virt-viewer-window.c:1256
-msgid "USB device selection"
-msgstr ""
+msgid "USB"
+msgstr "USB"
 
 #. gtk_tool_button_set_label(GTK_TOOL_BUTTON(button), "");
 #: ../src/virt_viewer/virt-viewer-window.c:1275

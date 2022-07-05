@@ -13,7 +13,6 @@
 #include <glib/garray.h>
 #include <glib/gi18n.h>
 
-#include <freerdp/channels/disp.h>
 #include <freerdp/locale/keyboard.h>
 #include <freerdp/scancode.h>
 

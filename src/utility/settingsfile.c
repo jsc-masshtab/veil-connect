@@ -6,6 +6,8 @@
  * Author: http://mashtab.org/
  */
 
+#include <stdlib.h>
+
 #include "settingsfile.h"
 
 static gchar *ini_file_path = NULL;

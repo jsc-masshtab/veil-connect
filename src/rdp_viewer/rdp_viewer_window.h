@@ -31,6 +31,8 @@ typedef struct{
     GtkWidget *top_menu;
 
     GtkWidget *menu_send_shortcut;
+    GtkWidget *menu_open_usb;
+    GtkWidget *menu_vm_control;
 
     RdpDisplay *rdp_display;
 

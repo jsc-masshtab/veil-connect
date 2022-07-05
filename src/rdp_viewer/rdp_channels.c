@@ -18,7 +18,7 @@
 #include <freerdp/client/cliprdr.h>
 #include <freerdp/client/rdpgfx.h>
 #include <freerdp/client/encomsp.h>
-#include <freerdp/channels/disp.h>
+#include <freerdp/client/disp.h>
 
 #include "rdp_channels.h"
 #include "rdp_client.h"
