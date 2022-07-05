@@ -6,6 +6,7 @@
 | ОС                 | Пакет   |
 |--------------------|---------|
 | Astra 1.6 Smolensk | stretch |
+| Astra 1.7 Smolensk | buster  |
 | Astra 2.12 Orel    | bionic  |
 | Debian 9           | stretch |
 | Debian 10          | buster  |

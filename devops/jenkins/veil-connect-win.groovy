@@ -1,4 +1,11 @@
-def rocketNotify = true
+library "veil-connect-libraries@$BRANCH"
+
+def branch = buildParameters.branch()
+def version = buildParameters.version()
+def agents32 = buildParameters.win32Agents()
+def agents64 = buildParameters.win64Agents()
+
+notifyBuild("STARTED")
 
 pipeline {
     agent {
@@ -6,20 +13,10 @@ pipeline {
     }
 
     post {
-        failure {
-            println "Something goes wrong"
-            println "Current build marked as ${currentBuild.result}"
-            notifyBuild(rocketNotify,":x: FAILED")
-        }
-
-        aborted {
-            println "Build was interrupted manually"
-            println "Current build marked as ${currentBuild.result}"
-            notifyBuild(rocketNotify,":x: FAILED")
-        }
-
-        success {
-            notifyBuild(rocketNotify, ":white_check_mark: SUCCESSFUL")
+        always {
+            script {
+                notifyBuild(currentBuild.result)
+            }
         }
     }
 
@@ -33,26 +30,20 @@ pipeline {
     }
 
     parameters {
-        string(      name: 'BRANCH',      defaultValue: 'master',                                        description: 'branch')
-        string(      name: 'VERSION',     defaultValue: '1.14.0',                                        description: 'version')
-        choice(      name: 'WIN32_AGENT', choices: ['win7_x32'],                                         description: 'jenkins build agent')
-        choice(      name: 'WIN64_AGENT', choices: ['cloud-windows-2012', 'win10_x64_veil_guest_agent'], description: 'jenkins build agent')
-        booleanParam(name: 'WIN32',       defaultValue: true,                                            description: 'create EXE?')
-        booleanParam(name: 'WIN64',       defaultValue: true,                                            description: 'create EXE?')
+        string(      name: 'BRANCH',         defaultValue: branch,     description: 'branch')
+        string(      name: 'VERSION',        defaultValue: version,    description: 'version')
+        choice(      name: 'WIN32_AGENT',    choices: agents32,        description: 'jenkins build agent')
+        choice(      name: 'WIN64_AGENT',    choices: agents64,        description: 'jenkins build agent')
+        booleanParam(name: 'WIN32',          defaultValue: true,       description: 'create EXE?')
+        booleanParam(name: 'WIN64',          defaultValue: true,       description: 'create EXE?')
     }
 
     stages {
         stage ('checkout') {
             steps {
-                notifyBuild(rocketNotify, ":bell: STARTED")
-                cleanWs()
-                checkout([ $class: 'GitSCM',
-                    branches: [[name: '$BRANCH']],
-                    doGenerateSubmoduleConfigurations: false,
-                    extensions: [], submoduleCfg: [],
-                    userRemoteConfigs: [[credentialsId: 'jenkins-veil-connect-token',
-                    url: 'http://gitlab.bazalt.team/vdi/veil-connect.git']]
-                ])
+                script {
+                    buildSteps.gitCheckout("$BRANCH")
+                }
                 stash name: 'src', includes: '**', excludes: '**/.git,**/.git/**'
             }
         }
@@ -285,22 +276,6 @@ pipeline {
                     }
                 }
             }
-        }
-    }
-}
-
-def notifyBuild(rocketNotify, buildStatus) {
-    buildStatus =  buildStatus ?: 'SUCCESSFUL'
-
-    def summary = "${buildStatus}: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]' (${env.BUILD_URL})" + "\n"
-
-    summary += "BRANCH: ${BRANCH}. VERSION: ${VERSION}"
-
-    if (rocketNotify){
-        try {
-            rocketSend (channel: 'jenkins-notify', message: summary, serverUrl: '192.168.14.210', trustSSL: true, rawMessage: true)
-        } catch (Exception e) {
-            println "Notify is failed"
         }
     }
 }
