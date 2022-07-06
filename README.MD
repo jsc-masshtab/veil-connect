@@ -12,6 +12,7 @@
 | Debian 10          | buster  |
 | Ubuntu 18.04       | bionic  |
 | Ubuntu 20.04       | focal   |
+| Ubuntu 22.04       | jammy   |
 | Centos 7           |  el7    |
 | Centos 8           |  el8    |
 | Alt Linux 9        |  alt9   |
