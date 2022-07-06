@@ -30,14 +30,15 @@ if [ -n "$WINDOW" ]; then
     "3" "Ubuntu 16.04" \
     "4" "Ubuntu 18.04" \
     "5" "Ubuntu 20.04" \
-    "6" "Centos 7" \
-    "7" "Centos 8" \
-    "8" "Astra Linux Orel 2.12" \
-    "9" "Astra Linux Smolensk (SE)" \
-    "10" "Alt Linux 9" \
-    "11" "RedOS 7.2" \
-    "12" "RedOS 7.3" 3>&1 1>&2 2>&3)
-    
+    "6" "Ubuntu 22.04" \
+    "7" "Centos 7" \
+    "8" "Centos 8" \
+    "9" "Astra Linux Orel 2.12" \
+    "10" "Astra Linux Smolensk (SE)" \
+    "11" "Alt Linux 9" \
+    "12" "RedOS 7.2" \
+    "13" "RedOS 7.3" 3>&1 1>&2 2>&3)
+
 
     clear 2> /dev/null || :
 
@@ -47,20 +48,21 @@ if [ -n "$WINDOW" ]; then
 else
     echo "Welcome to VeiL Connect installer! (sudo required)"
     echo "Select your OS:"
-        
+
     echo "
         1.  Debian 9
         2.  Debian 10
         3.  Ubuntu 16.04
         4.  Ubuntu 18.04
         5.  Ubuntu 20.04
-        6.  Centos 7
-        7.  Centos 8
-        8.  Astra Linux Orel 2.12
-        9.  Astra Linux Smolensk (SE)
-        10. Alt Linux 9
-        11. RedOS 7.2 
-        12. RedOS 7.3
+        6.  Ubuntu 22.04
+        7.  Centos 7
+        8.  Centos 8
+        9.  Astra Linux Orel 2.12
+        10. Astra Linux Smolensk (SE)
+        11. Alt Linux 9
+        12. RedOS 7.2
+        13. RedOS 7.3
     "
     echo "My OS is:"
     read OS
@@ -77,14 +79,15 @@ case $OS in
         result="$?"
         rm -f /etc/apt/sources.list.d/stretch-backports.list && apt-get update
         ;;
-    2|3|4|5)
+    2|3|4|5|6)
+        apt-key del 4BD0CAA7
         apt-get update && apt-get install apt-transport-https wget lsb-release gnupg -y
-        wget -qO - https://veil-update.mashtab.org/veil-repo-key.gpg | apt-key add -
-        echo "deb [arch=amd64] $REPO_URL/apt $(lsb_release -cs) main" | tee /etc/apt/sources.list.d/veil-connect.list
+        wget -O /usr/share/keyrings/veil-repo-key.gpg https://veil-update.mashtab.org/veil-repo-key.gpg
+        echo "deb [arch=amd64 signed-by=/usr/share/keyrings/veil-repo-key.gpg] $REPO_URL/apt $(lsb_release -cs) main" | tee /etc/apt/sources.list.d/veil-connect.list
         apt-get update && apt-get install veil-connect -y
         result="$?"
         ;;
-    6|7)
+    7|8)
         tee /etc/yum.repos.d/veil-connect.repo <<EOF
 [veil-connect]
 name=VeiL Connect repository
@@ -98,14 +101,14 @@ EOF
         yum install veil-connect -y
         result="$?"
         ;;
-    8)
+    9)
         apt-get update && apt-get install apt-transport-https wget gnupg -y
         wget -qO - https://veil-update.mashtab.org/veil-repo-key.gpg | apt-key add -
         echo "deb [arch=amd64] $REPO_URL/apt bionic main" | tee /etc/apt/sources.list.d/veil-connect.list
         apt-get update && apt-get install veil-connect -y
         result="$?"
         ;;
-    9)
+    10)
         if [ -n "$WINDOW" ]; then
             $WINDOW --title  "$TITLE" --msgbox "Please visit https://veil.mashtab.org/vdi-docs/connect/operator_guide/install/net/linux/smolensk/ for info" $HEIGHT $WIDTH  2>/dev/null
         else
@@ -113,14 +116,14 @@ EOF
         fi
         exit 1
         ;;
-    10)
+    11)
         apt-get update && apt-get install wget -y
         wget https://veil-update.mashtab.org/veil-connect/linux/apt-rpm/x86_64/RPMS.alt9/veil-connect-latest.rpm
         apt-get install ./veil-connect-latest.rpm -y
         result="$?"
         rm -f veil-connect-latest.rpm
         ;;
-    11) tee /etc/yum.repos.d/veil-connect.repo <<EOF
+    12) tee /etc/yum.repos.d/veil-connect.repo <<EOF
 [veil-connect]
 name=VeiL Connect repository
 baseurl=$REPO_URL/yum/el7/\$basearch
@@ -133,7 +136,7 @@ EOF
         result="$?"
         ;;
 
-    12) tee /etc/yum.repos.d/veil-connect.repo <<EOF
+    13) tee /etc/yum.repos.d/veil-connect.repo <<EOF
 [veil-connect]
 name=VeiL Connect repository
 baseurl=$REPO_URL/yum/redos7.3/\$basearch

@@ -46,6 +46,7 @@ pipeline {
         booleanParam(name: 'BUSTER',      defaultValue: true,       description: 'create DEB?')
         booleanParam(name: 'BIONIC',      defaultValue: true,       description: 'create DEB?')
         booleanParam(name: 'FOCAL',       defaultValue: true,       description: 'create DEB?')
+        booleanParam(name: 'JAMMY',       defaultValue: true,       description: 'create DEB?')
         booleanParam(name: 'EL7',         defaultValue: true,       description: 'create RPM?')
         booleanParam(name: 'EL8',         defaultValue: true,       description: 'create RPM?')
         booleanParam(name: 'RED73',       defaultValue: true,       description: 'create RPM?')
@@ -116,6 +117,21 @@ pipeline {
                     }
                     environment {
                       DISTR = "focal"
+                    }
+                    steps {
+                        script {
+                            buildSteps.prepareBuildImage()
+                        }
+                    }
+                }
+
+                stage ('jammy. docker build') {
+                    when {
+                        beforeAgent true
+                        expression { params.JAMMY == true }
+                    }
+                    environment {
+                      DISTR = "jammy"
                     }
                     steps {
                         script {
@@ -268,6 +284,29 @@ pipeline {
                     agent {
                         docker {
                             image "${DOCKER_IMAGE_NAME}-focal:${VERSION}"
+                            args '-u root:root'
+                            reuseNode true
+                            label "${AGENT}"
+                        }
+                    }
+                    steps {
+                        script {
+                            buildSteps.buildDebPackage()
+                        }
+                    }
+                }
+
+                stage ('jammy. build') {
+                    when {
+                        beforeAgent true
+                        expression { params.JAMMY == true }
+                    }
+                    environment {
+                        DISTR = "jammy"
+                    }
+                    agent {
+                        docker {
+                            image "${DOCKER_IMAGE_NAME}-jammy:${VERSION}"
                             args '-u root:root'
                             reuseNode true
                             label "${AGENT}"
@@ -460,6 +499,21 @@ pipeline {
                     }
                     environment {
                         DISTR = "focal"
+                    }
+                    steps {
+                        script {
+                            buildSteps.deployToAptly()
+                        }
+                    }
+                }
+
+                stage ('jammy. deploy to repo') {
+                    when {
+                        beforeAgent true
+                        expression { params.JAMMY == true }
+                    }
+                    environment {
+                        DISTR = "jammy"
                     }
                     steps {
                         script {

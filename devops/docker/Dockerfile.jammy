@@ -1,0 +1,8 @@
+FROM ubuntu:jammy
+
+# install build-deps
+RUN apt-get update && \
+    DEBIAN_FRONTEND=noninteractive apt-get install -y -q libhiredis-dev \
+    libspice-client-gtk-3.0-dev libjson-glib-dev libxml2-dev libsoup2.4-dev \
+    freerdp2-dev gcc cmake pkg-config libusb-1.0-0-dev libusbredirparser-dev curl && \
+    rm -f /var/cache/apt/archives/*.deb /var/cache/apt/archives/partial/*.deb /var/cache/apt/*.bin || true

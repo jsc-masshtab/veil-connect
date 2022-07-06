@@ -39,7 +39,7 @@ def buildDebPackage() {
         chmod -R 755 ${WORKSPACE}/devops/deb-${DISTR}/root/DEBIAN
         chown -R root:root ${WORKSPACE}/devops/deb-${DISTR}/root
         cd ${WORKSPACE}/devops/deb-${DISTR}
-        dpkg-deb -b root .
+        dpkg-deb -Zxz -b root .
     '''
 }
 
