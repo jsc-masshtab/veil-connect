@@ -102,8 +102,8 @@ void disp_update_layout(void *context, UINT32 targetWidth, UINT32 targetHeight)
     ExtendedRdpContext *ex_context = (ExtendedRdpContext *)context;
 
     rdpSettings* settings = ex_context->context.settings;
-    if (settings->SmartSizingWidth != targetWidth ||
-        settings->SmartSizingHeight != targetHeight)
+    if (settings->DesktopWidth != targetWidth ||
+        settings->DesktopHeight != targetHeight)
     {
         DISPLAY_CONTROL_MONITOR_LAYOUT layout = { 0 };
 
@@ -123,7 +123,5 @@ void disp_update_layout(void *context, UINT32 targetWidth, UINT32 targetHeight)
                 g_warning("SendMonitorLayout failed.");
             }
         }
-        settings->SmartSizingWidth = targetWidth;
-        settings->SmartSizingHeight = targetHeight;
     }
 }

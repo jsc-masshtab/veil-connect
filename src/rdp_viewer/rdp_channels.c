@@ -95,7 +95,6 @@ void rdp_OnChannelConnectedEventHandler(void* context, ChannelConnectedEventArgs
     {
         g_info("(strcmp(e->name, DISP_DVC_CHANNEL_NAME) == 0)");
         disp_init((DispClientContext*)e->pInterface, ex_context);
-        int u = 9;
     }
 }
 

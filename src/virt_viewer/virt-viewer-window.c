@@ -1518,7 +1518,6 @@ void
 virt_viewer_window_show(VirtViewerWindow *self)
 {
     // adjust GUI
-    gtk_widget_set_sensitive(GTK_WIDGET(gtk_builder_get_object(self->priv->builder, "menu-preferences")), FALSE);
     gboolean is_vdi_mode = REMOTE_VIEWER(self->priv->app->application_p)->conn_data.global_app_mode ==
             GLOBAL_APP_MODE_VDI;
     gtk_widget_set_sensitive(self->priv->menu_vm_control, is_vdi_mode);
