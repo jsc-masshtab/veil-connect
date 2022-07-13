@@ -2529,8 +2529,8 @@ virt_viewer_app_get_preferences(VirtViewerApp *self)
     GtkWidget *preferences = self->priv->preferences;
     gchar *path;
 
-    if (preferences)
-        goto end;
+    //if (preferences)
+    //    goto end;
 
     gtk_builder_connect_signals(builder, self);
 
