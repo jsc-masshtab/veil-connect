@@ -44,6 +44,7 @@ pipeline {
         choice(      name: 'AGENT',       choices: agents,          description: 'jenkins build agent')
         booleanParam(name: 'STRETCH',     defaultValue: true,       description: 'create DEB?')
         booleanParam(name: 'BUSTER',      defaultValue: true,       description: 'create DEB?')
+        booleanParam(name: 'BULLSEYE',    defaultValue: true,       description: 'create DEB?')
         booleanParam(name: 'BIONIC',      defaultValue: true,       description: 'create DEB?')
         booleanParam(name: 'FOCAL',       defaultValue: true,       description: 'create DEB?')
         booleanParam(name: 'JAMMY',       defaultValue: true,       description: 'create DEB?')
@@ -87,6 +88,21 @@ pipeline {
                     }
                     environment {
                       DISTR = "buster"
+                    }
+                    steps {
+                        script {
+                            buildSteps.prepareBuildImage()
+                        }
+                    }
+                }
+
+                stage ('bullseye. docker build') {
+                    when {
+                        beforeAgent true
+                        expression { params.BULLSEYE == true }
+                    }
+                    environment {
+                      DISTR = "bullseye"
                     }
                     steps {
                         script {
@@ -238,6 +254,29 @@ pipeline {
                     agent {
                         docker {
                             image "${DOCKER_IMAGE_NAME}-buster:${VERSION}"
+                            args '-u root:root'
+                            reuseNode true
+                            label "${AGENT}"
+                        }
+                    }
+                    steps {
+                        script {
+                            buildSteps.buildDebPackage()
+                        }
+                    }
+                }
+
+                stage ('bullseye. build') {
+                    when {
+                        beforeAgent true
+                        expression { params.BULLSEYE == true }
+                    }
+                    environment {
+                        DISTR = "bullseye"
+                    }
+                    agent {
+                        docker {
+                            image "${DOCKER_IMAGE_NAME}-bullseye:${VERSION}"
                             args '-u root:root'
                             reuseNode true
                             label "${AGENT}"
@@ -469,6 +508,21 @@ pipeline {
                     }
                     environment {
                         DISTR = "buster"
+                    }
+                    steps {
+                        script {
+                            buildSteps.deployToAptly()
+                        }
+                    }
+                }
+
+                stage ('bullseye. deploy to repo') {
+                    when {
+                        beforeAgent true
+                        expression { params.BULLSEYE == true }
+                    }
+                    environment {
+                        DISTR = "bullseye"
                     }
                     steps {
                         script {
