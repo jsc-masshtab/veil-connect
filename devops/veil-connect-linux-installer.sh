@@ -27,17 +27,18 @@ if [ -n "$WINDOW" ]; then
     OS=$($WINDOW --title  "$TITLE" --menu  "Select your OS:" $HEIGHT $WIDTH 10 \
     "1" "Debian 9" \
     "2" "Debian 10" \
-    "3" "Ubuntu 16.04" \
-    "4" "Ubuntu 18.04" \
-    "5" "Ubuntu 20.04" \
-    "6" "Ubuntu 22.04" \
-    "7" "Centos 7" \
-    "8" "Centos 8" \
-    "9" "Astra Linux Orel 2.12" \
-    "10" "Astra Linux Smolensk (SE)" \
-    "11" "Alt Linux 9" \
-    "12" "RedOS 7.2" \
-    "13" "RedOS 7.3" 3>&1 1>&2 2>&3)
+    "3" "Debian 11" \
+    "4" "Ubuntu 16.04" \
+    "5" "Ubuntu 18.04" \
+    "6" "Ubuntu 20.04" \
+    "7" "Ubuntu 22.04" \
+    "8" "Centos 7" \
+    "9" "Centos 8" \
+    "10" "Astra Linux Orel 2.12" \
+    "11" "Astra Linux Smolensk (SE)" \
+    "12" "Alt Linux 9" \
+    "13" "RedOS 7.2" \
+    "14" "RedOS 7.3" 3>&1 1>&2 2>&3)
 
 
     clear 2> /dev/null || :
@@ -52,17 +53,18 @@ else
     echo "
         1.  Debian 9
         2.  Debian 10
-        3.  Ubuntu 16.04
-        4.  Ubuntu 18.04
-        5.  Ubuntu 20.04
-        6.  Ubuntu 22.04
-        7.  Centos 7
-        8.  Centos 8
-        9.  Astra Linux Orel 2.12
-        10. Astra Linux Smolensk (SE)
-        11. Alt Linux 9
-        12. RedOS 7.2
-        13. RedOS 7.3
+        3.  Debian 11
+        4.  Ubuntu 16.04
+        5.  Ubuntu 18.04
+        6.  Ubuntu 20.04
+        7.  Ubuntu 22.04
+        8.  Centos 7
+        9.  Centos 8
+        10.  Astra Linux Orel 2.12
+        11. Astra Linux Smolensk (SE)
+        12. Alt Linux 9
+        13. RedOS 7.2
+        14. RedOS 7.3
     "
     echo "My OS is:"
     read OS
@@ -79,7 +81,7 @@ case $OS in
         result="$?"
         rm -f /etc/apt/sources.list.d/stretch-backports.list && apt-get update
         ;;
-    2|3|4|5|6)
+    2|3|4|5|6|7)
         apt-key del 4BD0CAA7
         apt-get update && apt-get install apt-transport-https wget lsb-release gnupg -y
         wget -O /usr/share/keyrings/veil-repo-key.gpg https://veil-update.mashtab.org/veil-repo-key.gpg
@@ -87,7 +89,7 @@ case $OS in
         apt-get update && apt-get install veil-connect -y
         result="$?"
         ;;
-    7|8)
+    8|9)
         tee /etc/yum.repos.d/veil-connect.repo <<EOF
 [veil-connect]
 name=VeiL Connect repository
@@ -101,14 +103,14 @@ EOF
         yum install veil-connect -y
         result="$?"
         ;;
-    9)
+    10)
         apt-get update && apt-get install apt-transport-https wget gnupg -y
         wget -qO - https://veil-update.mashtab.org/veil-repo-key.gpg | apt-key add -
         echo "deb [arch=amd64] $REPO_URL/apt bionic main" | tee /etc/apt/sources.list.d/veil-connect.list
         apt-get update && apt-get install veil-connect -y
         result="$?"
         ;;
-    10)
+    11)
         if [ -n "$WINDOW" ]; then
             $WINDOW --title  "$TITLE" --msgbox "Please visit https://veil.mashtab.org/vdi-docs/connect/operator_guide/install/net/linux/smolensk/ for info" $HEIGHT $WIDTH  2>/dev/null
         else
@@ -116,14 +118,14 @@ EOF
         fi
         exit 1
         ;;
-    11)
+    12)
         apt-get update && apt-get install wget -y
         wget https://veil-update.mashtab.org/veil-connect/linux/apt-rpm/x86_64/RPMS.alt9/veil-connect-latest.rpm
         apt-get install ./veil-connect-latest.rpm -y
         result="$?"
         rm -f veil-connect-latest.rpm
         ;;
-    12) tee /etc/yum.repos.d/veil-connect.repo <<EOF
+    13) tee /etc/yum.repos.d/veil-connect.repo <<EOF
 [veil-connect]
 name=VeiL Connect repository
 baseurl=$REPO_URL/yum/el7/\$basearch
@@ -136,7 +138,7 @@ EOF
         result="$?"
         ;;
 
-    13) tee /etc/yum.repos.d/veil-connect.repo <<EOF
+    14) tee /etc/yum.repos.d/veil-connect.repo <<EOF
 [veil-connect]
 name=VeiL Connect repository
 baseurl=$REPO_URL/yum/redos7.3/\$basearch
