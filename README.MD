@@ -10,6 +10,7 @@
 | Astra 2.12 Orel    | bionic  |
 | Debian 9           | stretch |
 | Debian 10          | buster  |
+| Debian 11          | bullseye|
 | Ubuntu 18.04       | bionic  |
 | Ubuntu 20.04       | focal   |
 | Ubuntu 22.04       | jammy   |
