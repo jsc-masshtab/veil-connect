@@ -127,7 +127,8 @@ void rdp_OnChannelDisconnectedEventHandler(void* context, ChannelDisconnectedEve
 	}
 	else if (strcmp(e->name, DISP_DVC_CHANNEL_NAME) == 0)
     {
-        g_info("(strcmp(e->name, DISP_DVC_CHANNEL_NAME) == 0)");
+        g_info("rdp_OnChannelDisconnectedEventHandler");
         disp_uninit(ex_context->rdp_disp, (DispClientContext*)e->pInterface);
+        ex_context->rdp_disp = NULL;
     }
 }
