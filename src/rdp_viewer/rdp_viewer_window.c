@@ -453,56 +453,11 @@ rdp_viewer_window_menu_show_shortcuts(GtkWidget *btn, gpointer userdata)
 }
 
 static void
-rdp_viewer_window_menu_start_vm(GtkWidget *menu G_GNUC_UNUSED, gpointer userdata G_GNUC_UNUSED)
-{
-    g_info("%s", (const char *)__func__);
-    vdi_api_session_execute_task_do_action_on_vm("start", FALSE);
-}
-
-static void
-rdp_viewer_window_menu_suspend_vm(GtkWidget *menu G_GNUC_UNUSED, gpointer userdata G_GNUC_UNUSED)
-{
-    g_info("%s", (const char *)__func__);
-    vdi_api_session_execute_task_do_action_on_vm("suspend", FALSE);
-}
-
-static void
-rdp_viewer_window_menu_shutdown_vm(GtkWidget *menu G_GNUC_UNUSED, gpointer userdata G_GNUC_UNUSED)
-{
-    g_info("%s", (const char *)__func__);
-    vdi_api_session_execute_task_do_action_on_vm("shutdown", FALSE);
-}
-
-static void
-rdp_viewer_window_menu_shutdown_vm_force(GtkWidget *menu G_GNUC_UNUSED, gpointer userdata G_GNUC_UNUSED)
-{
-    g_info("%s", (const char *)__func__);
-    vdi_api_session_execute_task_do_action_on_vm("shutdown", TRUE);
-}
-
-static void
-rdp_viewer_window_menu_reboot_vm(GtkWidget *menu G_GNUC_UNUSED, gpointer userdata G_GNUC_UNUSED)
-{
-    g_info("%s", (const char *)__func__);
-    vdi_api_session_execute_task_do_action_on_vm("reboot", FALSE);
-}
-
-static void
-rdp_viewer_window_menu_reboot_vm_force(GtkWidget *menu G_GNUC_UNUSED, gpointer userdata G_GNUC_UNUSED)
-{
-    g_info("%s", (const char *)__func__);
-    vdi_api_session_execute_task_do_action_on_vm("reboot", TRUE);
-}
-
-static void
 rdp_viewer_control_menu_setup(GtkBuilder *builder, RdpViewerWindow *rdp_window)
 {
     rdp_window->menu_vm_control = vm_control_menu_create();
 
     GtkMenuItem *menu_switch_off = GTK_MENU_ITEM(gtk_builder_get_object(builder, "menu-switch-off"));
-    GtkMenuItem *menu_reconnect = GTK_MENU_ITEM(gtk_builder_get_object(builder, "menu-reconnect"));
-    gtk_widget_destroy(GTK_WIDGET(menu_reconnect));
-
     g_signal_connect(menu_switch_off, "activate", G_CALLBACK(rdp_viewer_window_menu_disconnect), rdp_window);
 }
 

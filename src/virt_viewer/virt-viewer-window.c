@@ -78,14 +78,7 @@ void virt_viewer_window_menu_preferences_cb(GtkWidget *menu, VirtViewerWindow *s
 void virt_viewer_window_menu_change_cd_activate(GtkWidget *menu, VirtViewerWindow *self);
 // connection control
 void virt_viewer_window_menu_disconnect(GtkWidget *menu, VirtViewerWindow *self);
-void virt_viewer_window_menu_reconnect(GtkWidget *menu, VirtViewerWindow *self);
-// vm control
-void virt_viewer_window_menu_start_vm(GtkWidget *menu, VirtViewerWindow *self);
-void virt_viewer_window_menu_suspend_vm(GtkWidget *menu, VirtViewerWindow *self);
-void virt_viewer_window_menu_shutdown_vm(GtkWidget *menu, VirtViewerWindow *self);
-void virt_viewer_window_menu_shutdown_vm_force(GtkWidget *menu, VirtViewerWindow *self);
-void virt_viewer_window_menu_reboot_vm(GtkWidget *menu, VirtViewerWindow *self);
-void virt_viewer_window_menu_reboot_vm_force(GtkWidget *menu, VirtViewerWindow *self);
+//void virt_viewer_window_menu_reconnect(GtkWidget *menu, VirtViewerWindow *self);
 
 /* Internal methods */
 static void virt_viewer_window_enable_modifiers(VirtViewerWindow *self);
@@ -1186,17 +1179,17 @@ virt_viewer_window_on_vm_control_menu(GtkWidget *menu, VirtViewerWindow *self)
     gtk_menu_popup_at_widget(GTK_MENU(menu_vm_control), menu, GDK_GRAVITY_SOUTH, GDK_GRAVITY_SOUTH, NULL);
 }
 
-G_MODULE_EXPORT void
-virt_viewer_window_menu_reconnect(GtkWidget *menu G_GNUC_UNUSED, VirtViewerWindow *self)
-{
-    // Завершаем соединение и подключаемся снова, не закрывая окно
-    g_info("%s\n", (const char *)__func__);
-    VirtViewerApp *app = self->priv->app;
-
-    virt_viewer_app_deactivate(app, FALSE);
-    virt_viewer_app_show_status(app, _("Reconnecting"));
-    virt_viewer_connect_attempt(app);
-}
+//G_MODULE_EXPORT void
+//virt_viewer_window_menu_reconnect(GtkWidget *menu G_GNUC_UNUSED, VirtViewerWindow *self)
+//{
+//    // Завершаем соединение и подключаемся снова, не закрывая окно
+//    g_info("%s\n", (const char *)__func__);
+//    VirtViewerApp *app = self->priv->app;
+//
+//    virt_viewer_app_deactivate(app, FALSE);
+//    virt_viewer_app_show_status(app, _("Reconnecting"));
+//    virt_viewer_connect_attempt(app);
+//}
 
 static void
 virt_viewer_window_toolbar_setup(VirtViewerWindow *self)

@@ -40,7 +40,7 @@ on_btn_remove_item_clicked(GtkButton *button, AdditionalAddressesWidget *self)
 {
     // find box_row by button
     Item *searched_item = NULL;
-    for (int i = 0; i < self->items_array->len; ++i) {
+    for (guint i = 0; i < self->items_array->len; ++i) {
         Item *item = g_ptr_array_index(self->items_array, i);
 
         if (item->remove_btn == GTK_WIDGET(button)) {
@@ -88,7 +88,7 @@ on_btn_add_item_clicked(GtkButton *button G_GNUC_UNUSED, AdditionalAddressesWidg
 static void
 on_btn_remove_all_clicked(GtkButton *button G_GNUC_UNUSED, AdditionalAddressesWidget *self)
 {
-    for (int i = 0; i < self->items_array->len; ++i) {
+    for (guint i = 0; i < self->items_array->len; ++i) {
         Item *item = g_ptr_array_index(self->items_array, i);
         gtk_widget_destroy(item->list_box_row);
     }
@@ -118,7 +118,7 @@ static void take_from_gui(AdditionalAddressesWidget *self)
         *self->p_list = NULL;
     }
 
-    for (int i = 0; i < self->items_array->len; ++i) {
+    for (guint i = 0; i < self->items_array->len; ++i) {
         Item *item = g_ptr_array_index(self->items_array, i);
 
         const gchar *text = gtk_entry_get_text(GTK_ENTRY(item->item_entry));

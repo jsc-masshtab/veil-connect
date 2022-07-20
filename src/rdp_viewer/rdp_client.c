@@ -577,17 +577,17 @@ static void rdp_client_free(freerdp* instance G_GNUC_UNUSED, rdpContext* context
     wait_for_mutex_and_clear(&ex_context->primary_buffer_mutex);
 }
 
-static int rdp_client_start(rdpContext* context)
+static int rdp_client_start(rdpContext* context G_GNUC_UNUSED)
 {
-    ExtendedRdpContext* ex = (ExtendedRdpContext*)context;
+    //ExtendedRdpContext* ex = (ExtendedRdpContext*)context;
     g_info("%s", (const char *)__func__);
 
     return 0;
 }
 
-static int rdp_client_stop(rdpContext* context)
+static int rdp_client_stop(rdpContext* context G_GNUC_UNUSED)
 {
-    ExtendedRdpContext* ex = (ExtendedRdpContext*)context;
+    //ExtendedRdpContext* ex = (ExtendedRdpContext*)context;
     g_info("%s", (const char *)__func__);
 
     return 0;
