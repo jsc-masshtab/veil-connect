@@ -52,6 +52,7 @@ pipeline {
         booleanParam(name: 'EL8',         defaultValue: true,       description: 'create RPM?')
         booleanParam(name: 'RED73',       defaultValue: true,       description: 'create RPM?')
         booleanParam(name: 'ALT9',        defaultValue: true,       description: 'create RPM?')
+        booleanParam(name: 'ALTEROS7',    defaultValue: true,       description: 'create RPM?')
         booleanParam(name: 'EMBEDDED',    defaultValue: true,       description: 'create DEB?')
     }
 
@@ -215,6 +216,21 @@ pipeline {
                         }
                     }
                 }
+
+                stage ('alteros7. docker build') {
+                    when {
+                        beforeAgent true
+                        expression { params.ALTEROS7 == true }
+                    }
+                    environment {
+                      DISTR = "alteros7"
+                    }
+                    steps {
+                        script {
+                            buildSteps.prepareBuildImage()
+                        }
+                    }
+                }
             }
         }
 
@@ -365,6 +381,7 @@ pipeline {
                     }
                     environment {
                         DISTR = "el7"
+                        SPEC = "el"
                     }
                     agent {
                         docker {
@@ -388,6 +405,7 @@ pipeline {
                     }
                     environment {
                         DISTR = "el8"
+                        SPEC = "el"
                     }
                     agent {
                         docker {
@@ -411,6 +429,7 @@ pipeline {
                     }
                     environment {
                         DISTR = "alt9"
+                        SPEC = "alt"
                     }
                     agent {
                         docker {
@@ -421,7 +440,7 @@ pipeline {
                     }
                     steps {
                         script {
-                            buildSteps.buildAltRpmPackage()
+                            buildSteps.buildRpmPackage()
                         }
                     }
                 }
@@ -433,10 +452,35 @@ pipeline {
                     }
                     environment {
                         DISTR = "redos7.3"
+                        SPEC = "el"
                     }
                     agent {
                         docker {
                             image "${DOCKER_IMAGE_NAME}-redos7.3:${VERSION}"
+                            args '-u root:root'
+                            reuseNode true
+                            label "${AGENT}"
+                        }
+                    }
+                    steps {
+                        script {
+                            buildSteps.buildRpmPackage()
+                        }
+                    }
+                }
+
+                stage ('alteros7. build') {
+                    when {
+                        beforeAgent true
+                        expression { params.ALTEROS7 == true }
+                    }
+                    environment {
+                        DISTR = "alteros7"
+                        SPEC = "el"
+                    }
+                    agent {
+                        docker {
+                            image "${DOCKER_IMAGE_NAME}-alteros7:${VERSION}"
                             args '-u root:root'
                             reuseNode true
                             label "${AGENT}"
@@ -629,6 +673,21 @@ pipeline {
                     }
                     environment {
                         DISTR = "redos7.3"
+                    }
+                    steps {
+                        script {
+                            buildSteps.deployToRpmRepo()
+                        }
+                    }
+                }
+
+                stage ('alteros7. deploy to repo') {
+                    when {
+                        beforeAgent true
+                        expression { params.ALTEROS7 == true }
+                    }
+                    environment {
+                        DISTR = "alteros7"
                     }
                     steps {
                         script {

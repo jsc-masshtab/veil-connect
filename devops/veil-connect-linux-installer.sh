@@ -5,7 +5,7 @@ HEIGHT=18
 WIDTH=82
 HELLO="Welcome to VeiL Connect installer"
 ERROR="ERROR: VeiL Connect installer must be run as root!"
-SUCSESS="Installation of VeiL Connect was successful!"
+SUCCESS="Installation of VeiL Connect was successful!"
 ERROR_INSTALL="ERROR: An error occurred during the installation of the program!"
 
 REPO_URL="https://veil-update.mashtab.org/veil-connect/linux"
@@ -36,9 +36,10 @@ if [ -n "$WINDOW" ]; then
     "9" "Centos 8" \
     "10" "Astra Linux Orel 2.12" \
     "11" "Astra Linux Smolensk (SE)" \
-    "12" "Alt Linux 9" \
+    "12" "ALT Linux 9" \
     "13" "RedOS 7.2" \
-    "14" "RedOS 7.3" 3>&1 1>&2 2>&3)
+    "14" "RedOS 7.3" \
+    "15" "AlterOS 7" 3>&1 1>&2 2>&3)
 
 
     clear 2> /dev/null || :
@@ -60,11 +61,12 @@ else
         7.  Ubuntu 22.04
         8.  Centos 7
         9.  Centos 8
-        10.  Astra Linux Orel 2.12
+        10. Astra Linux Orel 2.12
         11. Astra Linux Smolensk (SE)
-        12. Alt Linux 9
+        12. ALT Linux 9
         13. RedOS 7.2
         14. RedOS 7.3
+        15. AlterOS 7
     "
     echo "My OS is:"
     read OS
@@ -151,12 +153,37 @@ EOF
         result="$?"
         ;;
     
+    15) tee /etc/yum.repos.d/veil-connect.repo <<EOF
+[veil-connect]
+name=VeiL Connect repository
+baseurl=$REPO_URL/yum/alteros7/\$basearch
+gpgcheck=1
+gpgkey=$REPO_URL/yum/RPM-GPG-KEY-veil-connect
+enabled=1
+EOF
+
+        # install centos 7 packages
+        if [[ $(rpm -qa | grep freerdp-libs) != "freerdp-libs-2.1.1-2.el7.x86_64" ]]; then
+            yum erase -y freerdp-libs
+            yum install -y http://mirror.centos.org/centos/7/os/x86_64/Packages/libwinpr-2.1.1-2.el7.x86_64.rpm \
+                           http://mirror.centos.org/centos/7/os/x86_64/Packages/freerdp-libs-2.1.1-2.el7.x86_64.rpm
+        fi
+
+        if [[ $(rpm -qa | grep hiredis) != "hiredis-0.12.1-2.el7.x86_64" ]]; then
+            yum install -y https://download-ib01.fedoraproject.org/pub/epel/7/x86_64/Packages/h/hiredis-0.12.1-2.el7.x86_64.rpm
+        fi
+
+        # install veil-connect
+        yum install -y veil-connect
+        result="$?"
+        ;;
+
     *)
         echo "Error: Empty OS" ;;
 esac
 
 if [ "$result" -eq 0 ]; then
-        echo -e "\n$TITLE\n\n$SUCSESS"
+        echo -e "\n$TITLE\n\n$SUCCESS"
     else
         echo -e "\n$TITLE\n\n$ERROR_INSTALL"
 fi

@@ -1,8 +1,11 @@
 FROM centos:8
 
 # install build-deps
-RUN yum install -y epel-release dnf-plugins-core && \
+RUN cd /etc/yum.repos.d/ && \
+    sed -i 's/mirrorlist/#mirrorlist/g' /etc/yum.repos.d/CentOS-* && \
+    sed -i 's|#baseurl=http://mirror.centos.org|baseurl=http://vault.centos.org|g' /etc/yum.repos.d/CentOS-* && \
+    yum install -y epel-release dnf-plugins-core && \
     yum config-manager --set-enabled powertools && \
     yum install -y rpmdevtools spice-gtk3-devel freerdp-devel json-glib-devel libsoup-devel \
     libxml2-devel gcc cmake3 make gtk3-devel hiredis-devel usbredir-devel libusb-devel && \
-    yum clean all
+    yum clean all && rm -rf /var/cache/yum

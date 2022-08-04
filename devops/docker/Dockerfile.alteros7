@@ -1,0 +1,19 @@
+FROM nexus.bazalt.team/alteros:7.5
+
+# install build-deps
+RUN echo '[education]' > /etc/yum.repos.d/AlterOS-Extra.repo && \
+    echo 'name=AlterOS-$releasever - education' >> /etc/yum.repos.d/AlterOS-Extra.repo && \
+    echo 'baseurl=http://repo.alter-os.ru/alteros/$releasever/education/$basearch/' >> /etc/yum.repos.d/AlterOS-Extra.repo && \
+    echo 'gpgcheck=1' >> /etc/yum.repos.d/AlterOS-Extra.repo && \
+    echo 'gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-AlterOS-7' >> /etc/yum.repos.d/AlterOS-Extra.repo && \
+    yum install -y alteros-release && \
+    yum install -y rpmdevtools spice-gtk3-devel json-glib-devel libsoup-devel \
+    libxml2-devel gcc python36u-pip make gtk3-devel usbredir-devel libusb-devel && \
+    yum install -y http://mirror.centos.org/centos/7/os/x86_64/Packages/libwinpr-2.1.1-2.el7.x86_64.rpm \
+                   http://mirror.centos.org/centos/7/os/x86_64/Packages/libwinpr-devel-2.1.1-2.el7.x86_64.rpm \
+                   http://mirror.centos.org/centos/7/os/x86_64/Packages/freerdp-libs-2.1.1-2.el7.x86_64.rpm \
+                   http://mirror.centos.org/centos/7/os/x86_64/Packages/freerdp-devel-2.1.1-2.el7.x86_64.rpm \
+                   https://download-ib01.fedoraproject.org/pub/epel/7/x86_64/Packages/h/hiredis-0.12.1-2.el7.x86_64.rpm \
+                   https://download-ib01.fedoraproject.org/pub/epel/7/x86_64/Packages/h/hiredis-devel-0.12.1-2.el7.x86_64.rpm && \
+    yum clean all && rm -rf /var/cache/yum && \
+    pip3.6 install cmake==3.17.3

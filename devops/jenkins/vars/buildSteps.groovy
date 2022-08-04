@@ -47,28 +47,6 @@ def buildRpmPackage() {
     sh script: '''
         mkdir build-${DISTR}
         cd build-${DISTR}
-        cmake3 -DCMAKE_BUILD_TYPE=Release ../
-        make
-        rm -rf CMakeCache.txt  CMakeFiles  Makefile  cmake_install.cmake
-        cd ${WORKSPACE}
-
-        # make installer
-        mkdir -p rpmbuild-${DISTR}/{BUILD,BUILDROOT,RPMS,SOURCES,SPECS,SRPMS}
-        cp devops/rpm/veil-connect.spec rpmbuild-${DISTR}/SPECS
-        sed -i -e "s:%%VER%%:${VERSION}:g" rpmbuild-${DISTR}/SPECS/veil-connect.spec
-        mkdir -p rpmbuild-${DISTR}/BUILD/opt/veil-connect
-        mkdir -p rpmbuild-${DISTR}/BUILD/usr/share/applications
-        cp -r build-${DISTR}/* doc/veil-connect.ico rpmbuild-${DISTR}/BUILD/opt/veil-connect
-        cp doc/veil-connect.desktop rpmbuild-${DISTR}/BUILD/usr/share/applications
-        cd rpmbuild-${DISTR}
-        rpmbuild --define "_topdir `pwd`" -v -bb SPECS/veil-connect.spec
-    '''
-}
-
-def buildAltRpmPackage() {
-    sh script: '''
-        mkdir build-${DISTR}
-        cd build-${DISTR}
         cmake -DCMAKE_BUILD_TYPE=Release ../
         make
         rm -rf CMakeCache.txt  CMakeFiles  Makefile  cmake_install.cmake
@@ -76,14 +54,14 @@ def buildAltRpmPackage() {
 
         # make installer
         mkdir -p rpmbuild-${DISTR}/{BUILD,BUILDROOT,RPMS,SOURCES,SPECS,SRPMS}
-        cp devops/rpm/veil-connect-alt.spec rpmbuild-${DISTR}/SPECS
-        sed -i -e "s:%%VER%%:${VERSION}:g" rpmbuild-${DISTR}/SPECS/veil-connect-alt.spec
+        cp devops/rpm/veil-connect-${SPEC}.spec rpmbuild-${DISTR}/SPECS
+        sed -i -e "s:%%VER%%:${VERSION}:g" rpmbuild-${DISTR}/SPECS/veil-connect-${SPEC}.spec
         mkdir -p rpmbuild-${DISTR}/BUILD/opt/veil-connect
         mkdir -p rpmbuild-${DISTR}/BUILD/usr/share/applications
         cp -r build-${DISTR}/* doc/veil-connect.ico rpmbuild-${DISTR}/BUILD/opt/veil-connect
         cp doc/veil-connect.desktop rpmbuild-${DISTR}/BUILD/usr/share/applications
         cd rpmbuild-${DISTR}
-        rpmbuild --define "_topdir `pwd`" --define "_tmppath %{_topdir}/tmp" -v -bb SPECS/veil-connect-alt.spec
+        rpmbuild --define "_topdir `pwd`" --define "_tmppath %{_topdir}/tmp" -v -bb SPECS/veil-connect-${SPEC}.spec
     '''
 }
 
