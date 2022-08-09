@@ -334,8 +334,8 @@ connect_to_vm(gpointer data G_GNUC_UNUSED, RemoteViewer *self)
                                               self->conn_data.ip, self->conn_data.port);
                 native_rdp_launcher_start(self->native_rdp_launcher, NULL, &self->conn_data.rdp_settings);
 #endif
-    } else if (protocol == X2GO_PROTOCOL) {
-        x2go_launcher_start(self->x2go_launcher, self->conn_data.user, self->conn_data.password, &self->conn_data);
+    //} else if (protocol == X2GO_PROTOCOL) {
+    //    x2go_launcher_start(self->x2go_launcher, self->conn_data.user, self->conn_data.password, &self->conn_data);
     } else if (protocol == SPICE_PROTOCOL || protocol == SPICE_DIRECT_PROTOCOL) {
         virt_viewer_app_instant_start(self->virt_viewer_obj, &self->conn_data);
     } else if (protocol == LOUDPLAY_PROTOCOL) {

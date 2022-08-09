@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- Generated with glade 3.22.1 -->
+<!-- Generated with glade 3.22.2 -->
 <interface>
   <requires lib="gtk+" version="3.20"/>
   <object class="GtkAdjustment" id="adjustment1">
@@ -293,7 +293,6 @@ the previous pool</property>
                         <items>
                           <item id="SPICE" translatable="yes">SPICE</item>
                           <item id="RDP" translatable="yes">RDP</item>
-                          <item id="X2GO" translatable="yes">X2GO</item>
                           <item id="LOUDPLAY" translatable="yes">LOUDPLAY</item>
                         </items>
                       </object>
@@ -1240,8 +1239,8 @@ GUI data will be ignored</property>
                 </child>
                 <child>
                   <object class="GtkBox">
-                    <property name="visible">True</property>
                     <property name="can_focus">False</property>
+                    <property name="no_show_all">True</property>
                     <property name="margin_top">3</property>
                     <property name="orientation">vertical</property>
                     <property name="spacing">9</property>
@@ -1546,8 +1545,8 @@ GUI data will be ignored</property>
                 </child>
                 <child type="tab">
                   <object class="GtkLabel">
-                    <property name="visible">True</property>
                     <property name="can_focus">False</property>
+                    <property name="no_show_all">True</property>
                     <property name="label" translatable="yes">X2GO</property>
                   </object>
                   <packing>

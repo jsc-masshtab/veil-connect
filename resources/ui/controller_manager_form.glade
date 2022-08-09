@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- Generated with glade 3.22.1 -->
+<!-- Generated with glade 3.22.2 -->
 <interface>
   <requires lib="gtk+" version="3.0"/>
   <object class="GtkImage" id="image_cancel">
@@ -20,7 +20,7 @@
   <object class="GtkWindow" id="main-window">
     <property name="name">main-window</property>
     <property name="can_focus">False</property>
-    <child>
+    <child type="titlebar">
       <placeholder/>
     </child>
     <child>
@@ -167,7 +167,6 @@
                   <item id="SPICE" translatable="yes">SPICE</item>
                   <item id="SPICE_DIRECT" translatable="yes">SPICE DIRECT</item>
                   <item id="RDP" translatable="yes">RDP</item>
-                  <item id="X2GO" translatable="yes">X2GO</item>
                 </items>
               </object>
               <packing>
