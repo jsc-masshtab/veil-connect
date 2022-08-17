@@ -9,6 +9,7 @@
 #     path_in_str = str(path)
 #     print(path_in_str)
 
+src/vm_control_menu.c
 src/additional_addresses_widget.c
 src/conn_info_dialog.c
 src/main.c
@@ -75,6 +76,10 @@ src/virt_viewer/virt-viewer-display.c
 src/virt_viewer/windows-cmdline-wrapper.c
 src/controller_client/controller_manager.c
 src/controller_client/controller_session.c
+src/loudplay/loudplay_config.c
+src/loudplay/loudplay_launcher.c
+src/loudplay/loudplay_control_server.c
+src/loudplay/loudplay_control_widget.c
 resources/ui/usb_selector_form.glade
 resources/ui/vdi_user_settings_form.glade
 resources/ui/vdi_manager_form.glade
@@ -94,3 +99,4 @@ resources/ui/virt-viewer-auth.glade
 resources/ui/virt-viewer-file-transfer-dialog.glade
 resources/ui/controller_manager_form.glade
 resources/ui/additional_addresses_form.glade
+resources/ui/loudplay_control_form.glade

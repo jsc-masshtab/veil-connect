@@ -218,6 +218,19 @@ void usbredir_spice_destroy(SpiceUsbSession *self)
     free(self);
 }
 
+void usbredir_spice_free_resources(SpiceUsbSession *self)
+{
+    if (self->builder) {
+        g_object_unref(self->builder);
+        self->builder = NULL;
+        gtk_widget_destroy(self->dialog);
+        self->dialog = NULL;
+        self->main_container = NULL;
+        self->usb_device_widget = NULL;
+        self->status_label = NULL;
+    }
+}
+
 void usbredir_spice_show_dialog(SpiceUsbSession *self, GtkWindow *parent)
 {
     // create main GUI
@@ -253,12 +266,7 @@ void usbredir_spice_show_dialog(SpiceUsbSession *self, GtkWindow *parent)
     gtk_widget_show_all(self->dialog);
     gtk_dialog_run(GTK_DIALOG(self->dialog));
 
-    g_object_unref(self->builder);
-    gtk_widget_destroy(self->dialog);
-    self->dialog = NULL;
-    self->main_container = NULL;
-    self->usb_device_widget = NULL;
-    self->status_label = NULL;
+    usbredir_spice_free_resources(self);
 }
 
 void usbredir_spice_set_credentials(SpiceUsbSession *self,

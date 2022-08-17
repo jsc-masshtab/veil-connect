@@ -12,6 +12,8 @@
 #include <gtk/gtk.h>
 
 #include "settings_data.h"
+#include "loudplay_control_server.h"
+#include "loudplay_control_widget.h"
 
 
 #define TYPE_LOUDPLAY_LAUNCHER ( loudplay_launcher_get_type( ) )
@@ -25,6 +27,9 @@ typedef struct
     gboolean is_launched;
 
     GtkWindow *parent_widget;
+
+    LoudplayControlServer *ctrl_server;
+    LoudplayControlWidget *ctrl_widget;
 
 } LoudplayLauncher;
 

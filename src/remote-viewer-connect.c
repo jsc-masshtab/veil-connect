@@ -7,6 +7,7 @@
  */
 
 #include <freerdp/version.h>
+#include <freerdp/freerdp.h>
 
 #include <config.h>
 
@@ -555,8 +556,8 @@ remote_viewer_connect_show(RemoteViewerConnect *self, ConnectSettingsData *conn_
     gtk_label_set_selectable(GTK_LABEL(self->message_display_label), TRUE);
     self->header_label = GTK_WIDGET(gtk_builder_get_object(builder, "header-label"));
     g_autofree gchar *header_label_tooltip_text = NULL;
-    header_label_tooltip_text = g_strdup_printf("Built with freerdp version: %s Application build date: %s %s",
-            FREERDP_VERSION_FULL, __DATE__, __TIME__);
+    header_label_tooltip_text = g_strdup_printf("Freerdp version: B %s  R %s  Application build date: %s %s",
+            FREERDP_VERSION_FULL, freerdp_get_version_string(), __DATE__, __TIME__);
     gtk_widget_set_tooltip_text(self->header_label, header_label_tooltip_text);
     gtk_label_set_text(GTK_LABEL(self->header_label), VERSION);
     self->new_version_available_image = GTK_WIDGET(gtk_builder_get_object(builder, "new-version-available-image"));

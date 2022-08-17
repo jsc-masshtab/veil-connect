@@ -41,7 +41,7 @@ main(int argc, char **argv)
 #endif
     // start app
     virt_viewer_util_init(APPLICATION_NAME);
-    g_info("APP VERSION %s FREERDP_VERSION %s", VERSION, FREERDP_VERSION_FULL);
+    g_info("APP VERSION %s FREERDP_VERSION B %s  R %s", VERSION, FREERDP_VERSION_FULL, freerdp_get_version_string());
     g_info("Build data time: %s %s", __DATE__, __TIME__);
     g_info("Ini file path: %s", get_ini_file_name());
 
