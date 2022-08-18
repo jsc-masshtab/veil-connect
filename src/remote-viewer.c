@@ -46,6 +46,7 @@ enum RemoteViewerProperties {
 static void on_logged_out(gpointer data G_GNUC_UNUSED, const gchar *reason_phrase, RemoteViewer *self);
 static void connect_to_vm(gpointer data G_GNUC_UNUSED, RemoteViewer *self);
 static void on_vm_connection_finished(gpointer data G_GNUC_UNUSED, RemoteViewer *self);
+static void on_loudplay_config_updated(gpointer data G_GNUC_UNUSED, RemoteViewer *self);
 static void show_vm_selector_window(gpointer data G_GNUC_UNUSED, RemoteViewer *self);
 static void on_quit_requested(gpointer data G_GNUC_UNUSED, RemoteViewer *self);
 
@@ -85,6 +86,8 @@ remote_viewer_startup(GApplication *app)
     g_signal_connect(self->virt_viewer_obj, "quit-requested", G_CALLBACK(on_quit_requested), self);
 
     g_signal_connect(self->loudplay_launcher, "job-finished", G_CALLBACK(on_vm_connection_finished), self);
+    g_signal_connect(self->loudplay_launcher->ctrl_server, "loudplay-config-updated",
+            G_CALLBACK(on_loudplay_config_updated), self);
 
     self->remote_viewer_connect = remote_viewer_connect_new();
     g_signal_connect(self->remote_viewer_connect, "show-vm-selector-requested",
@@ -334,8 +337,8 @@ connect_to_vm(gpointer data G_GNUC_UNUSED, RemoteViewer *self)
                                               self->conn_data.ip, self->conn_data.port);
                 native_rdp_launcher_start(self->native_rdp_launcher, NULL, &self->conn_data.rdp_settings);
 #endif
-    } else if (protocol == X2GO_PROTOCOL) {
-        x2go_launcher_start(self->x2go_launcher, self->conn_data.user, self->conn_data.password, &self->conn_data);
+    //} else if (protocol == X2GO_PROTOCOL) {
+    //    x2go_launcher_start(self->x2go_launcher, self->conn_data.user, self->conn_data.password, &self->conn_data);
     } else if (protocol == SPICE_PROTOCOL || protocol == SPICE_DIRECT_PROTOCOL) {
         virt_viewer_app_instant_start(self->virt_viewer_obj, &self->conn_data);
     } else if (protocol == LOUDPLAY_PROTOCOL) {
@@ -373,6 +376,28 @@ on_vm_connection_finished(gpointer data G_GNUC_UNUSED, RemoteViewer *self)
             break;
         }
     }
+}
+
+// Обновление настроек, пришедшее от стриминг клиента
+static void
+on_loudplay_config_updated(gpointer data G_GNUC_UNUSED, RemoteViewer *self)
+{
+    g_autofree gchar *loudplay_config_json = NULL;
+    loudplay_config_json = loudplay_control_server_get_cur_config(self->loudplay_launcher->ctrl_server);
+
+    // Save path to client
+    gchar *loudplay_client_path = g_strdup(self->conn_data.loudplay_config->loudplay_client_path);
+
+    loudplay_settings_clear(&self->conn_data.loudplay_config);
+    self->conn_data.loudplay_config = LOUDPLAY_CONFIG(json_gobject_from_data(
+            TYPE_LOUDPLAY_CONFIG, loudplay_config_json, -1, NULL));
+    if (self->conn_data.loudplay_config == NULL) // В случае неудачи создаем дефолтный
+        self->conn_data.loudplay_config = LOUDPLAY_CONFIG( g_object_new( TYPE_LOUDPLAY_CONFIG, NULL ) );
+
+    // Restore path to client
+    self->conn_data.loudplay_config->loudplay_client_path = loudplay_client_path;
+
+    loudplay_control_widget_update_gui(self->loudplay_launcher->ctrl_widget);
 }
 
 //

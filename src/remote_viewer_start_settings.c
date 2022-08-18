@@ -9,6 +9,7 @@
 #include "remote_viewer_start_settings.h"
 #include "additional_addresses_widget.h"
 
+// X2Go скрыт 09.08.2022
 
 // D режиме по умолчанию подключение к VDI серверу. В ручном режиме прямое подключение к ВМ
 // GUI в разных режимах имеет небольшое отличие

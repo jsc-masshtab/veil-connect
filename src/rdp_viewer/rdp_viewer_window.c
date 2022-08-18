@@ -321,7 +321,7 @@ static void rdp_viewer_window_on_vm_control_menu(GtkWidget *menu, gpointer userd
 {
     RdpViewerWindow *rdp_window = (RdpViewerWindow *)userdata;
     gtk_widget_show_all(rdp_window->menu_vm_control);
-    gtk_menu_popup_at_widget(GTK_MENU(rdp_window->menu_vm_control), menu, GDK_GRAVITY_SOUTH, GDK_GRAVITY_SOUTH, NULL);
+    gtk_menu_popup_at_widget(GTK_MENU(rdp_window->menu_vm_control), menu, GDK_GRAVITY_SOUTH, GDK_GRAVITY_NORTH, NULL);
 }
 
 static void rdp_viewer_item_menu_connection_info_activated(GtkWidget *menu G_GNUC_UNUSED,
@@ -431,7 +431,7 @@ rdp_viewer_window_menu_show_usb(GtkWidget *menu, gpointer userdata)
     g_info("%s", (const char *)__func__);
     RdpViewerWindow *rdp_window = (RdpViewerWindow *)userdata;
     gtk_widget_show_all(rdp_window->menu_open_usb);
-    gtk_menu_popup_at_widget(GTK_MENU(rdp_window->menu_open_usb), menu, GDK_GRAVITY_SOUTH, GDK_GRAVITY_SOUTH, NULL);
+    gtk_menu_popup_at_widget(GTK_MENU(rdp_window->menu_open_usb), menu, GDK_GRAVITY_SOUTH, GDK_GRAVITY_NORTH, NULL);
 }
 
 static void

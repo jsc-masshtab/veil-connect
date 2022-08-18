@@ -140,7 +140,7 @@ void additional_addresses_widget_show(GList **list, MultiAddressMode *multiAddre
     GtkBuilder *builder = remote_viewer_util_load_ui("additional_addresses_form.glade");
 
     self->main_dialog = get_widget_from_builder(builder, "main_dialog");
-    gtk_window_set_title(GTK_WINDOW(self->main_dialog), _("Adresses"));
+    gtk_window_set_title(GTK_WINDOW(self->main_dialog), _("Additional adresses"));
     self->main_viewport = get_widget_from_builder(builder, "main_viewport");
     self->main_list_box = get_widget_from_builder(builder, "main_list_box");
 

@@ -176,6 +176,10 @@ list(APPEND SRC_CODE
         src/loudplay/loudplay_config.c
         src/loudplay/loudplay_launcher.c
         src/loudplay/loudplay_launcher.h
+        src/loudplay/loudplay_control_server.h
+        src/loudplay/loudplay_control_server.c
+        src/loudplay/loudplay_control_widget.c
+        src/loudplay/loudplay_control_widget.h
 )
 
 # usb_redirection

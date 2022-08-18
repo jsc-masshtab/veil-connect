@@ -25,7 +25,7 @@ static void multi_button_main_btn_clicked(GtkButton *button, MultiButton *self)
     g_info("%s", (const char *)__func__);
     gtk_widget_show_all(self->main_menu);
     gtk_menu_popup_at_widget(GTK_MENU(self->main_menu), GTK_WIDGET(button),
-                             GDK_GRAVITY_SOUTH, GDK_GRAVITY_SOUTH, NULL);
+                             GDK_GRAVITY_SOUTH, GDK_GRAVITY_NORTH, NULL);
 }
 
 static void multi_button_cancel_btn_clicked(GtkButton *button G_GNUC_UNUSED, MultiButton *self)

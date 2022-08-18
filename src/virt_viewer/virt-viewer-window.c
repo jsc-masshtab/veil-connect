@@ -1176,7 +1176,7 @@ virt_viewer_window_on_vm_control_menu(GtkWidget *menu, VirtViewerWindow *self)
 {
     GtkWidget *menu_vm_control = self->priv->menu_vm_control;
     gtk_widget_show_all(menu_vm_control);
-    gtk_menu_popup_at_widget(GTK_MENU(menu_vm_control), menu, GDK_GRAVITY_SOUTH, GDK_GRAVITY_SOUTH, NULL);
+    gtk_menu_popup_at_widget(GTK_MENU(menu_vm_control), menu, GDK_GRAVITY_SOUTH, GDK_GRAVITY_NORTH, NULL);
 }
 
 //G_MODULE_EXPORT void
