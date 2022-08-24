@@ -6,6 +6,8 @@
  * Author: http://mashtab.org/
  */
 
+#include <freerdp/version.h>
+
 #include "remote_viewer_start_settings.h"
 #include "additional_addresses_widget.h"
 
@@ -655,6 +657,12 @@ fill_gui(ConnectSettingsDialog *dialog_data)
     gtk_toggle_button_set_active((GtkToggleButton *)dialog_data->rdp_log_debug_info_check_btn,
                                  p_conn_data->rdp_settings.freerdp_debug_log_enabled);
 
+    gtk_spin_button_set_value(GTK_SPIN_BUTTON(dialog_data->rdp_h264_bitrate_spinbox),
+                              p_conn_data->rdp_settings.h264_bitrate);
+    gtk_spin_button_set_value(GTK_SPIN_BUTTON(dialog_data->rdp_h264_framerate_spinbox),
+                              p_conn_data->rdp_settings.h264_framerate);
+
+
     // X2Go Settings
     gtk_combo_box_set_active(GTK_COMBO_BOX(dialog_data->x2go_app_combobox),
                              (gint)p_conn_data->x2Go_settings.app_type);
@@ -835,6 +843,11 @@ take_from_gui(ConnectSettingsDialog *dialog_data)
     conn_data->rdp_settings.freerdp_debug_log_enabled =
             gtk_toggle_button_get_active((GtkToggleButton *)dialog_data->rdp_log_debug_info_check_btn);
 
+    conn_data->rdp_settings.h264_bitrate =
+            gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(dialog_data->rdp_h264_bitrate_spinbox));
+    conn_data->rdp_settings.h264_framerate =
+            gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(dialog_data->rdp_h264_framerate_spinbox));
+
     // X2Go settings
     conn_data->x2Go_settings.app_type = (X2goApplication)gtk_combo_box_get_active(
             GTK_COMBO_BOX(dialog_data->x2go_app_combobox));
@@ -994,6 +1007,13 @@ GtkResponseType remote_viewer_start_settings_dialog(ConnectSettingsDialog *self,
     self->gateway_address_entry = get_widget_from_builder(self->builder, "gateway_address_entry");
     self->btn_add_addresses = get_widget_from_builder(self->builder, "btn_add_addresses");
     self->rdp_log_debug_info_check_btn = get_widget_from_builder(self->builder, "rdp_log_debug_info_check_btn");
+
+    self->rdp_h264_bitrate_spinbox = get_widget_from_builder(self->builder, "rdp_h264_bitrate_spinbox");
+    self->rdp_h264_framerate_spinbox = get_widget_from_builder(self->builder, "rdp_h264_framerate_spinbox");
+#ifndef FREERDP_VERSION_VEIL_MOD
+    gtk_widget_set_sensitive(self->rdp_h264_bitrate_spinbox, FALSE);
+    gtk_widget_set_sensitive(self->rdp_h264_framerate_spinbox, FALSE);
+#endif
 
     // X2Go settings
     self->x2go_app_combobox = get_widget_from_builder(self->builder, "x2go_app_combobox");

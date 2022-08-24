@@ -16,6 +16,7 @@
 #include <freerdp/locale/keyboard.h>
 #include <freerdp/scancode.h>
 #include <freerdp/client/cmdline.h>
+#include <freerdp/version.h>
 
 #include "virt-viewer-auth.h"
 
@@ -311,8 +312,12 @@ static void* rdp_viewer_job_routine(RdpViewer *self)
     if (status)
         goto end;
 
-    // MAIN RDP LOOP
     freerdp* instance = ex_contect->context.instance;
+#ifdef FREERDP_VERSION_VEIL_MOD
+    instance->settings->H264BitRate = ex_contect->p_rdp_settings->h264_bitrate;
+    instance->settings->H264FrameRate = ex_contect->p_rdp_settings->h264_framerate;
+#endif
+    // MAIN RDP LOOP
     HANDLE handles[64];
     UINT32 conn_try = 0;
 

@@ -353,6 +353,9 @@ void rdp_settings_read_ini_file(VeilRdpSettings *rdp_settings)
     update_string_safely(&rdp_settings->gateway_address, gateway_address);
 
     rdp_settings->freerdp_debug_log_enabled = read_int_from_ini_file(rdp_group, "freerdp_debug_log_enabled", FALSE);
+
+    rdp_settings->h264_bitrate = read_int_from_ini_file(rdp_group, "h264_bitrate", 10000000);
+    rdp_settings->h264_framerate = read_int_from_ini_file(rdp_group, "h264_framerate", 30);
 }
 
 /*
@@ -489,6 +492,9 @@ void rdp_settings_write(VeilRdpSettings *rdp_settings)
     write_str_to_ini_file(rdp_group, "gateway_address", rdp_settings->gateway_address);
 
     write_int_to_ini_file(rdp_group, "freerdp_debug_log_enabled", rdp_settings->freerdp_debug_log_enabled);
+
+    write_int_to_ini_file(rdp_group, "h264_bitrate", rdp_settings->h264_bitrate);
+    write_int_to_ini_file(rdp_group, "h264_framerate", rdp_settings->h264_framerate);
 }
 
 void rdp_settings_clear(VeilRdpSettings *rdp_settings)

@@ -105,6 +105,10 @@ typedef struct{
 
     gboolean freerdp_debug_log_enabled;
 
+    // H264 settings
+    int h264_bitrate;
+    int h264_framerate;
+
 } VeilRdpSettings;
 
 

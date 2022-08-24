@@ -108,6 +108,9 @@ typedef struct {
 
     GtkWidget *rdp_log_debug_info_check_btn;
 
+    GtkWidget *rdp_h264_bitrate_spinbox;
+    GtkWidget *rdp_h264_framerate_spinbox;
+
     // X2GO settings
     GtkWidget *x2go_app_combobox;
 
