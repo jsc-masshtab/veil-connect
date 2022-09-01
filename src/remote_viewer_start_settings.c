@@ -662,6 +662,8 @@ fill_gui(ConnectSettingsDialog *dialog_data)
     gtk_spin_button_set_value(GTK_SPIN_BUTTON(dialog_data->rdp_h264_framerate_spinbox),
                               p_conn_data->rdp_settings.h264_framerate);
 
+    gtk_toggle_button_set_active((GtkToggleButton *)dialog_data->username_mod_disabled_check_btn,
+                                 p_conn_data->rdp_settings.disable_username_mod);
 
     // X2Go Settings
     gtk_combo_box_set_active(GTK_COMBO_BOX(dialog_data->x2go_app_combobox),
@@ -848,6 +850,9 @@ take_from_gui(ConnectSettingsDialog *dialog_data)
     conn_data->rdp_settings.h264_framerate =
             gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(dialog_data->rdp_h264_framerate_spinbox));
 
+    conn_data->rdp_settings.disable_username_mod =
+            gtk_toggle_button_get_active((GtkToggleButton *)dialog_data->username_mod_disabled_check_btn);
+
     // X2Go settings
     conn_data->x2Go_settings.app_type = (X2goApplication)gtk_combo_box_get_active(
             GTK_COMBO_BOX(dialog_data->x2go_app_combobox));
@@ -1014,6 +1019,8 @@ GtkResponseType remote_viewer_start_settings_dialog(ConnectSettingsDialog *self,
     gtk_widget_set_sensitive(self->rdp_h264_bitrate_spinbox, FALSE);
     gtk_widget_set_sensitive(self->rdp_h264_framerate_spinbox, FALSE);
 #endif
+    self->username_mod_disabled_check_btn =
+            get_widget_from_builder(self->builder, "username_mod_disabled_check_btn");
 
     // X2Go settings
     self->x2go_app_combobox = get_widget_from_builder(self->builder, "x2go_app_combobox");

@@ -109,6 +109,8 @@ typedef struct{
     int h264_bitrate;
     int h264_framerate;
 
+    gboolean disable_username_mod; // do not split username@domain
+
 } VeilRdpSettings;
 
 

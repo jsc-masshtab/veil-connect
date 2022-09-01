@@ -76,7 +76,8 @@ native_rdp_launcher_store_conn_data(const VeilRdpSettings *p_rdp_settings)
     g_autofree gchar *target_name_converted = NULL;
 
     // Если имя в формате name@domain то вычлиянем имя и домен
-    extract_name_and_domain(user_name, &user_name, &domain);
+    if (!p_rdp_settings->disable_username_mod)
+        extract_name_and_domain(user_name, &user_name, &domain);
 
     if (strlen_safely(domain))
         user_name_converted = g_strdup_printf("%s\\%s", domain, user_name);

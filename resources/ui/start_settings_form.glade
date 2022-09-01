@@ -1261,6 +1261,24 @@ GUI data will be ignored</property>
                               </packing>
                             </child>
                             <child>
+                              <object class="GtkCheckButton" id="username_mod_disabled_check_btn">
+                                <property name="label" translatable="yes">Disable username modification</property>
+                                <property name="visible">True</property>
+                                <property name="can_focus">True</property>
+                                <property name="receives_default">False</property>
+                                <property name="tooltip_text" translatable="yes">If the username is in the format user@domain, then by default it is split into user and domain.</property>
+                                <property name="halign">start</property>
+                                <property name="draw_indicator">True</property>
+                              </object>
+                              <packing>
+                                <property name="left_attach">0</property>
+                                <property name="top_attach">25</property>
+                              </packing>
+                            </child>
+                            <child>
+                              <placeholder/>
+                            </child>
+                            <child>
                               <placeholder/>
                             </child>
                             <child>

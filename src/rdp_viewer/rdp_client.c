@@ -113,7 +113,9 @@ GArray *rdp_client_create_params_array(ExtendedRdpContext* ex)
     add_rdp_param(rdp_params_dyn_array, full_adress);
 
     // Проверить находится ли имя в формате name@domain и извлечь данные
-    extract_name_and_domain(ex->p_rdp_settings->user_name, &ex->p_rdp_settings->user_name, &ex->p_rdp_settings->domain);
+    if (!ex->p_rdp_settings->disable_username_mod)
+        extract_name_and_domain(ex->p_rdp_settings->user_name,
+                &ex->p_rdp_settings->user_name, &ex->p_rdp_settings->domain);
 
     add_rdp_param(rdp_params_dyn_array, g_strdup_printf("/u:%s", ex->p_rdp_settings->user_name));
 
