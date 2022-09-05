@@ -174,8 +174,8 @@ VdiSession *vdi_session_new()
     vdi_session->vdi_username = NULL;
     vdi_session->vdi_password = NULL;
     vdi_session->disposable_password = NULL;
-    vdi_session->vdi_ip = NULL;
-    vdi_session->multi_address_mode = MULTI_ADDRESS_MODE_MAIN_FIRST;
+    vdi_session->multi_address_mode = MULTI_ADDRESS_MODE_FIRST;
+    vdi_session->broker_addresses_list = NULL;
 
     vdi_session->api_url = NULL;
 
@@ -214,9 +214,10 @@ static void free_session_memory()
     free_memory_safely(&vdi_session_static->vdi_username);
     free_memory_safely(&vdi_session_static->vdi_password);
     free_memory_safely(&vdi_session_static->disposable_password);
-    free_memory_safely(&vdi_session_static->vdi_ip);
-    if (vdi_session_static->additional_addresses_list)
-        g_list_free_full(vdi_session_static->additional_addresses_list, g_free);
+    if (vdi_session_static->broker_addresses_list) {
+        g_list_free_full(vdi_session_static->broker_addresses_list, g_free);
+        vdi_session_static->broker_addresses_list = NULL;
+    }
     free_memory_safely(&vdi_session_static->current_logged_address);
 
     free_memory_safely(&vdi_session_static->api_url);
@@ -487,14 +488,19 @@ static gboolean auth_fail_detected(gpointer user_data G_GNUC_UNUSED)
     return FALSE;
 }
 
-const gchar *vdi_session_get_vdi_ip()
-{
-    return vdi_session_static->vdi_ip;
-}
+//const gchar *vdi_session_get_vdi_ip()
+//{
+//    return vdi_session_static->
+//}
 
 int vdi_session_get_vdi_port(void)
 {
     return vdi_session_static->vdi_port;
+}
+
+void vdi_session_set_vdi_port(int port)
+{
+    vdi_session_static->vdi_port = port;
 }
 
 gboolean vdi_session_is_ldap()
@@ -539,23 +545,12 @@ void vdi_session_set_credentials(const gchar *username, const gchar *password,
     vdi_session_static->disposable_password = strstrip_safely(g_strdup(disposable_password));
 }
 
-void vdi_session_set_conn_data(const gchar *ip, int port)
+void vdi_session_set_broker_addresses(GList *add_addresses)
 {
-    free_memory_safely(&vdi_session_static->vdi_ip);
-    free_memory_safely(&vdi_session_static->api_url);
+    if (vdi_session_static->broker_addresses_list)
+        g_list_free_full(vdi_session_static->broker_addresses_list, g_free);
 
-    vdi_session_static->vdi_ip = strstrip_safely(g_strdup(ip));
-    vdi_session_static->vdi_port = port;
-
-    vdi_session_static->api_url = vdi_session_form_api_url(vdi_session_static->vdi_ip, vdi_session_static->vdi_port);
-}
-
-void vdi_session_set_additional_addresses(GList *add_addresses)
-{
-    if (vdi_session_static->additional_addresses_list)
-        g_list_free_full(vdi_session_static->additional_addresses_list, g_free);
-
-    vdi_session_static->additional_addresses_list = add_addresses;
+    vdi_session_static->broker_addresses_list = add_addresses;
 }
 
 void vdi_session_set_multi_address_mode(MultiAddressMode multi_address_mode)
@@ -748,16 +743,11 @@ void vdi_session_log_in_task(GTask       *task,
     free_memory_safely(&vdi_session_static->current_logged_address);
 
     switch (vdi_session_static->multi_address_mode) {
-        case MULTI_ADDRESS_MODE_MAIN_FIRST: {
-            // Connect to main address
-            g_info("Trying to login at main address %s", vdi_session_static->vdi_ip);
-            if (vdi_session_auth_request(vdi_session_static->vdi_ip, login_data))
-                break;
-
-            // Connect to additional addresses
-            guint addresses_amount = g_list_length(vdi_session_static->additional_addresses_list);
+        case MULTI_ADDRESS_MODE_FIRST: {
+            // Connect to addresses
+            guint addresses_amount = g_list_length(vdi_session_static->broker_addresses_list);
             guint count = 0;
-            for (GList *l = vdi_session_static->additional_addresses_list; l != NULL; l = l->next) {
+            for (GList *l = vdi_session_static->broker_addresses_list; l != NULL; l = l->next) {
 
                 if (g_cancellable_is_cancelled(cancellable)) {
                     g_info("%s  Cancelled", (const char *)__func__);
@@ -767,7 +757,7 @@ void vdi_session_log_in_task(GTask       *task,
                 count++;
                 const gchar *address = (const gchar *)l->data;
                 if(strlen_safely(address) > 0) {
-                    g_info("Trying to login at additional address %s. %i from %i", address, count, addresses_amount);
+                    g_info("Trying to login at address %s. %i from %i", address, count, addresses_amount);
                     if (vdi_session_auth_request(address, login_data))
                         break;
                 }
@@ -775,10 +765,9 @@ void vdi_session_log_in_task(GTask       *task,
 
             break;
         }
-        case MULTI_ADDRESS_MODE_RANDOM_FIRST: {
+        case MULTI_ADDRESS_MODE_RANDOM: {
             // Connect to random address from available ones
-            GList *all_addresses_list = g_list_copy(vdi_session_static->additional_addresses_list); // shadow copy
-            all_addresses_list = g_list_append(all_addresses_list, vdi_session_static->vdi_ip);
+            GList *all_addresses_list = g_list_copy(vdi_session_static->broker_addresses_list); // shadow copy
 
             guint addresses_amount = g_list_length(all_addresses_list);
             //g_info("!!! addresses_amount %i", addresses_amount);

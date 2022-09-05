@@ -37,9 +37,10 @@ typedef enum{
     VDI_POOL_TYPE_RDS
 } VdiPoolType;
 
+// Определяет к какому адресу подключиться в первую очередь.
 typedef enum{
-    MULTI_ADDRESS_MODE_MAIN_FIRST,
-    MULTI_ADDRESS_MODE_RANDOM_FIRST
+    MULTI_ADDRESS_MODE_FIRST, // К первому в списке
+    MULTI_ADDRESS_MODE_RANDOM // К случайному в списке
 } MultiAddressMode;
 
 // Pools request data
@@ -125,10 +126,8 @@ struct _VdiSession
     gchar *vdi_password;
     gchar *disposable_password; // 2fa
 
-    gchar *vdi_ip; // Основной адрес для потдключения
-    GList *additional_addresses_list; // Дополнительные адреса для потдключения
+    GList *broker_addresses_list; // Адреса для потдключения
     gchar *current_logged_address; // Адрес по которому фактически произошло успешное подключение
-
     MultiAddressMode multi_address_mode;
     int vdi_port;
 
@@ -186,9 +185,10 @@ void vdi_session_vm_prep_progress_received_notify(int request_id, int progress, 
 void vdi_session_pool_entitlement_changed_notify(void);
 
 // get vid server ip
-const gchar *vdi_session_get_vdi_ip(void);
+//const gchar *vdi_session_get_vdi_ip(void);
 // get port
 int vdi_session_get_vdi_port(void);
+void vdi_session_set_vdi_port(int port);
 
 gboolean vdi_session_is_ldap(void);
 // get username
@@ -205,8 +205,7 @@ void vdi_session_cancel_pending_requests(void);
 // set vdi session credentials
 void vdi_session_set_credentials(const gchar *username, const gchar *password,
                                  const gchar *disposable_password);
-void vdi_session_set_conn_data(const gchar *ip, int port);
-void vdi_session_set_additional_addresses(GList *add_addresses);
+void vdi_session_set_broker_addresses(GList *add_addresses);
 void vdi_session_set_multi_address_mode(MultiAddressMode multi_address_mode);
 
 void vdi_session_set_ldap(gboolean is_ldap);

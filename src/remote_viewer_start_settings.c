@@ -82,7 +82,7 @@ static gboolean
 check_parameters(ConnectSettingsData *p_conn_data G_GNUC_UNUSED, ConnectSettingsDialog *dialog_data)
 {
     gboolean is_ok = TRUE;
-    const gchar *pattern = "^$|[а-яА-ЯёЁa-zA-Z0-9]+[а-яА-ЯёЁa-zA-Z0-9.\\-_+ ]*$";
+    const gchar *pattern = "^$|[а-яА-ЯёЁa-zA-Z0-9]+[а-яА-ЯёЁa-zA-Z0-9.\\-_+, ]*$";
 
     // check domain name and set
     const gchar *domain_gui_str = gtk_entry_get_text(GTK_ENTRY(dialog_data->domain_entry));
@@ -467,9 +467,16 @@ btn_show_usb_filter_tooltip_spice_clicked(GtkButton *button G_GNUC_UNUSED, Conne
 static void
 btn_add_addresses_clicked(GtkButton *button G_GNUC_UNUSED, ConnectSettingsDialog *dialog_data)
 {
-    additional_addresses_widget_show(&get_vdi_session_static()->additional_addresses_list,
-                                     &get_vdi_session_static()->multi_address_mode,
-            dialog_data->p_conn_data, GTK_WINDOW(dialog_data->window));
+    g_autofree gchar *comma_separated_string = NULL;
+    comma_separated_string = additional_addresses_widget_show(
+            gtk_entry_get_text(GTK_ENTRY(dialog_data->address_entry)),
+            &get_vdi_session_static()->multi_address_mode,
+            GTK_WINDOW(dialog_data->window));
+
+    if (comma_separated_string)
+        gtk_entry_set_text(GTK_ENTRY(dialog_data->address_entry), comma_separated_string);
+    else
+        gtk_entry_set_text(GTK_ENTRY(dialog_data->address_entry), "");
 }
 
 static void
@@ -517,8 +524,12 @@ fill_gui(ConnectSettingsDialog *dialog_data)
 
     switch (p_conn_data->global_app_mode) {
         case GLOBAL_APP_MODE_VDI: {
-            if (vdi_session_get_vdi_ip())
-                gtk_entry_set_text(GTK_ENTRY(dialog_data->address_entry), vdi_session_get_vdi_ip());
+            g_autofree gchar *comma_separated_string = NULL;
+            comma_separated_string = util_string_list_to_comma_separated_string(
+                    get_vdi_session_static()->broker_addresses_list);
+            if (comma_separated_string)
+                gtk_entry_set_text(GTK_ENTRY(dialog_data->address_entry), comma_separated_string);
+
             gtk_spin_button_set_value(GTK_SPIN_BUTTON(dialog_data->port_spinbox),
                                       vdi_session_get_vdi_port());
             break;
@@ -718,7 +729,9 @@ take_from_gui(ConnectSettingsDialog *dialog_data)
 
     switch (conn_data->global_app_mode) {
         case GLOBAL_APP_MODE_VDI: {
-            vdi_session_set_conn_data(ip, port);
+            vdi_session_set_vdi_port(port);
+            GList *list = util_comma_separated_string_to_list(ip);
+            vdi_session_set_broker_addresses(list);
             break;
         }
         case GLOBAL_APP_MODE_DIRECT: {

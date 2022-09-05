@@ -311,7 +311,7 @@ handle_connect_request(RemoteViewerConnect *self)
 {
     switch (self->p_conn_data->global_app_mode) {
         case GLOBAL_APP_MODE_VDI: {
-            if (strlen_safely(vdi_session_get_vdi_ip()) == 0) {
+            if (g_list_length(get_vdi_session_static()->broker_addresses_list) == 0) {
                 util_set_message_to_info_label(GTK_LABEL(self->message_display_label),
                                           _("Connection address is not specified"));
                 return;

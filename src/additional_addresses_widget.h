@@ -10,8 +10,8 @@
 
 #include "settings_data.h"
 
-void additional_addresses_widget_show(GList **list, MultiAddressMode *multiAddressMode,
-        ConnectSettingsData *p_conn_data, GtkWindow *parent);
+gchar *additional_addresses_widget_show(const gchar *comma_separated_string, MultiAddressMode *multiAddressMode,
+        GtkWindow *parent);
 
 
 #endif //VEIL_CONNECT_ADDITIONAL_ADDRESSES_WIDGET_H

@@ -44,8 +44,8 @@ void settings_data_read_all(ConnectSettingsData *data)
         password = read_str_from_ini_file(param_group_vdi, "password");
         ip = read_str_from_ini_file(param_group_vdi, "ip");
 
-        GList *add_addresses = read_string_list_from_ini_file(param_group_vdi, "additional_addresses_list");
-        vdi_session_set_additional_addresses(add_addresses);
+        GList *broker_addresses_list = read_string_list_from_ini_file(param_group_vdi, "broker_addresses_list");
+        vdi_session_set_broker_addresses(broker_addresses_list);
         MultiAddressMode multi_address_mode = (MultiAddressMode)read_int_from_ini_file(
                 param_group_vdi, "multi_address_mode", 0);
         vdi_session_set_multi_address_mode(multi_address_mode);
@@ -54,7 +54,7 @@ void settings_data_read_all(ConnectSettingsData *data)
         gboolean is_ldap = read_int_from_ini_file(param_group_vdi, "is_ldap", 0);
 
         vdi_session_set_credentials(username, password, NULL);
-        vdi_session_set_conn_data(ip, port);
+        vdi_session_set_vdi_port(port);
         vdi_session_set_ldap(is_ldap);
 
         data->domain = read_str_from_ini_file(param_group_vdi, "domain");
@@ -138,10 +138,9 @@ void settings_data_save_all(ConnectSettingsData *data)
         write_str_to_ini_file(param_group_vdi, "password", vdi_session_get_vdi_password());
     else
         write_str_to_ini_file(param_group_vdi, "password", "");
-    write_str_to_ini_file(param_group_vdi, "ip", vdi_session_get_vdi_ip());
-    // save additional addresses
-    GList *addresses = get_vdi_session_static()->additional_addresses_list;
-    write_string_list_to_ini_file_v2(param_group_vdi, "additional_addresses_list", addresses);
+    // save addresses
+    GList *addresses = get_vdi_session_static()->broker_addresses_list;
+    write_string_list_to_ini_file_v2(param_group_vdi, "broker_addresses_list", addresses);
     write_int_to_ini_file(param_group_vdi, "multi_address_mode", get_vdi_session_static()->multi_address_mode);
 
     write_int_to_ini_file(param_group_vdi, "port", vdi_session_get_vdi_port());

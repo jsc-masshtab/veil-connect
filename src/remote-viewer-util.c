@@ -1412,6 +1412,47 @@ void terminate_process(GPid pid)
 #endif
 }
 
+gchar *util_string_list_to_comma_separated_string(GList *string_list)
+{
+    if (!string_list)
+        return NULL;
+
+    gchar *final_string = NULL;
+    if (g_list_length(string_list)) {
+        // convert to strings separated by comma
+        for (GList *l = string_list; l != NULL; l = l->next) {
+            const gchar *cur_string = (const gchar *) l->data;
+
+            if (final_string) {
+                gchar *temp_string = g_strconcat(final_string, ",", cur_string, NULL);
+                g_free(final_string);
+                final_string = temp_string;
+            } else {
+                final_string = g_strdup(cur_string);
+            }
+        }
+    }
+
+    return final_string;
+}
+
+GList *util_comma_separated_string_to_list(const gchar *comma_separated_string)
+{
+    GList *list = NULL;
+
+    if (!comma_separated_string)
+        return list;
+
+    gchar **string_array = g_strsplit(comma_separated_string, ",", 30);
+    gchar **str;
+    for (str = string_array; *str; str++) {
+        list = g_list_append(list, strstrip_safely(g_strdup(*str)));
+    }
+
+    g_strfreev(string_array);
+
+    return list;
+}
 
 /*
  * Local variables:

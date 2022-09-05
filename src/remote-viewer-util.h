@@ -258,6 +258,9 @@ GtkWidget *util_find_child(GtkWidget* parent, const gchar* name);
 
 void terminate_process(GPid pid);
 
+gchar *util_string_list_to_comma_separated_string(GList *string_list);
+GList *util_comma_separated_string_to_list(const gchar *comma_separated_string);
+
 #endif
 
 /*

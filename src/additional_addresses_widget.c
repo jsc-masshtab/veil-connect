@@ -10,7 +10,6 @@
 
 typedef struct{
 
-    GMainLoop *loop;
     GtkBuilder *builder;
     GtkWidget *main_dialog;
     GtkWidget *main_viewport;
@@ -19,12 +18,12 @@ typedef struct{
     GtkWidget *btn_add_item;
     GtkWidget *btn_remove_all;
 
-    GtkWidget *btn_connect_to_main_address_first;
-    GtkWidget *btn_connect_to_random_address_first;
+    GtkWidget *btn_connect_in_sequence;
+    GtkWidget *btn_connect_at_random;
 
     GPtrArray *items_array;
 
-    GList **p_list;
+    gchar *comma_separated_string;
     MultiAddressMode *p_multiAddressMode;
 
 } AdditionalAddressesWidget;
@@ -99,56 +98,63 @@ on_btn_remove_all_clicked(GtkButton *button G_GNUC_UNUSED, AdditionalAddressesWi
 
 static void fill_gui(AdditionalAddressesWidget *self)
 {
-    for (GList *l = *self->p_list; l != NULL; l = l->next) {
-        const gchar *str = (const gchar *)l->data;
-        additional_addresses_widget_add_item(self, str);
+    gchar **string_array = g_strsplit(self->comma_separated_string, ",", 30);
+    gchar **str;
+    for (str = string_array; *str; str++) {
+        additional_addresses_widget_add_item(self, *str);
     }
 
+    g_strfreev(string_array);
+
     // connect mode
-    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(self->btn_connect_to_main_address_first),
-                                 (*self->p_multiAddressMode) == MULTI_ADDRESS_MODE_MAIN_FIRST);
-    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(self->btn_connect_to_random_address_first),
-                                 (*self->p_multiAddressMode) == MULTI_ADDRESS_MODE_RANDOM_FIRST);
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(self->btn_connect_in_sequence),
+                                 (*self->p_multiAddressMode) == MULTI_ADDRESS_MODE_FIRST);
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(self->btn_connect_at_random),
+                                 (*self->p_multiAddressMode) == MULTI_ADDRESS_MODE_RANDOM);
 }
 
 static void take_from_gui(AdditionalAddressesWidget *self)
 {
-    if (*self->p_list) {
-        g_list_free_full(*self->p_list, g_free);
-        *self->p_list = NULL;
-    }
+    free_memory_safely(&self->comma_separated_string);
 
     for (guint i = 0; i < self->items_array->len; ++i) {
         Item *item = g_ptr_array_index(self->items_array, i);
 
         const gchar *text = gtk_entry_get_text(GTK_ENTRY(item->item_entry));
-        (*self->p_list) = g_list_append(*self->p_list, g_strdup(text));
+
+        if (self->comma_separated_string) {
+            gchar *temp_string = g_strconcat(self->comma_separated_string, ",", text, NULL);
+            g_free(self->comma_separated_string);
+            self->comma_separated_string = temp_string;
+        } else {
+            self->comma_separated_string = g_strdup(text);
+        }
     }
 
     // connect mode
-    if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(self->btn_connect_to_main_address_first)))
-        *self->p_multiAddressMode = MULTI_ADDRESS_MODE_MAIN_FIRST;
-    else if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(self->btn_connect_to_random_address_first)))
-        *self->p_multiAddressMode = MULTI_ADDRESS_MODE_RANDOM_FIRST;
+    if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(self->btn_connect_in_sequence)))
+        *self->p_multiAddressMode = MULTI_ADDRESS_MODE_FIRST;
+    else if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(self->btn_connect_at_random)))
+        *self->p_multiAddressMode = MULTI_ADDRESS_MODE_RANDOM;
 }
 
-void additional_addresses_widget_show(GList **list, MultiAddressMode *multiAddressMode,
-        ConnectSettingsData *p_conn_data G_GNUC_UNUSED, GtkWindow *parent)
+gchar *additional_addresses_widget_show(const gchar *comma_separated_string, MultiAddressMode *multiAddressMode,
+        GtkWindow *parent)
 {
     AdditionalAddressesWidget *self = (AdditionalAddressesWidget*)calloc(1, sizeof(AdditionalAddressesWidget));
 
     GtkBuilder *builder = remote_viewer_util_load_ui("additional_addresses_form.glade");
 
     self->main_dialog = get_widget_from_builder(builder, "main_dialog");
-    gtk_window_set_title(GTK_WINDOW(self->main_dialog), _("Additional adresses"));
+    gtk_window_set_title(GTK_WINDOW(self->main_dialog), _("Addresses"));
     self->main_viewport = get_widget_from_builder(builder, "main_viewport");
     self->main_list_box = get_widget_from_builder(builder, "main_list_box");
 
     self->btn_add_item = get_widget_from_builder(builder, "btn_add_item");
     self->btn_remove_all = get_widget_from_builder(builder, "btn_remove_all");
 
-    self->btn_connect_to_main_address_first = get_widget_from_builder(builder, "btn_connect_to_main_address_first");
-    self->btn_connect_to_random_address_first = get_widget_from_builder(builder, "btn_connect_to_random_address_first");
+    self->btn_connect_in_sequence = get_widget_from_builder(builder, "btn_connect_in_sequence");
+    self->btn_connect_at_random = get_widget_from_builder(builder, "btn_connect_at_random");
 
     self->items_array = g_ptr_array_new();
 
@@ -161,7 +167,7 @@ void additional_addresses_widget_show(GList **list, MultiAddressMode *multiAddre
     gtk_window_set_position(GTK_WINDOW(self->main_dialog), GTK_WIN_POS_CENTER);
 
     // set gui data
-    self->p_list = list;
+    self->comma_separated_string = g_strdup(comma_separated_string);
     self->p_multiAddressMode = multiAddressMode;
     fill_gui(self);
 
@@ -173,8 +179,11 @@ void additional_addresses_widget_show(GList **list, MultiAddressMode *multiAddre
     take_from_gui(self);
 
     // Clear
+    gchar *final_comma_separated_string = self->comma_separated_string;
     g_ptr_array_free(self->items_array, TRUE);
     g_object_unref(builder);
     gtk_widget_destroy(self->main_dialog);
     free(self);
+
+    return final_comma_separated_string;
 }
