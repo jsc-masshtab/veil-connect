@@ -1253,6 +1253,8 @@ void util_free_veil_vm_data(VeilVmData *vm_data)
         g_array_free(vm_data->farm_array, TRUE);
     }
 
+    free_memory_safely(&vm_data->spice_conn.address);
+
     free(vm_data);
 }
 

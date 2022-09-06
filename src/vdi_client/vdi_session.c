@@ -1362,11 +1362,18 @@ void vdi_session_get_vm_data_task(GTask *task,
     vdi_vm_data->server_reply_type = server_reply_type;
 
     if (server_reply_type == SERVER_REPLY_TYPE_DATA) {
-        vdi_vm_data->vm_host = g_strdup(json_object_get_string_member_safely(
-                reply_json_object, "controller_address"));
-        vdi_vm_data->vm_port = (int)json_object_get_int_member_safely(reply_json_object, "remote_access_port");
         vdi_vm_data->vm_password = g_strdup(json_object_get_string_member_safely(
                 reply_json_object, "graphics_password"));
+
+        JsonObject *spice_conn_object = json_object_get_object_member_safely(reply_json_object, "spice_conn");
+        if (spice_conn_object) {
+            vdi_vm_data->spice_conn.address =
+                    g_strdup(json_object_get_string_member_safely(spice_conn_object, "address"));
+            vdi_vm_data->spice_conn.port =
+                    (int)json_object_get_int_member_safely(spice_conn_object, "port");
+        } else {
+            g_warning("%s Error reply. Response_body_str: %s", (const char *)__func__, response_body_str);
+        }
     } else {
         g_warning("%s Error reply. Response_body_str: %s", (const char *)__func__, response_body_str);
     }

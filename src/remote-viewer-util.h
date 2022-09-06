@@ -112,6 +112,11 @@ typedef struct{
     gchar *vm_password;
     gchar *vm_verbose_name;
 
+    struct{
+        gchar *address;
+        int port;
+    } spice_conn;
+
     gchar *message;
 
     gint test_data;

@@ -174,9 +174,9 @@ static void on_vdi_session_get_vm_data_task_finished(GObject *source_object G_GN
 
         // Set spice credentials and connect
         usbredir_spice_set_credentials(self,
-                                       vdi_vm_data->vm_host,
+                                       vdi_vm_data->spice_conn.address,
                                        vdi_vm_data->vm_password,
-                                       vdi_vm_data->vm_port);
+                                       vdi_vm_data->spice_conn.port);
         usbredir_spice_connect(self);
 
     } else {

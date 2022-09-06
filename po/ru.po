@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-09-05 18:35+0300\n"
+"POT-Creation-Date: 2022-09-06 16:41+0300\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -361,18 +361,27 @@ msgstr ""
 msgid "USB redirection is not allowed"
 msgstr "Проброс USB запрещен администратором"
 
+#: ../src/rdp_viewer/rdp_viewer_window.c:400
+#, c-format
+msgid ""
+"The client and server are incompatible. This client demands the server to be "
+"at least %s. Current server version is %s."
+msgstr ""
+"Клиент и сервер несовместимы. Этот клиент требует, чтобы сервер был "
+"по крайней мере версии %s. Текущая версия сервера %s."
+
 #. Leave fullscreen
-#: ../src/rdp_viewer/rdp_viewer_window.c:531
+#: ../src/rdp_viewer/rdp_viewer_window.c:544
 msgid "Leave full screen"
 msgstr "Покинуть полный экран"
 
-#: ../src/rdp_viewer/rdp_viewer_window.c:545
+#: ../src/rdp_viewer/rdp_viewer_window.c:558
 #: ../src/virt_viewer/virt-viewer-window.c:1235
 msgid "Send key combination"
 msgstr "Послать комбинацию клавиш"
 
-#: ../src/rdp_viewer/rdp_viewer_window.c:561
-#: ../src/rdp_viewer/rdp_viewer_window.c:562
+#: ../src/rdp_viewer/rdp_viewer_window.c:574
+#: ../src/rdp_viewer/rdp_viewer_window.c:575
 #: ../src/virt_viewer/virt-viewer-window.c:1226
 #: ../src/virt_viewer/virt-viewer-window.c:1227
 msgid "USB"
@@ -380,7 +389,7 @@ msgstr "USB"
 
 #. Vm control
 #. Управление ВМ
-#: ../src/rdp_viewer/rdp_viewer_window.c:566
+#: ../src/rdp_viewer/rdp_viewer_window.c:579
 #: ../src/virt_viewer/virt-viewer-window.c:1217
 #: ../resources/ui/virt-viewer_veil.glade.h:38
 #: ../resources/ui/loudplay_control_form.glade.h:4
@@ -389,14 +398,14 @@ msgstr "Управление ВМ"
 
 #. Disconnect
 #. Отключиться
-#: ../src/rdp_viewer/rdp_viewer_window.c:570
+#: ../src/rdp_viewer/rdp_viewer_window.c:583
 #: ../src/virt_viewer/virt-viewer-window.c:1209
 #: ../resources/ui/virt-viewer_veil.glade.h:36
 msgid "Disconnect"
 msgstr "Отключиться"
 
 #. Перенаправление USB /dev/bus/usb/%03i/%03i завершилось с ошибкой. %s
-#: ../src/rdp_viewer/rdp_viewer_window.c:588
+#: ../src/rdp_viewer/rdp_viewer_window.c:601
 #, c-format
 msgid ""
 "USB redirection /dev/bus/usb/%03i/%03i finished with errors.\n"
@@ -406,7 +415,7 @@ msgstr ""
 "%s"
 
 #. ВМ: %s     Пользователь: %s  -  %s
-#: ../src/rdp_viewer/rdp_viewer_window.c:715
+#: ../src/rdp_viewer/rdp_viewer_window.c:728
 #, c-format
 msgid "VM: %s     User: %s     Monitor number: %i  -  %s"
 msgstr "ВМ: %s     Пользователь: %s     Номер монитора: %i  -  %s"
