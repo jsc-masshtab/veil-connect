@@ -3,7 +3,7 @@ def branch() {
 }
 
 def version() {
-    return "1.14.6"
+    return "1.14.7"
 }
 
 def linuxAgents() {

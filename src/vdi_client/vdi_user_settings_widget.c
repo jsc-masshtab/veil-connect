@@ -29,6 +29,7 @@ typedef struct{
     GtkWidget *check_btn_2fa;
     GtkWidget *btn_generate_qr_code;
     GtkWidget *btn_apply;
+    GtkWidget *btn_close;
 
     GtkWidget *status_msg_text_view;
     GtkWidget *spinner_status;
@@ -205,6 +206,11 @@ static void on_btn_apply_clicked(GtkButton *button G_GNUC_UNUSED, VdiUserSetting
                        (GAsyncReadyCallback)on_vdi_session_update_user_data_task_finished, tk_user_data, self);
 }
 
+static void on_btn_close_clicked(GtkButton *button G_GNUC_UNUSED, VdiUserSettingsWidget *self)
+{
+    shutdown_loop(self->loop);
+}
+
 static void on_check_btn_2fa_toggled(GtkToggleButton *button, VdiUserSettingsWidget *self)
 {
     gboolean is_active = gtk_toggle_button_get_active(button);
@@ -246,6 +252,7 @@ void vdi_user_settings_widget_show(GtkWindow *parent)
     self.check_btn_2fa = get_widget_from_builder(self.builder, "check_btn_2fa");
     self.btn_generate_qr_code = get_widget_from_builder(self.builder, "btn_generate_qr_code");
     self.btn_apply = get_widget_from_builder(self.builder, "btn_apply");
+    self.btn_close = get_widget_from_builder(self.builder, "btn_close");
 
     self.status_msg_text_view = get_widget_from_builder(self.builder, "status_msg_text_view");
     self.spinner_status = get_widget_from_builder(self.builder, "spinner_status");
@@ -258,6 +265,7 @@ void vdi_user_settings_widget_show(GtkWindow *parent)
     g_signal_connect_swapped(self.main_window, "delete-event", G_CALLBACK(window_deleted_cb), &self);
     g_signal_connect(self.btn_generate_qr_code, "clicked", G_CALLBACK(on_btn_generate_qr_code_clicked), &self);
     g_signal_connect(self.btn_apply, "clicked", G_CALLBACK(on_btn_apply_clicked), &self);
+    g_signal_connect(self.btn_close, "clicked", G_CALLBACK(on_btn_close_clicked), &self);
     g_signal_connect(self.check_btn_2fa, "toggled", G_CALLBACK(on_check_btn_2fa_toggled), &self);
     gulong parent_hide_sig_handler = g_signal_connect(parent, "hide",
                                           G_CALLBACK(on_parent_hidden), &self);
