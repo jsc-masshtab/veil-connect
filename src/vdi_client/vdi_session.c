@@ -1044,7 +1044,7 @@ void vdi_session_windows_sso_auth_task(GTask *task,
     SecBufferDesc output_desc = {.cBuffers = 1, .pBuffers = &output_token, .ulVersion = SECBUFFER_VERSION};
 
     g_autofree gchar *service_name = NULL;
-    if(g_list_length(vdi_session_static->broker_addresses_list) > 1) {
+    if(g_list_length(vdi_session_static->broker_addresses_list) >= 1) {
         // First address in the list
         service_name = g_strdup_printf("http/%s", (const gchar *)vdi_session_static->broker_addresses_list->data);
     }
