@@ -257,7 +257,7 @@ if (WIN32)
     else(BUILD_x32) # 64bit
         message(STATUS "Using 64bit dependencies")
         SET(LIBS_INCLUDE_PATH C:/msys32/mingw64/include/)
-        SET(FREERDP_PATH C:/job/FreeRDP-2.3.2/)
+        SET(FREERDP_PATH C:/job/FreeRDP-2.8.0/)
         SET(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
         
         # breakpad wrapper
@@ -269,13 +269,13 @@ if (WIN32)
 
     # freerdp
     INCLUDE_DIRECTORIES(SYSTEM ${FREERDP_PATH}include) # SYSTEM is used to suppress warnings from the library
-    SET(LIBS ${LIBS} ${FREERDP_PATH}Release/freerdp2.dll)
-    SET(LIBS ${LIBS} ${FREERDP_PATH}Release/freerdp-client2.dll)
+    SET(LIBS ${LIBS} ${FREERDP_PATH}Release/libfreerdp2.dll)
+    SET(LIBS ${LIBS} ${FREERDP_PATH}Release/libfreerdp-client2.dll)
 
     # winpr2
     INCLUDE_DIRECTORIES(SYSTEM ${FREERDP_PATH}winpr/include)  # SYSTEM is used to suppress warnings from the library
-    SET(LIBS ${LIBS} ${FREERDP_PATH}Release/winpr-tools2.dll)
-    SET(LIBS ${LIBS} ${FREERDP_PATH}Release/winpr2.dll)
+    SET(LIBS ${LIBS} ${FREERDP_PATH}Release/libwinpr-tools2.dll)
+    SET(LIBS ${LIBS} ${FREERDP_PATH}Release/libwinpr2.dll)
 
     # other libs
     SET(LIBS ${LIBS}
