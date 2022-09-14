@@ -1038,20 +1038,26 @@ void vdi_session_windows_sso_auth_task(GTask *task,
     LoginData *login_data = calloc(1, sizeof(LoginData));
     gboolean is_success = FALSE;
 
+    SecBuffer output_token = {.BufferType = SECBUFFER_TOKEN, .cbBuffer = 0, .pvBuffer = NULL};
+    SecBuffer input_token = {.BufferType = SECBUFFER_TOKEN, .cbBuffer = 0, .pvBuffer = NULL};
+    SecBufferDesc input_desc = {.cBuffers = 1, .pBuffers = &input_token, .ulVersion = SECBUFFER_VERSION};
+    SecBufferDesc output_desc = {.cBuffers = 1, .pBuffers = &output_token, .ulVersion = SECBUFFER_VERSION};
+
     g_autofree gchar *service_name = NULL;
-    service_name = g_strdup_printf("http/%s", vdi_session_get_vdi_ip());
+    if(g_list_length(vdi_session_static->broker_addresses_list) > 1) {
+        // First address in the list
+        service_name = g_strdup_printf("http/%s", (const gchar *)vdi_session_static->broker_addresses_list->data);
+    }
+    else {
+        login_data->reply_msg = g_strdup(_("Address is not specified"));
+        goto end;
+    }
+
     g_info("%s: service_name: %s", (const char *)__func__, service_name);
     OM_uint32 gss_flags = (ISC_REQ_MUTUAL_AUTH | ISC_REQ_ALLOCATE_MEMORY |
             ISC_REQ_CONFIDENTIALITY | ISC_REQ_REPLAY_DETECT);
 
-    g_autofree gchar *package = NULL;
-    package = g_strdup("Kerberos");
-
-    SecBuffer output_token = {.BufferType = SECBUFFER_TOKEN, .cbBuffer = 0, .pvBuffer = NULL};
-    SecBuffer input_token = {.BufferType = SECBUFFER_TOKEN, .cbBuffer = 0, .pvBuffer = NULL};
-
-    SecBufferDesc input_desc = {.cBuffers = 1, .pBuffers = &input_token, .ulVersion = SECBUFFER_VERSION};
-    SecBufferDesc output_desc = {.cBuffers = 1, .pBuffers = &output_token, .ulVersion = SECBUFFER_VERSION};
+    gchar *package = g_strdup("Kerberos");
 
     CredHandle cred_handle = {.dwLower = 0, .dwUpper = 0};
 
@@ -1068,6 +1074,8 @@ void vdi_session_windows_sso_auth_task(GTask *task,
                                         NULL,                       // noget key arg
                                         &cred_handle,
                                         &expiry);
+    free_memory_safely(&package);
+
     if (maj_stat != SEC_E_OK) {
         login_data->reply_msg = g_strdup_printf(_("Acquiring credentials error : %lu"), maj_stat);
         goto end;
