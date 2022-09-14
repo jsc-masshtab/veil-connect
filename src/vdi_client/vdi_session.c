@@ -1046,7 +1046,8 @@ void vdi_session_windows_sso_auth_task(GTask *task,
     g_autofree gchar *service_name = NULL;
     if(g_list_length(vdi_session_static->broker_addresses_list) >= 1) {
         // First address in the list
-        service_name = g_strdup_printf("http/%s", (const gchar *)vdi_session_static->broker_addresses_list->data);
+        service_name = g_strdup_printf("http/%s",
+                (const gchar *)g_list_first(vdi_session_static->broker_addresses_list)->data);
     }
     else {
         login_data->reply_msg = g_strdup(_("Address is not specified"));
@@ -1372,6 +1373,11 @@ void vdi_session_get_vm_data_task(GTask *task,
     if (server_reply_type == SERVER_REPLY_TYPE_DATA) {
         vdi_vm_data->vm_password = g_strdup(json_object_get_string_member_safely(
                 reply_json_object, "graphics_password"));
+
+        vdi_vm_data->vm_host = g_strdup(json_object_get_string_member_safely(
+                reply_json_object, "controller_address"));
+        vdi_vm_data->vm_port = (int)json_object_get_int_member_safely(reply_json_object, "remote_access_port");
+
 
         JsonObject *spice_conn_object = json_object_get_object_member_safely(reply_json_object, "spice_conn");
         if (spice_conn_object) {

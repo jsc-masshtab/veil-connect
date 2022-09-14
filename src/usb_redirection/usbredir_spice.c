@@ -173,10 +173,20 @@ static void on_vdi_session_get_vm_data_task_finished(GObject *source_object G_GN
         usbredir_spice_set_status(self, "Получены данные для подключения SPICE");
 
         // Set spice credentials and connect
-        usbredir_spice_set_credentials(self,
-                                       vdi_vm_data->spice_conn.address,
-                                       vdi_vm_data->vm_password,
-                                       vdi_vm_data->spice_conn.port);
+        // Старые версии VDI не передают корректный адрес для подключения по спайсу,
+        // тем не менее используем самый ожидаемый
+        const gchar *required_server_version = "4.1.5";
+        if (virt_viewer_compare_version(get_vdi_session_static()->vdi_version.string, required_server_version) < 0) {
+            usbredir_spice_set_credentials(self,
+                                           vdi_vm_data->vm_host,
+                                           vdi_vm_data->vm_password,
+                                           vdi_vm_data->vm_port);
+        } else {
+            usbredir_spice_set_credentials(self,
+                                           vdi_vm_data->spice_conn.address,
+                                           vdi_vm_data->vm_password,
+                                           vdi_vm_data->spice_conn.port);
+        }
         usbredir_spice_connect(self);
 
     } else {

@@ -393,18 +393,18 @@ static void rdp_viewer_item_menu_usb_spice_activated(GtkWidget *menu G_GNUC_UNUS
     if (!rdp_viewer_window_is_usbredir_possible(rdp_window))
         return;
 
-    // Проверка поддерживает ли сервер перенаправление с использованием спайс в rdp сессии
-    const gchar *required_server_version = "4.1.5";
-    if (virt_viewer_compare_version(get_vdi_session_static()->vdi_version.string, required_server_version) < 0) {
-        g_autofree gchar *msg = NULL;
-        msg = g_strdup_printf(_("The client and server are incompatible. "
-                         "This client demands the server to be at least %s. "
-                         "Current server version is %s."),
-                                 required_server_version,
-                                 get_vdi_session_static()->vdi_version.string);
-        show_msg_box_dialog(GTK_WINDOW(rdp_window->rdp_viewer_window), msg);
-        return;
-    }
+    //// Проверка поддерживает ли сервер перенаправление с использованием спайс в rdp сессии
+    //const gchar *required_server_version = "4.1.5";
+    //if (virt_viewer_compare_version(get_vdi_session_static()->vdi_version.string, required_server_version) < 0) {
+    //    g_autofree gchar *msg = NULL;
+    //    msg = g_strdup_printf(_("The client and server are incompatible. "
+    //                     "This client demands the server to be at least %s. "
+    //                     "Current server version is %s."),
+    //                             required_server_version,
+    //                             get_vdi_session_static()->vdi_version.string);
+    //    show_msg_box_dialog(GTK_WINDOW(rdp_window->rdp_viewer_window), msg);
+    //    return;
+    //}
 
     // Create spice session
     if (usbredir_controller_get_static()->spice_usb_session == NULL)
