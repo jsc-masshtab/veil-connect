@@ -210,6 +210,9 @@ pipeline {
 
                             copy C:\\job\\openh264-6\\openh264-6.dll
 
+                            for %%I in (libfreerdp2 libfreerdp-client2 libwinpr2 libwinpr-tools2 avcodec-58 avutil-56 swresample-3 ^
+                            swscale-5) do (copy C:\\job\\FreeRDP-2.8.0\\Release\\%%I.dll)
+
                             perl -pi -e 's/crosshair/default\\0\\0/g' libspice-client-gtk-3.0-5.dll
 
                             REM ### Add vcredist to installer ###
@@ -217,12 +220,6 @@ pipeline {
 
                             REM ### Add UsbDk to installer ###
                             curl http://mothership.bazalt.team/files/usbdk/UsbDk_1.0.22_x64.msi --output usbdk.msi
-
-                            REM ### Add FreeRDP alternative libs to installer
-                            mkdir freerdp_2.2.0
-                            for %%I in (freerdp2 freerdp-client2 winpr2 winpr-tools2) do (curl http://nexus.bazalt.team/repository/files/freerdp/x64/2.2.0/%%I.dll --output freerdp_2.2.0\\%%I.dll)
-                            mkdir freerdp_2.3.2
-                            for %%I in (freerdp2 freerdp-client2 winpr2 winpr-tools2) do (copy C:\\job\\FreeRDP-2.3.2\\Release\\%%I.dll freerdp_2.3.2)
 
                             REM ### Make installer ###
                             sed -i -e "s:&&VER&&:%VERSION%:g" -e "s:&&BUILD_VER&&:%BUILD_NUMBER%:g" %WORKSPACE%/devops\\inno-setup\\veil-connect-installer-64.iss
