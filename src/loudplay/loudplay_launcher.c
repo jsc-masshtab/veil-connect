@@ -99,11 +99,23 @@ static gboolean loudplay_launcher_launch_process(LoudplayLauncher *self, Connect
     gchar *argv[3] = {};
 
     const gchar *loudplay_dir = conn_data->loudplay_config->loudplay_client_path;
+    if(strlen_safely(loudplay_dir) == 0) {
+        g_warning("%s: loudplay_client_path is not specified", (const char *)__func__);
+        return FALSE;
+    }
+
 #ifdef G_OS_WIN32
-    argv[0] = g_build_filename(loudplay_dir, "bin", "streaming.exe", NULL);
+    const gchar *program_name = "streaming.exe";
 #else
-    argv[0] = g_build_filename(loudplay_dir, "bin", "streaming", NULL);
+    const gchar *program_name = "streaming";
 #endif
+    if (conn_data->loudplay_config->is_client_path_relative) {
+        g_autofree gchar *current_dir = NULL;
+        current_dir = g_get_current_dir();
+        argv[0] = g_build_filename(current_dir, loudplay_dir, "bin", program_name, NULL);
+    } else {
+        argv[0] = g_build_filename(loudplay_dir, "bin", program_name, NULL);
+    }
     g_info("app path: %s", argv[0]);
 
     // The second argument is port number

@@ -584,6 +584,8 @@ void loudplay_settings_read(LoudPlayConfig **p_loudplay_config)
     (*p_loudplay_config)->loudplay_client_path = read_str_from_ini_file_with_def(
             "LoudplaySettings", "loudplay_client_path",
             "C:\\job\\loudplay\\1.0.3\\1.0.3");
+    (*p_loudplay_config)->is_client_path_relative =
+            read_int_from_ini_file("LoudplaySettings", "is_client_path_relative", FALSE);
 }
 
 void loudplay_settings_write(LoudPlayConfig *loudplay_config)
@@ -597,6 +599,8 @@ void loudplay_settings_write(LoudPlayConfig *loudplay_config)
 
     write_str_to_ini_file("LoudplaySettings", "loudplay_client_path",
                           loudplay_config->loudplay_client_path);
+    write_int_to_ini_file("LoudplaySettings", "is_client_path_relative",
+            loudplay_config->is_client_path_relative);
 }
 
 void loudplay_settings_clear(LoudPlayConfig **p_loudplay_config)

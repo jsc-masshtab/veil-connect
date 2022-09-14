@@ -49,6 +49,8 @@ struct _LoudPlayConfig
 
     /* instance members */
     gchar *loudplay_client_path;
+    gboolean is_client_path_relative;
+
 };
 
 struct _LoudPlayConfigClass

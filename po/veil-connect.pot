@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-09-06 16:41+0300\n"
+"POT-Creation-Date: 2022-09-14 11:06+0300\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -138,12 +138,12 @@ msgid "Client monitors info:\n"
 msgstr ""
 
 #: ../src/remote-viewer-connect.c:172
-#: ../resources/ui/start_settings_form.glade.h:231
+#: ../resources/ui/start_settings_form.glade.h:233
 msgid "VM connection mode"
 msgstr ""
 
 #: ../src/remote-viewer-connect.c:188
-#: ../resources/ui/start_settings_form.glade.h:232
+#: ../resources/ui/start_settings_form.glade.h:234
 msgid "Controller connection mode"
 msgstr ""
 
@@ -462,7 +462,7 @@ msgstr ""
 
 #. "Двухфакторная аутентификация включена.\n"
 #. "Для отключения снимите галочку и нажмите Применить."
-#: ../src/vdi_client/vdi_user_settings_widget.c:84
+#: ../src/vdi_client/vdi_user_settings_widget.c:85
 msgid ""
 "Two-factor authentication enabled.\n"
 "Uncheck 2fa and press Apply to disable."
@@ -473,7 +473,7 @@ msgstr ""
 #. "- сгенерируйте QR-код,\n"
 #. "- отсканируйте QR-код c помощью аутентификатора "
 #. "и нажмите Применить."
-#: ../src/vdi_client/vdi_user_settings_widget.c:92
+#: ../src/vdi_client/vdi_user_settings_widget.c:93
 msgid ""
 "Two-factor authentication disabled. To enable:\n"
 "- check 2fa,\n"
@@ -482,11 +482,11 @@ msgid ""
 msgstr ""
 
 #. "Не удалось сгенерировать QR-код"
-#: ../src/vdi_client/vdi_user_settings_widget.c:123
+#: ../src/vdi_client/vdi_user_settings_widget.c:124
 msgid "Failed to generate QR-code"
 msgstr ""
 
-#: ../src/vdi_client/vdi_user_settings_widget.c:139
+#: ../src/vdi_client/vdi_user_settings_widget.c:140
 #, c-format
 msgid ""
 "QR-code generated.\n"
@@ -494,42 +494,42 @@ msgid ""
 "(Yandex.Key, Google Authenticator). %s"
 msgstr ""
 
-#: ../src/vdi_client/vdi_user_settings_widget.c:142
+#: ../src/vdi_client/vdi_user_settings_widget.c:143
 msgid "Then press Apply."
 msgstr ""
 
-#: ../src/vdi_client/vdi_user_settings_widget.c:149
-#: ../src/vdi_client/vdi_user_settings_widget.c:180
+#: ../src/vdi_client/vdi_user_settings_widget.c:150
+#: ../src/vdi_client/vdi_user_settings_widget.c:181
 #, c-format
 msgid "An error occurred  %s"
 msgstr ""
 
 #. "Не удалось применить изменения."
-#: ../src/vdi_client/vdi_user_settings_widget.c:171
+#: ../src/vdi_client/vdi_user_settings_widget.c:172
 msgid "Failed to apply changes."
 msgstr ""
 
-#: ../src/vdi_client/vdi_user_settings_widget.c:177
+#: ../src/vdi_client/vdi_user_settings_widget.c:178
 msgid "Changes applied successfully."
 msgstr ""
 
 #. Отправлен запрос на генерацию QR.
-#: ../src/vdi_client/vdi_user_settings_widget.c:190
+#: ../src/vdi_client/vdi_user_settings_widget.c:191
 msgid "QR generation request sent."
 msgstr ""
 
 #. Отправлен запрос на применение изменений.
-#: ../src/vdi_client/vdi_user_settings_widget.c:199
+#: ../src/vdi_client/vdi_user_settings_widget.c:200
 msgid "Request to apply changes sent."
 msgstr ""
 
 #. "Сгенерируйте QR-код."
-#: ../src/vdi_client/vdi_user_settings_widget.c:215
+#: ../src/vdi_client/vdi_user_settings_widget.c:221
 msgid "Generate QR-code."
 msgstr ""
 
 #. "Для отключения двухфакторной аутентификации нажмите Применить."
-#: ../src/vdi_client/vdi_user_settings_widget.c:220
+#: ../src/vdi_client/vdi_user_settings_widget.c:226
 msgid "Press Apply to disable 2fa."
 msgstr ""
 
@@ -995,6 +995,7 @@ msgstr ""
 
 #. Закрыть
 #: ../resources/ui/usb_selector_form.glade.h:2
+#: ../resources/ui/vdi_user_settings_form.glade.h:8
 #: ../resources/ui/virt-viewer_veil.glade.h:12
 #: ../resources/ui/x2go_control_form.glade.h:9
 msgid "Close"
@@ -2017,60 +2018,68 @@ msgstr ""
 msgid "Path to loudplay client"
 msgstr ""
 
-#. Архивировать логи
+#: ../resources/ui/start_settings_form.glade.h:216
+msgid "Absolute"
+msgstr ""
+
 #: ../resources/ui/start_settings_form.glade.h:217
+msgid "Relative"
+msgstr ""
+
+#. Архивировать логи
+#: ../resources/ui/start_settings_form.glade.h:219
 msgid "Archive logs"
 msgstr ""
 
 #. Создать архив папки с логами
-#: ../resources/ui/start_settings_form.glade.h:219
+#: ../resources/ui/start_settings_form.glade.h:221
 msgid "Create log archive"
 msgstr ""
 
 #. Получить обновления
-#: ../resources/ui/start_settings_form.glade.h:221
+#: ../resources/ui/start_settings_form.glade.h:223
 msgid "Get updates"
 msgstr ""
 
 #. Путь к Windows хранилищу обновлений
-#: ../resources/ui/start_settings_form.glade.h:223
+#: ../resources/ui/start_settings_form.glade.h:225
 msgid "Windows updates URL"
 msgstr ""
 
 #. Открыть документацию
-#: ../resources/ui/start_settings_form.glade.h:225
+#: ../resources/ui/start_settings_form.glade.h:227
 msgid "Open documentation (in browser)"
 msgstr ""
 
 #. Время ожидания ВМ из пула, сек
-#: ../resources/ui/start_settings_form.glade.h:227
+#: ../resources/ui/start_settings_form.glade.h:229
 msgid "VM waiting time, sec"
 msgstr ""
 
-#: ../resources/ui/start_settings_form.glade.h:228
+#: ../resources/ui/start_settings_form.glade.h:230
 msgid ""
 "Global application mode. It determines  which server the applications "
 "connects to"
 msgstr ""
 
-#: ../resources/ui/start_settings_form.glade.h:229
+#: ../resources/ui/start_settings_form.glade.h:231
 msgid "Application mode"
 msgstr ""
 
-#: ../resources/ui/start_settings_form.glade.h:230
+#: ../resources/ui/start_settings_form.glade.h:232
 msgid "VDI connection mode"
 msgstr ""
 
-#: ../resources/ui/start_settings_form.glade.h:233
+#: ../resources/ui/start_settings_form.glade.h:235
 msgid "Single-instance application"
 msgstr ""
 
-#: ../resources/ui/start_settings_form.glade.h:234
+#: ../resources/ui/start_settings_form.glade.h:236
 msgid "Determines if only one instance of the application can be launched"
 msgstr ""
 
 #. Служебные
-#: ../resources/ui/start_settings_form.glade.h:236
+#: ../resources/ui/start_settings_form.glade.h:238
 msgid "Service"
 msgstr ""
 

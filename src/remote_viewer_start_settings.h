@@ -127,6 +127,7 @@ typedef struct {
 
     // Loudplay
     GtkWidget *loudplay_client_path_entry;
+    GtkWidget *loudplay_client_path_type_combobox;
     GtkWidget *loudplay_box;
     GObjectGui *loudplay_config_gui;
 

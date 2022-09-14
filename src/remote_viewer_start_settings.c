@@ -698,6 +698,8 @@ fill_gui(ConnectSettingsDialog *dialog_data)
     // Loudplay
     gtk_entry_set_text(GTK_ENTRY(dialog_data->loudplay_client_path_entry),
                        p_conn_data->loudplay_config->loudplay_client_path);
+    gtk_combo_box_set_active_id(GTK_COMBO_BOX(dialog_data->loudplay_client_path_type_combobox),
+                                p_conn_data->loudplay_config->is_client_path_relative ? "Relative" : "Absolute");
 
     if (dialog_data->loudplay_config_gui) {
         gtk_widget_destroy(dialog_data->loudplay_config_gui);
@@ -891,6 +893,10 @@ take_from_gui(ConnectSettingsDialog *dialog_data)
     const gchar *loudplay_client_path = gtk_entry_get_text(
             GTK_ENTRY(dialog_data->loudplay_client_path_entry));
     update_string_safely(&conn_data->loudplay_config->loudplay_client_path, loudplay_client_path);
+
+    const gchar *loudplay_client_path_type = gtk_combo_box_get_active_id(
+            GTK_COMBO_BOX(dialog_data->loudplay_client_path_type_combobox));
+    conn_data->loudplay_config->is_client_path_relative = (g_strcmp0(loudplay_client_path_type, "Relative") == 0);
 }
 
 static void
@@ -1054,6 +1060,8 @@ GtkResponseType remote_viewer_start_settings_dialog(ConnectSettingsDialog *self,
 
     // Loudplay
     self->loudplay_client_path_entry = get_widget_from_builder(self->builder, "loudplay_client_path_entry");
+    self->loudplay_client_path_type_combobox = get_widget_from_builder(self->builder,
+            "loudplay_client_path_type_combobox");
     self->loudplay_box = get_widget_from_builder(self->builder, "loudplay_box");
 
     // Service functions
