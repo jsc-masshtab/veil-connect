@@ -13,9 +13,46 @@
 #include "config.h"
 #include "vm_control_menu.h"
 
+#ifdef G_OS_WIN32
+typedef LRESULT(CALLBACK *pCallWndProc)(int, WPARAM, LPARAM);
+#endif
 G_DEFINE_TYPE( LoudplayControlWidget, loudplay_control_widget, G_TYPE_OBJECT )
 
+static LoudplayControlWidget *self_static = NULL; // приходится делать так, так как нет способа передать
+// кастомные данные в калбэк window_keyboard_hook_callback
 
+
+static void loudplay_control_widget_raise_main_window(LoudplayControlWidget *self_)
+{
+    gtk_window_present(GTK_WINDOW(self_->main_window));
+    gtk_widget_show_all(self_->main_window);
+    gdk_window_raise(gtk_widget_get_window(self_->main_window));
+#ifdef G_OS_WIN32
+    gtk_window_set_keep_above(GTK_WINDOW(self_->main_window), TRUE);
+#endif
+}
+#ifdef G_OS_WIN32
+static LRESULT CALLBACK window_keyboard_hook_callback(int nCode, WPARAM wParam, LPARAM lParam)
+{
+    //g_info("HERE1  nCode: %i,  wParam:  %llu", nCode, wParam);
+    if (nCode < 0) {
+        return CallNextHookEx(NULL, nCode, wParam, lParam);
+    }
+
+    if (nCode == HC_ACTION && wParam == WM_SYSKEYUP) { // Release during ALT being pressed
+        KBDLLHOOKSTRUCT* kbhs = (KBDLLHOOKSTRUCT *)lParam;
+        if (kbhs->vkCode == VK_LCONTROL) {
+            g_info("KBDLLHOOKSTRUCT      vkCode: %lu\n"
+                   "     scanCode: %lu\n"
+                   "     flags: %lu\n", kbhs->vkCode, kbhs->scanCode, kbhs->flags);
+            if (self_static) {
+                loudplay_control_widget_raise_main_window(self_static);
+            }
+        }
+    }
+    return CallNextHookEx(NULL, nCode, wParam, lParam);
+}
+#endif
 static void loudplay_control_widget_clear(LoudplayControlWidget *self)
 {
     if (self->builder) {
@@ -31,7 +68,7 @@ static void loudplay_control_widget_clear(LoudplayControlWidget *self)
         self->menu_vm_control = NULL;
     }
 
-    self->loudplay_config_gui = NULL;
+    //self->loudplay_config_gui = NULL;
     self->status_label = NULL;
     self->settings_invoke_window = NULL;
 }
@@ -51,10 +88,9 @@ static void
 loudplay_control_widget_btn_invoke_settings_clicked(GtkButton *button G_GNUC_UNUSED, gpointer data)
 {
     LoudplayControlWidget *self = (LoudplayControlWidget *)data;
-    gtk_widget_show_all(self->main_window);
-    gtk_window_present(GTK_WINDOW(self->main_window));
+    loudplay_control_widget_raise_main_window(self);
 }
-
+/*
 static void
 loudplay_control_widget_btn_apply_settings_clicked(GtkButton *button G_GNUC_UNUSED, gpointer data)
 {
@@ -66,7 +102,7 @@ loudplay_control_widget_btn_apply_settings_clicked(GtkButton *button G_GNUC_UNUS
     msg = g_strdup_printf(_("Settings update requested by %s"), APPLICATION_NAME);
     loudplay_control_widget_set_status(self, msg);
     g_signal_emit_by_name(self, "settings-change-requested");
-}
+}*/
 
 static void
 loudplay_control_widget_btn_stop_clicked(GtkButton *button G_GNUC_UNUSED, gpointer data)
@@ -92,7 +128,7 @@ static gboolean
 window_deleted_cb(LoudplayControlWidget *self)
 {
     g_info("%s", (const char *) __func__);
-    loudplay_control_widget_clear(self);
+    gtk_widget_hide(self->main_window);
     return TRUE;
 }
 
@@ -140,10 +176,10 @@ static void loudplay_control_widget_create_gui_if_required(LoudplayControlWidget
     gtk_window_set_title(GTK_WINDOW(self->main_window), title);
     self->status_label = GTK_WIDGET(gtk_builder_get_object(self->builder, "status_label"));
 
-    self->btn_apply_settings = GTK_WIDGET(gtk_builder_get_object(self->builder, "btn_apply_settings"));
+    //self->btn_apply_settings = GTK_WIDGET(gtk_builder_get_object(self->builder, "btn_apply_settings"));
     self->btn_stop = GTK_WIDGET(gtk_builder_get_object(self->builder, "btn_stop"));
 
-    self->loudplay_viewport = GTK_WIDGET(gtk_builder_get_object(self->builder, "loudplay_viewport"));
+    //self->loudplay_viewport = GTK_WIDGET(gtk_builder_get_object(self->builder, "loudplay_viewport"));
 
     self->settings_invoke_window = GTK_WIDGET(gtk_builder_get_object(self->builder, "settings_invoke_window"));
     self->btn_invoke_settings = GTK_WIDGET(gtk_builder_get_object(self->builder, "btn_invoke_settings"));
@@ -154,8 +190,8 @@ static void loudplay_control_widget_create_gui_if_required(LoudplayControlWidget
 
     g_signal_connect(self->btn_invoke_settings, "clicked",
                      G_CALLBACK(loudplay_control_widget_btn_invoke_settings_clicked), self);
-    g_signal_connect(self->btn_apply_settings, "clicked",
-                     G_CALLBACK(loudplay_control_widget_btn_apply_settings_clicked), self);
+    //g_signal_connect(self->btn_apply_settings, "clicked",
+    //                 G_CALLBACK(loudplay_control_widget_btn_apply_settings_clicked), self);
     g_signal_connect(self->btn_stop, "clicked",
                      G_CALLBACK(loudplay_control_widget_btn_stop_clicked), self);
     g_signal_connect(self->btn_show_vm_control, "clicked",
@@ -178,11 +214,11 @@ void loudplay_control_widget_show_on_top(LoudplayControlWidget *self)
 {
     loudplay_control_widget_set_status(self, _("..."));
     loudplay_control_widget_create_gui_if_required(self);
-    loudplay_control_widget_update_gui(self);
+    //loudplay_control_widget_update_gui(self);
 
     // loudplay settings
     // Показать окно поверх всех
-    gtk_widget_set_size_request(self->main_window, 400, 450);
+    gtk_widget_set_size_request(self->main_window, 400, 250);
     gtk_widget_show_all(self->main_window);
     gtk_window_present(GTK_WINDOW(self->main_window));
 
@@ -209,8 +245,17 @@ void loudplay_control_widget_show_on_top(LoudplayControlWidget *self)
 
     gtk_window_move(GTK_WINDOW(self->settings_invoke_window),
             geometry.x + geometry.width - width,
-            geometry.y + geometry.height * 0.5 - height * 0.5);
+            geometry.y + (int)(geometry.height * 0.5) - (int)(height * 0.5));
     gtk_widget_show_all(self->settings_invoke_window);
+
+    // Set key board events interruption
+#ifdef G_OS_WIN32
+    self_static = self;
+    self->hHook = SetWindowsHookExW(WH_KEYBOARD_LL, window_keyboard_hook_callback, NULL, 0);
+    if (!self->hHook) {
+        g_warning("Failed to set event hook. Error code: %lu", GetLastError());
+    }
+#endif
 }
 
 void loudplay_control_widget_hide(LoudplayControlWidget *self)
@@ -219,8 +264,15 @@ void loudplay_control_widget_hide(LoudplayControlWidget *self)
         gtk_widget_hide(self->settings_invoke_window);
     if (self->main_window)
         gtk_widget_hide(self->main_window);
-}
 
+#ifdef G_OS_WIN32
+    if (self->hHook) {
+        self_static = NULL;
+        UnhookWindowsHookEx(self->hHook);
+    }
+#endif
+}
+/*
 void loudplay_control_widget_update_gui(LoudplayControlWidget *self)
 {
     if (self->loudplay_config_gui)
@@ -228,7 +280,7 @@ void loudplay_control_widget_update_gui(LoudplayControlWidget *self)
     self->loudplay_config_gui = gobject_gui_generate_gui(G_OBJECT(self->p_conn_data->loudplay_config));
     gtk_container_add(GTK_CONTAINER(self->loudplay_viewport), self->loudplay_config_gui);
     gtk_widget_show_all(self->loudplay_config_gui);
-}
+}*/
 
 void loudplay_control_widget_set_status(LoudplayControlWidget *self, const gchar *text)
 {

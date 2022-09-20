@@ -9,6 +9,10 @@
 #ifndef VEIL_CONNECT_LOUDPLAY_CONTROL_WIDGET_H
 #define VEIL_CONNECT_LOUDPLAY_CONTROL_WIDGET_H
 
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
 #include <glib.h>
 #include <gtk/gtk.h>
 
@@ -28,14 +32,14 @@ typedef struct{
     GtkWidget *main_window;
     GtkWidget *status_label;
 
-    GtkWidget *btn_apply_settings;
+    //GtkWidget *btn_apply_settings;
     GtkWidget *btn_stop;
 
-    GtkWidget *loudplay_viewport;
+    //GtkWidget *loudplay_viewport;
 
     ConnectSettingsData *p_conn_data;
 
-    GObjectGui *loudplay_config_gui;
+    //GObjectGui *loudplay_config_gui;
 
     // invoking window
     GtkWidget *settings_invoke_window;
@@ -45,6 +49,9 @@ typedef struct{
     GtkWidget *btn_show_vm_control;
     GtkWidget *menu_vm_control;
 
+#ifdef G_OS_WIN32
+    HHOOK hHook;
+#endif
     
 } LoudplayControlWidget;
 
@@ -65,7 +72,7 @@ LoudplayControlWidget *loudplay_control_widget_new(ConnectSettingsData *conn_dat
 void loudplay_control_widget_show_on_top(LoudplayControlWidget *self);
 void loudplay_control_widget_hide(LoudplayControlWidget *self);
 
-void loudplay_control_widget_update_gui(LoudplayControlWidget *self);
+//void loudplay_control_widget_update_gui(LoudplayControlWidget *self);
 
 void loudplay_control_widget_set_status(LoudplayControlWidget *self,
         const gchar *text);

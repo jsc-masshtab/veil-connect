@@ -387,6 +387,7 @@ on_loudplay_config_updated(gpointer data G_GNUC_UNUSED, RemoteViewer *self)
 
     // Save path to client
     gchar *loudplay_client_path = g_strdup(self->conn_data.loudplay_config->loudplay_client_path);
+    gboolean is_client_path_relative = self->conn_data.loudplay_config->is_client_path_relative;
 
     loudplay_settings_clear(&self->conn_data.loudplay_config);
     self->conn_data.loudplay_config = LOUDPLAY_CONFIG(json_gobject_from_data(
@@ -396,8 +397,9 @@ on_loudplay_config_updated(gpointer data G_GNUC_UNUSED, RemoteViewer *self)
 
     // Restore path to client
     self->conn_data.loudplay_config->loudplay_client_path = loudplay_client_path;
+    self->conn_data.loudplay_config->is_client_path_relative = is_client_path_relative;
 
-    loudplay_control_widget_update_gui(self->loudplay_launcher->ctrl_widget);
+    //loudplay_control_widget_update_gui(self->loudplay_launcher->ctrl_widget);
 }
 
 //
