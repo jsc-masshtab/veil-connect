@@ -113,6 +113,7 @@ typedef struct{
 
     int sound_rate;
     int sound_channel;
+    int audio_mode;
 
 } VeilRdpSettings;
 

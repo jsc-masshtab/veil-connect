@@ -129,6 +129,8 @@ GArray *rdp_client_create_params_array(ExtendedRdpContext* ex)
     gchar *sound_str = g_strdup_printf("/sound:rate:%i,channel:%i",
             ex->p_rdp_settings->sound_rate, ex->p_rdp_settings->sound_channel);
     add_rdp_param(rdp_params_dyn_array, sound_str);
+    gchar *audio_str = g_strdup_printf("/audio-mode:%i", ex->p_rdp_settings->audio_mode);
+    add_rdp_param(rdp_params_dyn_array, audio_str);
     add_rdp_param(rdp_params_dyn_array, g_strdup("/relax-order-checks"));
     if (ex->p_rdp_settings->dynamic_resolution_enabled && !ex->p_rdp_settings->is_multimon)
         add_rdp_param(rdp_params_dyn_array, g_strdup("/dynamic-resolution"));

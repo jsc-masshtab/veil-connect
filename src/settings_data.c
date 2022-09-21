@@ -358,6 +358,7 @@ void rdp_settings_read_ini_file(VeilRdpSettings *rdp_settings)
 
     rdp_settings->sound_rate = read_int_from_ini_file(rdp_group, "sound_rate", 44100);
     rdp_settings->sound_channel = read_int_from_ini_file(rdp_group, "sound_channel", 2);
+    rdp_settings->audio_mode = read_int_from_ini_file(rdp_group, "audio_mode", 0);
 }
 
 /*
@@ -502,6 +503,7 @@ void rdp_settings_write(VeilRdpSettings *rdp_settings)
 
     write_int_to_ini_file(rdp_group, "sound_rate", rdp_settings->sound_rate);
     write_int_to_ini_file(rdp_group, "sound_channel", rdp_settings->sound_channel);
+    write_int_to_ini_file(rdp_group, "audio_mode", rdp_settings->audio_mode);
 }
 
 void rdp_settings_clear(VeilRdpSettings *rdp_settings)

@@ -115,6 +115,7 @@ typedef struct {
 
     GtkWidget *rdp_sound_rate_spinbox;
     GtkWidget *rdp_sound_channel_combobox;
+    GtkWidget *rdp_audio_mode_combobox;
 
     // X2GO settings
     GtkWidget *x2go_app_combobox;
