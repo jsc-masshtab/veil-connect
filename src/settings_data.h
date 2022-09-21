@@ -111,6 +111,9 @@ typedef struct{
 
     gboolean disable_username_mod; // do not split username@domain
 
+    int sound_rate;
+    int sound_channel;
+
 } VeilRdpSettings;
 
 

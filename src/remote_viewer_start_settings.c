@@ -676,6 +676,12 @@ fill_gui(ConnectSettingsDialog *dialog_data)
     gtk_toggle_button_set_active((GtkToggleButton *)dialog_data->username_mod_disabled_check_btn,
                                  p_conn_data->rdp_settings.disable_username_mod);
 
+    gtk_spin_button_set_value(GTK_SPIN_BUTTON(dialog_data->rdp_sound_rate_spinbox),
+                              p_conn_data->rdp_settings.sound_rate);
+    g_autofree gchar *sound_channel_str = NULL;
+    sound_channel_str = g_strdup_printf("%i", p_conn_data->rdp_settings.sound_channel);
+    gtk_combo_box_set_active_id(GTK_COMBO_BOX(dialog_data->rdp_sound_channel_combobox), sound_channel_str);
+
     // X2Go Settings
     gtk_combo_box_set_active(GTK_COMBO_BOX(dialog_data->x2go_app_combobox),
                              (gint)p_conn_data->x2Go_settings.app_type);
@@ -868,6 +874,12 @@ take_from_gui(ConnectSettingsDialog *dialog_data)
     conn_data->rdp_settings.disable_username_mod =
             gtk_toggle_button_get_active((GtkToggleButton *)dialog_data->username_mod_disabled_check_btn);
 
+    conn_data->rdp_settings.sound_rate =
+            gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(dialog_data->rdp_sound_rate_spinbox));
+    const gchar *rdp_sound_channel_id =
+            gtk_combo_box_get_active_id(GTK_COMBO_BOX(dialog_data->rdp_sound_channel_combobox));
+    conn_data->rdp_settings.sound_channel =atoi(rdp_sound_channel_id);
+
     // X2Go settings
     conn_data->x2Go_settings.app_type = (X2goApplication)gtk_combo_box_get_active(
             GTK_COMBO_BOX(dialog_data->x2go_app_combobox));
@@ -1040,6 +1052,8 @@ GtkResponseType remote_viewer_start_settings_dialog(ConnectSettingsDialog *self,
 #endif
     self->username_mod_disabled_check_btn =
             get_widget_from_builder(self->builder, "username_mod_disabled_check_btn");
+    self->rdp_sound_rate_spinbox = get_widget_from_builder(self->builder, "rdp_sound_rate_spinbox");
+    self->rdp_sound_channel_combobox = get_widget_from_builder(self->builder, "rdp_sound_channel_combobox");
 
     // X2Go settings
     self->x2go_app_combobox = get_widget_from_builder(self->builder, "x2go_app_combobox");

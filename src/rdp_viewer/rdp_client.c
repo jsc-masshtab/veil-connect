@@ -126,7 +126,9 @@ GArray *rdp_client_create_params_array(ExtendedRdpContext* ex)
     add_rdp_param(rdp_params_dyn_array, g_strdup_printf("/w:%i", ex->whole_image_width));
     add_rdp_param(rdp_params_dyn_array, g_strdup_printf("/h:%i", ex->whole_image_height));
     add_rdp_param(rdp_params_dyn_array, g_strdup("/cert-ignore"));
-    add_rdp_param(rdp_params_dyn_array, g_strdup("/sound:rate:44100,channel:2"));
+    gchar *sound_str = g_strdup_printf("/sound:rate:%i,channel:%i",
+            ex->p_rdp_settings->sound_rate, ex->p_rdp_settings->sound_channel);
+    add_rdp_param(rdp_params_dyn_array, sound_str);
     add_rdp_param(rdp_params_dyn_array, g_strdup("/relax-order-checks"));
     if (ex->p_rdp_settings->dynamic_resolution_enabled && !ex->p_rdp_settings->is_multimon)
         add_rdp_param(rdp_params_dyn_array, g_strdup("/dynamic-resolution"));
@@ -278,9 +280,9 @@ void destroy_rdp_context(ExtendedRdpContext* ex_context)
         // stop cursor updating
         g_source_remove_safely(&ex_context->cursor_update_timeout_id);
 
-        g_info("%s: wai for mutex (invalid_region_mutex)", (const char *)__func__);
+        g_info("%s: wait for mutex (invalid_region_mutex)", (const char *)__func__);
         wait_for_mutex_and_clear(&ex_context->invalid_region_mutex);
-        g_info("%s: wai for mutex (cursor_mutex)", (const char *)__func__);
+        g_info("%s: wait for mutex (cursor_mutex)", (const char *)__func__);
         wait_for_mutex_and_clear(&ex_context->cursor_mutex);
 
         g_info("%s: context free no ", (const char *)__func__);

@@ -356,8 +356,8 @@ void rdp_settings_read_ini_file(VeilRdpSettings *rdp_settings)
     rdp_settings->h264_bitrate = read_int_from_ini_file(rdp_group, "h264_bitrate", 10000000);
     rdp_settings->h264_framerate = read_int_from_ini_file(rdp_group, "h264_framerate", 30);
 
-    rdp_settings->disable_username_mod = read_int_from_ini_file(rdp_group, "disable_username_mod", 0);
-
+    rdp_settings->sound_rate = read_int_from_ini_file(rdp_group, "sound_rate", 44100);
+    rdp_settings->sound_channel = read_int_from_ini_file(rdp_group, "sound_channel", 2);
 }
 
 /*
@@ -499,6 +499,9 @@ void rdp_settings_write(VeilRdpSettings *rdp_settings)
     write_int_to_ini_file(rdp_group, "h264_framerate", rdp_settings->h264_framerate);
 
     write_int_to_ini_file(rdp_group, "disable_username_mod", rdp_settings->disable_username_mod);
+
+    write_int_to_ini_file(rdp_group, "sound_rate", rdp_settings->sound_rate);
+    write_int_to_ini_file(rdp_group, "sound_channel", rdp_settings->sound_channel);
 }
 
 void rdp_settings_clear(VeilRdpSettings *rdp_settings)
