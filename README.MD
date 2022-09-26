@@ -101,6 +101,7 @@ pacman -S mingw-w64-x86_64-toolchain base-devel
 pacman -S mingw64/mingw-w64-x86_64-libsoup
 pacman -S mingw64/mingw-w64-x86_64-spice-gtk
 pacman -S mingw64/mingw-w64-x86_64-libusb
+pacman -S mingw64/mingw-w64-x86_64-breakpad-git
 ```
 - В файле CmaleLists.txt в переменную LIBS_INCLUDE_PATH задать путь MSYS_INCLUDE.
 
