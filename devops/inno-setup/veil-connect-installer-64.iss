@@ -65,6 +65,7 @@ Source: "C:\Jenkins\workspace\veil-connect-win\build\veil_connect.exe"; DestDir:
 Source: "C:\Jenkins\workspace\veil-connect-win\build\vc_redist.exe"; DestDir: "{tmp}"; Flags: deleteafterinstall; Components: app
 Source: "C:\Jenkins\workspace\veil-connect-win\build\usbdk.msi"; DestDir: "{tmp}"; Flags: deleteafterinstall; Components: usbdk
 Source: "C:\Jenkins\workspace\veil-connect-win\build\gspawn-win64-helper*.exe"; DestDir: "{app}"; Flags: ignoreversion; Components: app
+Source: "C:\Jenkins\workspace\veil-connect-win\build\gdbus.exe"; DestDir: "{app}"; Flags: ignoreversion; Components: app
 Source: "C:\Jenkins\workspace\veil-connect-win\build\*.dll"; DestDir: "{app}"; Flags: ignoreversion; Components: app
 Source: "C:\Jenkins\workspace\veil-connect-win\build\*.css"; DestDir: "{app}"; Flags: ignoreversion; Components: app
 ;Source: "C:\Jenkins\workspace\veil-connect-win\build\*.bak"; DestDir: "{app}"; Flags: ignoreversion; Components: app

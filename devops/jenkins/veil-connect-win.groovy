@@ -80,6 +80,7 @@ pipeline {
                             copy C:\\msys32\\mingw32\\lib\\gdk-pixbuf-2.0\\2.10.0\\loaders.cache lib\\gdk-pixbuf-2.0\\2.10.0
                             xcopy C:\\msys32\\mingw32\\lib\\gio lib\\gio /E /H /I
 
+                            mkdir lib\\gstreamer-1.0
                             copy C:\\msys32\\mingw32\\lib\\gstreamer-1.0\\*.dll lib\\gstreamer-1.0
 
                             copy rdp_data\\rdp_template_file.txt rdp_data\\rdp_file.rdp
@@ -137,6 +138,7 @@ pipeline {
 
                             xcopy C:\\msys32\\mingw64\\lib\\gio lib\\gio /E /H /I
 
+                            mkdir lib\\gstreamer-1.0
                             copy C:\\msys32\\mingw64\\lib\\gstreamer-1.0\\*.dll lib\\gstreamer-1.0
 
                             copy rdp_data\\rdp_template_file.txt rdp_data\\rdp_file.rdp
@@ -146,8 +148,8 @@ pipeline {
 
                             copy C:\\msys32\\mingw64\\bin\\*.dll
 
-                            copy C:\\msys32\\mingw64\\bin\\gspawn-win64-helper.exe
-                            copy C:\\msys32\\mingw64\\bin\\gspawn-win64-helper-console.exe
+                            for %%I in (gspawn-win64-helper.exe gspawn-win64-helper-console.exe ^
+                            gdbus.exe) do (copy C:\\msys32\\mingw64\\bin\\%%I)
 
                             copy C:\\job\\openh264-6\\openh264-6.dll
 
