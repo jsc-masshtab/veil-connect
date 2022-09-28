@@ -333,8 +333,9 @@ void virt_viewer_util_init(const char *appname)
 #endif
 
     setlocale(LC_ALL, "");
-    //setlocale(LC_ALL, "Russian");
-    bindtextdomain(GETTEXT_PACKAGE, LOCALE_DIR);
+    g_autofree gchar *locale = NULL;
+    locale = get_locale_path();
+    bindtextdomain(GETTEXT_PACKAGE, locale);
     bind_textdomain_codeset(GETTEXT_PACKAGE, "UTF-8");
     textdomain(GETTEXT_PACKAGE);
 
@@ -824,6 +825,20 @@ gchar *get_log_dir_path()
 #elif _WIN32
     const gchar *locap_app_data_path = g_getenv("LOCALAPPDATA");
     gchar *log_dir = g_strdup_printf("%s\\%s\\log", locap_app_data_path, APP_FILES_DIRECTORY_NAME);
+#endif
+    return log_dir;
+}
+
+gchar *get_locale_path()
+{
+    // log dir dipends on OS
+#ifdef G_OS_UNIX
+    gchar *log_dir = g_strdup("locale");
+#elif _WIN32
+    g_autofree gchar *current_dir = NULL;
+    current_dir = g_get_current_dir();
+
+    gchar *log_dir = g_strdup_printf("%s\\locale", current_dir);
 #endif
     return log_dir;
 }

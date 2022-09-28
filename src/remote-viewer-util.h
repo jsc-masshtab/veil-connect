@@ -190,6 +190,9 @@ GtkWidget *get_widget_from_builder(GtkBuilder *builder, const gchar *name);
 // Get path to log directory. Must be freed
 gchar *get_log_dir_path(void);
 
+// Get path to locale directory. Must be freed
+gchar *get_locale_path(void);
+
 // Replace substring
 gchar *replace_str(const gchar *src, const gchar *find, const gchar *replace);
 
